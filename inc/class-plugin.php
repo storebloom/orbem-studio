@@ -38,8 +38,10 @@ class Plugin extends Plugin_Base {
      */
     public function enqueueFrontAssets()
     {
-        $game_page = get_option('orbem_game_page');
-        if (true === is_page($game_page)) {
+        $game_page = get_option('explore_game_page', '');
+        $page = get_queried_object();
+
+        if (false === empty($game_page) && false === empty($page->post_title) && $game_page === $page->post_title) {
             self::enqueueScript('orbem-order/explore');
 
             if (true === current_user_can('manage_options')) {
@@ -220,7 +222,7 @@ class Plugin extends Plugin_Base {
                         'explorePoints' => $explore_points,
                         'exploreAbilities' => $explore_abilities,
                         'levelMaps' => Explore::getLevelMap(),
-                        'gameURL' => get_option('explore_game_url', get_home_url()),
+                        'gameURL' => get_option('explore_game_page', get_home_url()),
                         'wpThemeURL' => str_replace(['https://', 'http://', 'www'], '', get_home_url()),
                     ]
                 );
@@ -267,22 +269,23 @@ class Plugin extends Plugin_Base {
     }
 
     /**
+     * Use template file if page matches option.
+     *
      * @filter template_include
      * @param $template
      * @return mixed|string
      */
     public function exploreIncludeTemplate( $template )
     {
-        if (is_page()) {
-            $game_page = get_option('explore_game_page', '');
+        $game_page = get_option('explore_game_page', '');
+        $page = get_queried_object();
 
-            if ( false === empty($game_page) ) {
-                if ( $game_page === get_the_title()) {
-                    return plugin_dir_path(__FILE__) . '../templates/explore.php';
-                }
-            }
-            return $template;
+        if (false === empty($game_page) && false === empty($page->post_title) && $game_page === $page->post_title) {
+
+            return plugin_dir_path(__FILE__) . '../templates/explore.php';
         }
+
+        return $template;
     }
 
 

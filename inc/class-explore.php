@@ -1179,7 +1179,9 @@ class Explore
      */
     public function inlineExploreStyles()
     {
-        if (is_page_template('templates/explore.php')) {
+        $game_page = get_option('explore_game_page', '');
+        
+        if (false === empty($game_page) && is_page($game_page)) {
             echo '<script src="https://accounts.google.com/gsi/client" async defer></script>';
 
             $position = get_user_meta(get_current_user_id(), 'current_location', true);

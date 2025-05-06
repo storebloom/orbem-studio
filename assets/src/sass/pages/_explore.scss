@@ -5,6 +5,10 @@ html {
     overscroll-behavior: none;
     width: 5000px;
 
+    header, #header, footer, #footer {
+      display: none;
+    }
+
     .explore-item-list {
       max-height: 80vh;
       overflow: scroll;
