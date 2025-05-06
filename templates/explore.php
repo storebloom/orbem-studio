@@ -58,6 +58,8 @@ if ( $is_admin ) {
     $item_list = array_merge($item_list, $triggers);
 }
 
+get_header();
+
 include plugin_dir_path(__FILE__) . '/plugin-header.php';
 ?>
 <div class="container">

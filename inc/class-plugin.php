@@ -281,7 +281,6 @@ class Plugin extends Plugin_Base {
         $page = get_queried_object();
 
         if (false === empty($game_page) && false === empty($page->post_title) && $game_page === $page->post_title) {
-
             return plugin_dir_path(__FILE__) . '../templates/explore.php';
         }
 
