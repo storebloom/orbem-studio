@@ -58,9 +58,7 @@ if ( $is_admin ) {
     $item_list = array_merge($item_list, $triggers);
 }
 
-get_header();
-
-include plugin_dir_path(__FILE__) . '/plugin-header.php';
+include plugin_dir_path(__FILE__) . 'plugin-header.php';
 ?>
 <div class="container">
     <main id="primary"<?php echo esc_attr(true === $is_admin ? ' data-devmode=true' : ''); ?> class="site-main<?php echo esc_attr($rst); ?>">
