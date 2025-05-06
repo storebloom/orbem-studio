@@ -1,0 +1,54 @@
+{
+  "name": "orbem-game-engine",
+  "version": "1.0.0",
+  "description": "Dependencies for orbem game engine plugin",
+  "devDependencies": {
+    "dotenv": "^16.5.0",
+    "prettier": "^3.5.3"
+
+  },
+  "scripts": {
+    "build": "wp-scripts build assets/src/js/*.js --output-path=assets/build/",
+    "env:build": "wp-env build",
+    "env:destroy": "wp-env destroy",
+    "env:shell": "wp-env run cli bash",
+    "env:start": "wp-env start",
+    "env:stop": "wp-env stop",
+    "setup": "npm ci && composer install",
+    "watch:hot": "wp-scripts start assets/src/js/*.js --output-path=assets/build/ --hot",
+    "watch": "wp-scripts start assets/src/js/*.js --output-path=assets/build/"
+  },
+  "engines": {
+    "node": ">=22.4.0",
+    "npm": ">=10.5.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/storebloom/orbem-game-engine.git"
+  },
+  "keywords": [
+    "orbemorder.com"
+  ],
+  "author": "Scott Adrian",
+  "contributors": [
+    {
+      "name": "Scott Adrian",
+      "email": "scott.adrian@orbemorder.com"
+    },
+    {
+      "name": "Scott Weaver",
+      "email": "scottmweaver@gmail.com"
+    }
+  ],
+  "license": "UNLICENSED",
+  "bugs": {
+    "url": "https://github.com/storebloom/orbem-game-engine/issues"
+  },
+  "homepage": "https://github.com/storebloom/orbem-game-engine#readme",
+  "prettier": {
+    "bracketSpacing": true,
+    "jsxSingleQuote": true,
+    "singleQuote": true,
+    "tabWidth": 4
+  }
+}
