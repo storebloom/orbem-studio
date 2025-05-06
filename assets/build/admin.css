@@ -1,1 +1,9 @@
-.wp-submenu li a[href*=taxonomy]{background:#4a4a4a;padding-left:2rem}
+/*!***************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[4].use[1]!./node_modules/postcss-loader/dist/cjs.js??ruleSet[1].rules[4].use[2]!./node_modules/sass-loader/dist/cjs.js??ruleSet[1].rules[4].use[3]!./assets/src/sass/admin.scss ***!
+  \***************************************************************************************************************************************************************************************************************************************************/
+.wp-submenu li a[href*=taxonomy] {
+  background: #4a4a4a;
+  padding-left: 2rem;
+}
+
+/*# sourceMappingURL=admin.css.map*/

@@ -1,1 +1,1162 @@
-html,html body{overscroll-behavior:none}html body{overflow:hidden;width:5000px}html body .explore-item-list{max-height:80vh;overflow:scroll}html body .explore-item-list .find-explore-item.selected{color:blue;cursor:pointer;font-weight:700}html body #explore-create-account,html body #explore-login-account{cursor:pointer}html body .intro-video{height:100%;left:-6000px;opacity:0;position:fixed;top:0;transition:opacity .3s;width:100%;z-index:9999}html body .intro-video #skip-intro-video{background:#0a7aff;border-radius:8px;bottom:3rem;color:#fff;cursor:pointer;padding:1rem 2rem;position:fixed;right:3rem;z-index:9}html body .intro-video video{height:100%;-o-object-fit:cover;object-fit:cover;position:relative;width:100%;z-index:1}html body .intro-video.engage{left:0;opacity:1}html body .explainer-trigger{position:absolute}html body .explainer-container{background:#fff;border:8px dashed #00cee3;border-radius:20px;font-size:20px;left:-5000px;opacity:0;padding:1rem 1.5rem;position:absolute;transition:opacity .3s;z-index:-1}html body .explainer-container img{position:absolute}html body .explainer-container.engage{opacity:1;z-index:8}html body .explainer-container.engage:after{content:"✕";cursor:pointer;font-size:28px;font-weight:700;position:absolute;right:5px;top:5px}html body #primary{overflow:hidden;overscroll-behavior:none}@media only screen and (max-width:480px){html body #primary{height:100dvh;left:0;position:fixed;top:0;width:100vw}}html body #primary .indicator-icon{height:15px;opacity:0;position:absolute;transition:opacity .2s;width:15px}html body #primary .indicator-icon.engage{display:block;opacity:1}html body #primary>.container{margin-top:0}html body .next-mission{display:none}html body .next-mission.engage{display:block}html body #create-account,html body #login-account{cursor:pointer}html body #create-account:hover,html body #login-account:hover{color:#00a0d2;font-weight:700}html body .map-cutscene{bottom:-1500px;display:flex;justify-content:space-between;left:50%;max-height:300px;position:fixed;transform:translatex(-50%);transition:bottom .3s;width:80vw;z-index:99999999}html body .map-cutscene.engage{bottom:20px}html body .map-cutscene.engage[data-video=true]{bottom:unset;height:100vh;top:0;width:100%}html body .map-cutscene .wp-block-orbem-paragraph-mp3{align-self:center;background:#fff;border:20px solid #4ee7ff;border-radius:20px;display:none;flex-basis:70%;padding:20px 50px}html body .map-cutscene .wp-block-orbem-paragraph-mp3.engage,html body .map-cutscene .wp-block-orbem-paragraph-mp3.engage p{display:block}html body .map-cutscene .cut-character{opacity:0;text-align:right;width:300px}html body .map-cutscene .cut-character.engage{opacity:1}html body .map-cutscene .cut-character img{height:100%;margin-right:1rem;-o-object-fit:contain;object-fit:contain;-o-object-position:bottom;object-position:bottom;width:100%}html body div[data-character=mc]{bottom:0;height:300px;left:5%;opacity:0;position:fixed;text-align:right;width:300px}html body div[data-character=mc].engage{opacity:1}html body div[data-character=mc] img{height:100%;margin-right:1rem;-o-object-fit:contain;object-fit:contain;-o-object-position:bottom;object-position:bottom;width:100%}html body.admin-bar .explore-overlay{top:184px}html body .explore-overlay,html body .grecaptcha-badge{display:none}html body .explore-overlay .you-died-message{display:none;left:50%;max-width:400px;position:absolute;text-align:center;top:50%;transform:translate(-50%,-50%);width:100%}html body .explore-overlay .you-died-message.engage{display:block}html body .explore-overlay .greeting-message{display:none;left:50%;max-width:600px;position:absolute;text-align:center;top:50%;transform:translate(-50%,-50%);width:100%}html body .explore-overlay .greeting-message.engage{display:block}html body .explore-overlay .greeting-message .greeting-buttons{display:flex;gap:1rem;margin:auto;width:224px}html body .explore-overlay .greeting-message .greeting-buttons #engage-explore,html body .explore-overlay .greeting-message .greeting-buttons #new-explore{display:none;margin:20px auto;opacity:0;padding:10px 20px;transition:all .5s}html body .explore-overlay .greeting-message .greeting-buttons #engage-explore.engage,html body .explore-overlay .greeting-message .greeting-buttons #new-explore.engage{display:block;opacity:1}html body .explore-overlay .greeting-message .character-choice{cursor:pointer;display:flex;justify-content:center}html body .explore-overlay .greeting-message .character-choice .character-item{cursor:pointer;width:25%}html body .explore-overlay .greeting-message .character-choice .character-item img{height:auto;width:100%}html body .explore-overlay .greeting-message .character-choice .character-item img.engage{border:5px dotted #00bfff}html body .explore-overlay .greeting-message .character-choice .character-item small{color:green;font-weight:600}html body .explore-overlay .greeting-message button{margin-top:15px}html body .explore-overlay.engage{display:block}html body .container{background-position:0 0;background-repeat:no-repeat;background-size:cover;height:4517px;overflow:hidden;overscroll-behavior:none;position:relative;width:5000px}html body .container #new-addition{max-width:700px;position:fixed;right:6.75rem;top:1rem;width:-moz-max-content;width:max-content}html body .container #new-addition:not(.engage){width:300px;z-index:9}html body .container #new-addition:not(.engage):hover:before{font-size:50px}html body .container #new-addition:not(.engage):before{color:#000;content:"🛠";cursor:pointer;font-size:50px;line-height:30px;position:absolute;right:0;text-shadow:1px 1px 2px #fff;top:0}html body .container #new-addition.engage{max-height:95vh;overflow:scroll;z-index:10}html body .container #new-addition.engage .add-new-fields{width:50%}html body .container #new-addition.engage .add-new-fields input{border:1px solid gray}html body .container #new-addition.engage .addition-content{display:block}html body .container #new-addition.engage .addition-content ul{background:#c8c8c8;border-radius:8px;min-width:171px;padding:1.5rem;width:40%}html body .container #new-addition.engage .addition-content ul li{cursor:pointer;padding-left:0}html body .container #new-addition.engage .addition-content ul li.engage{color:blue}html body .container #new-addition.engage .addition-content ul li:hover{font-weight:700}html body .container #new-addition .addition-content{background:#fff;border:1px solid #000;border-radius:10px;display:none;padding:1rem}html body .container #new-addition .addition-content h2{margin-top:0}html body .container #new-addition .addition-content .add-new-form{display:flex;flex-direction:row;flex-wrap:wrap;gap:1rem;position:relative;width:100%}html body .container #new-addition .addition-content .add-new-form .close-settings{cursor:pointer;position:absolute;right:.25rem;top:.25rem}html body .container #new-addition .addition-content .add-new-form h2{width:100%}html body .container #new-addition .addition-content .add-new-form a{margin-top:1rem}html body .container #magic,html body .container #weapon{bottom:1rem;left:1rem;position:fixed;z-index:1}html body .container #magic .magic-container,html body .container #weapon .magic-container{display:flex}html body .container #magic img,html body .container #weapon img{-o-object-fit:contain;object-fit:contain}html body .container #magic{margin-top:2rem}html body .container #weapon{bottom:5.5rem}html body .container #characters{position:fixed;right:6.75rem;top:1rem}html body .container #characters:not(.engage){width:300px;z-index:9}html body .container #characters:not(.engage):hover:before{font-size:50px}html body .container #characters:not(.engage):before{color:#000;content:"⛑";cursor:pointer;font-size:50px;line-height:30px;position:absolute;right:0;text-shadow:1px 1px 2px #fff;top:0}html body .container #characters.engage{z-index:10}html body .container #characters.engage .characters-content{display:block}html body .container #characters .characters-content{background:#fff;border:1px solid #000;border-radius:10px;display:none;padding:1rem}html body .container #characters .characters-content h2{margin-top:0}html body .container #characters .characters-content .characters-form{display:flex;flex-direction:column;position:relative;width:100%}html body .container #characters .characters-content .characters-form .close-settings{cursor:pointer;position:absolute;right:.25rem;top:.25rem}html body .container #characters .characters-content .characters-form .character-list{display:flex;gap:1rem}html body .container #characters .characters-content .characters-form .character-list .character-item{cursor:pointer;width:150px}html body .container #characters .characters-content .characters-form .character-list .character-item:hover{border:4px solid #00bfff;border-radius:4px}html body .container #characters .characters-content .characters-form .character-list .character-item .character-images .character-icon{display:none}html body .container #characters .characters-content .characters-form .character-list .character-item .character-images .character-icon.engage{display:block}html body .container #characters .characters-content .characters-form .character-list .character-item img{width:100%}html body .container #characters .characters-content .characters-form label{margin-bottom:1rem}html body .container #characters .characters-content .characters-form a{margin-top:1rem}html body .container #settings{position:fixed;right:1rem;top:1rem;width:300px}html body .container #settings:not(.engage){z-index:9}html body .container #settings:not(.engage):hover:before{font-size:50px}html body .container #settings:not(.engage):before{color:#000;content:"⚙";cursor:pointer;font-size:50px;line-height:30px;position:absolute;right:0;text-shadow:1px 1px 2px #fff;top:0}html body .container #settings.engage{z-index:10}html body .container #settings.engage .setting-content{display:block}html body .container #settings .setting-content{background:#fff;border:1px solid #000;border-radius:10px;display:none;padding:1rem}html body .container #settings .setting-content h2{margin-top:0}html body .container #settings .setting-content .settings-form{display:flex;flex-direction:column;position:relative;width:100%}html body .container #settings .setting-content .settings-form .close-settings{cursor:pointer;position:absolute;right:.25rem;top:.25rem}html body .container #settings .setting-content .settings-form label{margin-bottom:1rem}html body .container #settings .setting-content .settings-form a{margin-top:1rem}html body .container #storage{position:fixed;right:3.5rem;top:1rem;width:100%}html body .container #storage:not(.engage){z-index:9}html body .container #storage:not(.engage):hover:before{font-size:50px}html body .container #storage:not(.engage):before{color:#000;content:"▦";cursor:pointer;font-size:50px;line-height:30px;position:absolute;right:0;text-shadow:1px 1px 2px #fff;top:0}html body .container #storage.engage{z-index:10}html body .container #storage.engage .storage-content{display:block}html body .container #storage .storage-content{background:#fff;border:1px solid #000;border-radius:10px;display:none;margin:auto;padding:1rem;width:600px}html body .container #storage .storage-content h2{margin-top:0}html body .container #storage .storage-content .storage-form{display:flex;flex-direction:column;position:relative;width:100%}html body .container #storage .storage-content .storage-form .close-settings{cursor:pointer;position:absolute;right:.25rem;top:.25rem}html body .container #storage .storage-content .storage-form .retrieval-points .storage-menu{border-bottom:1px solid #000;border-left:1px solid #000;display:none;flex-wrap:nowrap}html body .container #storage .storage-content .storage-form .retrieval-points .storage-menu[data-menu=weapons] .storage-item img{-o-object-fit:contain;object-fit:contain;width:80px}html body .container #storage .storage-content .storage-form .retrieval-points .storage-menu.engage{display:flex}html body .container #storage .storage-content .storage-form .retrieval-points .storage-menu .storage-item{border-right:1px solid #000;border-top:1px solid #000;padding:1rem;width:100%}html body .container #storage .storage-content .storage-form .retrieval-points .storage-menu .storage-item:before{content:attr(data-count)}html body .container #storage .storage-content .storage-form .retrieval-points .storage-menu .storage-item[data-type=health]:after{content:"♥";font-size:2rem}html body .container #storage .storage-content .storage-form .retrieval-points .storage-menu .storage-item[data-type=mana]:after{content:"⁂";font-size:2rem}html body .container #storage .storage-content .storage-form label{margin-bottom:1rem}html body .container #storage .storage-content .storage-form a{margin-top:1rem}html body .container #return-to-map{cursor:pointer;display:none;position:fixed;right:40px;top:40px;z-index:99999}html body .container #return-to-map.engage{display:block}html body .container #leave-map{display:none;opacity:0;position:fixed;right:40px;top:40px;z-index:99999}html body .container #leave-map.engage{display:block;opacity:1}html body .container #sound-control{bottom:40px;cursor:pointer;height:50px;opacity:0;position:fixed;right:40px;width:50px;z-index:99999}html body .container #sound-control:before{background:url(data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+DQo8c3ZnIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgdmVyc2lvbj0iMS4wIiAgd2lkdGg9IjUwMCIgaGVpZ2h0PSI1MDAiIHZpZXdCb3g9IjAgMCA3NSA3NSI+DQo8cGF0aCBkPSJNMzkuMzg5LDEzLjc2OSBMMjIuMjM1LDI4LjYwNiBMNiwyOC42MDYgTDYsNDcuNjk5IEwyMS45ODksNDcuNjk5IEwzOS4zODksNjIuNzUgTDM5LjM4OSwxMy43Njl6Ig0Kc3R5bGU9InN0cm9rZTojMTExO3N0cm9rZS13aWR0aDo1O3N0cm9rZS1saW5lam9pbjpyb3VuZDtmaWxsOiMxMTE7Ig0KLz4NCjxwYXRoIGQ9Ik00OCwyNy42YTE5LjUsMTkuNSAwIDAgMSAwLDIxLjRNNTUuMSwyMC41YTMwLDMwIDAgMCAxIDAsMzUuNk02MS42LDE0YTM4LjgsMzguOCAwIDAgMSAwLDQ4LjYiIHN0eWxlPSJmaWxsOm5vbmU7c3Ryb2tlOiMxMTE7c3Ryb2tlLXdpZHRoOjU7c3Ryb2tlLWxpbmVjYXA6cm91bmQiLz4NCjwvc3ZnPg==) no-repeat 100%;background-size:100% 100%;content:"";height:40px;left:0;position:absolute;top:0;width:40px}html body .container #sound-control.mute:before{background:url(data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iaXNvLTg4NTktMSI/Pg0KPCEtLSBHZW5lcmF0b3I6IEFkb2JlIElsbHVzdHJhdG9yIDE2LjAuMCwgU1ZHIEV4cG9ydCBQbHVnLUluIC4gU1ZHIFZlcnNpb246IDYuMDAgQnVpbGQgMCkgIC0tPg0KPCFET0NUWVBFIHN2ZyBQVUJMSUMgIi0vL1czQy8vRFREIFNWRyAxLjEvL0VOIiAiaHR0cDovL3d3dy53My5vcmcvR3JhcGhpY3MvU1ZHLzEuMS9EVEQvc3ZnMTEuZHRkIj4NCjxzdmcgdmVyc2lvbj0iMS4xIiBpZD0iQ2FwYV8xIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB4PSIwcHgiIHk9IjBweCINCgkgd2lkdGg9IjMwNi4yNTdweCIgaGVpZ2h0PSIzMDYuMjU3cHgiIHZpZXdCb3g9IjAgMCAzMDYuMjU3IDMwNi4yNTciIHN0eWxlPSJlbmFibGUtYmFja2dyb3VuZDpuZXcgMCAwIDMwNi4yNTcgMzA2LjI1NzsiDQoJIHhtbDpzcGFjZT0icHJlc2VydmUiPg0KPGc+DQoJPHBhdGggZD0iTTE5Ljc0NywxMjEuOTY4djcwLjA2OGMwLDIxLjQ5OSwxNy40MywzOC45MjQsMzguOTI0LDM4LjkyNGg0MC43MDNsMTEyLjA4OCw3My42MTINCgkJYzExLjM1MSw2LjI3MSwyNi44MDgtNS44ODMsMzQuMzcyLTIxLjI1Nkw0Ny4yNjEsODQuNzVDMzEuMzMzLDg5LjYyOCwxOS43NDcsMTA0LjQzOCwxOS43NDcsMTIxLjk2OHoiLz4NCgk8cGF0aCBkPSJNMjUwLjM4Niw0MS44MTZjMC0yMS41LTE5LjQ2NC01MS4yNTMtMzguOTI0LTM4LjkyNEwxMDguNzEsNzYuNDk5bDE0MS42NzYsMTQxLjY3N1Y0MS44MTZ6Ii8+DQoJPHBhdGggZD0iTTU1LjQ2Myw4My4yMDJsMTkzLjE0NiwxOTMuMTQ1bDE4Ljg4LDE4Ljg3NGMzLjQ1OSwzLjQ2OSw4LjAwNSw1LjIwNCwxMi41NDcsNS4yMDRjNC41NDEsMCw5LjA4Ny0xLjczNSwxMi41NTItNS4yMDQNCgkJYzYuOTM0LTYuOTI5LDYuOTM0LTE4LjE3LDAtMjUuMTA0bC00Mi4xOTctNDIuMTk3TDEwMy4wMzcsODAuNTY2TDM4Ljc3MSwxNi4zMTRjLTMuNDYxLTMuNDY5LTguMDA1LTUuMjA0LTEyLjU0OS01LjIwNA0KCQljLTQuNTQ0LDAtOS4wODUsMS43MzUtMTIuNTUyLDUuMjA0Yy02LjkzNyw2LjkyOC02LjkzNywxOC4xNywwLDI1LjEwMUw1NS40NjMsODMuMjAyeiIvPg0KPC9nPg0KPGc+DQo8L2c+DQo8Zz4NCjwvZz4NCjxnPg0KPC9nPg0KPGc+DQo8L2c+DQo8Zz4NCjwvZz4NCjxnPg0KPC9nPg0KPGc+DQo8L2c+DQo8Zz4NCjwvZz4NCjxnPg0KPC9nPg0KPGc+DQo8L2c+DQo8Zz4NCjwvZz4NCjxnPg0KPC9nPg0KPGc+DQo8L2c+DQo8Zz4NCjwvZz4NCjxnPg0KPC9nPg0KPC9zdmc+DQo=) no-repeat 100%;background-size:100% 100%;width:28px}html body .container #missions{text-shadow:1px 1px 2px #fff;top:7.5rem}html body .container #explore-points,html body .container #missions{display:flex;flex-direction:column;gap:.5rem;left:1rem;opacity:0;position:fixed;z-index:99999}html body .container #explore-points{top:1rem}html body .container #explore-points .point-bar{border:1px solid #2b2b2b;border-radius:20px;height:10px;overflow:hidden;transition:all .5s}html body .container #explore-points .point-bar.mana-amount .gauge{background:#7500e3;height:100%}html body .container #explore-points .point-bar.power-amount .gauge{background:#00cee3;height:100%;transition:all .3s}html body .container #explore-points .point-bar.point-amount{height:2px}html body .container #explore-points .point-bar.point-amount .gauge{background:#e3bd00;height:100%}html body .container #explore-points .point-bar.health-amount .gauge{background:#38a223;height:100%}html body .container #explore-points .point-bar.engage{border-color:gold}html body .container #explore-points .point-info-wrap{border-bottom:1px solid #000;display:flex;gap:.75rem;padding-bottom:.5rem}html body .container #key-guide{bottom:40px;opacity:0;position:fixed;right:-240px;transition:opacity .6s;width:200px;z-index:99999}html body .container #key-guide img{width:100%}@media only screen and (min-width:480px){html body .container #key-guide.engage{opacity:.8;right:40px}}html body .container [data-genre=explore-sign]>div,html body .container [data-genre=explore-sign]>figure,html body .container [data-genre=explore-sign]>img:not(.sign-image),html body .container [data-genre=explore-sign]>p{height:100%;left:50%;max-height:60vh;max-width:70vw;overflow:scroll;padding:2rem;position:fixed;top:50%;transform:translate(-50%,-50%);width:95%}html body .container [data-genre=explore-sign]:not(.open-up)>div,html body .container [data-genre=explore-sign]:not(.open-up)>figure,html body .container [data-genre=explore-sign]:not(.open-up)>img:not(.sign-image),html body .container [data-genre=explore-sign]:not(.open-up)>p{display:none}html body .container .enemy-item,html body .container .map-item{position:absolute;z-index:1}html body .container .enemy-item.selected,html body .container .map-item.selected{border:5px solid #add8e6;border-radius:4px}html body .container .enemy-item[data-passable=true].passable,html body .container .map-item[data-passable=true].passable{z-index:0}html body .container .enemy-item[data-foreground=true],html body .container .map-item[data-foreground=true]{z-index:2}html body .container .enemy-item[data-enemy-type=boss],html body .container .map-item[data-enemy-type=boss]{margin:0 1rem}html body .container .enemy-item[data-enemy-type=boss] svg,html body .container .map-item[data-enemy-type=boss] svg{background:rgba(0,0,255,.17);border:3px solid blue;border-radius:10000px;left:8px;opacity:0;position:absolute;transition:all 18s linear;width:30px}html body .container .enemy-item[data-enemy-type=boss].pulse-wave-engage:not(.pulse-in) svg,html body .container .map-item[data-enemy-type=boss].pulse-wave-engage:not(.pulse-in) svg{left:unset;opacity:1;padding:1000px;top:unset;transform:translate(-1000px,-1000px);z-index:99999999}html body .container .enemy-item .map-item-modal,html body .container .map-item .map-item-modal{background:#fff;border-radius:55px;font-size:14px;opacity:0;padding:22px;position:absolute;right:0;top:0;transform:translate(80%,-80%);transition:all .5s;width:200px}html body .container .enemy-item .map-item-modal.engage,html body .container .map-item .map-item-modal.engage{display:block}html body .container .enemy-item .map-item-modal:before,html body .container .map-item .map-item-modal:before{border-left:0 solid transparent;border-right:36px solid transparent;border-top:20px solid #fff;content:"";left:20px;position:absolute;top:91%;width:0}html body .container .enemy-item.engage .map-item-modal,html body .container .map-item.engage .map-item-modal{opacity:1}html body .container div[data-map-item-area]{height:100%;left:0;position:absolute;top:0;width:100%}html body .container .default-map>svg{height:4517px;left:0;opacity:0;position:absolute;top:0;width:5000px}html body .container .default-map .minigame{display:none;height:auto;left:50%;max-width:700px;position:fixed;top:45%;transform:translate(-50%,-50%);width:75%;z-index:1}html body .container .default-map .minigame.engage{display:block}html body .container .default-map .minigame.engage .wires{display:flex;position:fixed}html body .container .default-map .minigame.engage .programming-subject{display:none}html body .container .default-map .minigame.engage .programming-subject.engage{display:block}html body .container .default-map .minigame.engage .minigame-programming{align-items:center;display:none;height:75vh;justify-content:space-around}html body .container .default-map .minigame.engage .minigame-programming.engage{display:flex}html body .container .default-map .minigame.engage .minigame-programming .input-section{align-items:center;display:flex;flex-wrap:wrap;height:100vh;justify-content:center;width:66%}html body .container .default-map .minigame.engage .minigame-programming .input-section input{width:70%}html body .container .default-map .minigame.engage .minigame-programming .input-section button{width:28%}html body .container .default-map .minigame.engage .minigame-programming .input-section .programming-output{background:#1f2023;border:2px solid #e3e3e3;border-radius:4px;color:#fff;height:100%;max-height:65vh;max-width:500px;padding:2rem;width:100%}html body .container .default-map .minigame.engage .minigame-programming .input-section .programming-output textarea{background:transparent;border:0;color:#ffcb00;outline:none;resize:none}html body .container .default-map .minigame.engage .minigame-programming img{background:#fff;border:4px solid #00c1ff;border-radius:4px;box-shadow:5px 10px 9px -2px rgba(0,0,0,.459);float:right;height:68vh;padding:1rem}html body .container .default-map .enemy-item,html body .container .default-map .map-item{position:absolute;z-index:2}html body .container .default-map .enemy-item .character-icon,html body .container .default-map .map-item .character-icon{display:none}html body .container .default-map .enemy-item .character-icon.engage,html body .container .default-map .map-item .character-icon.engage{display:block}html body .container #map-character{height:600px;position:absolute;width:800px;z-index:1}@media only screen and (max-width:480px){html body .container #map-character{width:300px}}html body .container #map-character:before{bottom:30%;color:gold;content:"+50pts";left:47.5%;opacity:0;position:absolute;transition:all .8s;z-index:9}html body .container #map-character.point:before{bottom:50%;opacity:1}html body .container #map-character.over:before{opacity:0}html body .container #map-character .map-character-icon{display:none;height:auto;left:50%;opacity:1;position:absolute;top:50%;transform:translate(-50%,-50%);width:90px}html body .container #map-character .map-character-icon.engage{display:block}html body .container #map-character .map-character-icon.punched{opacity:0}html body .container .magic-weapon,html body .container .map-weapon{position:absolute}html body .container .magic-weapon[data-weapon=fist],html body .container .map-weapon[data-weapon=fist]{z-index:1}html body .container .magic-weapon.protection.engage,html body .container .map-weapon.protection.engage{background:blue;border-radius:10000px;opacity:.8;padding:100px;transform:translate(-100px,-100px);transition:padding .1s;z-index:100}html body .container .magic-weapon[data-direction=down]:not(.protection):not(.fire).engage,html body .container .map-weapon[data-direction=down]:not(.protection):not(.fire).engage{padding-bottom:6rem;z-index:1}html body .container .magic-weapon[data-direction=down]:not(.protection):not(.fire).engage.heavy-engage,html body .container .map-weapon[data-direction=down]:not(.protection):not(.fire).engage.heavy-engage{scale:1.3}html body .container .magic-weapon[data-direction=down]:not(.protection):not(.fire).charge-attack-engage,html body .container .magic-weapon[data-direction=down]:not(.protection):not(.fire).charge-engage,html body .container .magic-weapon[data-direction=top]:not(.protection):not(.fire),html body .container .map-weapon[data-direction=down]:not(.protection):not(.fire).charge-attack-engage,html body .container .map-weapon[data-direction=down]:not(.protection):not(.fire).charge-engage,html body .container .map-weapon[data-direction=top]:not(.protection):not(.fire){z-index:1}html body .container .magic-weapon[data-direction=top]:not(.protection):not(.fire)[data-weapon=fist],html body .container .map-weapon[data-direction=top]:not(.protection):not(.fire)[data-weapon=fist]{z-index:0}html body .container .magic-weapon[data-direction=top]:not(.protection):not(.fire).engage,html body .container .map-weapon[data-direction=top]:not(.protection):not(.fire).engage{padding-top:7rem;transform:translateY(-7rem);width:1rem;z-index:0}html body .container .magic-weapon[data-direction=top]:not(.protection):not(.fire).engage.heavy-engage,html body .container .map-weapon[data-direction=top]:not(.protection):not(.fire).engage.heavy-engage{scale:1.3}html body .container .magic-weapon[data-direction=top]:not(.protection):not(.fire).charge-attack-engage,html body .container .magic-weapon[data-direction=top]:not(.protection):not(.fire).charge-engage,html body .container .map-weapon[data-direction=top]:not(.protection):not(.fire).charge-attack-engage,html body .container .map-weapon[data-direction=top]:not(.protection):not(.fire).charge-engage{z-index:0}html body .container .magic-weapon[data-direction=left]:not(.protection):not(.fire)[data-weapon=fist],html body .container .map-weapon[data-direction=left]:not(.protection):not(.fire)[data-weapon=fist]{z-index:1}html body .container .magic-weapon[data-direction=left]:not(.protection):not(.fire).engage,html body .container .map-weapon[data-direction=left]:not(.protection):not(.fire).engage{padding-left:4.5rem;transform:translateX(-3.5rem)}html body .container .magic-weapon[data-direction=left]:not(.protection):not(.fire).engage.heavy-engage,html body .container .map-weapon[data-direction=left]:not(.protection):not(.fire).engage.heavy-engage{scale:1.3}html body .container .magic-weapon[data-direction=right]:not(.protection):not(.fire)[data-weapon=fist],html body .container .map-weapon[data-direction=right]:not(.protection):not(.fire)[data-weapon=fist]{z-index:0}html body .container .magic-weapon[data-direction=right]:not(.protection):not(.fire).engage,html body .container .map-weapon[data-direction=right]:not(.protection):not(.fire).engage{padding-right:3.5rem}html body .container .magic-weapon[data-direction=right]:not(.protection):not(.fire).engage.heavy-engage,html body .container .map-weapon[data-direction=right]:not(.protection):not(.fire).engage.heavy-engage{scale:1.3}html body .container .touch-buttons{display:flex;flex-wrap:wrap;height:100dvh;left:0;max-width:100%!important;opacity:0;position:fixed;top:0;transition:all .5s;width:100vw;z-index:-1}@media only screen and (max-width:480px){html body .container .touch-buttons.do-mobile{z-index:9}html body .container .touch-buttons.engage{opacity:.4;z-index:99}}html body .container .touch-buttons span{height:33%;position:relative;width:33%}html body .container .touch-buttons span:before{background-size:contain!important;content:"";height:140px;left:30%;position:absolute;top:10%;width:30px}html body .container .touch-buttons span:first-child:before{background:url(images/sword-arrow.c84f7fa5.png) no-repeat;transform:rotate(125deg)}html body .container .touch-buttons span:nth-child(2):before{background:url(images/sword-arrow.c84f7fa5.png) no-repeat;transform:rotate(180deg)}html body .container .touch-buttons span:nth-child(3):before{background:url(images/sword-arrow.c84f7fa5.png) no-repeat;transform:rotate(225deg)}html body .container .touch-buttons span:nth-child(4):before{background:url(images/sword-arrow.c84f7fa5.png) no-repeat;transform:rotate(90deg)}html body .container .touch-buttons span:nth-child(6):before{background:url(images/sword-arrow.c84f7fa5.png) no-repeat;transform:rotate(270deg)}html body .container .touch-buttons span:nth-child(7):before{background:url(images/sword-arrow.c84f7fa5.png) no-repeat;transform:rotate(45deg)}html body .container .touch-buttons span:nth-child(8):before{background:url(images/sword-arrow.c84f7fa5.png) no-repeat}html body .container .touch-buttons span:nth-child(9):before{background:url(images/sword-arrow.c84f7fa5.png) no-repeat;transform:rotate(315deg)}html body .loading-screen{background:#add8e6;display:none;height:100%;left:0;position:fixed;top:0;width:100%;z-index:999999}html body .loading-screen.engage{display:block}
+/*!*************************************************************************************************************************************************************************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[4].use[1]!./node_modules/postcss-loader/dist/cjs.js??ruleSet[1].rules[4].use[2]!./node_modules/sass-loader/dist/cjs.js??ruleSet[1].rules[4].use[3]!./assets/src/sass/app.scss ***!
+  \*************************************************************************************************************************************************************************************************************************************************/
+@charset "UTF-8";
+html {
+  overscroll-behavior: none;
+}
+html body {
+  overflow: hidden;
+  overscroll-behavior: none;
+  width: 5000px;
+}
+html body header, html body #header, html body footer, html body #footer {
+  display: none;
+}
+html body .explore-item-list {
+  max-height: 80vh;
+  overflow: scroll;
+}
+html body .explore-item-list .find-explore-item.selected {
+  color: blue;
+  cursor: pointer;
+  font-weight: bold;
+}
+html body #explore-create-account,
+html body #explore-login-account {
+  cursor: pointer;
+}
+html body .intro-video {
+  height: 100%;
+  left: -6000px;
+  opacity: 0;
+  position: fixed;
+  top: 0;
+  transition: opacity 0.3s;
+  width: 100%;
+  z-index: 9999;
+}
+html body .intro-video #skip-intro-video {
+  background: #0a7aff;
+  bottom: 3rem;
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
+  position: fixed;
+  right: 3rem;
+  padding: 1rem 2rem;
+  z-index: 9;
+}
+html body .intro-video video {
+  height: 100%;
+  width: 100%;
+  -o-object-fit: cover;
+     object-fit: cover;
+  position: relative;
+  z-index: 1;
+}
+html body .intro-video.engage {
+  left: 0;
+  opacity: 1;
+}
+html body .explainer-trigger {
+  position: absolute;
+}
+html body .explainer-container {
+  background: white;
+  border: dashed 8px #00cee3;
+  border-radius: 20px;
+  font-size: 20px;
+  left: -5000px;
+  opacity: 0;
+  padding: 1rem 1.5rem;
+  position: absolute;
+  transition: 0.3s opacity;
+  transition: 0.3s opacity;
+  z-index: -1;
+}
+html body .explainer-container img {
+  position: absolute;
+}
+html body .explainer-container.engage {
+  opacity: 1;
+  z-index: 8;
+}
+html body .explainer-container.engage:after {
+  content: "✕";
+  cursor: pointer;
+  font-size: 28px;
+  font-weight: bold;
+  position: absolute;
+  right: 5px;
+  top: 5px;
+}
+html body #primary {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+@media only screen and (max-width: 480px) {
+  html body #primary {
+    height: 100dvh;
+    left: 0;
+    position: fixed;
+    top: 0;
+    width: 100vw;
+  }
+}
+html body #primary .indicator-icon {
+  height: 15px;
+  opacity: 0;
+  position: absolute;
+  transition: opacity 0.2s;
+  width: 15px;
+}
+html body #primary .indicator-icon.engage {
+  display: block;
+  opacity: 1;
+}
+html body #primary > .container {
+  margin-top: 0;
+}
+html body .next-mission {
+  display: none;
+}
+html body .next-mission.engage {
+  display: block;
+}
+html body #create-account, html body #login-account {
+  cursor: pointer;
+}
+html body #create-account:hover, html body #login-account:hover {
+  color: #00a0d2;
+  font-weight: bold;
+}
+html body .map-cutscene {
+  display: flex;
+  justify-content: space-between;
+  position: fixed;
+  bottom: -1500px;
+  left: 50%;
+  max-height: 300px;
+  transform: translatex(-50%);
+  transition: bottom 0.3s;
+  width: 80vw;
+  z-index: 99999999;
+}
+html body .map-cutscene.engage {
+  bottom: 20px;
+}
+html body .map-cutscene.engage[data-video=true] {
+  bottom: unset;
+  height: 100vh;
+  top: 0;
+  width: 100%;
+}
+html body .map-cutscene .wp-block-orbem-paragraph-mp3 {
+  align-self: center;
+  background: white;
+  flex-basis: 70%;
+  padding: 20px 50px;
+  border-radius: 20px;
+  border: 20px #4ee7ff solid;
+  display: none;
+}
+html body .map-cutscene .wp-block-orbem-paragraph-mp3.engage {
+  display: block;
+}
+html body .map-cutscene .wp-block-orbem-paragraph-mp3.engage p {
+  display: block;
+}
+html body .map-cutscene .cut-character {
+  opacity: 0;
+  text-align: right;
+  width: 300px;
+}
+html body .map-cutscene .cut-character.engage {
+  opacity: 1;
+}
+html body .map-cutscene .cut-character img {
+  height: 100%;
+  margin-right: 1rem;
+  -o-object-fit: contain;
+     object-fit: contain;
+  -o-object-position: bottom;
+     object-position: bottom;
+  width: 100%;
+}
+html body div[data-character=mc] {
+  opacity: 0;
+  position: fixed;
+  bottom: 0;
+  left: 5%;
+  height: 300px;
+  text-align: right;
+  width: 300px;
+}
+html body div[data-character=mc].engage {
+  opacity: 1;
+}
+html body div[data-character=mc] img {
+  height: 100%;
+  margin-right: 1rem;
+  -o-object-fit: contain;
+     object-fit: contain;
+  -o-object-position: bottom;
+     object-position: bottom;
+  width: 100%;
+}
+html body.admin-bar .explore-overlay {
+  top: 184px;
+}
+html body .grecaptcha-badge {
+  display: none;
+}
+html body .explore-overlay {
+  display: none;
+}
+html body .explore-overlay .you-died-message {
+  display: none;
+  left: 50%;
+  max-width: 400px;
+  position: absolute;
+  text-align: center;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+}
+html body .explore-overlay .you-died-message.engage {
+  display: block;
+}
+html body .explore-overlay .greeting-message {
+  display: none;
+  left: 50%;
+  max-width: 600px;
+  position: absolute;
+  text-align: center;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+}
+html body .explore-overlay .greeting-message.engage {
+  display: block;
+}
+html body .explore-overlay .greeting-message .greeting-buttons {
+  display: flex;
+  gap: 1rem;
+  margin: auto;
+  width: 224px;
+}
+html body .explore-overlay .greeting-message .greeting-buttons #engage-explore,
+html body .explore-overlay .greeting-message .greeting-buttons #new-explore {
+  display: none;
+  opacity: 0;
+  margin: 20px auto;
+  padding: 10px 20px;
+  transition: all 0.5s;
+}
+html body .explore-overlay .greeting-message .greeting-buttons #engage-explore.engage,
+html body .explore-overlay .greeting-message .greeting-buttons #new-explore.engage {
+  display: block;
+  opacity: 1;
+}
+html body .explore-overlay .greeting-message .character-choice {
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+}
+html body .explore-overlay .greeting-message .character-choice .character-item {
+  cursor: pointer;
+  width: 25%;
+}
+html body .explore-overlay .greeting-message .character-choice .character-item img {
+  height: auto;
+  width: 100%;
+}
+html body .explore-overlay .greeting-message .character-choice .character-item img.engage {
+  border: 5px dotted deepskyblue;
+}
+html body .explore-overlay .greeting-message .character-choice .character-item small {
+  color: green;
+  font-weight: 600;
+}
+html body .explore-overlay .greeting-message button {
+  margin-top: 15px;
+}
+html body .explore-overlay.engage {
+  display: block;
+}
+html body .container {
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: left top;
+  height: 4517px;
+  overflow: hidden;
+  overscroll-behavior: none;
+  position: relative;
+  width: 5000px;
+}
+html body .container #new-addition {
+  position: fixed;
+  right: 6.75rem;
+  top: 1rem;
+  max-width: 700px;
+  width: -moz-max-content;
+  width: max-content;
+}
+html body .container #new-addition:not(.engage) {
+  width: 300px;
+  z-index: 9;
+}
+html body .container #new-addition:not(.engage):hover:before {
+  font-size: 50px;
+}
+html body .container #new-addition:not(.engage):before {
+  content: "🛠";
+  color: black;
+  cursor: pointer;
+  line-height: 30px;
+  text-shadow: 1px 1px 2px white;
+  font-size: 50px;
+  position: absolute;
+  right: 0;
+  top: 0;
+}
+html body .container #new-addition.engage {
+  z-index: 10;
+  overflow: scroll;
+  max-height: 95vh;
+}
+html body .container #new-addition.engage .add-new-fields {
+  width: 50%;
+}
+html body .container #new-addition.engage .add-new-fields input {
+  border: 1px solid grey;
+}
+html body .container #new-addition.engage .addition-content {
+  display: block;
+}
+html body .container #new-addition.engage .addition-content ul {
+  background: #c8c8c8;
+  padding: 1.5rem;
+  width: 40%;
+  min-width: 171px;
+  border-radius: 8px;
+}
+html body .container #new-addition.engage .addition-content ul li {
+  padding-left: 0;
+  cursor: pointer;
+}
+html body .container #new-addition.engage .addition-content ul li.engage {
+  color: blue;
+}
+html body .container #new-addition.engage .addition-content ul li:hover {
+  font-weight: bold;
+}
+html body .container #new-addition .addition-content {
+  background: white;
+  border: 1px solid black;
+  border-radius: 10px;
+  display: none;
+  padding: 1rem;
+}
+html body .container #new-addition .addition-content h2 {
+  margin-top: 0;
+}
+html body .container #new-addition .addition-content .add-new-form {
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: row;
+  gap: 1rem;
+  position: relative;
+  width: 100%;
+}
+html body .container #new-addition .addition-content .add-new-form .close-settings {
+  cursor: pointer;
+  position: absolute;
+  right: 0.25rem;
+  top: 0.25rem;
+}
+html body .container #new-addition .addition-content .add-new-form h2 {
+  width: 100%;
+}
+html body .container #new-addition .addition-content .add-new-form a {
+  margin-top: 1rem;
+}
+html body .container #magic, html body .container #weapon {
+  bottom: 1rem;
+  left: 1rem;
+  position: fixed;
+  z-index: 1;
+}
+html body .container #magic .magic-container, html body .container #weapon .magic-container {
+  display: flex;
+}
+html body .container #magic img, html body .container #weapon img {
+  -o-object-fit: contain;
+     object-fit: contain;
+}
+html body .container #magic {
+  margin-top: 2rem;
+}
+html body .container #weapon {
+  bottom: 5.5rem;
+}
+html body .container #characters {
+  position: fixed;
+  right: 6.75rem;
+  top: 1rem;
+}
+html body .container #characters:not(.engage) {
+  width: 300px;
+  z-index: 9;
+}
+html body .container #characters:not(.engage):hover:before {
+  font-size: 50px;
+}
+html body .container #characters:not(.engage):before {
+  content: "⛑";
+  color: black;
+  cursor: pointer;
+  line-height: 30px;
+  text-shadow: 1px 1px 2px white;
+  font-size: 50px;
+  position: absolute;
+  right: 0;
+  top: 0;
+}
+html body .container #characters.engage {
+  z-index: 10;
+}
+html body .container #characters.engage .characters-content {
+  display: block;
+}
+html body .container #characters .characters-content {
+  background: white;
+  border: 1px solid black;
+  border-radius: 10px;
+  display: none;
+  padding: 1rem;
+}
+html body .container #characters .characters-content h2 {
+  margin-top: 0;
+}
+html body .container #characters .characters-content .characters-form {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  width: 100%;
+}
+html body .container #characters .characters-content .characters-form .close-settings {
+  cursor: pointer;
+  position: absolute;
+  right: 0.25rem;
+  top: 0.25rem;
+}
+html body .container #characters .characters-content .characters-form .character-list {
+  display: flex;
+  gap: 1rem;
+}
+html body .container #characters .characters-content .characters-form .character-list .character-item {
+  cursor: pointer;
+  width: 150px;
+}
+html body .container #characters .characters-content .characters-form .character-list .character-item:hover {
+  border: 4px solid deepskyblue;
+  border-radius: 4px;
+}
+html body .container #characters .characters-content .characters-form .character-list .character-item .character-images .character-icon {
+  display: none;
+}
+html body .container #characters .characters-content .characters-form .character-list .character-item .character-images .character-icon.engage {
+  display: block;
+}
+html body .container #characters .characters-content .characters-form .character-list .character-item img {
+  width: 100%;
+}
+html body .container #characters .characters-content .characters-form label {
+  margin-bottom: 1rem;
+}
+html body .container #characters .characters-content .characters-form a {
+  margin-top: 1rem;
+}
+html body .container #settings {
+  position: fixed;
+  right: 1rem;
+  top: 1rem;
+  width: 300px;
+}
+html body .container #settings:not(.engage) {
+  z-index: 9;
+}
+html body .container #settings:not(.engage):hover:before {
+  font-size: 50px;
+}
+html body .container #settings:not(.engage):before {
+  content: "⚙";
+  color: black;
+  cursor: pointer;
+  line-height: 30px;
+  text-shadow: 1px 1px 2px white;
+  font-size: 50px;
+  position: absolute;
+  right: 0;
+  top: 0;
+}
+html body .container #settings.engage {
+  z-index: 10;
+}
+html body .container #settings.engage .setting-content {
+  display: block;
+}
+html body .container #settings .setting-content {
+  background: white;
+  border: 1px solid black;
+  border-radius: 10px;
+  display: none;
+  padding: 1rem;
+}
+html body .container #settings .setting-content h2 {
+  margin-top: 0;
+}
+html body .container #settings .setting-content .settings-form {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  width: 100%;
+}
+html body .container #settings .setting-content .settings-form .close-settings {
+  cursor: pointer;
+  position: absolute;
+  right: 0.25rem;
+  top: 0.25rem;
+}
+html body .container #settings .setting-content .settings-form label {
+  margin-bottom: 1rem;
+}
+html body .container #settings .setting-content .settings-form a {
+  margin-top: 1rem;
+}
+html body .container #storage {
+  position: fixed;
+  right: 3.5rem;
+  top: 1rem;
+  width: 100%;
+}
+html body .container #storage:not(.engage) {
+  z-index: 9;
+}
+html body .container #storage:not(.engage):hover:before {
+  font-size: 50px;
+}
+html body .container #storage:not(.engage):before {
+  content: "▦";
+  color: black;
+  cursor: pointer;
+  line-height: 30px;
+  text-shadow: 1px 1px 2px white;
+  font-size: 50px;
+  position: absolute;
+  right: 0;
+  top: 0;
+}
+html body .container #storage.engage {
+  z-index: 10;
+}
+html body .container #storage.engage .storage-content {
+  display: block;
+}
+html body .container #storage .storage-content {
+  background: white;
+  border: 1px solid black;
+  border-radius: 10px;
+  display: none;
+  padding: 1rem;
+  margin: auto;
+  width: 600px;
+}
+html body .container #storage .storage-content h2 {
+  margin-top: 0;
+}
+html body .container #storage .storage-content .storage-form {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  width: 100%;
+}
+html body .container #storage .storage-content .storage-form .close-settings {
+  cursor: pointer;
+  position: absolute;
+  right: 0.25rem;
+  top: 0.25rem;
+}
+html body .container #storage .storage-content .storage-form .retrieval-points .storage-menu {
+  border-left: 1px solid black;
+  border-bottom: 1px solid black;
+  display: none;
+  flex-wrap: nowrap;
+}
+html body .container #storage .storage-content .storage-form .retrieval-points .storage-menu[data-menu=weapons] .storage-item img {
+  -o-object-fit: contain;
+     object-fit: contain;
+  width: 80px;
+}
+html body .container #storage .storage-content .storage-form .retrieval-points .storage-menu.engage {
+  display: flex;
+}
+html body .container #storage .storage-content .storage-form .retrieval-points .storage-menu .storage-item {
+  border-top: 1px solid black;
+  border-right: 1px solid black;
+  padding: 1rem;
+  width: 100%;
+}
+html body .container #storage .storage-content .storage-form .retrieval-points .storage-menu .storage-item:before {
+  content: attr(data-count);
+}
+html body .container #storage .storage-content .storage-form .retrieval-points .storage-menu .storage-item[data-type=health]:after {
+  content: "♥";
+  font-size: 2rem;
+}
+html body .container #storage .storage-content .storage-form .retrieval-points .storage-menu .storage-item[data-type=mana]:after {
+  content: "⁂";
+  font-size: 2rem;
+}
+html body .container #storage .storage-content .storage-form label {
+  margin-bottom: 1rem;
+}
+html body .container #storage .storage-content .storage-form a {
+  margin-top: 1rem;
+}
+html body .container #return-to-map {
+  cursor: pointer;
+  display: none;
+  position: fixed;
+  right: 40px;
+  top: 40px;
+  z-index: 99999;
+}
+html body .container #return-to-map.engage {
+  display: block;
+}
+html body .container #leave-map {
+  display: none;
+  opacity: 0;
+  position: fixed;
+  right: 40px;
+  top: 40px;
+  z-index: 99999;
+}
+html body .container #leave-map.engage {
+  display: block;
+  opacity: 1;
+}
+html body .container #sound-control {
+  bottom: 40px;
+  cursor: pointer;
+  height: 50px;
+  opacity: 0;
+  position: fixed;
+  right: 40px;
+  width: 50px;
+  z-index: 99999;
+}
+html body .container #sound-control:before {
+  background: url(data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+DQo8c3ZnIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgdmVyc2lvbj0iMS4wIiAgd2lkdGg9IjUwMCIgaGVpZ2h0PSI1MDAiIHZpZXdCb3g9IjAgMCA3NSA3NSI+DQo8cGF0aCBkPSJNMzkuMzg5LDEzLjc2OSBMMjIuMjM1LDI4LjYwNiBMNiwyOC42MDYgTDYsNDcuNjk5IEwyMS45ODksNDcuNjk5IEwzOS4zODksNjIuNzUgTDM5LjM4OSwxMy43Njl6Ig0Kc3R5bGU9InN0cm9rZTojMTExO3N0cm9rZS13aWR0aDo1O3N0cm9rZS1saW5lam9pbjpyb3VuZDtmaWxsOiMxMTE7Ig0KLz4NCjxwYXRoIGQ9Ik00OCwyNy42YTE5LjUsMTkuNSAwIDAgMSAwLDIxLjRNNTUuMSwyMC41YTMwLDMwIDAgMCAxIDAsMzUuNk02MS42LDE0YTM4LjgsMzguOCAwIDAgMSAwLDQ4LjYiIHN0eWxlPSJmaWxsOm5vbmU7c3Ryb2tlOiMxMTE7c3Ryb2tlLXdpZHRoOjU7c3Ryb2tlLWxpbmVjYXA6cm91bmQiLz4NCjwvc3ZnPg==) no-repeat 100%;
+  background-size: 100% 100%;
+  content: "";
+  height: 40px;
+  left: 0;
+  position: absolute;
+  top: 0;
+  width: 40px;
+}
+html body .container #sound-control.mute:before {
+  background: url(data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iaXNvLTg4NTktMSI/Pg0KPCEtLSBHZW5lcmF0b3I6IEFkb2JlIElsbHVzdHJhdG9yIDE2LjAuMCwgU1ZHIEV4cG9ydCBQbHVnLUluIC4gU1ZHIFZlcnNpb246IDYuMDAgQnVpbGQgMCkgIC0tPg0KPCFET0NUWVBFIHN2ZyBQVUJMSUMgIi0vL1czQy8vRFREIFNWRyAxLjEvL0VOIiAiaHR0cDovL3d3dy53My5vcmcvR3JhcGhpY3MvU1ZHLzEuMS9EVEQvc3ZnMTEuZHRkIj4NCjxzdmcgdmVyc2lvbj0iMS4xIiBpZD0iQ2FwYV8xIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB4PSIwcHgiIHk9IjBweCINCgkgd2lkdGg9IjMwNi4yNTdweCIgaGVpZ2h0PSIzMDYuMjU3cHgiIHZpZXdCb3g9IjAgMCAzMDYuMjU3IDMwNi4yNTciIHN0eWxlPSJlbmFibGUtYmFja2dyb3VuZDpuZXcgMCAwIDMwNi4yNTcgMzA2LjI1NzsiDQoJIHhtbDpzcGFjZT0icHJlc2VydmUiPg0KPGc+DQoJPHBhdGggZD0iTTE5Ljc0NywxMjEuOTY4djcwLjA2OGMwLDIxLjQ5OSwxNy40MywzOC45MjQsMzguOTI0LDM4LjkyNGg0MC43MDNsMTEyLjA4OCw3My42MTINCgkJYzExLjM1MSw2LjI3MSwyNi44MDgtNS44ODMsMzQuMzcyLTIxLjI1Nkw0Ny4yNjEsODQuNzVDMzEuMzMzLDg5LjYyOCwxOS43NDcsMTA0LjQzOCwxOS43NDcsMTIxLjk2OHoiLz4NCgk8cGF0aCBkPSJNMjUwLjM4Niw0MS44MTZjMC0yMS41LTE5LjQ2NC01MS4yNTMtMzguOTI0LTM4LjkyNEwxMDguNzEsNzYuNDk5bDE0MS42NzYsMTQxLjY3N1Y0MS44MTZ6Ii8+DQoJPHBhdGggZD0iTTU1LjQ2Myw4My4yMDJsMTkzLjE0NiwxOTMuMTQ1bDE4Ljg4LDE4Ljg3NGMzLjQ1OSwzLjQ2OSw4LjAwNSw1LjIwNCwxMi41NDcsNS4yMDRjNC41NDEsMCw5LjA4Ny0xLjczNSwxMi41NTItNS4yMDQNCgkJYzYuOTM0LTYuOTI5LDYuOTM0LTE4LjE3LDAtMjUuMTA0bC00Mi4xOTctNDIuMTk3TDEwMy4wMzcsODAuNTY2TDM4Ljc3MSwxNi4zMTRjLTMuNDYxLTMuNDY5LTguMDA1LTUuMjA0LTEyLjU0OS01LjIwNA0KCQljLTQuNTQ0LDAtOS4wODUsMS43MzUtMTIuNTUyLDUuMjA0Yy02LjkzNyw2LjkyOC02LjkzNywxOC4xNywwLDI1LjEwMUw1NS40NjMsODMuMjAyeiIvPg0KPC9nPg0KPGc+DQo8L2c+DQo8Zz4NCjwvZz4NCjxnPg0KPC9nPg0KPGc+DQo8L2c+DQo8Zz4NCjwvZz4NCjxnPg0KPC9nPg0KPGc+DQo8L2c+DQo8Zz4NCjwvZz4NCjxnPg0KPC9nPg0KPGc+DQo8L2c+DQo8Zz4NCjwvZz4NCjxnPg0KPC9nPg0KPGc+DQo8L2c+DQo8Zz4NCjwvZz4NCjxnPg0KPC9nPg0KPC9zdmc+DQo=) no-repeat 100%;
+  background-size: 100% 100%;
+  width: 28px;
+}
+html body .container #missions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  left: 1rem;
+  opacity: 0;
+  position: fixed;
+  text-shadow: 1px 1px 2px white;
+  top: 7.5rem;
+  z-index: 99999;
+}
+html body .container #explore-points {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  left: 1rem;
+  opacity: 0;
+  position: fixed;
+  top: 1rem;
+  z-index: 99999;
+}
+html body .container #explore-points .point-bar {
+  border: #2b2b2b 1px solid;
+  border-radius: 20px;
+  height: 10px;
+  overflow: hidden;
+  transition: all 0.5s;
+}
+html body .container #explore-points .point-bar.health-amount .gauge {
+  background: #38a223;
+  height: 100%;
+}
+html body .container #explore-points .point-bar.mana-amount .gauge {
+  background: #7500e3;
+  height: 100%;
+}
+html body .container #explore-points .point-bar.power-amount .gauge {
+  background: #00cee3;
+  height: 100%;
+  transition: all 0.3s;
+}
+html body .container #explore-points .point-bar.point-amount {
+  height: 2px;
+}
+html body .container #explore-points .point-bar.point-amount .gauge {
+  background: #e3bd00;
+  height: 100%;
+}
+html body .container #explore-points .point-bar.health-amount .gauge {
+  background: #38a223;
+  height: 100%;
+}
+html body .container #explore-points .point-bar.engage {
+  border-color: gold;
+}
+html body .container #explore-points .point-info-wrap {
+  border-bottom: 1px solid black;
+  padding-bottom: 0.5rem;
+  display: flex;
+  gap: 0.75rem;
+}
+html body .container #key-guide {
+  bottom: 40px;
+  opacity: 0;
+  position: fixed;
+  right: -240px;
+  transition: opacity 0.6s;
+  width: 200px;
+  z-index: 99999;
+}
+html body .container #key-guide img {
+  width: 100%;
+}
+@media only screen and (min-width: 480px) {
+  html body .container #key-guide.engage {
+    opacity: 0.8;
+    right: 40px;
+  }
+}
+html body .container [data-genre=explore-sign] > div, html body .container [data-genre=explore-sign] > p, html body .container [data-genre=explore-sign] > img:not(.sign-image), html body .container [data-genre=explore-sign] > figure {
+  height: 100%;
+  left: 50%;
+  max-height: 60vh;
+  max-width: 70vw;
+  overflow: scroll;
+  padding: 2rem;
+  position: fixed;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 95%;
+}
+html body .container [data-genre=explore-sign]:not(.open-up) > div, html body .container [data-genre=explore-sign]:not(.open-up) > p, html body .container [data-genre=explore-sign]:not(.open-up) > img:not(.sign-image), html body .container [data-genre=explore-sign]:not(.open-up) > figure {
+  display: none;
+}
+html body .container .map-item,
+html body .container .enemy-item {
+  position: absolute;
+  z-index: 1;
+}
+html body .container .map-item.selected,
+html body .container .enemy-item.selected {
+  border: 5px solid lightblue;
+  border-radius: 4px;
+}
+html body .container .map-item[data-passable=true].passable,
+html body .container .enemy-item[data-passable=true].passable {
+  z-index: 0;
+}
+html body .container .map-item[data-foreground=true],
+html body .container .enemy-item[data-foreground=true] {
+  z-index: 2;
+}
+html body .container .map-item[data-enemy-type=boss],
+html body .container .enemy-item[data-enemy-type=boss] {
+  margin: 0 1rem;
+}
+html body .container .map-item[data-enemy-type=boss] svg,
+html body .container .enemy-item[data-enemy-type=boss] svg {
+  background: rgba(0, 0, 255, 0.17);
+  border: 3px solid blue;
+  border-radius: 10000px;
+  opacity: 0;
+  position: absolute;
+  left: 8px;
+  transition: all 18s linear;
+  width: 30px;
+}
+html body .container .map-item[data-enemy-type=boss].pulse-wave-engage:not(.pulse-in) svg,
+html body .container .enemy-item[data-enemy-type=boss].pulse-wave-engage:not(.pulse-in) svg {
+  left: unset;
+  opacity: 1;
+  padding: 1000px;
+  top: unset;
+  transform: translate(-1000px, -1000px);
+  z-index: 99999999;
+}
+html body .container .map-item .map-item-modal,
+html body .container .enemy-item .map-item-modal {
+  background: #fff;
+  border-radius: 55px;
+  font-size: 14px;
+  opacity: 0;
+  right: 0;
+  padding: 22px;
+  position: absolute;
+  top: 0;
+  transform: translate(80%, -80%);
+  transition: all 0.5s;
+  width: 200px;
+}
+html body .container .map-item .map-item-modal.engage,
+html body .container .enemy-item .map-item-modal.engage {
+  display: block;
+}
+html body .container .map-item .map-item-modal:before,
+html body .container .enemy-item .map-item-modal:before {
+  border-top: 20px solid #fff;
+  border-left: 0 solid transparent;
+  border-right: 36px solid transparent;
+  content: "";
+  left: 20px;
+  position: absolute;
+  top: 91%;
+  width: 0;
+}
+html body .container .map-item.engage .map-item-modal,
+html body .container .enemy-item.engage .map-item-modal {
+  opacity: 1;
+}
+html body .container div[data-map-item-area] {
+  position: absolute;
+  height: 100%;
+  left: 0;
+  top: 0;
+  width: 100%;
+}
+html body .container .default-map > svg {
+  height: 4517px;
+  left: 0;
+  opacity: 0;
+  position: absolute;
+  top: 0;
+  width: 5000px;
+}
+html body .container .default-map .minigame {
+  display: none;
+  position: fixed;
+  left: 50%;
+  top: 45%;
+  width: 75%;
+  height: auto;
+  max-width: 700px;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+}
+html body .container .default-map .minigame.engage {
+  display: block;
+}
+html body .container .default-map .minigame.engage .wires {
+  display: flex;
+  position: fixed;
+}
+html body .container .default-map .minigame.engage .programming-subject {
+  display: none;
+}
+html body .container .default-map .minigame.engage .programming-subject.engage {
+  display: block;
+}
+html body .container .default-map .minigame.engage .minigame-programming {
+  align-items: center;
+  display: none;
+  height: 75vh;
+  justify-content: space-around;
+}
+html body .container .default-map .minigame.engage .minigame-programming.engage {
+  display: flex;
+}
+html body .container .default-map .minigame.engage .minigame-programming .input-section {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  height: 100vh;
+  justify-content: center;
+  width: 66%;
+}
+html body .container .default-map .minigame.engage .minigame-programming .input-section input {
+  width: 70%;
+}
+html body .container .default-map .minigame.engage .minigame-programming .input-section button {
+  width: 28%;
+}
+html body .container .default-map .minigame.engage .minigame-programming .input-section .programming-output {
+  background: #1f2023;
+  border: 2px solid #e3e3e3;
+  border-radius: 4px;
+  color: white;
+  height: 100%;
+  max-height: 65vh;
+  max-width: 500px;
+  padding: 2rem;
+  width: 100%;
+}
+html body .container .default-map .minigame.engage .minigame-programming .input-section .programming-output textarea {
+  background: transparent;
+  border: 0;
+  color: #ffcb00;
+  outline: none;
+  resize: none;
+}
+html body .container .default-map .minigame.engage .minigame-programming img {
+  background: white;
+  height: 68vh;
+  float: right;
+  padding: 1rem;
+  border: 4px solid #00c1ff;
+  border-radius: 4px;
+  box-shadow: 5px 10px 9px -2px rgba(0, 0, 0, 0.4588235294);
+}
+html body .container .default-map .map-item,
+html body .container .default-map .enemy-item {
+  position: absolute;
+  z-index: 2;
+}
+html body .container .default-map .map-item .character-icon,
+html body .container .default-map .enemy-item .character-icon {
+  display: none;
+}
+html body .container .default-map .map-item .character-icon.engage,
+html body .container .default-map .enemy-item .character-icon.engage {
+  display: block;
+}
+html body .container #map-character {
+  height: 600px;
+  position: absolute;
+  width: 800px;
+  z-index: 1;
+}
+@media only screen and (max-width: 480px) {
+  html body .container #map-character {
+    width: 300px;
+  }
+}
+html body .container #map-character:before {
+  bottom: 30%;
+  content: "+50pts";
+  color: gold;
+  left: 47.5%;
+  opacity: 0;
+  position: absolute;
+  transition: all 0.8s;
+  z-index: 9;
+}
+html body .container #map-character.point:before {
+  bottom: 50%;
+  opacity: 1;
+}
+html body .container #map-character.over:before {
+  opacity: 0;
+}
+html body .container #map-character .map-character-icon {
+  display: none;
+  height: auto;
+  left: 50%;
+  opacity: 1;
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 90px;
+}
+html body .container #map-character .map-character-icon.engage {
+  display: block;
+}
+html body .container #map-character .map-character-icon.punched {
+  opacity: 0;
+}
+html body .container .map-weapon,
+html body .container .magic-weapon {
+  position: absolute;
+}
+html body .container .map-weapon[data-weapon=fist],
+html body .container .magic-weapon[data-weapon=fist] {
+  z-index: 1;
+}
+html body .container .map-weapon.protection.engage,
+html body .container .magic-weapon.protection.engage {
+  background: blue;
+  border-radius: 10000px;
+  opacity: 0.8;
+  padding: 100px;
+  transition: padding 0.1s;
+  transform: translate(-100px, -100px);
+  z-index: 100;
+}
+html body .container .map-weapon[data-direction=down]:not(.protection):not(.fire).engage,
+html body .container .magic-weapon[data-direction=down]:not(.protection):not(.fire).engage {
+  padding-bottom: 6rem;
+  z-index: 1;
+}
+html body .container .map-weapon[data-direction=down]:not(.protection):not(.fire).engage.heavy-engage,
+html body .container .magic-weapon[data-direction=down]:not(.protection):not(.fire).engage.heavy-engage {
+  scale: 1.3;
+}
+html body .container .map-weapon[data-direction=down]:not(.protection):not(.fire).charge-engage,
+html body .container .magic-weapon[data-direction=down]:not(.protection):not(.fire).charge-engage {
+  z-index: 1;
+}
+html body .container .map-weapon[data-direction=down]:not(.protection):not(.fire).charge-attack-engage,
+html body .container .magic-weapon[data-direction=down]:not(.protection):not(.fire).charge-attack-engage {
+  z-index: 1;
+}
+html body .container .map-weapon[data-direction=top]:not(.protection):not(.fire),
+html body .container .magic-weapon[data-direction=top]:not(.protection):not(.fire) {
+  z-index: 1;
+}
+html body .container .map-weapon[data-direction=top]:not(.protection):not(.fire)[data-weapon=fist],
+html body .container .magic-weapon[data-direction=top]:not(.protection):not(.fire)[data-weapon=fist] {
+  z-index: 0;
+}
+html body .container .map-weapon[data-direction=top]:not(.protection):not(.fire).engage,
+html body .container .magic-weapon[data-direction=top]:not(.protection):not(.fire).engage {
+  padding-top: 7rem;
+  transform: translateY(-7rem);
+  width: 1rem;
+  z-index: 0;
+}
+html body .container .map-weapon[data-direction=top]:not(.protection):not(.fire).engage.heavy-engage,
+html body .container .magic-weapon[data-direction=top]:not(.protection):not(.fire).engage.heavy-engage {
+  scale: 1.3;
+}
+html body .container .map-weapon[data-direction=top]:not(.protection):not(.fire).charge-engage,
+html body .container .magic-weapon[data-direction=top]:not(.protection):not(.fire).charge-engage {
+  z-index: 0;
+}
+html body .container .map-weapon[data-direction=top]:not(.protection):not(.fire).charge-attack-engage,
+html body .container .magic-weapon[data-direction=top]:not(.protection):not(.fire).charge-attack-engage {
+  z-index: 0;
+}
+html body .container .map-weapon[data-direction=left]:not(.protection):not(.fire)[data-weapon=fist],
+html body .container .magic-weapon[data-direction=left]:not(.protection):not(.fire)[data-weapon=fist] {
+  z-index: 1;
+}
+html body .container .map-weapon[data-direction=left]:not(.protection):not(.fire).engage,
+html body .container .magic-weapon[data-direction=left]:not(.protection):not(.fire).engage {
+  padding-left: 4.5rem;
+  transform: translateX(-3.5rem);
+}
+html body .container .map-weapon[data-direction=left]:not(.protection):not(.fire).engage.heavy-engage,
+html body .container .magic-weapon[data-direction=left]:not(.protection):not(.fire).engage.heavy-engage {
+  scale: 1.3;
+}
+html body .container .map-weapon[data-direction=right]:not(.protection):not(.fire)[data-weapon=fist],
+html body .container .magic-weapon[data-direction=right]:not(.protection):not(.fire)[data-weapon=fist] {
+  z-index: 0;
+}
+html body .container .map-weapon[data-direction=right]:not(.protection):not(.fire).engage,
+html body .container .magic-weapon[data-direction=right]:not(.protection):not(.fire).engage {
+  padding-right: 3.5rem;
+}
+html body .container .map-weapon[data-direction=right]:not(.protection):not(.fire).engage.heavy-engage,
+html body .container .magic-weapon[data-direction=right]:not(.protection):not(.fire).engage.heavy-engage {
+  scale: 1.3;
+}
+html body .container .touch-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  height: 100dvh;
+  left: 0;
+  max-width: 100% !important;
+  opacity: 0;
+  position: fixed;
+  top: 0;
+  transition: all 0.5s;
+  width: 100vw;
+  z-index: -1;
+}
+@media only screen and (max-width: 480px) {
+  html body .container .touch-buttons.do-mobile {
+    z-index: 9;
+  }
+}
+@media only screen and (max-width: 480px) {
+  html body .container .touch-buttons.engage {
+    opacity: 0.4;
+    z-index: 99;
+  }
+}
+html body .container .touch-buttons span {
+  width: 33%;
+  height: 33%;
+  position: relative;
+}
+html body .container .touch-buttons span:before {
+  background-size: contain !important;
+  content: "";
+  height: 140px;
+  left: 30%;
+  position: absolute;
+  top: 10%;
+  width: 30px;
+}
+html body .container .touch-buttons span:first-child:before {
+  background: url(images/sword-arrow.c84f7fa5.png) no-repeat;
+  transform: rotate(125deg);
+}
+html body .container .touch-buttons span:nth-child(2):before {
+  background: url(images/sword-arrow.c84f7fa5.png) no-repeat;
+  transform: rotate(180deg);
+}
+html body .container .touch-buttons span:nth-child(3):before {
+  background: url(images/sword-arrow.c84f7fa5.png) no-repeat;
+  transform: rotate(225deg);
+}
+html body .container .touch-buttons span:nth-child(4):before {
+  background: url(images/sword-arrow.c84f7fa5.png) no-repeat;
+  transform: rotate(90deg);
+}
+html body .container .touch-buttons span:nth-child(6):before {
+  background: url(images/sword-arrow.c84f7fa5.png) no-repeat;
+  transform: rotate(270deg);
+}
+html body .container .touch-buttons span:nth-child(7):before {
+  background: url(images/sword-arrow.c84f7fa5.png) no-repeat;
+  transform: rotate(45deg);
+}
+html body .container .touch-buttons span:nth-child(8):before {
+  background: url(images/sword-arrow.c84f7fa5.png) no-repeat;
+}
+html body .container .touch-buttons span:nth-child(9):before {
+  background: url(images/sword-arrow.c84f7fa5.png) no-repeat;
+  transform: rotate(315deg);
+}
+html body .loading-screen {
+  background: lightblue;
+  display: none;
+  height: 100%;
+  left: 0;
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 999999;
+}
+html body .loading-screen.engage {
+  display: block;
+}
+
+/*# sourceMappingURL=app.css.map*/

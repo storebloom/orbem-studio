@@ -60,260 +60,257 @@ document.addEventListener("DOMContentLoaded", function(){
 
 
     // Explore page functions.
-    const explorePage = document.querySelector('.page-template-explore');
-    if (explorePage) {
-        window.history.pushState({}, document.title, window.location.pathname);
+    window.history.pushState({}, document.title, window.location.pathname);
 
-        // Detect and close intro video if finished.
-        const introVideo = document.getElementById('intro-video' );
+    // Detect and close intro video if finished.
+    const introVideo = document.getElementById('intro-video' );
 
-        if ( introVideo ) {
-            const introVideoContainer = document.querySelector('.intro-video.engage');
+    if ( introVideo ) {
+        const introVideoContainer = document.querySelector('.intro-video.engage');
 
-            introVideo.addEventListener('ended', () => {
-               if ( introVideoContainer ) {
-                   introVideoContainer.classList.remove( 'engage' );
-                   playStartScreenMusic();
-               }
-            });
+        introVideo.addEventListener('ended', () => {
+           if ( introVideoContainer ) {
+               introVideoContainer.classList.remove( 'engage' );
+               playStartScreenMusic();
+           }
+        });
 
-            const skipButton = document.getElementById('skip-intro-video');
+        const skipButton = document.getElementById('skip-intro-video');
 
-            if ( skipButton ) {
-                skipButton.addEventListener('click', () => {
-                    introVideo.pause();
+        if ( skipButton ) {
+            skipButton.addEventListener('click', () => {
+                introVideo.pause();
 
-                    if ( introVideoContainer ) {
-                        introVideoContainer.classList.remove( 'engage' );
-                    }
+                if ( introVideoContainer ) {
+                    introVideoContainer.classList.remove( 'engage' );
+                }
 
-                    playStartScreenMusic();
-                });
-            }
-        }
-
-        // Create account / login swap.
-        const createAccount = document.getElementById('explore-create-account');
-        const loginAccount = document.getElementById('explore-login-account');
-        const loginForm = document.querySelector('.login-form');
-        const registerForm = document.querySelector('.register-form');
-
-        if ( createAccount && loginForm && loginAccount) {
-            createAccount.addEventListener('click', () => {
-                loginForm.style.display = 'none';
-                registerForm.style.display = 'block';
-                createAccount.style.display = 'none';
-                loginAccount.style.display = 'block';
-            });
-
-            loginAccount.addEventListener('click', () => {
-                loginForm.style.display = 'block';
-                registerForm.style.display = 'none';
-                loginAccount.style.display = 'none';
-                createAccount.style.display = 'block';
+                playStartScreenMusic();
             });
         }
+    }
 
-        // Engage transport function.
-        if ( 'undefined' !== typeof exploreAbilities && exploreAbilities.includes('transportation') ) {
-            engageTransportFunction();
-        }
+    // Create account / login swap.
+    const createAccount = document.getElementById('explore-create-account');
+    const loginAccount = document.getElementById('explore-login-account');
+    const loginForm = document.querySelector('.login-form');
+    const registerForm = document.querySelector('.register-form');
 
-        // Engage draggable function.
-        engageDraggableFunction();
+    if ( createAccount && loginForm && loginAccount) {
+        createAccount.addEventListener('click', () => {
+            loginForm.style.display = 'none';
+            registerForm.style.display = 'block';
+            createAccount.style.display = 'none';
+            loginAccount.style.display = 'block';
+        });
 
-        // Spell clicks.
-        const spells = document.querySelectorAll('.spell');
-        const weapon = document.getElementById( 'weapon' );
+        loginAccount.addEventListener('click', () => {
+            loginForm.style.display = 'block';
+            registerForm.style.display = 'none';
+            loginAccount.style.display = 'none';
+            createAccount.style.display = 'block';
+        });
+    }
 
-        if ( spells && weapon ) {
-            spells.forEach( spell => {
-                spell.addEventListener( 'click', () => {
-                    const currentSpell = document.querySelector( '.spell.engage' );
-                    const currentWeapon = document.querySelector( '#weapon' );
-                    const theWeapon = document.querySelector( '.map-weapon' );
-                    const spellType = spell.getAttribute( 'data-type' );
-                    const spellName = spell.getAttribute( 'title' );
-                    const spellAmount = spell.getAttribute('data-value');
+    // Engage transport function.
+    if ( 'undefined' !== typeof exploreAbilities && exploreAbilities.includes('transportation') ) {
+        engageTransportFunction();
+    }
 
-                    // Remove engage from weapon.
-                    currentWeapon.classList.remove('engage');
+    // Engage draggable function.
+    engageDraggableFunction();
 
-                    if ( currentSpell ) {
-                        currentSpell.classList.remove( 'engage' );
-                    }
+    // Spell clicks.
+    const spells = document.querySelectorAll('.spell');
+    const weapon = document.getElementById( 'weapon' );
 
-                    spell.classList.add('engage');
-                    theWeapon.className = 'map-weapon';
-                    theWeapon.classList.add( spellType );
-                    theWeapon.classList.add( spellName );
-                    theWeapon.classList.add( 'spell' );
-                    theWeapon.setAttribute( 'data-value', spellAmount );
-                    window.weaponTime = spellAmount;
-                } );
-            } );
-
-            // Use weapon instead of magic.
-            weapon.addEventListener( 'click', () => {
+    if ( spells && weapon ) {
+        spells.forEach( spell => {
+            spell.addEventListener( 'click', () => {
                 const currentSpell = document.querySelector( '.spell.engage' );
+                const currentWeapon = document.querySelector( '#weapon' );
                 const theWeapon = document.querySelector( '.map-weapon' );
+                const spellType = spell.getAttribute( 'data-type' );
+                const spellName = spell.getAttribute( 'title' );
+                const spellAmount = spell.getAttribute('data-value');
+
+                // Remove engage from weapon.
+                currentWeapon.classList.remove('engage');
 
                 if ( currentSpell ) {
                     currentSpell.classList.remove( 'engage' );
-                    theWeapon.className = 'map-weapon';
-                    window.weaponTime = 400;
                 }
 
-                weapon.classList.add( 'engage' );
+                spell.classList.add('engage');
+                theWeapon.className = 'map-weapon';
+                theWeapon.classList.add( spellType );
+                theWeapon.classList.add( spellName );
+                theWeapon.classList.add( 'spell' );
+                theWeapon.setAttribute( 'data-value', spellAmount );
+                window.weaponTime = spellAmount;
             } );
-        }
+        } );
 
-        // Set up character choice.
-        const characterChoice = document.querySelector('.character-item > img');
-        if ( characterChoice ) {
-            addNoPoints();
-            characterChoice.classList.remove('engage');
-        }
+        // Use weapon instead of magic.
+        weapon.addEventListener( 'click', () => {
+            const currentSpell = document.querySelector( '.spell.engage' );
+            const theWeapon = document.querySelector( '.map-weapon' );
 
-        // Set points.
-        const thePoints = document.querySelectorAll( '#explore-points .point-bar' );
-
-        if ( thePoints ) {
-            thePoints.forEach( point => {
-                const amount = point.getAttribute('data-amount');
-                const gauge = point.querySelector('.gauge');
-
-                if ( gauge && false === point.classList.contains( 'point-amount' ) ) {
-                    point.setAttribute( 'data-amount', amount );
-                    gauge.style.width = amount + 'px';
-                } else {
-                    const newLevel = getCurrentLevel( amount );
-                    if ( levelMaps ) {
-                        window.nextLevelPointAmount = JSON.parse(levelMaps)[newLevel];
-
-                        point.setAttribute('data-amount', amount);
-                        gauge.style.width = getPointsGaugeAmount(amount);
-                    }
-                }
-            } );
-        }
-
-        document.body.style.position = 'fixed';
-        const engageExplore = document.getElementById('engage-explore');
-
-        if (engageExplore) {
-            engageExplore.addEventListener( 'click', function () {
-                engageExploreGame();
-            } );
-        }
-
-        // Reset triggered so start game.
-        const primary = document.getElementById( 'primary' );
-        if ( primary && true === primary.classList.contains('reset')) {
-            engageExploreGame();
-        }
-
-        // Settings.
-        const settingCogs = document.querySelectorAll('#settings, #storage, #characters, #new-addition');
-
-        if ( settingCogs ) {
-            settingCogs.forEach( settingCog => {
-                if ( 'storage' === settingCog.id ) {
-                    // Show item description in storage menu.
-                    const menuItems = document.querySelectorAll('.retrieval-points .storage-item' );
-
-                    if ( menuItems ) {
-                        menuItems.forEach( menuItem => {
-                            menuItem.addEventListener( 'click', () => {
-                                showItemDescription(menuItem);
-                            });
-                        } );
-                    }
-                }
-
-                settingCog.addEventListener('click', (e) => {
-                    if ( false === e.target.classList.contains( 'close-settings') && false === e.target.parentNode.classList.contains( 'character-item') ) {
-                        settingCog.classList.add( 'engage' );
-                    }
-                });
-
-                settingCog.querySelector('.close-settings').addEventListener( 'click', () => {
-                    const description = document.querySelector( '.retrieval-points #item-description' );
-                    settingCog.classList.remove('engage');
-
-                    if ( description ) {
-                        description.innerHTML = '';
-                    }
-                } );
-            } );
-        }
-
-        const updateSettings = document.getElementById('update-settings');
-
-        // Save settings.
-        const musicSettings = document.getElementById('music-volume');
-        const sfxSettings = document.getElementById('sfx-volume');
-        const talkingSettings = document.getElementById('talking-volume');
-
-        if ( updateSettings ) {
-            if ( sfxSettings && musicSettings && talkingSettings ) {
-                window.sfxVolume = sfxSettings.value / 100;
-                window.talkingVolume = talkingSettings.value;
-
-                // Volume listeners.
-                musicSettings.addEventListener("input", (event) => {
-                    window.currentMusic.volume = event.target.value / 100;
-                });
-
-                // Volume listeners.
-                talkingSettings.addEventListener("input", (event) => {
-                    window.talkingVolume = event.target.value;
-
-                    console.log(window.talkingVolume);
-                });
-
-                // Volume listeners.
-                sfxSettings.addEventListener("input", (event) => {
-                    window.sfxVolume = event.target.value / 100;
-                });
+            if ( currentSpell ) {
+                currentSpell.classList.remove( 'engage' );
+                theWeapon.className = 'map-weapon';
+                window.weaponTime = 400;
             }
 
-            updateSettings.addEventListener('click', () => {
-                if ( musicSettings && sfxSettings && talkingSettings ) {
-                    saveSettings(musicSettings.value, sfxSettings.value, talkingSettings.value);
+            weapon.classList.add( 'engage' );
+        } );
+    }
+
+    // Set up character choice.
+    const characterChoice = document.querySelector('.character-item > img');
+    if ( characterChoice ) {
+        addNoPoints();
+        characterChoice.classList.remove('engage');
+    }
+
+    // Set points.
+    const thePoints = document.querySelectorAll( '#explore-points .point-bar' );
+
+    if ( thePoints ) {
+        thePoints.forEach( point => {
+            const amount = point.getAttribute('data-amount');
+            const gauge = point.querySelector('.gauge');
+
+            if ( gauge && false === point.classList.contains( 'point-amount' ) ) {
+                point.setAttribute( 'data-amount', amount );
+                gauge.style.width = amount + 'px';
+            } else {
+                const newLevel = getCurrentLevel( amount );
+                if ( levelMaps ) {
+                    window.nextLevelPointAmount = JSON.parse(levelMaps)[newLevel];
+
+                    point.setAttribute('data-amount', amount);
+                    gauge.style.width = getPointsGaugeAmount(amount);
                 }
+            }
+        } );
+    }
+
+    document.body.style.position = 'fixed';
+    const engageExplore = document.getElementById('engage-explore');
+
+    if (engageExplore) {
+        engageExplore.addEventListener( 'click', function () {
+            engageExploreGame();
+        } );
+    }
+
+    // Reset triggered so start game.
+    const primary = document.getElementById( 'primary' );
+    if ( primary && true === primary.classList.contains('reset')) {
+        engageExploreGame();
+    }
+
+    // Settings.
+    const settingCogs = document.querySelectorAll('#settings, #storage, #characters, #new-addition');
+
+    if ( settingCogs ) {
+        settingCogs.forEach( settingCog => {
+            if ( 'storage' === settingCog.id ) {
+                // Show item description in storage menu.
+                const menuItems = document.querySelectorAll('.retrieval-points .storage-item' );
+
+                if ( menuItems ) {
+                    menuItems.forEach( menuItem => {
+                        menuItem.addEventListener( 'click', () => {
+                            showItemDescription(menuItem);
+                        });
+                    } );
+                }
+            }
+
+            settingCog.addEventListener('click', (e) => {
+                if ( false === e.target.classList.contains( 'close-settings') && false === e.target.parentNode.classList.contains( 'character-item') ) {
+                    settingCog.classList.add( 'engage' );
+                }
+            });
+
+            settingCog.querySelector('.close-settings').addEventListener( 'click', () => {
+                const description = document.querySelector( '.retrieval-points #item-description' );
+                settingCog.classList.remove('engage');
+
+                if ( description ) {
+                    description.innerHTML = '';
+                }
+            } );
+        } );
+    }
+
+    const updateSettings = document.getElementById('update-settings');
+
+    // Save settings.
+    const musicSettings = document.getElementById('music-volume');
+    const sfxSettings = document.getElementById('sfx-volume');
+    const talkingSettings = document.getElementById('talking-volume');
+
+    if ( updateSettings ) {
+        if ( sfxSettings && musicSettings && talkingSettings ) {
+            window.sfxVolume = sfxSettings.value / 100;
+            window.talkingVolume = talkingSettings.value;
+
+            // Volume listeners.
+            musicSettings.addEventListener("input", (event) => {
+                window.currentMusic.volume = event.target.value / 100;
+            });
+
+            // Volume listeners.
+            talkingSettings.addEventListener("input", (event) => {
+                window.talkingVolume = event.target.value;
+
+                console.log(window.talkingVolume);
+            });
+
+            // Volume listeners.
+            sfxSettings.addEventListener("input", (event) => {
+                window.sfxVolume = event.target.value / 100;
             });
         }
 
-        // Storage menu functionality.
-        // Tab logic.
-        const storageTabs = document.querySelectorAll( '.menu-tabs div' );
+        updateSettings.addEventListener('click', () => {
+            if ( musicSettings && sfxSettings && talkingSettings ) {
+                saveSettings(musicSettings.value, sfxSettings.value, talkingSettings.value);
+            }
+        });
+    }
 
-        if ( storageTabs ) {
-            storageTabs.forEach( ( storageTab, storageIndex ) => {
-                storageTab.addEventListener( 'click', () => {
-                    const currentTab = document.querySelector( '.menu-tabs .engage' );
+    // Storage menu functionality.
+    // Tab logic.
+    const storageTabs = document.querySelectorAll( '.menu-tabs div' );
 
-                    if ( currentTab ) {
-                        currentTab.classList.remove( 'engage' );
-                    }
+    if ( storageTabs ) {
+        storageTabs.forEach( ( storageTab, storageIndex ) => {
+            storageTab.addEventListener( 'click', () => {
+                const currentTab = document.querySelector( '.menu-tabs .engage' );
 
-                    // Select new tab.
-                    storageTab.classList.add( 'engage' );
+                if ( currentTab ) {
+                    currentTab.classList.remove( 'engage' );
+                }
 
-                    const tabContent = document.querySelectorAll( '.storage-menu' );
-                    const currentTabContent = document.querySelector( '.storage-menu.engage' );
+                // Select new tab.
+                storageTab.classList.add( 'engage' );
 
-                    if ( currentTabContent ) {
-                        currentTabContent.classList.remove( 'engage' );
-                    }
+                const tabContent = document.querySelectorAll( '.storage-menu' );
+                const currentTabContent = document.querySelector( '.storage-menu.engage' );
 
-                    if ( tabContent ) {
-                        tabContent[storageIndex].classList.add( 'engage' );
-                    }
-                } );
+                if ( currentTabContent ) {
+                    currentTabContent.classList.remove( 'engage' );
+                }
+
+                if ( tabContent ) {
+                    tabContent[storageIndex].classList.add( 'engage' );
+                }
             } );
-        }
+        } );
     }
 
     // New game reset.
@@ -327,33 +324,6 @@ document.addEventListener("DOMContentLoaded", function(){
             setTimeout(() => {
                 window.location.href = gameURL;
             }, 1000);
-        });
-    }
-
-    // Show/hide create or login forms
-    const createAccount = document.getElementById( 'create-account' );
-    const loginAccount = document.getElementById( 'login-account' );
-
-    if ( createAccount && loginAccount ) {
-        const login = document.querySelector( '.login-form' );
-        const register = document.querySelector( '.register-form' );
-
-        createAccount.addEventListener( 'click', () => {
-            if ( login && register ) {
-                login.style.display = 'none';
-                register.style.display = 'block';
-                loginAccount.style.display = 'block';
-                createAccount.style.display = 'none';
-            }
-        });
-
-        loginAccount.addEventListener( 'click', () => {
-            if ( login && register ) {
-                login.style.display = 'block';
-                register.style.display = 'none';
-                loginAccount.style.display = 'none';
-                createAccount.style.display = 'block';
-            }
         });
     }
 });
