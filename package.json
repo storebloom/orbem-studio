@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "description": "Dependencies for orbem game engine plugin",
   "devDependencies": {
+    "@wordpress/scripts": "^30.15.0",
     "dotenv": "^16.5.0",
     "prettier": "^3.5.3"
-
   },
   "scripts": {
     "build": "wp-scripts build assets/src/js/*.js --output-path=assets/build/",
