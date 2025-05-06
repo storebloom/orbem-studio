@@ -1180,7 +1180,7 @@ class Explore
     public function inlineExploreStyles()
     {
         $game_page = get_option('explore_game_page', '');
-        
+
         if (false === empty($game_page) && is_page($game_page)) {
             echo '<script src="https://accounts.google.com/gsi/client" async defer></script>';
 
