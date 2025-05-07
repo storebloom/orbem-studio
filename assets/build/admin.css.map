@@ -1,1 +1,0 @@
-{"version":3,"file":"admin.css","mappings":";;;AAAA;EACE;EACA;AACF,C","sources":["webpack://orbem-game-engine/./assets/src/sass/admin.scss"],"sourcesContent":[".wp-submenu li a[href*=\"taxonomy\"] {\n  background: #4a4a4a;\n  padding-left: 2rem;\n}"],"names":[],"sourceRoot":""}
