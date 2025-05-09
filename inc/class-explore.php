@@ -171,8 +171,12 @@ class Explore
      * @return void
      */
     public function registerGameOptions() {
+        $pages = get_posts(['post_type' => 'page', 'post_status' => 'publish', 'posts_per_page' => 50]);
+        $areas = get_posts(['post_type' => 'explore-area', 'post_status' => 'publish', 'posts_per_page' => 100]);
         $settings = [
-            'explore_game_page' => ['text', 'Game Page Title'],
+            'explore_game_page' => ['select', 'Game Page Title', $pages],
+            'explore_first_area' => ['select', 'Starting Area', $areas],
+            'explore_require_login' => ['checkbox', 'Require Login'],
             'explore_indicator_icon' => ['upload', 'Indicator Icon'],
             'explore_arrow_icon' => ['upload', 'Arrow Icon'],
             'explore_intro_video' => ['upload', 'Intro Video'],
@@ -206,8 +210,17 @@ class Explore
                             <button type="button" class="remove_image_button button"><?php _e('Remove Image', 'orbem-game-engine'); ?></button>
                         </p>
                     </div>
-                    <?php else : ?>
+                    <?php elseif (isset($value[0]) && $value[0] === 'text') : ?>
                         <input type="text" id="<?php echo esc_attr($field_key); ?>" name="<?php echo esc_attr($field_key); ?>" value="<?php echo esc_attr($indicator); ?>" />
+                    <?php elseif (isset($value[0]) && $value[0] === 'select') : ?>
+                        <select name="<?php echo esc_attr($field_key); ?>">
+                            <option disabled selected value>Select...</option>
+                            <?php foreach($value[2] as $option) : ?>
+                            <option value="<?php echo esc_attr($option->ID); ?>" <?php selected($option->ID, $indicator, true); ?>><?php echo esc_attr($option->post_title); ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    <?php elseif (isset($value[0]) && $value[0] === 'checkbox') : ?>
+                        <input type="checkbox" id="<?php echo esc_attr($field_key); ?>" name="<?php echo esc_attr($field_key); ?>" <?php checked('on', $indicator, true); ?> />
                     <?php endif;
                 },
                 'game_options',
@@ -1098,6 +1111,8 @@ class Explore
      */
     public static function getExplorePoints($position)
     {
+        $first_area = get_option('explore_first_area', '');
+
         $args = [
             'numberposts' => -1,
             'post_type' => ['explore-weapon', 'explore-area', 'explore-point', 'explore-character', 'explore-enemy', 'explore-sign'],
@@ -1105,7 +1120,7 @@ class Explore
                 [
                     'taxonomy' => 'explore-area-point',
                     'field' => 'slug',
-                    'terms' => [false === empty($position) ? $position : 'foresight'],
+                    'terms' => [false === empty($position) ? $position : $first_area],
                     'operator' => 'IN',
                 ]
             ]
@@ -1184,16 +1199,14 @@ class Explore
         if (false === empty($game_page) && is_page($game_page)) {
             echo '<script src="https://accounts.google.com/gsi/client" async defer></script>';
 
-            $position = get_user_meta(get_current_user_id(), 'current_location', true);
+            $first_area = get_option('explore_first_area', false);
+            $current_location = get_user_meta(get_current_user_id(), 'current_location', true);
+            $position = false === empty($current_location) ? $current_location : get_post_field('post_name', $first_area);
             $explore_points = self::getExplorePoints($position);
             $explore_areas = get_posts(['post_type' => 'explore-area', 'numberposts' => -1]);
             $music_names = '';
             ?>
             <style id="map-item-styles">
-                html {
-                    overflow: hidden;
-                }
-
                 <?php foreach($explore_points as $explore_point) :
                     $top = get_post_meta($explore_point->ID, 'explore-top', true) . 'px';
                     $left = get_post_meta($explore_point->ID, 'explore-left', true) . 'px';
@@ -1204,7 +1217,7 @@ class Explore
                     $point_type = 'explore-enemy' === $explore_point->post_type ? '.enemy-item' : '.map-item';
                     ?>
 
-                    .page-template-explore .container .default-map <?php echo esc_html($point_type); ?>.<?php echo esc_html($explore_point->post_name); ?>-map-item {
+                    body .game-container .default-map <?php echo esc_html($point_type); ?>.<?php echo esc_html($explore_point->post_name); ?>-map-item {
                     <?php echo esc_html($background_url); ?>
                         background-size: cover;
                         top: <?php echo esc_html($top); ?>;
@@ -1233,7 +1246,7 @@ class Explore
      *
      * @return string
      */
-    public static function getMapItemHTML($explore_points, $userid, $current_location = 'foresight') {
+    public static function getMapItemHTML($explore_points, $userid, $current_location) {
         $html = '';
         $userid = $userid ?? get_current_user_id();
         $dead_ones = get_user_meta($userid, 'explore_enemies', true);

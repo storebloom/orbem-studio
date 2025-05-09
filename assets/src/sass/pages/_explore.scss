@@ -1,5 +1,6 @@
 html {
-  overscroll-behavior: none;
+  overflow: hidden;
+
   body {
     overflow: hidden;
     overscroll-behavior: none;
@@ -124,7 +125,7 @@ html {
         }
       }
     }
-    #primary > .container {
+    #primary > .game-container {
       margin-top: 0;
     }
 
@@ -324,7 +325,7 @@ html {
         display: block;
       }
     }
-    .container {
+    .game-container {
       background-size: cover;
       background-repeat: no-repeat;
       background-position: left top;
@@ -343,7 +344,7 @@ html {
 
         &:not(.engage) {
           width: 300px;
-          z-index: 9;
+          z-index: 5;
 
           &:hover {
             &:before {
@@ -365,7 +366,7 @@ html {
         }
 
         &.engage {
-          z-index: 10;
+          z-index: 6;
           overflow: scroll;
           max-height: 95vh;
 
@@ -442,7 +443,7 @@ html {
         bottom: 1rem;
         left: 1rem;
         position: fixed;
-        z-index: 1;
+        z-index: 6;
 
         .magic-container {
           display: flex;
@@ -468,7 +469,7 @@ html {
 
         &:not(.engage) {
           width: 300px;
-          z-index: 9;
+          z-index: 5;
 
           &:hover {
             &:before {
@@ -490,7 +491,7 @@ html {
         }
 
         &.engage {
-          z-index: 10;
+          z-index: 6;
 
           .characters-content {
             display: block;
@@ -568,7 +569,7 @@ html {
         width: 300px;
 
         &:not(.engage) {
-          z-index: 9;
+          z-index: 5;
 
           &:hover {
             &:before {
@@ -590,7 +591,7 @@ html {
         }
 
         &.engage {
-          z-index: 10;
+          z-index: 6;
 
           .setting-content {
             display: block;

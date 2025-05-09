@@ -1,3 +1,4 @@
+import { initImageUpload } from './image-upload';
 document.addEventListener("DOMContentLoaded", function() {
     const items = document.querySelectorAll('.map-item');
     const triggers = document.querySelectorAll('[data-trigger="true"], [data-genre="explore-area"], .map-cutscene');
@@ -6,6 +7,7 @@ document.addEventListener("DOMContentLoaded", function() {
     const addNewListItems = document.querySelectorAll('#add-new-list li');
     const godMode = document.getElementById( 'god-mode' );
     const noTouch = document.getElementById( 'no-touch' );
+
     window.godMode = false;
     window.noTouch = false;
 
@@ -210,7 +212,7 @@ document.addEventListener("DOMContentLoaded", function() {
         function handleMouseMove(event) {
             if (draggedContainer) {
                 // Calculate the mouse position relative to the .default-map element
-                const mapRect = document.querySelector( '.container' ).getBoundingClientRect();
+                const mapRect = document.querySelector( '.game-container' ).getBoundingClientRect();
                 const mouseX = event.clientX - mapRect.left;
                 const mouseY = event.clientY - mapRect.top;
 
@@ -288,6 +290,10 @@ function makeNewFormSub() {
             if (selectedPostType) {
                 postType = selectedPostType.dataset.type;
             }
+
+            let currentLocation = document.querySelector( '.game-container' );
+            currentLocation = currentLocation.className.replace( 'game-container ', '');
+
 
             const jsonString = {
                 type: postType,
