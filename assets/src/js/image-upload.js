@@ -2,7 +2,7 @@ document.addEventListener('DOMContentLoaded', function () {
     initImageUpload();
 });
 
-function initImageUpload() {
+export function initImageUpload() {
     // Handle image selection for all "Select Image" buttons
     const uploadImageButtons = document.querySelectorAll('.upload_image_button');
 

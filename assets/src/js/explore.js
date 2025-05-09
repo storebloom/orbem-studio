@@ -26,8 +26,8 @@ window.godMode = false;
 window.noTouch = false;
 
 document.addEventListener("DOMContentLoaded", function(){
-    currentLocation = document.querySelector( '.container' );
-    currentLocation = currentLocation.className.replace( 'container ', '');
+    currentLocation = document.querySelector( '.game-container' );
+    currentLocation = currentLocation.className.replace( 'game-container ', '');
 
     // var socket = io.connect('https://localhost:3030');
     //
@@ -113,7 +113,7 @@ document.addEventListener("DOMContentLoaded", function(){
     }
 
     // Engage transport function.
-    if ( 'undefined' !== typeof exploreAbilities && exploreAbilities.includes('transportation') ) {
+    if ( 'undefined' !== typeof exploreAbilities && 0 < exploreAbilities.length && exploreAbilities.includes('transportation') ) {
         engageTransportFunction();
     }
 
@@ -354,7 +354,7 @@ function unlockAbilities( pointAmount ) {
 function engageCharacterSelection() {
     const charactersMenu = document.getElementById( 'characters' );
     // Add crew select click event.
-    const crewMates = charactersMenu.querySelectorAll( '.character-list .character-item' );
+    const crewMates = charactersMenu ? charactersMenu.querySelectorAll( '.character-list .character-item' ) : false;
 
     if ( crewMates ) {
         crewMates.forEach( crewMate => {
@@ -1155,7 +1155,7 @@ const enterNewArea = (function () {
                 newMapItems = JSON.parse( newMapItems.data );
                 const mapItemStyles = document.getElementById( 'map-item-styles' );
                 const chracterItem = document.getElementById( 'map-character' );
-                const container = document.querySelector( '.container' );
+                const container = document.querySelector( '.game-container' );
                 const head = document.querySelector( 'head' );
 
                 // Delete old area styles/maps.
@@ -1267,10 +1267,10 @@ const enterNewArea = (function () {
                             newDefaultMap.dataset.iscutscene = 'yes';
                             engageCutscene( position, true );
 
-                            const container = document.querySelector( '.container' );
+                            const container = document.querySelector( '.game-container' );
 
                             if ( container ) {
-                                window.previousCutsceneArea = container.className.replace( 'container ', '');
+                                window.previousCutsceneArea = container.className.replace( 'game-container ', '');
                             }
                         }
 
@@ -1313,9 +1313,9 @@ const enterNewArea = (function () {
                     chracterItem.style.left = newMapItems['start-left'] + 'px';
                     chracterItem.scrollIntoView({ behavior: "instant", block: "center", inline: "center" });
 
-                    const mapContainer = document.querySelector( '.container' );
+                    const mapContainer = document.querySelector( '.game-container' );
 
-                    mapContainer.className = 'container ' + position;
+                    mapContainer.className = 'game-container ' + position;
                     mapContainer.style.backgroundImage = 'url(' + mapUrl + ')';
                     currentLocation = position;
 
@@ -1827,10 +1827,10 @@ function shootProjectile(projectile, mapCharacterLeft, mapCharacterTop, enemy, p
         projectile.classList.add( 'magic-weapon' )
 
         moveSpell(projectile, mapCharacterLeft, mapCharacterTop);
-        enemy = document.querySelector( '.container' );
+        enemy = document.querySelector( '.game-container' );
     } else if ( 'yes' === isProjectile ) {
         moveSpell(projectile, mapCharacterLeft, mapCharacterTop);
-        enemy = document.querySelector( '.container' );
+        enemy = document.querySelector( '.game-container' );
     }
 
     // check projectile position and remove if its wall.
@@ -2114,7 +2114,7 @@ function engageExploreGame() {
 
     // Show crew menu.
     const crewMenu = document.getElementById( 'characters' );
-    const crewMates = crewMenu.querySelectorAll( '.character-item' );
+    const crewMates = crewMenu ? crewMenu.querySelectorAll( '.character-item' ) : false;
 
     if ( crewMenu && 0 < crewMates.length ) {
         crewMenu.style.display = 'block';
@@ -2138,8 +2138,13 @@ function engageExploreGame() {
     playSong( newMusic, currentLocation );
 
     // Show leave map link and keys guide.
-    document.getElementById( 'explore-points' ).style.opacity = '1';
-    document.getElementById( 'missions' ).style.opacity = '1';
+    const explorePoints = document.getElementById( 'explore-points' );
+    const missions = document.getElementById( 'missions' );
+
+    if ( explorePoints && missions ) {
+        explorePoints.style.opacity = '1';
+        missions.style.opacity = '1';
+    }
 
     // Flash key-guide.
     const keyGuide = document.getElementById( 'key-guide' );
@@ -2344,7 +2349,7 @@ function loadMissionBlockades() {
  * @returns {number}
  */
 function miroExplorePosition(v,a,b,d,x, $newest) {
-    const pane = document.querySelector( '.container' );
+    const pane = document.querySelector( '.game-container' );
     const mapChar = document.querySelector( '#map-character' );
     let box = mapChar.querySelector( '.map-character-icon.engage' );
     const modal = document.querySelectorAll( '.map-item:not(.drag-dest), .projectile, .enemy-item, [data-hazard="true"]' );
@@ -2582,7 +2587,7 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
                         dragDest.style.display = 'block';
                     }
 
-                    const area = document.querySelector('.container').className.replace('container ', '');
+                    const area = document.querySelector('.game-container').className.replace('game-container ', '');
                     materializedItemsArray.push(itemName);
 
                     saveMaterializedItemTimeout = setTimeout(() => {
@@ -3485,9 +3490,13 @@ function removeItems( removeThings, cutsceneName ) {
 function playWalkSound() {
     const walkingSound = document.getElementById('walking');
 
-    if ( walkingSound ) {
+    if ( walkingSound && undefined !== walkingSound?.src && '' !== walkingSound.src ) {
         walkingSound.loop = true;
-        walkingSound.volume = window.sfxVolume;
+
+        if ( window.sfxVolume ) {
+            walkingSound.volume = window.sfxVolume;
+        }
+
         walkingSound.play();
     }
 
@@ -4192,7 +4201,7 @@ function playPointSound() {
  * This will hold all in-game transport functionality.
  */
 function engageTransportFunction() {
-    const container = document.querySelector('.container');
+    const container = document.querySelector('.game-container');
     const character = document.querySelector( '#map-character' );
 
     document.addEventListener( 'keydown', e => {
@@ -4317,7 +4326,7 @@ function dragItem() {
  * @param clickE
  */
 function clickTransport(clickE) {
-    const container = document.querySelector('.container');
+    const container = document.querySelector('.game-container');
     const rect = container.getBoundingClientRect();
     const x = ( clickE.clientX - rect.left ) - 400;
     const y = ( clickE.clientY - rect.top ) - 300;
@@ -4805,7 +4814,7 @@ function startTheTimer(timeAmount) {
         timer.style.fontSize = '2rem';
         timer.style.zIndex = '99999';
         timer.textContent = countDown;
-        const container = document.querySelector('.container');
+        const container = document.querySelector('.game-container');
 
         if (container) {
             container.appendChild(timer);

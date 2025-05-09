@@ -1,2 +1,5 @@
 **/assets/build/**
+assets/build/*
+assets/build
+assets/build*
 node_modules

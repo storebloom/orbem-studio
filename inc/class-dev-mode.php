@@ -56,27 +56,18 @@ class Dev_Mode
         register_rest_route($namespace, '/set-item-size/', array(
             'methods' => 'POST',
             'callback' => [$this, 'setItemSize'],
-            'permission_callback' => function( \WP_REST_Request $request ) {
-                return current_user_can( 'manage_options' );
-            },
         ));
 
         // Get addition fields by posttype.
         register_rest_route($namespace, '/get-new-fields/', array(
             'methods' => 'POST',
             'callback' => [$this, 'getNewFields'],
-            'permission_callback' => function( \WP_REST_Request $request ) {
-                return current_user_can( 'manage_options' );
-            },
         ));
 
         // Create new whatever.
         register_rest_route($namespace, '/add-new/', array(
             'methods' => 'POST',
             'callback' => [$this, 'addNew'],
-            'permission_callback' => function( \WP_REST_Request $request ) {
-                return current_user_can( 'manage_options' );
-            },
         ));
     }
 
