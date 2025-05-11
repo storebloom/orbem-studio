@@ -20,9 +20,10 @@ class Plugin extends Plugin_Base {
 
 		// Initiate classes.
 		$classes = array(
+            new Util( $this ),
 			new Explore( $this ),
             new Meta_Box( $this ),
-            new Dev_Mode( $this )
+            new Dev_Mode( $this ),
 		);
 
 		// Add classes doc hooks.

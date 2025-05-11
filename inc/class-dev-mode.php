@@ -47,9 +47,6 @@ class Dev_Mode
         register_rest_route($namespace, '/set-item-position/', array(
             'methods' => 'POST',
             'callback' => [$this, 'setItemPosition'],
-            'permission_callback' => function( \WP_REST_Request $request ) {
-                return current_user_can( 'manage_options' );
-            },
         ));
 
         // Set item size.
@@ -84,9 +81,7 @@ class Dev_Mode
             return new \OrbemGameEngine\WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
         }
 
-        // Process the data (e.g., register the user)
-        // Assuming you expect 'username' and 'email' in the JSON data
-        $item = sanitize_text_field($data['id']);
+        $item = intval($data['id']);
         $left = intval($data['left']);
         $top = intval($data['top']);
         $height = intval($data['height']);

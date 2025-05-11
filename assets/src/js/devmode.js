@@ -1,17 +1,28 @@
 import { initImageUpload } from './image-upload';
 document.addEventListener("DOMContentLoaded", function() {
     const items = document.querySelectorAll('.map-item');
-    const triggers = document.querySelectorAll('[data-trigger="true"], [data-genre="explore-area"], .map-cutscene');
+    const triggers = document.querySelectorAll('.explainer-container, [data-trigger="true"], [data-genre="explore-area"], .map-cutscene');
     const findItems = document.querySelectorAll('.find-explore-item');
     const mainCharacter = document.getElementById('map-character');
     const addNewListItems = document.querySelectorAll('#add-new-list li');
     const godMode = document.getElementById( 'god-mode' );
     const noTouch = document.getElementById( 'no-touch' );
+    const showCollision = document.getElementById( 'show-collision-map' );
 
     window.godMode = false;
     window.noTouch = false;
 
-    if ( godMode && noTouch ) {
+    if ( godMode && noTouch && showCollision ) {
+        showCollision.addEventListener('change', () => {
+            const collisionMap = document.querySelector( '.default-map > svg' );
+
+            if ( showCollision.checked ) {
+                collisionMap.style.opacity = '1';
+            } else {
+                collisionMap.style.opacity = '0';
+            }
+        });
+
         godMode.addEventListener('change', () => {
             if ( godMode.checked ) {
                 window.godMode = true;
@@ -269,8 +280,23 @@ document.addEventListener("DOMContentLoaded", function() {
 
     if ( triggers ) {
         triggers.forEach( trigger => {
-            trigger.style.backgroundColor = 'rgba(0,146,255,0.31)';
+            trigger.style.backgroundColor = 'rgb(0,146,255)';
+            trigger.style.opacity = .3;
+            trigger.style.zIndex = 1;
         });
+    }
+
+    // Open close item list.
+    const exploreItemList = document.querySelector('.explore-item-list');
+
+    if (exploreItemList) {
+        const openClose = document.querySelector('.open-close-item-list');
+
+        if ( openClose ) {
+            openClose.addEventListener('click', event => {
+                exploreItemList.classList.toggle('engage');
+            });
+        }
     }
 } );
 

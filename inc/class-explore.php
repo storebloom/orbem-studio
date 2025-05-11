@@ -1891,9 +1891,9 @@ class Explore
                 $path_trigger_width = false === empty($trigger['width']) && 0 !== $trigger['width'] ? $trigger['width'] : '';
                 $path_trigger_height = false === empty($trigger['height']) && 0 !== $trigger['height'] ? $trigger['height'] : '';
                 $arrow_img = get_option( 'explore_arrow_icon', false);
-                $orientation = $arrow_style['explore-explainer-arrow']['orientation'] ?? 'top';
-                $side = $arrow_style['explore-explainer-arrow']['side'] ?? 'right';
-                $rotation = $arrow_style['explore-explainer-arrow']['rotate'] ?? '0';
+                $orientation = $arrow_style['orientation'] ?? 'top';
+                $side = $arrow_style['side'] ?? 'right';
+                $rotation = $arrow_style['rotate'] ?? '0';
                 $arrow_style_css = 'transform: rotate(' . $rotation . 'deg); ' . $orientation . ': -130px;' . ' ' . $side . ': 0;';
 
 
@@ -1905,7 +1905,7 @@ class Explore
                 }
 
                 if (false === empty($explainer_top)) {
-                    $html .= '<div class="' . $explainer->post_name . '-explainer-item explainer-container" ';
+                    $html .= '<div id="' . $explainer->ID . '" class="' . $explainer->post_name . '-explainer-item explainer-container map-item" ';
                     $html .= 'style="left:' . $explainer_left . 'px;top:' . $explainer_top . 'px;height:auto; width:' . $explainer_width . 'px;"';
                     $html .= '>';
                     $html .= $arrow_img ? '<img data-rotate="' . $rotation . '" width="120" height="120" style="'. esc_attr($arrow_style_css) . '" src="' . $arrow_img . '" />' : '';
@@ -1968,26 +1968,6 @@ class Explore
         ];
 
         $taxo_types = [
-            'explore-area-point' => [
-                'name' => 'Explore Area',
-                'post-types' => ['explore-explainer', 'explore-minigame', 'explore-area', 'explore-point', 'explore-character', 'explore-cutscene', 'explore-enemy', 'explore-mission', 'explore-sign', 'explore-weapon']
-            ],
-            'explore-character-point' => [
-                'name' => 'Explore Character',
-                'post-types' => ['explore-cutscene', 'explore-explainer']
-            ],
-            'explore-point-tax' => [
-                'name' => 'Explore Point',
-                'post-types' => ['explore-mission']
-            ],
-            'explore-enemy-tax' => [
-                'name' => 'Explore Enemy',
-                'post-types' => ['explore-mission']
-            ],
-            'value-type' => [
-                'name' => 'Value Type',
-                'post-types' => ['explore-weapon', 'explore-point', 'explore-character', 'explore-area', 'explore-enemy']
-            ],
             'magic-type' => [
                 'name' => 'Magic Type',
                 'post-types' => ['explore-magic']

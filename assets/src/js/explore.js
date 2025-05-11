@@ -2453,7 +2453,7 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
                     const triggee = document.querySelector('.' + value.dataset.triggee + '-explainer-item');
 
                     if (triggee) {
-                        triggee.classList.add('engage');
+                        triggee.classList.add('show-explainer');
                         value.classList.add('already-hit');
 
                         const arrow = triggee.querySelector('img');
@@ -2507,7 +2507,7 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
 
                         // Close explainer on click.
                         triggee.addEventListener('click', () => {
-                            triggee.classList.remove('engage');
+                            triggee.classList.remove('show-explainer');
                         });
                     }
                 }
@@ -4001,7 +4001,7 @@ function blockMovement(top, left) {
     let finalLeft = left;
     const box = document.querySelector( '.map-character-icon.engage' ).getBoundingClientRect();
     const collisionWalls = document.querySelectorAll(
-        '.default-map svg rect, .map-item:not(.materialize-item-trigger):not(.drag-dest):not([data-hazard="true"]):not([data-trigger="true"]):not(.currently-dragging):not(.passable):not([data-genre="explore-sign"]):not([data-foreground="true"]), .enemy-item'
+        '.default-map svg rect, .map-item:not(.explainer-container):not(.materialize-item-trigger):not(.drag-dest):not([data-hazard="true"]):not([data-trigger="true"]):not(.currently-dragging):not(.passable):not([data-genre="explore-sign"]):not([data-foreground="true"]), .enemy-item'
     );
 
     return getBlockDirection(collisionWalls, box, finalTop, finalLeft, false);

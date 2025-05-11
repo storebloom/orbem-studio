@@ -9,10 +9,21 @@ html {
     header, #header, footer, #footer {
       display: none;
     }
+    
+    .open-close-item-list {
+      cursor: pointer;
+    }
 
     .explore-item-list {
       max-height: 80vh;
       overflow: scroll;
+      position: relative;
+      left: -1000px;
+      transition: left .3s;
+
+      &.engage {
+        left: 0;
+      }
 
       .find-explore-item {
         &.selected {
@@ -27,6 +38,13 @@ html {
     #explore-login-account {
       cursor: pointer;
     }
+
+    .login-form {
+      iframe {
+        margin: 0 auto!important;
+      }
+    }
+
     .intro-video {
       height: 100%;
       left: -6000px;
@@ -84,7 +102,7 @@ html {
         position: absolute;
       }
 
-      &.engage {
+      &.show-explainer {
         opacity: 1;
         z-index: 8;
 
@@ -830,7 +848,7 @@ html {
         opacity: 0;
         position: fixed;
         top: 1rem;
-        z-index: 99999;
+        z-index: 6;
 
         .point-bar {
           border: #2b2b2b 1px solid;
@@ -911,6 +929,7 @@ html {
       }
 
       [data-genre="explore-sign"] {
+        z-index: 5;
         &>div, &>p, &>img:not(.sign-image), &>figure {
           height: 100%;
           left: 50%;

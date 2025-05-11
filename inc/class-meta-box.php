@@ -28,6 +28,7 @@ class Meta_Box {
 	 */
 	public function __construct( $plugin ) {
 		$this->plugin = $plugin;
+        $this->util = new Util($plugin);
 	}
 
     /**
@@ -116,6 +117,17 @@ class Meta_Box {
 
     public function getMetaData($post_type = '')
     {
+        $explore_item_array = $this->util->getOrbemArray('explore-point');
+        $explore_area_array = $this->util->getOrbemArray('explore-area');
+        $explore_character_array = $this->util->getOrbemArray('explore-character');
+        $explore_enemy_array = $this->util->getOrbemArray('explore-enemy');
+        $explore_value_array = [
+            'none',
+            'point',
+            'mana',
+            'health'
+        ];
+
         $post_type_specific = [
             'explore-area' => [
                 'explore-music' => 'upload',
@@ -134,7 +146,13 @@ class Meta_Box {
                     'left' => 'number',
                     'height' => 'number',
                     'width' => 'number',
-                ]
+                ],
+                'explore-trigger-item' => [
+                    'select' => [$explore_item_array]
+                ],
+                'explore-trigger-enemy' => [
+                    'select' => [$explore_enemy_array]
+                ],
             ],
             'explore-cutscene' => [
                 'explore-cutscene-minigame' => 'text',
@@ -169,6 +187,9 @@ class Meta_Box {
                     'top' => 'number',
                     'left' => 'number',
                 ],
+                'explore-character' => [
+                    'select' => [$explore_character_array]
+                ],
             ],
             'explore-weapon' => [
                 'explore-attack' => [
@@ -181,6 +202,9 @@ class Meta_Box {
                         'yes',
                         'no'
                     ]
+                ],
+                'explore-value-type' => [
+                    'select' => [$explore_value_array]
                 ]
             ],
             'explore-character' => [
@@ -241,6 +265,9 @@ class Meta_Box {
                     'cutscene' => 'text',
                     'point' => 'text'
                 ],
+                'explore-value-type' => [
+                    'select' => [$explore_value_array]
+                ]
             ],
             'explore-enemy' => [
                 'explore-time-between' => 'number',
@@ -304,10 +331,13 @@ class Meta_Box {
                         'blocker',
                         'boss'
                     ]]
+                ],
+                'explore-value-type' => [
+                    'select' => [$explore_value_array]
                 ]
             ],
             'explore-minigame' => [
-                'explore-minigame-music' => 'upload'
+                'explore-minigame-music' => 'upload',
             ],
             'explore-explainer' => [
                 'explore-explainer-type' => [
@@ -336,7 +366,10 @@ class Meta_Box {
                         ]
                     ],
                     'rotate' => 'number',
-                ]
+                ],
+                'explore-character' => [
+                    'select' => [$explore_character_array]
+                ],
             ],
             'explore-point' => [
                 'explore-interacted' => 'upload',
@@ -391,6 +424,9 @@ class Meta_Box {
                     'left' => 'number',
                     'width' => 'number',
                     'height' => 'number',
+                ],
+                'explore-value-type' => [
+                    'select' => [$explore_value_array]
                 ]
             ],
         ];
@@ -404,7 +440,10 @@ class Meta_Box {
             'explore-width'                 => 'number',
             'value'                         => 'number',
             'explore-unlock-level'          => 'number',
-            'explore-remove-after-cutscene' => 'text'
+            'explore-remove-after-cutscene' => 'text',
+            'explore-area' => [
+                'select' => [$explore_area_array]
+            ]
         ];
 
         return false === empty($post_type_specific[$post_type]) ? array_merge($global_list, $post_type_specific[$post_type]) : $global_list;

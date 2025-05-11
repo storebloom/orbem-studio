@@ -86,10 +86,15 @@ include plugin_dir_path(__FILE__) . 'plugin-header.php';
                             </button>
                         <?php endif; ?>
                     </div>
-    			<?php else : ?>
-                    <p>
+    			<?php endif; ?>
+                <?php if (false === is_user_logged_in()) : ?>
+                    <?php if ('' === $require_login) : ?>
+                        <p>
+                            <strong>OR</strong>
+                        </p>
+                    <?php endif; ?>
                         <h2><?php esc_html_e('Login or register.', 'miropelia'); ?></h2>
-                        <h3><?php esc_html_e('All game progress is saved to your account.', 'miropelia'); ?></h3>
+                        <h3><?php esc_html_e('If you want your game progress saved, login is required.', 'miropelia'); ?></h3>
                         <br>
                         <div class="login-form form-wrapper">
                             <?php echo \Miropelia\Register::googleLogin('Login with Google'); ?>
@@ -109,7 +114,7 @@ include plugin_dir_path(__FILE__) . 'plugin-header.php';
                     <p id="explore-login-account" style="display: none;">
                         <?php esc_html_e('Already have an account', 'miropelia'); ?>
                     </p>
-    			<?php endif; ?>
+                <?php endif; ?>
         </div>
     </div>
     <div class="game-container <?php echo esc_attr($location); ?>" style="background: url(<?php echo esc_url($explore_area_map ?? ''); ?>) no-repeat left top; background-size: cover;">
@@ -129,6 +134,7 @@ include plugin_dir_path(__FILE__) . 'plugin-header.php';
                     <span class="my-points"><?php echo esc_html($point);?></span>/<span class="next-level-points"><?php echo esc_html($max_points[$current_level]); ?></span>
             </div>
             <?php if (true === $is_admin) : ?>
+                <div class="open-close-item-list">open/close item list ></div>
                 <div class="explore-item-list" style="background-color: rgba(255,255,255,0.82); padding: 1rem;">
                     <?php $class_end = '-map-item';
                     foreach($item_list as $explore_item) :
@@ -150,8 +156,10 @@ include plugin_dir_path(__FILE__) . 'plugin-header.php';
                                 <?php echo esc_html(ucfirst(str_replace(['-', 'explore '], [' ', ''], $explore_item->post_name))); ?>
                                 <small><em><strong> | <?php echo esc_html(ucfirst(str_replace(['explore-', 'point'], ['', 'item'], $explore_item->post_type))); ?></strong></em></small>
                             </span>
-                            <span class="edit-item-button">✎</span>
+                            <span class="edit-item-button"> | size ✎</span>
                             <span class="close-item-button" style="display: none;">X</span>
+                            <br/>
+                            <a href="<?php echo esc_url(admin_url() . 'post.php?post=' . $explore_item->ID . '&action=edit'); ?>" />edit item</a>
                         </p>
                     <?php endforeach; ?>
                 </div>
