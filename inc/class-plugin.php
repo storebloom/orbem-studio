@@ -39,10 +39,10 @@ class Plugin extends Plugin_Base {
      */
     public function enqueueFrontAssets()
     {
-        $game_page = intval(get_option('explore_game_page', '0'));
+        $game_page = get_option('explore_game_page', '');
         $page = get_queried_object();
 
-        if (false === empty($game_page) && false === empty($page->ID) && $game_page === $page->ID) {
+        if (false === empty($game_page) && false === empty($page->post_name) && $game_page === $page->post_name) {
             self::enqueueScript('orbem-order/explore');
 
             if (true === current_user_can('manage_options')) {
@@ -223,7 +223,7 @@ class Plugin extends Plugin_Base {
                         'explorePoints' => $explore_points,
                         'exploreAbilities' => $explore_abilities,
                         'levelMaps' => Explore::getLevelMap(),
-                        'gameURL' => get_permalink(intval(get_option('explore_game_page', '0'))),
+                        'gameURL' => get_permalink(get_page_by_path(get_option('explore_game_page', ''))),
                         'wpThemeURL' => str_replace(['https://', 'http://', 'www'], '', get_home_url()),
                     ]
                 );
@@ -278,10 +278,10 @@ class Plugin extends Plugin_Base {
      */
     public function exploreIncludeTemplate( $template )
     {
-        $game_page = intval(get_option('explore_game_page', '0'));
+        $game_page = get_option('explore_game_page', '');
         $page = get_queried_object();
 
-        if (false === empty($game_page) && false === empty($page->ID) && $game_page === $page->ID) {
+        if (false === empty($game_page) && false === empty($page->post_name) && $game_page === $page->post_name) {
             return plugin_dir_path(__FILE__) . '../templates/explore.php';
         }
 

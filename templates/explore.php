@@ -18,7 +18,7 @@ $plugin_dir = str_replace( '/templates/', '', plugin_dir_url( __FILE__ ));
 $plugin_dir_path = plugin_dir_path( __FILE__ );
 $userid = get_current_user_id();
 $game_url = get_option('explore_game_page', '');
-$game_url = false === empty($game_url) ? get_permalink($game_url) : '/';
+$game_url = false === empty($game_url) ? get_permalink(get_page_by_path($game_url)) : '/';
 $walking_sound = get_option('explore_walking_sound', false);
 $points_sound = get_option('explore_points_sound', false);
 $points = get_user_meta($userid, 'explore_points', true);
@@ -27,7 +27,7 @@ $equipped_weapon = false === empty($weapon) ? get_post($weapon[0]) : Explore::ge
 $is_projectile = false === empty($equipped_weapon) ? get_post_meta($equipped_weapon->ID, 'explore-projectile', true) : false;
 $is_it_projectile = false === empty($is_projectile) ? $is_projectile : 'no';
 $location = get_user_meta($userid, 'current_location', true);
-$location = false === empty($location) ? $location : 'foresight';
+$location = false === empty($location) ? $location : $first_area;
 $coordinates = get_user_meta($userid, 'current_coordinates', true);
 $back = false === empty($coordinates) ? ' Back' : '';
 $explore_area = get_posts(['post_type' => 'explore-area', 'name' => $location]);

@@ -121,6 +121,7 @@ class Meta_Box {
         $explore_area_array = $this->util->getOrbemArray('explore-area');
         $explore_character_array = $this->util->getOrbemArray('explore-character');
         $explore_enemy_array = $this->util->getOrbemArray('explore-enemy');
+        $explore_weapon_array = $this->util->getOrbemArray('explore-weapon');
         $explore_value_array = [
             'none',
             'point',
@@ -190,6 +191,9 @@ class Meta_Box {
                 'explore-character' => [
                     'select' => [$explore_character_array]
                 ],
+                'explore-next-area' => [
+                    'select' => [$explore_area_array]
+                ]
             ],
             'explore-weapon' => [
                 'explore-attack' => [
@@ -205,7 +209,7 @@ class Meta_Box {
                 ],
                 'explore-value-type' => [
                     'select' => [$explore_value_array]
-                ]
+                ],
             ],
             'explore-character' => [
                 'explore-time-between' => 'number',
@@ -267,7 +271,10 @@ class Meta_Box {
                 ],
                 'explore-value-type' => [
                     'select' => [$explore_value_array]
-                ]
+                ],
+                'explore-weapon-choice' => [
+                    'select' => [$explore_weapon_array]
+                ],
             ],
             'explore-enemy' => [
                 'explore-time-between' => 'number',
@@ -334,7 +341,14 @@ class Meta_Box {
                 ],
                 'explore-value-type' => [
                     'select' => [$explore_value_array]
-                ]
+                ],
+                'explore-boss-waves' => [
+                    'projectile' => 'checkbox',
+                    'pulse-wave' => 'checkbox',
+                ],
+                'explore-weapon-weakness' => [
+                    'select' => [$explore_weapon_array]
+                ],
             ],
             'explore-minigame' => [
                 'explore-minigame-music' => 'upload',

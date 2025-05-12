@@ -38,13 +38,21 @@ class Util
      * @param $post_type
      * @return array
      */
-    public function getOrbemArray($post_type)
+    public function getOrbemArray($post_type, $taxo = false)
     {
         $explore_array = ['none'];
-        $explore_posts = get_posts(['post_status' => 'publish', 'post_type' => $post_type, 'numberposts' => -1, 'fields' => ['post_name']]);
+        if ($taxo) {
+            $explore_taxos = get_terms(['taxonomy' => $post_type]);
 
-        foreach ($explore_posts as $explore_post) {
-            $explore_array[] = $explore_post->post_name;
+            foreach($explore_taxos as $explore_taxo) {
+                $explore_array[] = $explore_taxo->name;
+            }
+        } else {
+            $explore_posts = get_posts(['post_status' => 'publish', 'post_type' => $post_type, 'numberposts' => -1, 'fields' => ['post_name']]);
+
+            foreach ($explore_posts as $explore_post) {
+                $explore_array[] = $explore_post->post_name;
+            }
         }
 
         return $explore_array;
