@@ -216,7 +216,7 @@ class Explore
                         <select name="<?php echo esc_attr($field_key); ?>">
                             <option disabled selected value>Select...</option>
                             <?php foreach($value[2] as $option) : ?>
-                            <option value="<?php echo esc_attr($option->ID); ?>" <?php selected($option->ID, $indicator, true); ?>><?php echo esc_attr($option->post_title); ?></option>
+                            <option value="<?php echo esc_attr($option->post_name); ?>" <?php selected($option->post_name, $indicator, true); ?>><?php echo esc_attr($option->post_title); ?></option>
                             <?php endforeach; ?>
                         </select>
                     <?php elseif (isset($value[0]) && $value[0] === 'checkbox') : ?>
@@ -1116,12 +1116,11 @@ class Explore
         $args = [
             'numberposts' => -1,
             'post_type' => ['explore-weapon', 'explore-area', 'explore-point', 'explore-character', 'explore-enemy', 'explore-sign'],
-            'tax_query' => [
+            'meta_query' => [
                 [
-                    'taxonomy' => 'explore-area-point',
-                    'field' => 'slug',
-                    'terms' => [false === empty($position) ? $position : $first_area],
-                    'operator' => 'IN',
+                    'key'     => 'explore-area',
+                    'value'   => false === empty($position) ? $position : $first_area,
+                    'compare' => '='
                 ]
             ]
         ];
@@ -1158,14 +1157,14 @@ class Explore
      */
     public static function getExplorePosts($position, $post_type)
     {
+        $first_area = get_option('explore_first_area', '');
         $args = [
             'post_type' => [$post_type],
-            'tax_query' => [
+            'meta_query' => [
                 [
-                    'taxonomy' => 'explore-area-point',
-                    'field' => 'slug',
-                    'terms' => [false === empty($position) ? $position : 'foresight'],
-                    'operator' => 'IN',
+                    'key'     => 'explore-area',
+                    'value'   => false === empty($position) ? $position : $first_area,
+                    'compare' => '='
                 ]
             ]
         ];
@@ -1198,6 +1197,7 @@ class Explore
 
         if (false === empty($game_page) && is_page($game_page)) {
             echo '<script src="https://accounts.google.com/gsi/client" async defer></script>';
+            echo '<meta name="viewport" content="width=device-width, initial-scale=1">';
 
             $first_area = get_option('explore_first_area', false);
             $current_location = get_user_meta(get_current_user_id(), 'current_location', true);
@@ -1256,13 +1256,13 @@ class Explore
                 'post_type' => 'explore-mission',
                 'numberposts' => 100,
                 'post_status' => 'publish',
-                'tax_query' => [
+                'meta_query' => [
                     [
-                        'taxonomy' => 'explore-area-point',
-                        'field' => 'slug',
-                        'terms' => $current_location,
-                    ],
-                ],
+                        'key'     => 'explore-area',
+                        'value'   => $current_location,
+                        'compare' => '='
+                    ]
+                ]
             ]
         );
 
@@ -1292,11 +1292,11 @@ class Explore
                 }
             }
 
-            $boss_waves = get_the_terms( $explore_point, 'explore-boss-waves' );
+            $boss_waves = get_post_meta( $explore_point, 'explore-boss-waves', true );
             $value = get_post_meta($explore_point->ID, 'value', true);
             $timer = get_post_meta($explore_point->ID, 'explore-timer', true);
             $timer = false === empty($timer['explore-timer']) ? $timer['explore-timer'] : $timer;
-            $type = get_the_terms($explore_point->ID, 'value-type');
+            $type = get_post_meta($explore_point->ID, 'explore-value-type');
             $interaction_type = get_post_meta($explore_point->ID, 'explore-interaction-type', true);
             $breakable = false === empty($interaction_type) && 'breakable' === $interaction_type;
             $collectable = false === empty($interaction_type) && 'collectable' === $interaction_type;
@@ -1308,7 +1308,7 @@ class Explore
             $left = get_post_meta($explore_point->ID, 'explore-left', true) . 'px';
             $height = get_post_meta($explore_point->ID, 'explore-height', true);
             $width = get_post_meta($explore_point->ID, 'explore-width', true);
-            $type = false === empty($type[0]->slug) ? $type[0]->slug : '';
+            $type = false === is_wp_error($type) && false === empty($type[0]->slug) ? $type[0]->slug : '';
             $walking_path = get_post_meta($explore_point->ID, 'explore-path', true);
             $walking_speed = get_post_meta($explore_point->ID, 'explore-speed', true);
             $time_between = get_post_meta($explore_point->ID, 'explore-time-between', true);
@@ -1341,18 +1341,18 @@ class Explore
                     'post_type' => 'explore-mission',
                     'numberposts' => 1,
                     'post_status' => 'publish',
-                    'tax_query' => [
+                    'meta_query' => [
                         [
-                            'taxonomy' => 'explore-area-point',
-                            'field' => 'slug',
-                            'terms' => $current_location,
+                            'key'     => 'explore-area',
+                            'value'   => $current_location,
+                            'compare' => '='
                         ],
                         [
-                            'taxonomy' => 'explore-point-tax',
-                            'field' => 'slug',
-                            'terms' => $explore_point->post_name,
+                            'key'     => 'explore-trigger-item',
+                            'value'   => $explore_point->post_name,
+                            'compare' => '='
                         ],
-                    ],
+                    ]
                 ]
             );
 
@@ -1361,18 +1361,18 @@ class Explore
                     'post_type' => 'explore-mission',
                     'numberposts' => 1,
                     'post_status' => 'publish',
-                    'tax_query' => [
+                    'meta_query' => [
                         [
-                            'taxonomy' => 'explore-area-point',
-                            'field' => 'slug',
-                            'terms' => $current_location,
+                            'key'     => 'explore-area',
+                            'value'   => $current_location,
+                            'compare' => '='
                         ],
                         [
-                            'taxonomy' => 'explore-enemy-tax',
-                            'field' => 'slug',
-                            'terms' => $explore_point->post_name,
-                        ],
-                    ],
+                            'key'     => 'explore-trigger-enemy',
+                            'value'   => $explore_point->post_name,
+                            'compare' => '='
+                        ]
+                    ]
                 ]
             );
 
@@ -1537,15 +1537,15 @@ class Explore
                         }
 
                         foreach ($boss_waves as $index => $boss_wave) {
-                            if ('pulse' === $boss_wave->slug) {
+                            if (true === isset($boss_wave['pulse']) && 'on' === $boss_wave['pulse']) {
                                 $pulse_wave = true;
                             }
 
-                            if ('barrage' === $boss_wave->slug) {
+                            if (true === isset($boss_wave['projectile']) && 'on' === $boss_wave['projectile']) {
                                 $barrage_wave = true;
                             }
 
-                            $wave_html .= ($index + 1) === count($boss_waves) ? $boss_wave->slug : $boss_wave->slug . ',';
+                            $wave_html .= array_keys($boss_waves)[$index] . ',';
                         }
                     }
 
@@ -1891,9 +1891,9 @@ class Explore
                 $path_trigger_width = false === empty($trigger['width']) && 0 !== $trigger['width'] ? $trigger['width'] : '';
                 $path_trigger_height = false === empty($trigger['height']) && 0 !== $trigger['height'] ? $trigger['height'] : '';
                 $arrow_img = get_option( 'explore_arrow_icon', false);
-                $orientation = $arrow_style['explore-explainer-arrow']['orientation'] ?? 'top';
-                $side = $arrow_style['explore-explainer-arrow']['side'] ?? 'right';
-                $rotation = $arrow_style['explore-explainer-arrow']['rotate'] ?? '0';
+                $orientation = $arrow_style['orientation'] ?? 'top';
+                $side = $arrow_style['side'] ?? 'right';
+                $rotation = $arrow_style['rotate'] ?? '0';
                 $arrow_style_css = 'transform: rotate(' . $rotation . 'deg); ' . $orientation . ': -130px;' . ' ' . $side . ': 0;';
 
 
@@ -1905,7 +1905,7 @@ class Explore
                 }
 
                 if (false === empty($explainer_top)) {
-                    $html .= '<div class="' . $explainer->post_name . '-explainer-item explainer-container" ';
+                    $html .= '<div id="' . $explainer->ID . '" class="' . $explainer->post_name . '-explainer-item explainer-container map-item" ';
                     $html .= 'style="left:' . $explainer_left . 'px;top:' . $explainer_top . 'px;height:auto; width:' . $explainer_width . 'px;"';
                     $html .= '>';
                     $html .= $arrow_img ? '<img data-rotate="' . $rotation . '" width="120" height="120" style="'. esc_attr($arrow_style_css) . '" src="' . $arrow_img . '" />' : '';
@@ -1968,49 +1968,13 @@ class Explore
         ];
 
         $taxo_types = [
-            'explore-area-point' => [
-                'name' => 'Explore Area',
-                'post-types' => ['explore-explainer', 'explore-minigame', 'explore-area', 'explore-point', 'explore-character', 'explore-cutscene', 'explore-enemy', 'explore-mission', 'explore-sign', 'explore-weapon']
-            ],
-            'explore-character-point' => [
-                'name' => 'Explore Character',
-                'post-types' => ['explore-cutscene', 'explore-explainer']
-            ],
-            'explore-point-tax' => [
-                'name' => 'Explore Point',
-                'post-types' => ['explore-mission']
-            ],
-            'explore-enemy-tax' => [
-                'name' => 'Explore Enemy',
-                'post-types' => ['explore-mission']
-            ],
-            'value-type' => [
-                'name' => 'Value Type',
-                'post-types' => ['explore-weapon', 'explore-point', 'explore-character', 'explore-area', 'explore-enemy']
-            ],
             'magic-type' => [
                 'name' => 'Magic Type',
                 'post-types' => ['explore-magic']
             ],
-            'explore-next-area' => [
-                'name' => 'Next Area',
-                'post-types' => ['explore-cutscene']
-            ],
             'explore-minigame-type' => [
                 'name' => 'Minigame Type',
                 'post-types' => ['explore-minigame']
-            ],
-            'explore-boss-waves' => [
-                'name' => 'Boss Wave Types',
-                'post-types' => ['explore-enemy']
-            ],
-            'explore-weapon-type' => [
-                'name' => 'Weapon Type',
-                'post-types' => ['explore-enemy']
-            ],
-            'explore-weapon-choice' => [
-                'name' => 'Weapon',
-                'post-types' => ['explore-character']
             ],
         ];
 

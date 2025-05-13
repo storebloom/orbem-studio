@@ -13,7 +13,7 @@ if ( false === is_wp_error($characters)) {
     foreach ($characters as $character) {
         $weapon_choice = get_the_terms($character->ID, 'explore-weapon-choice');
 
-        if (false !== $weapon_choice && false === in_array($storage['weapons'], [$weapon_choice[0]->slug])) {
+        if (false === is_wp_error($weapon_choice) && false === in_array($storage['weapons'], [$weapon_choice[0]->slug])) {
             $weapon_id = get_posts(['post_type' => 'explore-weapon', 'post_name' => $weapon_choice[0]->slug, 'posts_per_page' => 1]);
 
             if (false === empty($weapon_id[0])) {
