@@ -24,7 +24,7 @@ use OrbemGameEngine\Explore;
         <?php else : ?>
             <h2><?php echo esc_html(ucfirst(str_replace(['explore-', '-'],['', ' '],$key))); ?></h2>
             <?php foreach($value as $sub_key => $sub_value):
-                if (false === is_array($sub_value) || true === in_array($sub_key, ['select', 'radio'])) :
+                if (false === is_array($sub_value) || true === in_array($sub_key, ['select', 'radio', 'repeater'])) :
                     if (false === in_array($sub_key, ['select', 'radio', 'repeater'])) : ?>
                         <?php echo Meta_Box::getMetaHtml($sub_key, $sub_value, $values, $key); ?>
                     <?php elseif ('repeater' !== $sub_key) :?>

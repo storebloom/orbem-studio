@@ -2191,6 +2191,8 @@ function engageExploreGame() {
 
     if ( dependentCutscenes && 0 < dependentCutscenes.length ) {
         const dependentMinigame = dependentCutscenes[0].dataset.minigame;
+
+        // Get the mission name that triggers the start of this cutscene. TODO: add scalable logic this only works for first depedenent.
         let dependentMission = dependentCutscenes[0].dataset.mission;
 
         if ( dependentMinigame && '' !== dependentMinigame ) {

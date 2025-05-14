@@ -105,9 +105,11 @@ class Meta_Box {
                 }
 
                 if (true === is_array($value) && ['radio'] !== $type && ['select'] !== $type && ['repeater'] !== $type) {
-                    update_post_meta($post_id, $key, filter_input_array(
+                    $array_value = filter_input_array(
                         INPUT_POST, [$key => ['filter' => FILTER_UNSAFE_RAW, 'flags' => FILTER_REQUIRE_ARRAY]]
-                    )[$key]);
+                    );
+                    $array_value = $array_value[$key] ?? [];
+                    update_post_meta($post_id, $key, $array_value );
                 } else {
                     update_post_meta($post_id, $key, sanitize_text_field(wp_unslash(filter_input(INPUT_POST, $key, FILTER_UNSAFE_RAW))) ?? '');
                 }
@@ -122,6 +124,10 @@ class Meta_Box {
         $explore_character_array = $this->util->getOrbemArray('explore-character');
         $explore_enemy_array = $this->util->getOrbemArray('explore-enemy');
         $explore_weapon_array = $this->util->getOrbemArray('explore-weapon');
+        $explore_mission_array = $this->util->getOrbemArray('explore-mission');
+        $explore_minigame_array = $this->util->getOrbemArray('explore-minigame');
+        $explore_cutscene_array = $this->util->getOrbemArray('explore-cutscene');
+        $explore_hazard_array = $this->util->getOrbemArray('explore-point', false, 'explore-interaction-type', 'hazard');
         $explore_value_array = [
             'none',
             'point',
@@ -133,15 +139,33 @@ class Meta_Box {
             'explore-area' => [
                 'explore-music' => 'upload',
                 'explore-map-svg' => 'upload',
-                'explore-is-cutscene' => 'text',
+                'explore-is-cutscene' => [
+                    'radio' => [
+                        'yes',
+                        'no'
+                    ]
+                ],
                 'explore-start-top' => 'number',
                 'explore-start-left' => 'number',
-                'explore-minigame' => 'text',
             ],
             'explore-mission' => [
-                'explore-ability' => 'text',
-                'explore-hazard-remove' => 'text',
-                'explore-next-mission' => 'text',
+                'explore-ability' => [
+                    'select' => [
+                        [
+                            'none',
+                            'speed',
+                            'strength',
+                            'hazard',
+                            'programming',
+                        ]
+                    ]
+                ],
+                'explore-hazard-remove' => [
+                    'select' => [$explore_hazard_array]
+                ],
+                'explore-next-mission' => [
+                    'select' => [$explore_mission_array]
+                ],
                 'explore-mission-trigger' => [
                     'top' => 'number',
                     'left' => 'number',
@@ -156,10 +180,10 @@ class Meta_Box {
                 ],
             ],
             'explore-cutscene' => [
-                'explore-cutscene-minigame' => 'text',
-                'explore-cutscene-boss' => 'text',
+                'explore-cutscene-boss' => [
+                    'select' => [$explore_enemy_array]
+                ],
                 'explore-cutscene-music' => 'upload',
-                'explore-mission-dependent' => 'text',
                 'explore-cutscene-trigger' => [
                     'top' => 'number',
                     'left' => 'number',
@@ -182,8 +206,18 @@ class Meta_Box {
                         ]
                     ]
                 ],
-                'explore-mission-cutscene' => 'text',
-                'explore-mission-complete-cutscene' => 'text',
+                'explore-mission-dependent' => [
+                    'radio' => [
+                        'yes',
+                        'no'
+                    ]
+                ],
+                'explore-mission-cutscene' => [
+                    'select' => [$explore_mission_array]
+                ],
+                'explore-mission-complete-cutscene' => [
+                    'select' => [$explore_mission_array]
+                ],
                 'explore-cutscene-next-area-position' => [
                     'top' => 'number',
                     'left' => 'number',
@@ -266,8 +300,12 @@ class Meta_Box {
                     'left' => 'number',
                     'height' => 'number',
                     'width' => 'number',
-                    'cutscene' => 'text',
-                    'point' => 'text'
+                    'cutscene' => [
+                        'select' => [$explore_cutscene_array]
+                    ],
+                    'item' => [
+                        'select' => [$explore_item_array]
+                    ],
                 ],
                 'explore-value-type' => [
                     'select' => [$explore_value_array]
@@ -307,8 +345,12 @@ class Meta_Box {
                     'left' => 'number',
                     'height' => 'number',
                     'width' => 'number',
-                    'cutscene' => 'text',
-                    'point' => 'text'
+                    'cutscene' => [
+                        'select' => [$explore_cutscene_array]
+                    ],
+                    'item' => [
+                        'select' => [$explore_item_array]
+                    ],
                 ],
                 'explore-path' => [
                     'repeater' => [
@@ -393,10 +435,11 @@ class Meta_Box {
                         'no'
                     ]
                 ],
-                'explore-minigame' => 'text',
                 'explore-timer' => [
                     'time' => 'number',
-                    'trigger' => 'text'
+                    'trigger' => [
+                        'select' => [$explore_item_array]
+                    ],
                 ],
                 'explore-interaction-type' => [
                     'select' => [[
@@ -431,7 +474,9 @@ class Meta_Box {
                     'width' => 'number',
                     'height' => 'number',
                     'image' => 'upload',
-                    'mission' => 'text'
+                    'mission' => [
+                        'select' => [$explore_mission_array]
+                    ],
                 ],
                 'explore-materialize-item-trigger' => [
                     'top' => 'number',
@@ -446,18 +491,24 @@ class Meta_Box {
         ];
 
         $global_list = [
-            'explore-mission'               => 'text',
-            'explore-minigame'              => 'text',
+            'explore-mission' => [
+                'select' => [$explore_mission_array]
+            ],
+            'explore-minigame' => [
+                'select' => [$explore_minigame_array]
+            ],
             'explore-top'                   => 'number',
             'explore-left'                  => 'number',
             'explore-height'                => 'number',
             'explore-width'                 => 'number',
             'value'                         => 'number',
             'explore-unlock-level'          => 'number',
-            'explore-remove-after-cutscene' => 'text',
+            'explore-remove-after-cutscene' => [
+                'select' => [$explore_cutscene_array]
+            ],
             'explore-area' => [
                 'select' => [$explore_area_array]
-            ]
+            ],
         ];
 
         return false === empty($post_type_specific[$post_type]) ? array_merge($global_list, $post_type_specific[$post_type]) : $global_list;

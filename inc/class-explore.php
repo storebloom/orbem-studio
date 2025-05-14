@@ -714,15 +714,11 @@ class Explore
 
         $current_equipped = get_user_meta($user, 'explore_current_' . $type, true);
         $current_equipped = false === empty($current_equipped) ? $current_equipped : [];
-        $effect_types = get_the_terms($item_id, 'value-type');
+        $effect_type = get_post_meta($item_id, 'explore-value-type', true);
         $the_effect_type = '';
 
-        if (true === is_array($effect_types)) {
-            foreach( $effect_types as $effect_type) {
-                if ( true === in_array($effect_type->slug, ['mana', 'health', 'power'], true)) {
-                    $the_effect_type = $effect_type->slug;
-                }
-            }
+        if ( true === in_array($effect_type, ['mana', 'health', 'power'], true)) {
+            $the_effect_type = $effect_type;
         }
 
         if (false === $unequip && false === empty($current_equipped[$the_effect_type])) {
@@ -779,13 +775,11 @@ class Explore
 
         if (false === in_array('', [$id, $type, $user, $name, $value], true)) {
             $current_storage_items = get_user_meta($user, 'explore_storage', true);
-            $item_subtypes = get_the_terms($id, 'value-type');
+            $item_subtype = get_post_meta($id, 'explore-value-type', true);
             $subtype = '';
 
-            foreach($item_subtypes as $item_subtype) {
-                if ($type !== $item_subtype->slug) {
-                    $subtype = $item_subtype->slug;
-                }
+            if ($type !== $item_subtype) {
+                $subtype = $item_subtype;
             }
 
             // If remove is true then remove the provided item.
@@ -981,13 +975,11 @@ class Explore
             $gear_equipped = get_user_meta( $userid, 'explore_current_gear', true);
             $weapons_equipped = get_user_meta( $userid, 'explore_current_weapons', true);
             $content = $item_obj->post_content;
-            $types = get_the_terms($item_obj->ID, 'value-type');
+            $type = get_post_meta($item_obj->ID, 'explore-value-type', true);
             $item_type = '';
 
-            foreach($types as $type) {
-                if (true === in_array($type->slug, ['mana', 'health', 'power'], true)) {
-                    $item_type = $type->slug;
-                }
+            if (true === in_array($type, ['mana', 'health', 'power'], true)) {
+                $item_type = $type;
             }
 
             // Check equipped gear. IF so change button to unequip.
@@ -1296,7 +1288,7 @@ class Explore
             $value = get_post_meta($explore_point->ID, 'value', true);
             $timer = get_post_meta($explore_point->ID, 'explore-timer', true);
             $timer = false === empty($timer['explore-timer']) ? $timer['explore-timer'] : $timer;
-            $type = get_post_meta($explore_point->ID, 'explore-value-type');
+            $type = get_post_meta($explore_point->ID, 'explore-value-type', true) ?? '';
             $interaction_type = get_post_meta($explore_point->ID, 'explore-interaction-type', true);
             $breakable = false === empty($interaction_type) && 'breakable' === $interaction_type;
             $collectable = false === empty($interaction_type) && 'collectable' === $interaction_type;
@@ -1308,7 +1300,6 @@ class Explore
             $left = get_post_meta($explore_point->ID, 'explore-left', true) . 'px';
             $height = get_post_meta($explore_point->ID, 'explore-height', true);
             $width = get_post_meta($explore_point->ID, 'explore-width', true);
-            $type = false === is_wp_error($type) && false === empty($type[0]->slug) ? $type[0]->slug : '';
             $walking_path = get_post_meta($explore_point->ID, 'explore-path', true);
             $walking_speed = get_post_meta($explore_point->ID, 'explore-speed', true);
             $time_between = get_post_meta($explore_point->ID, 'explore-time-between', true);
@@ -1515,10 +1506,10 @@ class Explore
                     $barrage_wave = false;
                     $speed = get_post_meta($explore_point->ID, 'explore-speed', true);
                     $enemy_speed = get_post_meta($explore_point->ID, 'explore-enemy-speed', true);
-                    $enemy_weapon_type = get_the_terms($explore_point->ID, 'explore-weapon-type');
+                    $enemy_weapon_type = get_post_meta($explore_point->ID, 'explore-weapon-weakness', true);
 
                     if ( false === empty($enemy_weapon_type)) {
-                        $html .= 'data-weapon="' . $enemy_weapon_type[0]->slug . '" ';
+                        $html .= 'data-weapon="' . $enemy_weapon_type . '" ';
                     }
 
                     $html .= 'data-health="' . intval($health) . '" data-healthamount="' . intval($health) . '" data-enemyspeed="' . intval($enemy_speed) . '" data-speed="' . intval($speed) . '" data-enemy-type="' . esc_attr($explore_enemy_type) . '"';
@@ -1719,8 +1710,8 @@ class Explore
         }
 
         foreach( $explore_cutscenes as $explore_cutscene ) {
-            $character = get_the_terms( $explore_cutscene->ID, 'explore-character-point' );
-            $next_area = get_the_terms( $explore_cutscene->ID, 'explore-next-area' );
+            $character = get_post_meta( $explore_cutscene->ID, 'explore-character', true );
+            $next_area = get_post_meta( $explore_cutscene->ID, 'explore-next-area', true );
             $minigame = get_post_meta( $explore_cutscene->ID, 'explore-cutscene-minigame', true);
             $has_video = has_block( 'video', $explore_cutscene );
             $cutscene_trigger = get_post_meta($explore_cutscene->ID, 'explore-cutscene-trigger', true);
@@ -1738,10 +1729,10 @@ class Explore
             $boss_fight = get_post_meta($explore_cutscene->ID, 'explore-cutscene-boss', true);
             $cutscene_trigger_type = get_post_meta($explore_cutscene->ID, 'explore-trigger-type', true) ?? '';
 
-            $next_area_datapoint = false === empty($next_area[0]) ? ' data-nextarea="' . $next_area[0]->slug . '"' : '';
+            $next_area_datapoint = false === empty($next_area) ? ' data-nextarea="' . $next_area . '"' : '';
 
             if (false === $has_video) {
-                $cutscene_name = false === $is_area_cutscene ? $character[0]->slug : $area[0]->post_name;
+                $cutscene_name = false === $is_area_cutscene ? $character : $area[0]->post_name;
             } else {
                 $cutscene_name = $explore_cutscene->post_name;
             }
@@ -1787,7 +1778,7 @@ class Explore
             }
 
             if (false === empty($next_area)) {
-                $area_obj = get_posts(['name' => $next_area[0]->slug, 'post_type' => 'explore-area', 'post_status' => 'publish', 'posts_per_page' => 1]);
+                $area_obj = get_posts(['name' => $next_area, 'post_type' => 'explore-area', 'post_status' => 'publish', 'posts_per_page' => 1]);
 
                 $html .= $next_area_datapoint;
                 $html .= false === empty($next_area_position_top) ? ' data-nextarea-position={"left":"' . $next_area_position_left . '","top":"' . $next_area_position_top . '"}' : '';
@@ -1796,12 +1787,10 @@ class Explore
 
             $html .= '>';
 
-            if (false === $is_area_cutscene && false === empty($character) && true === is_array($character)) {
-                foreach ( $character as $char ) {
-                    $character_post = get_posts( ['post_type' => ['explore-character', 'explore-enemy'], 'posts_per_page' => 1, 'name' => $char->slug] );
+            if (false === $is_area_cutscene && false === empty($character)) {
+                $character_post = get_posts( ['post_type' => ['explore-character', 'explore-enemy'], 'posts_per_page' => 1, 'name' => $character] );
 
-                    $html .= '<div data-character="' . $char->slug . '" class="cut-character"><img src="' . get_the_post_thumbnail_url($character_post[0]->ID) . '"/></div>';
-                }
+                $html .= '<div data-character="' . $character . '" class="cut-character"><img src="' . get_the_post_thumbnail_url($character_post[0]->ID) . '"/></div>';
             }
 
             $html .= 'explore-area' !== $explore_cutscene->post_type ? $explore_cutscene->post_content : '';
@@ -1816,7 +1805,7 @@ class Explore
             if (false === in_array( '', [$path_trigger_width, $path_trigger_height], true)) {
                 $html .= '<div id="' . $explore_cutscene->ID . '-t" class="cutscene-trigger wp-block-group map-item ' . $explore_cutscene->post_name . '-cutscene-trigger-map-item is-layout-flow wp-block-group-is-layout-flow"';
                 $html .= 'style="left:' . $path_trigger_left . 'px;top:' . $path_trigger_top . 'px;height:' . $path_trigger_height . 'px; width:' . $path_trigger_width . 'px;"';
-                $html .= 'data-trigger="true" data-triggee="' . $character[0]->slug . '-map-item"';
+                $html .= 'data-trigger="true" data-triggee="' . $character . '-map-item"';
                 $html .= ' data-triggertype="' . $cutscene_trigger_type . '"';
                 $html .= ' data-meta="explore-cutscene-trigger"';
                 $html .= '></div>';

@@ -180,7 +180,7 @@ class Dev_Mode
                 set_post_thumbnail($post_id, $attachment_id);
             }
 
-            wp_set_object_terms($post_id, $area, 'explore-area-point');
+            update_post_meta($post_id, 'explore-area', $area);
 
             unset($post_values['featured-image']);
             unset($post_values['title']);
