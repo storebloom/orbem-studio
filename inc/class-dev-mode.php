@@ -87,9 +87,20 @@ class Dev_Mode
         $height = intval($data['height']);
         $width = intval($data['width']);
         $meta = sanitize_text_field($data['meta']);
+        $walking_path = sanitize_text_field($data['walkingPath']);
 
-        if (false === empty($meta)) {
+        if (false === empty($meta) && 'true' !== $walking_path) {
             update_post_meta($item, $meta, ['top' => $top, 'left' => $left, 'height' => $height, 'width' => $width]);
+        } elseif ('true' === $walking_path) {
+            $current_walking_path = get_post_meta($item, 'explore-path', true);
+
+            if (false === empty($current_walking_path)) {
+                $current_walking_path[] = ['top' => $top, 'left' => $left];
+            } else {
+                $current_walking_path = [['top' => $top, 'left' => $left]];
+            }
+            update_post_meta($item, 'explore-path', $current_walking_path);
+
         } else {
             update_post_meta($item, 'explore-top', $top);
             update_post_meta($item, 'explore-left', $left);

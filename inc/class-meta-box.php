@@ -104,7 +104,7 @@ class Meta_Box {
                     $type = array_keys($value);
                 }
 
-                if (true === is_array($value) && ['radio'] !== $type && ['select'] !== $type && ['repeater'] !== $type) {
+                if (true === is_array($value) && ['radio'] !== $type && ['select'] !== $type) {
                     $array_value = filter_input_array(
                         INPUT_POST, [$key => ['filter' => FILTER_UNSAFE_RAW, 'flags' => FILTER_REQUIRE_ARRAY]]
                     );

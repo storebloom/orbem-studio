@@ -171,6 +171,8 @@ document.addEventListener("DOMContentLoaded", function(){
     if ( characterChoice ) {
         addNoPoints();
         characterChoice.classList.remove('engage');
+    } else {
+        addNoPoints();
     }
 
     // Set points.
@@ -408,7 +410,7 @@ function moveNPC( npc ) {
                         loopAmount = getLoopAmount(pathArray[position].left, pathArray[position].top, pathArray[nextPosition].left, pathArray[nextPosition].top, walkingSpeed, timeBetween);
 
                         // If loopAmount equals loop count, transition to next walking path.
-                        if (loopCount === (loopAmount - 1) || firstRun) {
+                        if (currentImage && (loopCount === (loopAmount - 1) || firstRun)) {
                             // Check that current position is not the last position. And move npc if it is not.
                             if (pathCount > position || (firstRun && pathCount === position)) {
                                 currentImage.classList.remove('engage');
@@ -447,6 +449,8 @@ function moveNPC( npc ) {
                                     loopCount = 0;
 
                                     // If not repeat and position is at end, clear interval.
+                                } else if ( pathCount === nextPosition ) {
+                                    clearInterval(window.walkingInterval);
                                 }
 
                                 // if it is the first run, set to false and iterate on position and loopcount.
@@ -680,7 +684,7 @@ function saveMission( mission, value, position ) {
             theMission.style.textDecoration = 'line-through';
 
             // Remove hazard if set.
-            if (null !== hazardRemoveText && hazardRemoveText) {
+            if (null !== hazardRemoveText && hazardRemoveText && 'none' !== hazardRemoveText) {
                 const hazardRemoveArray = hazardRemoveText.split(',');
 
                 if (hazardRemoveArray) {
@@ -1973,7 +1977,9 @@ function regulateTransitionSpeed(aPositionx, aPositiony, bPositionx, bPositiony,
  * @param timeBetween
  * @returns {number}
  */
-function getLoopAmount(aPositionx, aPositiony, bPositionx, bPositiony, multiple, timeBetween = '0.75') {
+function getLoopAmount(aPositionx, aPositiony, bPositionx, bPositiony, multiple = '60', timeBetween = '0.175') {
+    multiple = '0' === multiple ? '60' : multiple;
+    timeBetween = '0' === timeBetween ? '0.175' : timeBetween;
     const diffDist = Math.hypot(aPositionx - bPositionx, aPositiony - bPositiony);
     const transitionDist = ( diffDist * parseFloat(timeBetween) ) * multiple;
 
@@ -4110,12 +4116,15 @@ function runPointAnimation( value, position, isMission, missionPoints, missionNa
     positionType = positionType && '' !== positionType ? positionType : 'point';
     const thePoints = document.querySelector( `#explore-points .${ positionType }-amount` );
     let currentPoints = 100;
-    const objectAmount = true === isMission ? parseInt(missionPoints) : value.getAttribute('data-value');
+
+    console.log(missionPoints);
+
+    const objectAmount = true === isMission ? parseInt(missionPoints) : value.dataset?.value;
 
     if ( thePoints ) {
         currentPoints = thePoints.dataset.amount;
         if ( 'point' === positionType ) {
-            const newPoints = parseInt( currentPoints ) + parseInt( objectAmount );
+            const newPoints = parseInt( currentPoints ) + parseInt( objectAmount ?? '0' );
 
             // Add amount to current points.
             thePoints.setAttribute( 'data-amount', newPoints );

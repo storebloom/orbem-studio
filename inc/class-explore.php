@@ -1209,7 +1209,7 @@ class Explore
                     $point_type = 'explore-enemy' === $explore_point->post_type ? '.enemy-item' : '.map-item';
                     ?>
 
-                    body .game-container .default-map <?php echo esc_html($point_type); ?>.<?php echo esc_html($explore_point->post_name); ?>-map-item {
+                    body .game-container .default-map <?php echo esc_html($point_type); ?>.<?php echo esc_html($explore_point->post_name); ?>-map-item[data-genre="<?php echo esc_attr($explore_point->post_type); ?>"] {
                     <?php echo esc_html($background_url); ?>
                         background-size: cover;
                         top: <?php echo esc_html($top); ?>;
@@ -1263,7 +1263,7 @@ class Explore
         // Grab mission trigger points.
         foreach( $missions_for_triggers as $mission ) {
             $mission_trigger = get_post_meta($mission->ID, 'explore-mission-trigger', true);
-            $mission_trigger = false === empty($mission_trigger) ? $mission_trigger['explore-mission-trigger'] : $mission_trigger;
+            $mission_trigger = false === empty($mission_trigger) ? $mission_trigger : $mission_trigger;
 
             if (false === empty($mission_trigger['top'])) {
                 $mission_trigger_html .= '<div id="' . $mission->ID . '-t" class="mission-trigger wp-block-group map-item ' . $mission->post_name . '-mission-trigger-map-item is-layout-flow wp-block-group-is-layout-flow"';
@@ -1463,9 +1463,9 @@ class Explore
                     $hazard_remove = false === empty($hazard_remove) && true === in_array($explore_point->post_name, explode(',', $hazard_remove));
                 }
 
-                $explore_path = false === empty($walking_path['explore-path']) ? wp_json_encode($walking_path["explore-path"]) : '[{"top":"0","left":"0"}]';
+                $explore_path = false === empty($walking_path) ? wp_json_encode($walking_path) : '[{"top":"0","left":"0"}]';
 
-                if ('[{"top":"0","left":"0"}]' !== $explore_path) {
+                if ('[{"top":"0","left":"0"}]' !== $explore_path && true === in_array($explore_point->post_type, ['explore-character', 'explore-enemy'])) {
                     $html .= ' data-path=\'' . $explore_path . '\' ';
                     $html .= ' data-speed="' . $walking_speed . '" ';
                     $html .= ' data-timebetween="' . $time_between . '" ';
@@ -2116,22 +2116,22 @@ class Explore
             if (false === is_null($main_character) && false === empty($main_character)) {
                 $images = get_post_meta($main_character->ID, 'explore-character-images', true);
 
-                if (true === isset($images['explore-character-images']) && true === is_array($images['explore-character-images'])) {
+                if (true === isset($images) && true === is_array($images)) {
                     return [
                         'direction_images' => [
-                            'static' => $images['explore-character-images']['static'] ?? '',
-                            'up' => $images['explore-character-images']['up'] ?? '',
-                            'down' => $images['explore-character-images']['down'] ?? '',
-                            'left' => $images['explore-character-images']['left'] ?? '',
-                            'right' => $images['explore-character-images']['right'] ?? '',
-                            'static-up' => $images['explore-character-images']['static-up'] ?? '',
-                            'static-down' => $images['explore-character-images']['static-down'] ?? '',
-                            'static-left' => $images['explore-character-images']['static-left'] ?? '',
-                            'static-right' => $images['explore-character-images']['static-right'] ?? '',
-                            'up-punch' => $images['explore-character-images']['up-punch'] ?? '',
-                            'right-punch' => $images['explore-character-images']['right-punch'] ?? '',
-                            'left-punch' => $images['explore-character-images']['left-punch'] ?? '',
-                            'down-punch' => $images['explore-character-images']['down-punch'] ?? '',
+                            'static' => $images['static'] ?? '',
+                            'up' => $images['up'] ?? '',
+                            'down' => $images['down'] ?? '',
+                            'left' => $images['left'] ?? '',
+                            'right' => $images['right'] ?? '',
+                            'static-up' => $images['static-up'] ?? '',
+                            'static-down' => $images['static-down'] ?? '',
+                            'static-left' => $images['static-left'] ?? '',
+                            'static-right' => $images['static-right'] ?? '',
+                            'up-punch' => $images['up-punch'] ?? '',
+                            'right-punch' => $images['right-punch'] ?? '',
+                            'left-punch' => $images['left-punch'] ?? '',
+                            'down-punch' => $images['down-punch'] ?? '',
                         ],
                         'height' => get_post_meta($main_character->ID, 'explore-height', true),
                         'width' => get_post_meta($main_character->ID, 'explore-width', true),

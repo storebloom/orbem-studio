@@ -28,7 +28,7 @@ $post_types = get_post_types();
         <?php foreach($post_types as $post_type):
             if ( false !== stripos($post_type, 'explore')) :
             ?>
-        <li data-type="<?php echo esc_attr($post_type); ?>"><?php echo esc_html(ucfirst(str_replace(['explainer', 'explore-', 'point', '-'], ['focus view', '', 'item', ' '], $post_type))); ?></li>
+        <li data-type="<?php echo esc_attr($post_type); ?>"><?php echo esc_html(ucfirst(str_replace(['sign', 'explore-', 'point', '-'], ['focus view', '', 'item', ' '], $post_type))); ?></li>
         <?php endif; endforeach; ?>
     </ul>
     <div class="add-new-fields">

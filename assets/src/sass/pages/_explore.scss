@@ -18,9 +18,11 @@ html {
       position: relative;
       left: -1000px;
       transition: left .3s;
+      width: 0;
 
       &.engage {
         left: 0;
+        width: auto;
       }
 
       .find-explore-item {
@@ -119,6 +121,12 @@ html {
     #primary {
       overflow: hidden;
       overscroll-behavior: none;
+
+      &[data-devmode="true"] {
+        #missions {
+          top: 10.5rem;
+        }
+      }
 
       @media only screen and (max-width: 480px) {
         height: 100dvh;
@@ -848,6 +856,21 @@ html {
         top: 1rem;
         z-index: 6;
 
+        .pinpoint-container {
+          bottom: 13rem;
+          position: fixed;
+
+          #open-pinpoint {
+            cursor: pointer;
+            font-size: 40px;
+          }
+
+          input {
+            border: 1px solid #00cee3;
+            border-radius: 4px;
+          }
+        }
+
         .point-bar {
           border: #2b2b2b 1px solid;
           border-radius: 20px;
@@ -926,108 +949,6 @@ html {
         }
       }
 
-      [data-genre="explore-sign"] {
-        z-index: 5;
-        &>div, &>p, &>img:not(.sign-image), &>figure {
-          height: 100%;
-          left: 50%;
-          max-height: 60vh;
-          max-width: 70vw;
-          overflow: scroll;
-          padding: 2rem;
-          position: fixed;
-          top: 50%;
-          transform: translate(-50%, -50%);
-          width: 95%;
-        }
-
-        &:not(.open-up) {
-          &>div, &>p, &>img:not(.sign-image), &>figure {
-            display: none;
-          }
-        }
-      }
-
-      .map-item,
-      .enemy-item {
-        position: absolute;
-        z-index: 1;
-
-        &.selected {
-          border: 5px solid lightblue;
-          border-radius: 4px;
-        }
-
-        &[data-passable="true"].passable {
-          z-index: 0;
-        }
-
-        &[data-foreground="true"] {
-          z-index: 2;
-        }
-
-        &[data-enemy-type="boss"] {
-          margin: 0 1rem;
-
-          svg {
-            background: rgba(0, 0, 255, 0.17);
-            border: 3px solid blue;
-            border-radius: 10000px;
-            opacity: 0;
-            position: absolute;
-            left: 8px;
-            transition: all 18s linear;
-            width: 30px;
-          }
-
-          &.pulse-wave-engage:not(.pulse-in) {
-            svg {
-              left: unset;
-              opacity: 1;
-              padding: 1000px;
-              top: unset;
-              transform: translate(-1000px, -1000px);
-              z-index: 99999999;
-            }
-          }
-        }
-
-        .map-item-modal {
-          background: #fff;
-          border-radius: 55px;
-          font-size: 14px;
-          opacity: 0;
-          right: 0;
-          padding: 22px;
-          position: absolute;
-          top: 0;
-          transform: translate(80%, -80%);
-          transition: all .5s;
-          width: 200px;
-
-          &.engage {
-            display: block;
-          }
-
-          &:before {
-            border-top: 20px solid #fff;
-            border-left: 0 solid transparent;
-            border-right: 36px solid transparent;
-            content: "";
-            left: 20px;
-            position: absolute;
-            top: 91%;
-            width: 0;
-          }
-        }
-
-        &.engage {
-          .map-item-modal {
-            opacity: 1;
-          }
-        }
-      }
-
       div[data-map-item-area] {
         position: absolute;
         height: 100%;
@@ -1044,6 +965,122 @@ html {
           position: absolute;
           top: 0;
           width: 5000px;
+        }
+
+        .map-item,
+        .enemy-item {
+          position: absolute;
+          z-index: 1;
+
+          &[data-genre="explore-sign"] {
+            position: relative;
+            z-index: 5;
+            img.sign-image {
+              width: 100%;
+            }
+
+            &>div, &>p, &>img:not(.sign-image), &>figure {
+              height: 100%;
+              left: 50%;
+              max-height: 60vh;
+              max-width: 70vw;
+              overflow: visible;
+              padding: 2rem;
+              position: fixed;
+              top: 50%;
+              transform: translate(-50%, -50%);
+              width: 95%;
+
+              &:before {
+                content: 'X';
+                cursor: pointer;
+                font-size: 2rem;
+                position: absolute;
+                right: 0;
+                top: 0;
+              }
+            }
+
+            &:not(.open-up) {
+              &>div, &>p, &>img:not(.sign-image), &>figure {
+                display: none;
+              }
+            }
+          }
+
+          &.selected {
+            border: 5px solid lightblue;
+            border-radius: 4px;
+          }
+
+          &[data-passable="true"].passable {
+            z-index: 0;
+          }
+
+          &[data-foreground="true"] {
+            z-index: 2;
+          }
+
+          &[data-enemy-type="boss"] {
+            margin: 0 1rem;
+
+            svg {
+              background: rgba(0, 0, 255, 0.17);
+              border: 3px solid blue;
+              border-radius: 10000px;
+              opacity: 0;
+              position: absolute;
+              left: 8px;
+              transition: all 18s linear;
+              width: 30px;
+            }
+
+            &.pulse-wave-engage:not(.pulse-in) {
+              svg {
+                left: unset;
+                opacity: 1;
+                padding: 1000px;
+                top: unset;
+                transform: translate(-1000px, -1000px);
+                z-index: 99999999;
+              }
+            }
+          }
+
+          .map-item-modal {
+            background: #fff;
+            border-radius: 55px;
+            font-size: 14px;
+            opacity: 0;
+            right: 0;
+            padding: 22px;
+            position: absolute;
+            top: 0;
+            transform: translate(80%, -80%);
+            transition: all .5s;
+            width: 200px;
+
+            &.engage {
+              display: block;
+            }
+
+            &:before {
+              border-top: 20px solid #fff;
+              border-left: 0 solid transparent;
+              border-right: 36px solid transparent;
+              content: "";
+              left: 20px;
+              position: absolute;
+              top: 91%;
+              width: 0;
+            }
+          }
+
+          &.engage {
+            .map-item-modal {
+              opacity: 1;
+            }
+          }
         }
 
         .minigame {

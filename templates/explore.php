@@ -134,35 +134,8 @@ include plugin_dir_path(__FILE__) . 'plugin-header.php';
                     <span class="my-points"><?php echo esc_html($point);?></span>/<span class="next-level-points"><?php echo esc_html($max_points[$current_level]); ?></span>
             </div>
             <?php if (true === $is_admin) : ?>
-                <div class="open-close-item-list">open/close item list ></div>
-                <div class="explore-item-list" style="background-color: rgba(255,255,255,0.82); padding: 1rem;">
-                    <?php $class_end = '-map-item';
-                    foreach($item_list as $explore_item) :
-                        switch ($explore_item->post_type) {
-                        case 'explore-explainer':
-                            $class_end = '-explainer-item';
-                            break;
-                        case 'explore-cutscene':
-                            $class_end = '-map-cutscene';
-                            break;
-                            default:
-                                $class_end = '-map-item';
-                        }
-                        $class = $explore_item->post_name . $class_end;
-                        $meta = false !== stripos($explore_item->ID, 't') ? 'data-meta=' . $explore_item->post_type . '' : '';
-                        ?>
-                        <p class="find-explore-item" <?php echo esc_attr($meta); ?> id="<?php echo esc_html($explore_item->ID); ?>-f" data-class="<?php echo esc_attr($class); ?>">
-                            <span class="find-title">
-                                <?php echo esc_html(ucfirst(str_replace(['-', 'explore '], [' ', ''], $explore_item->post_name))); ?>
-                                <small><em><strong> | <?php echo esc_html(ucfirst(str_replace(['explore-', 'point'], ['', 'item'], $explore_item->post_type))); ?></strong></em></small>
-                            </span>
-                            <span class="edit-item-button"> | size ✎</span>
-                            <span class="close-item-button" style="display: none;">X</span>
-                            <br/>
-                            <a href="<?php echo esc_url(admin_url() . 'post.php?post=' . $explore_item->ID . '&action=edit'); ?>" />edit item</a>
-                        </p>
-                    <?php endforeach; ?>
-                </div>
+                <?php include $plugin_dir_path . '/components/finder-list.php'; ?>
+                <?php include $plugin_dir_path . '/components/pinpoint.php'; ?>
             <?php endif; ?>
         </div>
         <div id="settings">

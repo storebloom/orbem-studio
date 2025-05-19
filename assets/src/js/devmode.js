@@ -8,6 +8,40 @@ document.addEventListener("DOMContentLoaded", function() {
     const godMode = document.getElementById( 'god-mode' );
     const noTouch = document.getElementById( 'no-touch' );
     const showCollision = document.getElementById( 'show-collision-map' );
+    let recordThePath = false;
+
+    // Pinpoint.
+    const pinPointIcon = document.getElementById('open-pinpoint');
+
+    if ( pinPointIcon ) {
+        pinPointIcon.addEventListener('click', () => {
+            document.body.style.cursor = 'copy';
+
+            setTimeout( () => {
+                document.addEventListener('click', getMouseCoordinates);
+                document.addEventListener('mousemove', trackMouseCoordinates);
+            }, 0);
+        });
+
+        function getMouseCoordinates(e) {
+            e.stopPropagation();
+            const topPinpoint = document.getElementById('top-pinpoint');
+            const leftPinpoint = document.getElementById('left-pinpoint');
+
+            topPinpoint.value = mouseY;
+            leftPinpoint.value = mouseX;
+
+            document.removeEventListener('click', getMouseCoordinates);
+            document.removeEventListener('mousemove', trackMouseCoordinates);
+            document.body.style.cursor = 'inherit';
+        }
+
+        function trackMouseCoordinates(event) {
+            const mapRect = document.querySelector( '.game-container' ).getBoundingClientRect();
+            window.mouseX = parseInt(event.clientX - mapRect.left);
+            window.mouseY = parseInt(event.clientY - mapRect.top);
+        }
+    }
 
     window.godMode = false;
     window.noTouch = false;
@@ -117,15 +151,34 @@ document.addEventListener("DOMContentLoaded", function() {
                         widthInput.value = definedWidth && '' !== definedWidth ? definedWidth : theNewSizeItem.dataset?.width;
                         submitSize.classList.add('submit-size');
                         submitSize.textContent = 'submit';
-
                         heightLabel.appendChild(heightInput);
                         widthLabel.appendChild(widthInput);
                         sizeContainer.appendChild(heightLabel);
                         sizeContainer.appendChild(widthLabel);
                         sizeContainer.appendChild(submitSize);
+
+                        if ('explore-character' === item.dataset.posttype || 'explore-enemy' === item.dataset.posttype) {
+                            const recordPathLabel = document.createElement('label');
+                            const recordPathInput = document.createElement('input');
+                            recordPathInput.type = 'checkbox';
+                            recordPathLabel.textContent = 'Record Walking Path';
+                            recordPathLabel.appendChild(recordPathInput);
+                            sizeContainer.appendChild(recordPathLabel);
+
+                            // Start and stop recording walking path.
+                            recordPathInput.addEventListener('change', () => {
+                                if (recordPathInput.checked) {
+                                    recordThePath = theID;
+                                } else {
+                                    recordThePath = false;
+                                }
+                            });
+                        }
+
                         item.appendChild(sizeContainer);
                         editButton.classList.add('created');
 
+                        // Submit the new size for the find item.
                         submitSize.addEventListener('click', e => {
 
                             const filehref = `https://${wpThemeURL}/wp-json/orbemorder/v1/set-item-size/`;
@@ -170,7 +223,8 @@ document.addEventListener("DOMContentLoaded", function() {
             }
 
             itemTitle.addEventListener('click', (e) => {
-                const theItem = document.querySelector('.' + e.target.closest('.find-explore-item').dataset.class);
+                const theFinderItem = e.target.closest('.find-explore-item');
+                const theItem = document.querySelector('.' + theFinderItem.dataset.class + '[data-genre="' + theFinderItem.dataset.posttype + '"]');
                 const currentSelected = document.querySelector( '.map-item.selected');
                 const currentListSelected = document.querySelector('.find-explore-item.selected');
 
@@ -206,6 +260,10 @@ document.addEventListener("DOMContentLoaded", function() {
             clearTimeout(sendItemCoodinateTimeout);
             event.preventDefault();
             draggedContainer = event.target.closest('.map-item'); // Get the container element
+
+            // Remove transition for items that moved.
+            draggedContainer.style.transition = '';
+
             if (draggedContainer) {
                 // Calculate the offset of the mouse from the top-left corner of the container
                 const rect = draggedContainer.getBoundingClientRect();
@@ -247,6 +305,11 @@ document.addEventListener("DOMContentLoaded", function() {
                         id: theID,
                         meta: draggedContainer.dataset?.meta,
                     }
+
+                    if (theID === recordThePath) {
+                        jsonString.walkingPath = 'true';
+                    }
+
                     // Save position of item.
                     fetch(filehref, {
                         method: 'POST', // Specify the HTTP method.
@@ -260,6 +323,14 @@ document.addEventListener("DOMContentLoaded", function() {
                             if (!response.ok) {
                                 throw new Error('Network response was not ok ' + response.statusText);
                             }
+
+                            draggedContainer.style.border = '4px solid lightblue';
+                            draggedContainer.transition = 'border .3s';
+
+                            setTimeout( () => {
+                                draggedContainer.style.border = 'none';
+                                draggedContainer.style.transition = '';
+                            }, 500);
                         });
 
                     // Clear the reference to the dragged container.

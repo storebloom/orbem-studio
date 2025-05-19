@@ -13,8 +13,8 @@ if ( false === is_wp_error($characters)) {
     foreach ($characters as $character) {
         $weapon_choice = get_post_meta($character->ID, 'explore-weapon-choice');
 
-        if (false === is_wp_error($weapon_choice) && false === in_array($storage['weapons'], [$weapon_choice[0]->slug])) {
-            $weapon_id = get_posts(['post_type' => 'explore-weapon', 'post_name' => $weapon_choice[0]->slug, 'posts_per_page' => 1]);
+        if (false === is_wp_error($weapon_choice) && false === in_array($storage['weapons'], [$weapon_choice])) {
+            $weapon_id = get_posts(['post_type' => 'explore-weapon', 'post_name' => $weapon_choice, 'posts_per_page' => 1]);
 
             if (false === empty($weapon_id[0])) {
                 $storage['weapons'][] = ['name' => $weapon_choice, 'id' => $weapon_id[0]->ID, 'type' => 'weapons', 'character' => $character->post_name];
