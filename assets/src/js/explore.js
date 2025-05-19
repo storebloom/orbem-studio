@@ -2462,6 +2462,7 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
 
                     if (triggee) {
                         triggee.classList.add('show-explainer');
+                        triggee.style.zIndex = '5';
                         value.classList.add('already-hit');
 
                         const arrow = triggee.querySelector('img');
@@ -2516,6 +2517,7 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
                         // Close explainer on click.
                         triggee.addEventListener('click', () => {
                             triggee.classList.remove('show-explainer');
+                            triggee.style.zIndex = '1';
                         });
                     }
                 }
@@ -4116,8 +4118,6 @@ function runPointAnimation( value, position, isMission, missionPoints, missionNa
     positionType = positionType && '' !== positionType ? positionType : 'point';
     const thePoints = document.querySelector( `#explore-points .${ positionType }-amount` );
     let currentPoints = 100;
-
-    console.log(missionPoints);
 
     const objectAmount = true === isMission ? parseInt(missionPoints) : value.dataset?.value;
 

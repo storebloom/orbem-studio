@@ -1896,6 +1896,7 @@ class Explore
                 if (false === empty($explainer_top)) {
                     $html .= '<div id="' . $explainer->ID . '" class="' . $explainer->post_name . '-explainer-item explainer-container map-item" ';
                     $html .= 'style="left:' . $explainer_left . 'px;top:' . $explainer_top . 'px;height:auto; width:' . $explainer_width . 'px;"';
+                    $html .= ' data-type="' . $explainer_type . '"';
                     $html .= '>';
                     $html .= $arrow_img ? '<img data-rotate="' . $rotation . '" width="120" height="120" style="'. esc_attr($arrow_style_css) . '" src="' . $arrow_img . '" />' : '';
                     $html .= wp_kses_post($explainer->post_content);

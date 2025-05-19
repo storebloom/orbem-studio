@@ -24,7 +24,7 @@
                                 <?php echo esc_html(ucfirst(str_replace(['-', 'explore '], [' ', ''], $explore_item->post_name))); ?>
                                 <small><em><strong> | <?php echo esc_html(ucfirst(str_replace(['explore-', 'point'], ['', 'item'], $explore_item->post_type))); ?></strong></em></small>
                             </span>
-            <span class="edit-item-button"> | size ✎</span>
+            <span class="edit-item-button"> | size ✎</span> | <span class="show-hide-item show">👁</span>
             <br/>
             <a href="<?php echo esc_url(admin_url() . 'post.php?post=' . $explore_item->ID . '&action=edit'); ?>" />edit item</a>
             <span class="close-item-button" style="display: none;">X</span>

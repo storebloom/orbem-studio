@@ -68,6 +68,7 @@ document.addEventListener("DOMContentLoaded", function() {
         noTouch.addEventListener('change', () => {
             if ( noTouch.checked ) {
                 window.noTouch = true;
+                mainCharacter.style.zIndex = '0';
             } else {
                 window.noTouch = false;
             }
@@ -120,12 +121,26 @@ document.addEventListener("DOMContentLoaded", function() {
         findItems.forEach( item => {
             const itemTitle = item.querySelector('.find-title');
             const editButton = item.querySelector('.edit-item-button');
+            const showItem = item.querySelector('.show-hide-item');
             const closeButton = item.querySelector('.close-item-button');
 
-            if (editButton) {
+            if (editButton && showItem) {
                 const findContainer = editButton.closest('.find-explore-item');
                 const theID = findContainer.id.replace('-f', '');
                 const theNewSizeItem = document.getElementById(theID);
+
+                showItem.addEventListener('click', e => {
+                    if (true === showItem.classList.contains( 'show' )) {
+                        theNewSizeItem.style.display = 'none';
+                        showItem.textContent = '🫣';
+                    } else {
+                        theNewSizeItem.style.display = 'block';
+                        showItem.textContent = '👁️';
+                    }
+
+                    showItem.classList.toggle('show');
+                });
+
 
                 editButton.addEventListener('click', e => {
                     if (true !== editButton.classList.contains('created')) {
@@ -282,8 +297,9 @@ document.addEventListener("DOMContentLoaded", function() {
             if (draggedContainer) {
                 // Calculate the mouse position relative to the .default-map element
                 const mapRect = document.querySelector( '.game-container' ).getBoundingClientRect();
-                const mouseX = event.clientX - mapRect.left;
-                const mouseY = event.clientY - mapRect.top;
+
+                const mouseX = 'menu' === draggedContainer.dataset.type ? event.clientX : event.clientX - mapRect.left;
+                const mouseY = 'menu' === draggedContainer.dataset.type ? event.clientY : event.clientY - mapRect.top;
 
                 // Update container position based on mouse position relative to the container
                 draggedContainer.style.left = `${mouseX - offsetX}px`;

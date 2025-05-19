@@ -19,6 +19,11 @@ html {
       left: -1000px;
       transition: left .3s;
       width: 0;
+      z-index: 9;
+
+      .show-hide-item {
+        cursor: pointer;
+      }
 
       &.engage {
         left: 0;
@@ -115,6 +120,10 @@ html {
           right: 5px;
           top: 5px;
         }
+      }
+
+      &[data-type="menu"] {
+        position: fixed;
       }
     }
 
