@@ -40,7 +40,7 @@ class Util
      */
     public function getOrbemArray($post_type, $taxo = false, $meta_key = '', $meta_value = '')
     {
-        $explore_array = ['none'];
+        $explore_array = [];
         if ($taxo) {
             $explore_taxos = get_terms(['taxonomy' => $post_type]);
 

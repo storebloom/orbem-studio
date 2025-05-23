@@ -268,8 +268,6 @@ document.addEventListener("DOMContentLoaded", function(){
             // Volume listeners.
             talkingSettings.addEventListener("input", (event) => {
                 window.talkingVolume = event.target.value;
-
-                console.log(window.talkingVolume);
             });
 
             // Volume listeners.
@@ -678,7 +676,7 @@ function saveMission( mission, value, position ) {
 
             // Remove blockade if exists.
             if ('' !== missionBlockade && '0' !== JSON.parse(missionBlockade).top) {
-                document.querySelector('.' + theMission.className.replace('mission-item ', '') + '-blockade').remove();
+                document.querySelector('.' + theMission.className.replace('engage ', '').replace('next-mission ', '' ).replace('mission-item ', '') + '-blockade').remove();
             }
 
             theMission.style.textDecoration = 'line-through';
@@ -1951,16 +1949,18 @@ function regulateTransitionSpeed(aPositionx, aPositiony, bPositionx, bPositiony,
     const diffDist = Math.hypot(aPositionx - bPositionx, aPositiony - bPositiony);
     const transitionDist = ( diffDist * .075 ) * multiple;
     let moveDirection = 'down';
+    const ydiff = Math.abs(aPositiony - bPositiony);
+    const xdiff = Math.abs(aPositionx - bPositionx);
 
     projectile.style.transition = 'all ' + transitionDist + 'ms linear 0s';
 
-    if (aPositiony < bPositiony) {
+    if (aPositiony > bPositiony && ydiff > xdiff) {
         moveDirection = 'up';
-    } else if (aPositiony > bPositiony) {
+    } else if (aPositiony < bPositiony && ydiff > xdiff) {
         moveDirection = 'down';
-    } else if (aPositionx < bPositionx) {
+    } else if (aPositionx < bPositionx && xdiff > ydiff ) {
         moveDirection = 'right';
-    } else if (aPositionx > bPositionx) {
+    } else if (aPositionx > bPositionx && xdiff > ydiff) {
         moveDirection = 'left';
     }
 
@@ -2330,6 +2330,9 @@ function loadMissionBlockades() {
                     missionBlockadeEl.style.left = blockadeSpecs.left + 'px';
                     missionBlockadeEl.style.width = blockadeSpecs.width + 'px';
                     missionBlockadeEl.style.height = blockadeSpecs.height + 'px';
+                    missionBlockadeEl.dataset.genre = 'blockade';
+                    missionBlockadeEl.id = mission.id;
+                    missionBlockadeEl.draggable = true;
 
                     if (true === missionBlockadeEl.classList.contains('next-mission')) {
                         missionBlockadeEl.style.display = 'none';
@@ -2465,6 +2468,16 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
                         triggee.style.zIndex = '5';
                         value.classList.add('already-hit');
 
+                        const text = Array.from(triggee.querySelector('p').childNodes)
+                            .filter(node => node.nodeType === Node.TEXT_NODE)
+                            .map(node => node.textContent)
+                            .join('');
+                        const mcVoice = document.querySelector('.wp-block-orbem-paragraph-mp3.mc').dataset.voice;
+                        const providedAudio = document.getElementById(triggee.id + '-s') ?? false;
+
+                        // Do text to speech.
+                        makeTalk(text, mcVoice, providedAudio );
+
                         const arrow = triggee.querySelector('img');
                         const rotate = parseInt(arrow.dataset.rotate);
                         let animate1 = false;
@@ -2516,9 +2529,18 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
 
                         // Close explainer on click.
                         triggee.addEventListener('click', () => {
-                            triggee.classList.remove('show-explainer');
-                            triggee.style.zIndex = '1';
+                            triggee.remove();
                         });
+
+                        // Close on action key
+                        document.addEventListener('keydown', closeExplainer );
+                    }
+
+                    function closeExplainer(event) {
+                        if ('Space' === event.code) {
+                            triggee.remove('show-explainer');
+                            document.removeEventListener('keydown', closeExplainer);
+                        }
                     }
                 }
 
@@ -2560,7 +2582,8 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
 
                 // Change position to triggee if cutscene trigger hit.
                 position = cutsceneTriggee && '' !== cutsceneTriggee ? cleanClassName(cutsceneTriggee) : position;
-                const theCutScene = document.querySelector('.' + position + '-map-cutscene');
+
+                const theCutScene = cutsceneTriggee && '' !== cutsceneTriggee ? document.getElementById( value.id.replace('-t', '') ) : document.querySelector('.' + position + '-map-cutscene');
 
                 // Trigger cutscene if overlapping cutscene trigger item.
                 if (false === value.classList.contains('engage') && theCutScene && false === theCutScene.classList.contains('been-viewed') && true === value.classList.contains('cutscene-trigger')) {
@@ -3011,7 +3034,7 @@ function triggerIndicator(indicateMe, isCutscene = true) {
 
             if ( true === isCutscene ) {
                 indicator.dataset.sign = '';
-                indicator.dataset.cutscene =  positionName;
+                indicator.dataset.cutscene =  indicateMe.getAttribute('data-trigger-cutscene');
             }
 
             if ( false === isCutscene ) {
@@ -3148,7 +3171,7 @@ function engageCutscene( position, areaCutscene = false, isVideo = false ) {
             window.allowCutscene = true;
 
             // Before Cutscene.
-            beforeCutscene(cutscene);
+            beforeCutscene( cutscene );
 
             // Close cutscene if click out.
             cutscene.addEventListener( 'click', ( e ) => {
@@ -3235,7 +3258,6 @@ function engageCutscene( position, areaCutscene = false, isVideo = false ) {
         function closeCutscene() {
             window.allowMovement = true;
 
-            cutscene.classList.remove( 'engage' );
             cutscene.removeEventListener( 'click', cutsceneKeys );
             document.removeEventListener( 'keydown', cutsceneKeys );
 
@@ -3369,6 +3391,19 @@ function engageCutscene( position, areaCutscene = false, isVideo = false ) {
                     // After cutscene.
                     afterCutscene( cutscene, areaCutscene );
                 } );
+
+                // Skip cutscene video.
+                const skipButton = document.getElementById('skip-cutscene-video');
+
+                if ( skipButton ) {
+                    skipButton.addEventListener('click', () => {
+                        // Reengage movement.
+                        window.allowMovement = true;
+                        cutsceneVideo.pause();
+
+                        afterCutscene( cutscene, areaCutscene );
+                    });
+                }
             }
         }
     }
@@ -3406,6 +3441,8 @@ function beforeCutscene( cutscene ) {
  * @param areaCutscene
  */
 function afterCutscene( cutscene, areaCutscene = false ) {
+    cutscene.classList.remove( 'engage' );
+
     window.nextAreaMissionComplete = '';
     const cutsceneName = cleanClassName( cutscene.className ).replace( ' ', '' );
     const bossFight = cutscene.dataset.boss;
@@ -3813,7 +3850,9 @@ function cleanClassName(classes) {
             .replace('minigame ', '')
             .replace(' pulse-wave-engage', '')
             .replace(' barage-wave-engage', '')
-            .replace( ' selected', '');
+            .replace( ' selected', '')
+            .replace( '-cutscene-trigger', '')
+            .replace( 'cutscene-trigger ', '')
     }
 }
 
@@ -4785,18 +4824,25 @@ async function makeTalk(text, voiceName, providedAudio = false) {
         }
 
         const data = await response.json();
-        const audioContent = data.audioContent;
+        const audioContent = data?.audioContent;
 
         // Play the audio
         talkAudio = new Audio(`data:audio/mp3;base64,${audioContent}`);
+        let finalVolume = .5;
 
         if ( false !== providedAudio ) {
             talkAudio = providedAudio;
+            finalVolume = scaleDbToUnit(parseInt(window.talkingVolume));
         }
 
+        talkAudio.volume = finalVolume;
         talkAudio.play();
     } catch (error) {
         console.error("Error during TTS request:", error.message);
+    }
+
+    function scaleDbToUnit(value, dbMin = -40, dbMax = 16) {
+        return (value - dbMin) / (dbMax - dbMin);
     }
 }
 

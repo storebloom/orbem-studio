@@ -58,7 +58,7 @@ class Meta_Box {
 		$post_types = ['explore-explainer', 'explore-minigame', 'explore-point', 'explore-area', 'explore-character', 'explore-enemy', 'explore-weapon', 'explore-magic', 'explore-cutscene', 'explore-mission', 'explore-sign'];
 
 		// Add the Explore Point meta box to editor pages.
-		add_meta_box( 'explore-point', esc_html__( 'Configuration', 'orbem-game-engine' ), [$this, 'explore_point_box'], $post_types, 'side', 'high' );
+		add_meta_box( 'explore-point', esc_html__( 'Configuration', 'orbem-game-engine' ), [$this, 'explore_point_box'], $post_types, 'normal', 'high' );
 	}
 
 	/**
@@ -423,9 +423,7 @@ class Meta_Box {
                     ],
                     'rotate' => 'number',
                 ],
-                'explore-character' => [
-                    'select' => [$explore_character_array]
-                ],
+                'explore-sound-byte' => 'upload'
             ],
             'explore-point' => [
                 'explore-interacted' => 'upload',

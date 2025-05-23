@@ -1,331 +1,91 @@
 import { initImageUpload } from './image-upload';
 document.addEventListener("DOMContentLoaded", function() {
-    const items = document.querySelectorAll('.map-item');
-    const triggers = document.querySelectorAll('.explainer-container, [data-trigger="true"], [data-genre="explore-area"], .map-cutscene');
-    const findItems = document.querySelectorAll('.find-explore-item');
-    const mainCharacter = document.getElementById('map-character');
-    const addNewListItems = document.querySelectorAll('#add-new-list li');
-    const godMode = document.getElementById( 'god-mode' );
-    const noTouch = document.getElementById( 'no-touch' );
-    const showCollision = document.getElementById( 'show-collision-map' );
-    let recordThePath = false;
+    setTimeout( () => {
+        const items = document.querySelectorAll('.map-item');
+        const findItems = document.querySelectorAll('.find-explore-item');
+        const mainCharacter = document.getElementById('map-character');
+        const addNewListItems = document.querySelectorAll('#add-new-list li');
+        const godMode = document.getElementById( 'god-mode' );
+        const noTouch = document.getElementById( 'no-touch' );
+        const showCollision = document.getElementById( 'show-collision-map' );
+        let recordThePath = false;
 
-    // Pinpoint.
-    const pinPointIcon = document.getElementById('open-pinpoint');
+        // Pinpoint.
+        const pinPointIcon = document.getElementById('open-pinpoint');
 
-    if ( pinPointIcon ) {
-        pinPointIcon.addEventListener('click', () => {
-            document.body.style.cursor = 'copy';
+        if ( pinPointIcon ) {
+            pinPointIcon.addEventListener('click', () => {
+                document.body.style.cursor = 'copy';
 
-            setTimeout( () => {
-                document.addEventListener('click', getMouseCoordinates);
-                document.addEventListener('mousemove', trackMouseCoordinates);
-            }, 0);
-        });
+                setTimeout( () => {
+                    document.addEventListener('click', getMouseCoordinates);
+                    document.addEventListener('mousemove', trackMouseCoordinates);
+                }, 0);
+            });
 
-        function getMouseCoordinates(e) {
-            e.stopPropagation();
-            const topPinpoint = document.getElementById('top-pinpoint');
-            const leftPinpoint = document.getElementById('left-pinpoint');
+            function getMouseCoordinates(e) {
+                e.stopPropagation();
+                const topPinpoint = document.getElementById('top-pinpoint');
+                const leftPinpoint = document.getElementById('left-pinpoint');
 
-            topPinpoint.value = mouseY;
-            leftPinpoint.value = mouseX;
+                topPinpoint.value = mouseY;
+                leftPinpoint.value = mouseX;
 
-            document.removeEventListener('click', getMouseCoordinates);
-            document.removeEventListener('mousemove', trackMouseCoordinates);
-            document.body.style.cursor = 'inherit';
-        }
-
-        function trackMouseCoordinates(event) {
-            const mapRect = document.querySelector( '.game-container' ).getBoundingClientRect();
-            window.mouseX = parseInt(event.clientX - mapRect.left);
-            window.mouseY = parseInt(event.clientY - mapRect.top);
-        }
-    }
-
-    window.godMode = false;
-    window.noTouch = false;
-
-    if ( godMode && noTouch && showCollision ) {
-        showCollision.addEventListener('change', () => {
-            const collisionMap = document.querySelector( '.default-map > svg' );
-
-            if ( showCollision.checked ) {
-                collisionMap.style.opacity = '1';
-            } else {
-                collisionMap.style.opacity = '0';
-            }
-        });
-
-        godMode.addEventListener('change', () => {
-            if ( godMode.checked ) {
-                window.godMode = true;
-            } else {
-                window.godMode = false;
-            }
-        });
-
-        noTouch.addEventListener('change', () => {
-            if ( noTouch.checked ) {
-                window.noTouch = true;
-                mainCharacter.style.zIndex = '0';
-            } else {
-                window.noTouch = false;
-            }
-        });
-    }
-
-    if ( addNewListItems ) {
-        addNewListItems.forEach(function (item) {
-            item.addEventListener('click', () => {
-                const postType = item.dataset.type;
-
-                item.classList.add('engage');
-
-                const filehref = `https://${wpThemeURL}/wp-json/orbemorder/v1/get-new-fields/`;
-                const jsonString = {
-                    type: postType,
-                }
-                // Save position of item.
-                fetch(filehref, {
-                    method: 'POST', // Specify the HTTP method.
-                    headers: {
-                        'Content-Type': 'application/json', // Set the content type to JSON.
-                    },
-                    body: JSON.stringify(jsonString) // The JSON stringified payload.
-                })
-                    .then(response => {
-                        // Check if the response status is in the range 200-299.
-                        if (!response.ok) {
-                            throw new Error('Network response was not ok ' + response.statusText);
-                        }
-
-                        return response.json();
-                    }).then(data => {
-                        const addNewFields = document.querySelector('.add-new-fields');
-
-                        if ( addNewFields ) {
-                            addNewFields.innerHTML = data.data;
-
-                            if ( typeof initImageUpload === 'function' ) {
-                                initImageUpload();
-                                makeNewFormSub();
-                            }
-                        }
-                });
-            })
-        })
-    }
-
-    if ( findItems && findItems.length > 0 ) {
-        findItems.forEach( item => {
-            const itemTitle = item.querySelector('.find-title');
-            const editButton = item.querySelector('.edit-item-button');
-            const showItem = item.querySelector('.show-hide-item');
-            const closeButton = item.querySelector('.close-item-button');
-
-            if (editButton && showItem) {
-                const findContainer = editButton.closest('.find-explore-item');
-                const theID = findContainer.id.replace('-f', '');
-                const theNewSizeItem = document.getElementById(theID);
-
-                showItem.addEventListener('click', e => {
-                    if (true === showItem.classList.contains( 'show' )) {
-                        theNewSizeItem.style.display = 'none';
-                        showItem.textContent = '🫣';
-                    } else {
-                        theNewSizeItem.style.display = 'block';
-                        showItem.textContent = '👁️';
-                    }
-
-                    showItem.classList.toggle('show');
-                });
-
-
-                editButton.addEventListener('click', e => {
-                    if (true !== editButton.classList.contains('created')) {
-                        const sizeContainer = document.createElement('div');
-                        const heightLabel = document.createElement('label');
-                        const heightInput = document.createElement('input');
-                        const widthLabel = document.createElement('label');
-                        const widthInput = document.createElement('input');
-                        const submitSize = document.createElement('button');
-                        let definedHeight = theNewSizeItem.style.height;
-                        definedHeight = definedHeight ? definedHeight.replace('px', '') : '';
-                        let definedWidth = theNewSizeItem.style.width;
-                        definedWidth = definedWidth ? definedWidth.replace('px', '') : '';
-
-                        closeButton.style.display = 'block';
-
-                        heightLabel.textContent = 'Height';
-                        widthLabel.textContent = 'Width';
-                        sizeContainer.classList.add('size-input');
-                        heightInput.type = 'number';
-                        heightInput.value = definedHeight && '' !== definedHeight ? definedHeight : theNewSizeItem.dataset?.height;
-                        widthInput.type = 'number';
-                        widthInput.value = definedWidth && '' !== definedWidth ? definedWidth : theNewSizeItem.dataset?.width;
-                        submitSize.classList.add('submit-size');
-                        submitSize.textContent = 'submit';
-                        heightLabel.appendChild(heightInput);
-                        widthLabel.appendChild(widthInput);
-                        sizeContainer.appendChild(heightLabel);
-                        sizeContainer.appendChild(widthLabel);
-                        sizeContainer.appendChild(submitSize);
-
-                        if ('explore-character' === item.dataset.posttype || 'explore-enemy' === item.dataset.posttype) {
-                            const recordPathLabel = document.createElement('label');
-                            const recordPathInput = document.createElement('input');
-                            recordPathInput.type = 'checkbox';
-                            recordPathLabel.textContent = 'Record Walking Path';
-                            recordPathLabel.appendChild(recordPathInput);
-                            sizeContainer.appendChild(recordPathLabel);
-
-                            // Start and stop recording walking path.
-                            recordPathInput.addEventListener('change', () => {
-                                if (recordPathInput.checked) {
-                                    recordThePath = theID;
-                                } else {
-                                    recordThePath = false;
-                                }
-                            });
-                        }
-
-                        item.appendChild(sizeContainer);
-                        editButton.classList.add('created');
-
-                        // Submit the new size for the find item.
-                        submitSize.addEventListener('click', e => {
-
-                            const filehref = `https://${wpThemeURL}/wp-json/orbemorder/v1/set-item-size/`;
-                            const jsonString = {
-                                height: heightInput.value,
-                                width: widthInput.value,
-                                id: theID,
-                                meta: item.dataset?.meta
-                            }
-                            // Save position of item.
-                            fetch(filehref, {
-                                method: 'POST', // Specify the HTTP method.
-                                headers: {
-                                    'Content-Type': 'application/json', // Set the content type to JSON.
-                                },
-                                body: JSON.stringify(jsonString) // The JSON stringified payload.
-                            })
-                                .then(response => {
-                                    // Check if the response status is in the range 200-299.
-                                    if (!response.ok) {
-                                        throw new Error('Network response was not ok ' + response.statusText);
-                                    } else {
-                                        sizeContainer.remove();
-                                        editButton.classList.remove('created');
-                                        closeButton.style.display = 'none';
-
-                                        if ( theNewSizeItem ) {
-                                            theNewSizeItem.style.height = `${heightInput.value}px`;
-                                            theNewSizeItem.style.width = `${widthInput.value}px`;
-                                        }
-                                    }
-                                });
-                        });
-
-                        closeButton.addEventListener('click', e => {
-                            sizeContainer.remove();
-                            editButton.classList.remove('created');
-                            closeButton.style.display = 'none';
-                        });
-                    }
-                });
+                document.removeEventListener('click', getMouseCoordinates);
+                document.removeEventListener('mousemove', trackMouseCoordinates);
+                document.body.style.cursor = 'inherit';
             }
 
-            itemTitle.addEventListener('click', (e) => {
-                const theFinderItem = e.target.closest('.find-explore-item');
-                const theItem = document.querySelector('.' + theFinderItem.dataset.class + '[data-genre="' + theFinderItem.dataset.posttype + '"]');
-                const currentSelected = document.querySelector( '.map-item.selected');
-                const currentListSelected = document.querySelector('.find-explore-item.selected');
-
-                if ( currentSelected ) {
-                    currentSelected.classList.remove( 'selected' );
-                }
-
-                if ( currentListSelected ) {
-                    currentListSelected.classList.remove( 'selected' );
-                }
-
-                if ( theItem ) {
-                    mainCharacter.style.left = (parseInt(theItem.style.left.replace('px', '')) - 200) + 'px';
-                    mainCharacter.style.top = (parseInt(theItem.style.top.replace('px', '')) - 200) + 'px';
-                    theItem.scrollIntoView();
-                    theItem.classList.add('selected');
-                    item.classList.add('selected');
-                }
-            })
-        })
-    }
-
-    if ( items && items.length ) {
-
-        // Drag logic.
-        let draggedContainer = null;
-        let offsetX = 0;
-        let offsetY = 0;
-        let sendItemCoodinateTimeout;
-
-        // Handle the dragstart event
-        function handleDragStart(event) {
-            clearTimeout(sendItemCoodinateTimeout);
-            event.preventDefault();
-            draggedContainer = event.target.closest('.map-item'); // Get the container element
-
-            // Remove transition for items that moved.
-            draggedContainer.style.transition = '';
-
-            if (draggedContainer) {
-                // Calculate the offset of the mouse from the top-left corner of the container
-                const rect = draggedContainer.getBoundingClientRect();
-                offsetX = event.clientX - rect.left;
-                offsetY = event.clientY - rect.top;
-
-                event.dataTransfer.setData('text/plain', '');
-
-                // Add mousemove event listener to update container position
-                document.addEventListener('mousemove', handleMouseMove);
-            }
-        }
-
-        // Handle the mousemove event to update container position
-        function handleMouseMove(event) {
-            if (draggedContainer) {
-                // Calculate the mouse position relative to the .default-map element
+            function trackMouseCoordinates(event) {
                 const mapRect = document.querySelector( '.game-container' ).getBoundingClientRect();
-
-                const mouseX = 'menu' === draggedContainer.dataset.type ? event.clientX : event.clientX - mapRect.left;
-                const mouseY = 'menu' === draggedContainer.dataset.type ? event.clientY : event.clientY - mapRect.top;
-
-                // Update container position based on mouse position relative to the container
-                draggedContainer.style.left = `${mouseX - offsetX}px`;
-                draggedContainer.style.top = `${mouseY - offsetY}px`;
+                window.mouseX = parseInt(event.clientX - mapRect.left);
+                window.mouseY = parseInt(event.clientY - mapRect.top);
             }
         }
 
-        // Handle the dragend event
-        function handleDragEnd() {
-            if (draggedContainer) {
-                sendItemCoodinateTimeout = setTimeout(() => {
-                    const filehref = `https://${wpThemeURL}/wp-json/orbemorder/v1/set-item-position/`;
-                    const theID = 'true' === draggedContainer.dataset.trigger ? draggedContainer.id.replace('-t', '') : draggedContainer.id;
+        window.godMode = false;
+        window.noTouch = false;
+
+        if ( godMode && noTouch && showCollision ) {
+            showCollision.addEventListener('change', () => {
+                const collisionMap = document.querySelector( '.default-map > svg' );
+
+                if ( showCollision.checked ) {
+                    collisionMap.style.opacity = '1';
+                } else {
+                    collisionMap.style.opacity = '0';
+                }
+            });
+
+            godMode.addEventListener('change', () => {
+                if ( godMode.checked ) {
+                    window.godMode = true;
+                } else {
+                    window.godMode = false;
+                }
+            });
+
+            noTouch.addEventListener('change', () => {
+                if ( noTouch.checked ) {
+                    window.noTouch = true;
+                    mainCharacter.style.zIndex = '0';
+                } else {
+                    window.noTouch = false;
+                }
+            });
+        }
+
+        if ( addNewListItems ) {
+            addNewListItems.forEach(function (item) {
+                item.addEventListener('click', () => {
+                    const postType = item.dataset.type;
+
+                    item.classList.add('engage');
+
+                    const filehref = `https://${wpThemeURL}/wp-json/orbemorder/v1/get-new-fields/`;
                     const jsonString = {
-                        top: draggedContainer.style.top.replace('px', ''),
-                        left: draggedContainer.style.left.replace('px', ''),
-                        height: draggedContainer.style.height.replace('px', ''),
-                        width: draggedContainer.style.width.replace('px', ''),
-                        id: theID,
-                        meta: draggedContainer.dataset?.meta,
+                        type: postType,
                     }
-
-                    if (theID === recordThePath) {
-                        jsonString.walkingPath = 'true';
-                    }
-
                     // Save position of item.
                     fetch(filehref, {
                         method: 'POST', // Specify the HTTP method.
@@ -340,38 +100,281 @@ document.addEventListener("DOMContentLoaded", function() {
                                 throw new Error('Network response was not ok ' + response.statusText);
                             }
 
-                            draggedContainer.style.border = '4px solid lightblue';
-                            draggedContainer.transition = 'border .3s';
+                            return response.json();
+                        }).then(data => {
+                            const addNewFields = document.querySelector('.add-new-fields');
 
-                            setTimeout( () => {
-                                draggedContainer.style.border = 'none';
-                                draggedContainer.style.transition = '';
-                            }, 500);
-                        });
+                            if ( addNewFields ) {
+                                addNewFields.innerHTML = data.data;
 
-                    // Clear the reference to the dragged container.
-                    draggedContainer = null;
-                }, 1000);
-
-                // Remove mousemove event listener
-                document.removeEventListener('mousemove', handleMouseMove);
-            }
+                                if ( typeof initImageUpload === 'function' ) {
+                                    initImageUpload();
+                                    makeNewFormSub();
+                                }
+                            }
+                    });
+                })
+            })
         }
 
-        items.forEach( item => {
-            item.draggable = true;
-            item.addEventListener('dragstart', handleDragStart);
-            item.addEventListener('mouseup', handleDragEnd);
-        });
-    }
+        if ( findItems && findItems.length > 0 ) {
+            findItems.forEach( item => {
+                const itemTitle = item.querySelector('.find-title');
+                const editButton = item.querySelector('.edit-item-button');
+                const showItem = item.querySelector('.show-hide-item');
+                const closeButton = item.querySelector('.close-item-button');
 
-    if ( triggers ) {
-        triggers.forEach( trigger => {
-            trigger.style.backgroundColor = 'rgb(0,146,255)';
-            trigger.style.opacity = .3;
-            trigger.style.zIndex = 1;
-        });
-    }
+                if (editButton && showItem) {
+                    const findContainer = editButton.closest('.find-explore-item');
+                    const theID = findContainer.id.replace('-f', '');
+                    const theNewSizeItem = document.getElementById(theID);
+
+                    showItem.addEventListener('click', e => {
+                        if (true === showItem.classList.contains( 'show' )) {
+                            theNewSizeItem.style.display = 'none';
+                            showItem.textContent = '🫣';
+                        } else {
+                            theNewSizeItem.style.display = 'block';
+                            showItem.textContent = '👁️';
+                        }
+
+                        showItem.classList.toggle('show');
+                    });
+
+
+                    editButton.addEventListener('click', e => {
+                        if (true !== editButton.classList.contains('created')) {
+                            const sizeContainer = document.createElement('div');
+                            const heightLabel = document.createElement('label');
+                            const heightInput = document.createElement('input');
+                            const widthLabel = document.createElement('label');
+                            const widthInput = document.createElement('input');
+                            const submitSize = document.createElement('button');
+                            let definedHeight = theNewSizeItem.style.height;
+                            definedHeight = definedHeight ? definedHeight.replace('px', '') : '';
+                            let definedWidth = theNewSizeItem.style.width;
+                            definedWidth = definedWidth ? definedWidth.replace('px', '') : '';
+
+                            closeButton.style.display = 'block';
+
+                            heightLabel.textContent = 'Height';
+                            widthLabel.textContent = 'Width';
+                            sizeContainer.classList.add('size-input');
+                            heightInput.type = 'number';
+                            heightInput.value = definedHeight && '' !== definedHeight ? definedHeight : theNewSizeItem.dataset?.height;
+                            widthInput.type = 'number';
+                            widthInput.value = definedWidth && '' !== definedWidth ? definedWidth : theNewSizeItem.dataset?.width;
+                            submitSize.classList.add('submit-size');
+                            submitSize.textContent = 'submit';
+                            heightLabel.appendChild(heightInput);
+                            widthLabel.appendChild(widthInput);
+                            sizeContainer.appendChild(heightLabel);
+                            sizeContainer.appendChild(widthLabel);
+                            sizeContainer.appendChild(submitSize);
+
+                            if ('explore-character' === item.dataset.posttype || 'explore-enemy' === item.dataset.posttype) {
+                                const recordPathLabel = document.createElement('label');
+                                const recordPathInput = document.createElement('input');
+                                recordPathInput.type = 'checkbox';
+                                recordPathLabel.textContent = 'Record Walking Path';
+                                recordPathLabel.appendChild(recordPathInput);
+                                sizeContainer.appendChild(recordPathLabel);
+
+                                // Start and stop recording walking path.
+                                recordPathInput.addEventListener('change', () => {
+                                    if (recordPathInput.checked) {
+                                        recordThePath = theID;
+                                    } else {
+                                        recordThePath = false;
+                                    }
+                                });
+                            }
+
+                            item.appendChild(sizeContainer);
+                            editButton.classList.add('created');
+
+                            // Submit the new size for the find item.
+                            submitSize.addEventListener('click', e => {
+
+                                const filehref = `https://${wpThemeURL}/wp-json/orbemorder/v1/set-item-size/`;
+                                const jsonString = {
+                                    height: heightInput.value,
+                                    width: widthInput.value,
+                                    id: theID,
+                                    meta: item.dataset?.meta
+                                }
+                                // Save position of item.
+                                fetch(filehref, {
+                                    method: 'POST', // Specify the HTTP method.
+                                    headers: {
+                                        'Content-Type': 'application/json', // Set the content type to JSON.
+                                    },
+                                    body: JSON.stringify(jsonString) // The JSON stringified payload.
+                                })
+                                    .then(response => {
+                                        // Check if the response status is in the range 200-299.
+                                        if (!response.ok) {
+                                            throw new Error('Network response was not ok ' + response.statusText);
+                                        } else {
+                                            sizeContainer.remove();
+                                            editButton.classList.remove('created');
+                                            closeButton.style.display = 'none';
+
+                                            if ( theNewSizeItem ) {
+                                                theNewSizeItem.style.height = `${heightInput.value}px`;
+                                                theNewSizeItem.style.width = `${widthInput.value}px`;
+                                            }
+                                        }
+                                    });
+                            });
+
+                            closeButton.addEventListener('click', e => {
+                                sizeContainer.remove();
+                                editButton.classList.remove('created');
+                                closeButton.style.display = 'none';
+                            });
+                        }
+                    });
+                }
+
+                itemTitle.addEventListener('click', (e) => {
+                    const theFinderItem = e.target.closest('.find-explore-item');
+                    const theItem = document.querySelector('.' + theFinderItem.dataset.class + '[data-genre="' + theFinderItem.dataset.posttype + '"]');
+                    const currentSelected = document.querySelector( '.map-item.selected');
+                    const currentListSelected = document.querySelector('.find-explore-item.selected');
+
+                    if ( currentSelected ) {
+                        currentSelected.classList.remove( 'selected' );
+                    }
+
+                    if ( currentListSelected ) {
+                        currentListSelected.classList.remove( 'selected' );
+                    }
+
+                    if ( theItem ) {
+                        mainCharacter.style.left = (parseInt(theItem.style.left.replace('px', '')) - 200) + 'px';
+                        mainCharacter.style.top = (parseInt(theItem.style.top.replace('px', '')) - 200) + 'px';
+                        theItem.scrollIntoView();
+                        theItem.classList.add('selected');
+                        item.classList.add('selected');
+                    }
+                })
+            })
+        }
+
+        if ( items && items.length ) {
+
+            // Drag logic.
+            let draggedContainer = null;
+            let offsetX = 0;
+            let offsetY = 0;
+            let sendItemCoodinateTimeout;
+
+            // Handle the dragstart event
+            function handleDragStart(event) {
+                clearTimeout(sendItemCoodinateTimeout);
+                event.preventDefault();
+                draggedContainer = event.target.closest('.map-item'); // Get the container element
+
+                // Remove transition for items that moved.
+                draggedContainer.style.transition = '';
+
+                if (draggedContainer) {
+                    // Calculate the offset of the mouse from the top-left corner of the container
+                    const rect = draggedContainer.getBoundingClientRect();
+                    offsetX = event.clientX - rect.left;
+                    offsetY = event.clientY - rect.top;
+
+                    event.dataTransfer.setData('text/plain', '');
+
+                    // Add mousemove event listener to update container position
+                    document.addEventListener('mousemove', handleMouseMove);
+                }
+            }
+
+            // Handle the mousemove event to update container position
+            function handleMouseMove(event) {
+                if (draggedContainer) {
+                    // Calculate the mouse position relative to the .default-map element
+                    const mapRect = document.querySelector( '.game-container' ).getBoundingClientRect();
+
+                    const mouseX = 'menu' === draggedContainer.dataset.type ? event.clientX : event.clientX - mapRect.left;
+                    const mouseY = 'menu' === draggedContainer.dataset.type ? event.clientY : event.clientY - mapRect.top;
+
+                    // Update container position based on mouse position relative to the container
+                    draggedContainer.style.left = `${mouseX - offsetX}px`;
+                    draggedContainer.style.top = `${mouseY - offsetY}px`;
+                }
+            }
+
+            // Handle the dragend event
+            function handleDragEnd() {
+                if (draggedContainer) {
+                    sendItemCoodinateTimeout = setTimeout(() => {
+                        const filehref = `https://${wpThemeURL}/wp-json/orbemorder/v1/set-item-position/`;
+                        const theID = 'true' === draggedContainer.dataset.trigger ? draggedContainer.id.replace('-t', '') : draggedContainer.id;
+                        const jsonString = {
+                            top: draggedContainer.style.top.replace('px', ''),
+                            left: draggedContainer.style.left.replace('px', ''),
+                            height: draggedContainer.style.height.replace('px', ''),
+                            width: draggedContainer.style.width.replace('px', ''),
+                            id: theID,
+                            meta: draggedContainer.dataset?.meta,
+                        }
+
+                        if (theID === recordThePath) {
+                            jsonString.walkingPath = 'true';
+                        }
+
+                        // Save position of item.
+                        fetch(filehref, {
+                            method: 'POST', // Specify the HTTP method.
+                            headers: {
+                                'Content-Type': 'application/json', // Set the content type to JSON.
+                            },
+                            body: JSON.stringify(jsonString) // The JSON stringified payload.
+                        })
+                            .then(response => {
+                                // Check if the response status is in the range 200-299.
+                                if (!response.ok) {
+                                    throw new Error('Network response was not ok ' + response.statusText);
+                                }
+
+                                // draggedContainer.style.border = '4px solid lightblue';
+                                // draggedContainer.transition = 'border .3s';
+                                //
+                                // setTimeout( () => {
+                                //     draggedContainer.style.border = 'none';
+                                //     draggedContainer.style.transition = '';
+                                // }, 500);
+                            });
+
+                        // Clear the reference to the dragged container.
+                        draggedContainer = null;
+                    }, 1000);
+
+                    // Remove mousemove event listener
+                    document.removeEventListener('mousemove', handleMouseMove);
+                }
+            }
+
+            items.forEach( item => {
+                item.draggable = true;
+                item.addEventListener('dragstart', handleDragStart);
+                item.addEventListener('mouseup', handleDragEnd);
+            });
+        }
+
+
+        const triggers = document.querySelectorAll('.explainer-container, [data-trigger="true"], [data-genre="explore-area"], [data-genre="blockade"]');
+        if ( triggers ) {
+            triggers.forEach(trigger => {
+                trigger.style.backgroundColor = 'rgb(0,146,255)';
+                trigger.style.opacity = .3;
+                trigger.style.zIndex = 1;
+            });
+        }
+    }, 2500);
 
     // Open close item list.
     const exploreItemList = document.querySelector('.explore-item-list');

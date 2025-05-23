@@ -53,6 +53,7 @@ foreach ($explore_missions as $mission)  {
             $hazard_remove = get_post_meta($mission->ID, 'explore-hazard-remove', true);
             ?>
             <div
+                    id="<?php echo esc_attr($mission->ID); ?>"
                     class="<?php echo esc_attr($classes); ?>"
                     data-nextmission="<?php echo $next_mission ?? ''; ?>"
                     data-hazardremove="<?php echo $hazard_remove ?? ''; ?>"

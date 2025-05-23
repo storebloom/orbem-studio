@@ -1314,14 +1314,14 @@ class Explore
             $interacted_with = get_post_meta($explore_point->ID, 'explore-interacted', true);
             $crew_mate = get_post_meta($explore_point->ID, 'explore-crew-mate', true);
             $path_trigger = get_post_meta($explore_point->ID, 'explore-path-trigger', true);
-            $path_trigger = false === empty($path_trigger['explore-path-trigger']) ? $path_trigger['explore-path-trigger'] : '';
+            $path_trigger = false === empty($path_trigger) ? $path_trigger : '';
             $path_trigger_left = false === empty($path_trigger['left']) ? $path_trigger['left'] : '';
             $path_trigger_top = false === empty($path_trigger['top']) ? $path_trigger['top'] : '';
             $path_trigger_height = false === empty($path_trigger['height']) ? $path_trigger['height'] : '';
             $path_trigger_width = false === empty($path_trigger['width']) ? $path_trigger['width'] : '';
             $path_trigger_cutscene = false === empty($path_trigger['cutscene']) ? $path_trigger['cutscene'] : '';
             $materialize_item_trigger = get_post_meta($explore_point->ID, 'explore-materialize-item-trigger', true);
-            $materialize_item_trigger = $materialize_item_trigger['explore-materialize-item-trigger'] ?? false;
+            $materialize_item_trigger = $materialize_item_trigger ?? false;
             $is_materialized_item_triggered = self::isMaterializedItemTriggered($explore_point->post_name, $current_location, $userid);
             $has_minigame = get_post_meta($explore_point->ID, 'explore-minigame', true);
             $hazard_remove = false;
@@ -1368,7 +1368,7 @@ class Explore
             );
 
              // Create onload class:
-             $path_onload = true === empty($path_trigger['left']) && true === empty($path_trigger['cutscene']) ? ' path-onload' : '';
+             $path_onload = true === empty($path_trigger['left']) && true === empty($path_trigger['cutscene']) && ('explore-character' === $explore_point->post_type || 'explore-enemy' === $explore_point->post_type) ? ' path-onload' : '';
              $classes = $path_onload;
 
             // If it's an enemy and they have health show or if not an enemy show.
@@ -1718,24 +1718,19 @@ class Explore
             $character_position = get_post_meta($explore_cutscene->ID, 'explore-cutscene-character-position', true);
             $next_area_position = get_post_meta($explore_cutscene->ID, 'explore-cutscene-next-area-position', true);
             $mission_dependent = get_post_meta($explore_cutscene->ID, 'explore-mission-dependent', true);
-            $character_position_left = $character_position['explore-cutscene-character-position']['left'] ?? '';
-            $character_position_top = $character_position['explore-cutscene-character-position']['top'] ?? '';
-            $next_area_position_left = $next_area_position['explore-cutscene-next-area-position']['left'] ?? '';
-            $next_area_position_top = $next_area_position['explore-cutscene-next-area-position']['top'] ?? '';
-            $character_position_trigger = $character_position['explore-cutscene-character-position']['trigger'] ?? '';
+            $character_position_left = $character_position['left'] ?? '';
+            $character_position_top = $character_position['top'] ?? '';
+            $next_area_position_left = $next_area_position['left'] ?? '';
+            $next_area_position_top = $next_area_position['top'] ?? '';
+            $character_position_trigger = $character_position['trigger'] ?? '';
             $mission_cutscene = get_post_meta($explore_cutscene->ID, 'explore-mission-cutscene', true);
             $music = get_post_meta($explore_cutscene->ID, 'explore-cutscene-music', true);
             $mission_complete_cutscene = get_post_meta($explore_cutscene->ID, 'explore-mission-complete-cutscene', true);
             $boss_fight = get_post_meta($explore_cutscene->ID, 'explore-cutscene-boss', true);
             $cutscene_trigger_type = get_post_meta($explore_cutscene->ID, 'explore-trigger-type', true) ?? '';
-
             $next_area_datapoint = false === empty($next_area) ? ' data-nextarea="' . $next_area . '"' : '';
+            $cutscene_name = false === $is_area_cutscene || true === $has_video ? $explore_cutscene->post_name : $area[0]->post_name;
 
-            if (false === $has_video) {
-                $cutscene_name = false === $is_area_cutscene ? $character : $area[0]->post_name;
-            } else {
-                $cutscene_name = $explore_cutscene->post_name;
-            }
 
             $html .= '<div class="wp-block-group map-cutscene ' . esc_attr($cutscene_name) . '-map-cutscene is-layout-flow wp-block-group-is-layout-flow"';
             $html .= ' id="' . esc_attr($explore_cutscene->ID) . '"';
@@ -1794,18 +1789,24 @@ class Explore
             }
 
             $html .= 'explore-area' !== $explore_cutscene->post_type ? $explore_cutscene->post_content : '';
+
+            if (true === $has_video) {
+                $html .= '<span id="skip-cutscene-video">SKIP</span>';
+            }
+
             $html .= '</div>';
 
             $path_trigger_left = false === empty($cutscene_trigger['left']) && 0 !== $cutscene_trigger['left'] ? $cutscene_trigger['left'] : '';
             $path_trigger_top = false === empty($cutscene_trigger['top']) && 0 !== $cutscene_trigger['top'] ? $cutscene_trigger['top'] : '';
             $path_trigger_height = false === empty($cutscene_trigger['height']) && 0 !== $cutscene_trigger['height'] ? $cutscene_trigger['height'] : '';
             $path_trigger_width = false === empty($cutscene_trigger['width']) && 0 !== $cutscene_trigger['width'] ? $cutscene_trigger['width'] : '';
+            $character_class = false === empty($character) ? $character . '-map-item' : '';
 
             // Trigger Cutscene.
             if (false === in_array( '', [$path_trigger_width, $path_trigger_height], true)) {
                 $html .= '<div id="' . $explore_cutscene->ID . '-t" class="cutscene-trigger wp-block-group map-item ' . $explore_cutscene->post_name . '-cutscene-trigger-map-item is-layout-flow wp-block-group-is-layout-flow"';
                 $html .= 'style="left:' . $path_trigger_left . 'px;top:' . $path_trigger_top . 'px;height:' . $path_trigger_height . 'px; width:' . $path_trigger_width . 'px;"';
-                $html .= 'data-trigger="true" data-triggee="' . $character . '-map-item"';
+                $html .= 'data-trigger="true" data-triggee="' . $character_class . '"';
                 $html .= ' data-triggertype="' . $cutscene_trigger_type . '"';
                 $html .= ' data-meta="explore-cutscene-trigger"';
                 $html .= '></div>';
@@ -1867,6 +1868,7 @@ class Explore
 
         foreach($explore_explainers as $explainer) {
             $explainer_type = get_post_meta($explainer->ID, 'explore-explainer-type', true);
+            $sound_byte = get_post_meta($explainer->ID, 'explore-sound-byte', true);
 
             if ($type === $explainer_type) {
                 $trigger = get_post_meta( $explainer->ID, 'explore-explainer-trigger', true);
@@ -1900,6 +1902,11 @@ class Explore
                     $html .= '>';
                     $html .= $arrow_img ? '<img data-rotate="' . $rotation . '" width="120" height="120" style="'. esc_attr($arrow_style_css) . '" src="' . $arrow_img . '" />' : '';
                     $html .= wp_kses_post($explainer->post_content);
+
+                    if (false === empty($sound_byte)) {
+                        $html .= '<audio id="' . $explainer->ID . '-s" src="' . $sound_byte . '"></audio>';
+                    }
+
                     $html .= '</div>';
                 }
             }
@@ -1944,17 +1951,50 @@ class Explore
      */
     public function registerPostType() {
         $post_types = [
-            'explore-area' => 'Areas',
-            'explore-point' => 'Items',
-            'explore-character' => 'Characters',
-            'explore-cutscene' => 'Cutscenes',
-            'explore-enemy' => 'Enemies',
-            'explore-weapon' => 'Weapons',
-            'explore-magic' => 'Magic',
-            'explore-mission' => 'Missions',
-            'explore-sign' => 'Focus View',
-            'explore-minigame' => 'Minigames',
-            'explore-explainer' => 'Explainers',
+            'explore-area' => [
+                'Areas',
+                'supports' => [ 'title', 'thumbnail' ]
+            ],
+            'explore-point' => [
+                'Items',
+                'supports' => [ 'title', 'thumbnail' ]
+            ],
+            'explore-character' => [
+                'Characters',
+                'supports' => [ 'title', 'thumbnail' ]
+            ],
+            'explore-cutscene' => [
+                'Cutscenes',
+                'supports' => [ 'title', 'editor', 'thumbnail' ]
+            ],
+            'explore-enemy' => [
+                'Enemies',
+                'supports' => [ 'title', 'thumbnail' ]
+            ],
+            'explore-weapon' => [
+                'Weapons',
+                'supports' => [ 'title', 'editor', 'thumbnail' ]
+            ],
+            'explore-magic' => [
+                'Magic',
+                'supports' => [ 'title', 'editor', 'thumbnail' ]
+            ],
+            'explore-mission' => [
+                'Missions',
+                'supports' => [ 'title', 'thumbnail' ]
+            ],
+            'explore-sign' => [
+                'Focus View',
+                'supports' => [ 'title', 'editor', 'thumbnail' ]
+            ],
+            'explore-minigame' => [
+                'Minigames',
+                'supports' => [ 'title', 'editor', 'thumbnail' ]
+            ],
+            'explore-explainer' => [
+                'Explainers',
+                'supports' => [ 'title', 'editor', 'thumbnail' ]
+            ],
         ];
 
         $taxo_types = [
@@ -1968,22 +2008,22 @@ class Explore
             ],
         ];
 
-        foreach($post_types as $slug => $name) {
+        foreach($post_types as $slug => $info) {
             $args = array(
-                'label'     => __( $name, 'sharethis-custom' ),
+                'label'     => $info[0],
                 'menu_icon' => 'dashicons-location-alt',
                 'public'             => false,
                 'publicly_queryable' => false,
                 'show_ui'            => true,
                 'show_in_menu'       => true,
                 'query_var'          => true,
-                'rewrite'            => array( 'slug' => $slug ),
+                'rewrite'            => ['slug' => $slug],
                 'capability_type'    => 'page',
                 'has_archive'        => false,
                 'hierarchical'       => false,
                 'menu_position'      => null,
                 'show_in_rest'       => true,
-                'supports'           => array( 'title', 'editor', 'author', 'thumbnail', 'custom_fields'),
+                'supports'           => $info['supports'],
             );
 
             register_post_type( $slug, $args );

@@ -233,7 +233,7 @@ include plugin_dir_path(__FILE__) . 'plugin-header.php';
         <h2>Awww you died</h2>
         <button class="try-again">Try again</button>
     </div>
-    <?php if (true === is_user_logged_in() && false === empty($intro_video) && true === empty($coordinates)) : ?>
+    <?php if (false === empty($intro_video) && true === empty($coordinates)) : ?>
         <div class="intro-video engage">
             <span id="skip-intro-video">SKIP</span>
             <video id="intro-video" src="<?php echo esc_attr($intro_video); ?>" autoplay></video>
