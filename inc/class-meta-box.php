@@ -227,6 +227,12 @@ class Meta_Box {
                 ],
                 'explore-next-area' => [
                     'select' => [$explore_area_array]
+                ],
+                'explore-mute-music' => [
+                    'radio' => [
+                        'yes',
+                        'no'
+                    ]
                 ]
             ],
             'explore-weapon' => [

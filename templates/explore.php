@@ -236,7 +236,8 @@ include plugin_dir_path(__FILE__) . 'plugin-header.php';
     <?php if (false === empty($intro_video) && true === empty($coordinates)) : ?>
         <div class="intro-video engage">
             <span id="skip-intro-video">SKIP</span>
-            <video id="intro-video" src="<?php echo esc_attr($intro_video); ?>" autoplay></video>
+            <span id="unmute"><?php echo false === is_user_logged_in() ? '🔇' : '🔉' ; ?></span>
+            <video id="intro-video" src="<?php echo esc_attr($intro_video); ?>" autoplay<?php echo $muted = true === is_user_logged_in() ? '' : ' muted'; ?>></video>
         </div>
     <?php endif; ?>
     <?php if (false === empty($start_music)) : ?>

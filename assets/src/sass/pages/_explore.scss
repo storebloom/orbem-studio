@@ -62,6 +62,18 @@ html {
       z-index: 9;
     }
 
+    #unmute {
+      font-size: 30px;
+      bottom: 3rem;
+      border-radius: 8px;
+      color: white;
+      cursor: pointer;
+      position: fixed;
+      left: 3rem;
+      padding: 1rem 2rem;
+      z-index: 9;
+    }
+
     .intro-video {
       height: 100%;
       left: -6000px;

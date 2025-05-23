@@ -58,7 +58,6 @@ document.addEventListener("DOMContentLoaded", function(){
     //     }
     // }
 
-
     // Explore page functions.
     window.history.pushState({}, document.title, window.location.pathname);
 
@@ -67,6 +66,16 @@ document.addEventListener("DOMContentLoaded", function(){
 
     if ( introVideo ) {
         const introVideoContainer = document.querySelector('.intro-video.engage');
+
+        // Unmute introvideo.
+        const unmute = document.getElementById( 'unmute' );
+
+        if ( unmute ) {
+            unmute.addEventListener('click', () => {
+                introVideo.muted = !introVideo.muted;
+                unmute.textContent = introVideo.muted ? '🔇' : '🔉';
+            });
+        }
 
         introVideo.addEventListener('ended', () => {
            if ( introVideoContainer ) {
@@ -2322,7 +2331,7 @@ function loadMissionBlockades() {
 
                 if ( '0' !== blockadeSpecs.height ) {
                     const missionBlockadeEl = document.createElement('div');
-                    const blockadeClasses = mission.className.replace('mission-item', '');
+                    const blockadeClasses = mission.className.replace('mission-item ', '');
                     const defaultMap = document.querySelector('.default-map');
 
                     missionBlockadeEl.className = 'wp-block-group map-item is-layout-flow wp-block-group-is-layout-flow ' + blockadeClasses + '-blockade';
@@ -3154,6 +3163,12 @@ function engageCutscene( position, areaCutscene = false, isVideo = false ) {
                 playSong( cutscene.dataset.music, position );
             }
 
+            console.log(cutscene.dataset.mutemusic);
+            // Mute current if mute is flagged.
+            if ('yes' === cutscene.dataset?.mutemusic && window.currentMusic) {
+                window.currentMusic.pause();
+            }
+
             let textContainer = dialogues[0];
 
             // on load.
@@ -3382,6 +3397,11 @@ function engageCutscene( position, areaCutscene = false, isVideo = false ) {
             cutscene.classList.add('engage');
 
             if ( cutsceneVideo ) {
+                // Mute current if mute is flagged.
+                if ('yes' === cutscene.dataset?.mutemusic && window.currentMusic) {
+                    window.currentMusic.pause();
+                }
+
                 cutsceneVideo.play();
 
                 cutsceneVideo.addEventListener( 'ended', () => {
@@ -3461,7 +3481,7 @@ function afterCutscene( cutscene, areaCutscene = false ) {
     }
 
     // restart music if it changed.
-    if ( cutscene.dataset.music && '' !== cutscene.dataset.music && musicNames[currentLocation] ) {
+    if ( ( 'yes' === cutscene.dataset.mutemusic || cutscene.dataset.music && '' !== cutscene.dataset.music ) && musicNames[currentLocation] ) {
         playSong( musicNames[currentLocation], currentLocation );
     }
 
@@ -4802,7 +4822,7 @@ async function makeTalk(text, voiceName, providedAudio = false) {
         },
         audioConfig: {
             audioEncoding: "MP3",
-            volumeGainDb: window.talkingVolume,
+            volumeGainDb: ( parseInt(window.talkingVolume) + 7 ),
         }
     };
 

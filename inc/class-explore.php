@@ -1713,6 +1713,7 @@ class Explore
             $character = get_post_meta( $explore_cutscene->ID, 'explore-character', true );
             $next_area = get_post_meta( $explore_cutscene->ID, 'explore-next-area', true );
             $minigame = get_post_meta( $explore_cutscene->ID, 'explore-cutscene-minigame', true);
+            $mute_music = get_post_meta( $explore_cutscene->ID, 'explore-mute-music', true );
             $has_video = has_block( 'video', $explore_cutscene );
             $cutscene_trigger = get_post_meta($explore_cutscene->ID, 'explore-cutscene-trigger', true);
             $character_position = get_post_meta($explore_cutscene->ID, 'explore-cutscene-character-position', true);
@@ -1745,6 +1746,10 @@ class Explore
 
             if (false === empty($music)) {
                 $html .= 'data-music="' . esc_attr($music) . '" ';
+            }
+
+            if (false === empty($mute_music) && 'yes' === $mute_music) {
+                $html .= 'data-mutemusic="' . esc_attr($mute_music) . '" ';
             }
 
             // Minigame that triggers cutscene.

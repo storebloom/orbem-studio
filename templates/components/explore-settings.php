@@ -5,7 +5,7 @@
 $settings = get_user_meta($userid, 'explore_settings', true);
 $music = true === isset($settings['music']) ? intval($settings['music']) : 5;
 $sfx = true === isset($settings['sfx']) ? intval($settings['sfx']) : 5;
-$talking = true === isset($settings['talking']) ? intval($settings['talking']) : 5;
+$talking = true === isset($settings['talking']) ? intval($settings['talking']) : -12;
 ?>
 <div class="settings-form">
     <span class="close-settings">X</span>
