@@ -1,5 +1,37 @@
 import { initImageUpload } from './image-upload';
 document.addEventListener("DOMContentLoaded", function() {
+    window.devmode = false;
+    const devmodeMenuToggle = document.querySelector(".dev-mode-menu-toggle");
+
+    if ( devmodeMenuToggle ) {
+        devmodeMenuToggle.addEventListener("click", function() {
+            const devModeMenu = document.querySelector(".dev-mode-menu");
+
+            if (devModeMenu) {
+                devModeMenu.classList.toggle("engage");
+                devmodeMenuToggle.classList.toggle("engage");
+                const triggers = document.querySelectorAll('.explainer-container, [data-trigger="true"], [data-genre="explore-area"], [data-genre="blockade"]');
+
+                if ( devModeMenu.classList.contains('engage')) {
+                    if ( triggers ) {
+                        triggers.forEach(trigger => {
+                            trigger.style.backgroundColor = 'rgb(0,146,255)';
+                            trigger.style.opacity = .3;
+                            trigger.style.zIndex = 1;
+                        });
+                    }
+                } else {
+                    if ( triggers ) {
+                        triggers.forEach(trigger => {
+                            trigger.style.backgroundColor = '';
+                            trigger.style.opacity = 'inherit';
+                        });
+                    }
+                }
+            }
+        })
+    }
+
     setTimeout( () => {
         const items = document.querySelectorAll('.map-item');
         const findItems = document.querySelectorAll('.find-explore-item');
@@ -362,16 +394,6 @@ document.addEventListener("DOMContentLoaded", function() {
                 item.draggable = true;
                 item.addEventListener('dragstart', handleDragStart);
                 item.addEventListener('mouseup', handleDragEnd);
-            });
-        }
-
-
-        const triggers = document.querySelectorAll('.explainer-container, [data-trigger="true"], [data-genre="explore-area"], [data-genre="blockade"]');
-        if ( triggers ) {
-            triggers.forEach(trigger => {
-                trigger.style.backgroundColor = 'rgb(0,146,255)';
-                trigger.style.opacity = .3;
-                trigger.style.zIndex = 1;
             });
         }
     }, 2500);

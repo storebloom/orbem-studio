@@ -50,6 +50,7 @@ $rst = 'true' === filter_input( INPUT_GET, 'rst', FILTER_UNSAFE_RAW) ? ' reset' 
 $health = true === isset($points['health']['points']) ? $points['health']['points'] : 100;
 $mana = true === isset($points['mana']['points']) ? $points['mana']['points'] : 100;
 $point = true === isset($points['point']['points']) ? $points['point']['points'] : 0;
+$money = true === isset($points['money']['points']) ? $points['money']['points'] : 0;
 $point_widths = Explore::getCurrentPointWidth();
 $current_level = Explore::getCurrentLevel();
 $max_points = Explore::getLevelMap();
@@ -67,54 +68,67 @@ if ( $is_admin ) {
     $item_list = array_merge($item_list, $triggers);
 }
 
+$new_type = false === empty($coordinates) ? 'new-explore' : 'try-engage-explore';
+$new_type = is_user_logged_in() && false !== empty($coordinates) ? 'engage-explore' : $new_type;
+
 include plugin_dir_path(__FILE__) . 'plugin-header.php';
 ?>
 <main id="primary"<?php echo esc_attr(true === $is_admin ? ' data-devmode=true' : ''); ?> class="site-main<?php echo esc_attr($rst); ?>">
     <div class="explore-overlay engage" style="background: url(<?php echo esc_attr($signin_screen); ?>) no-repeat center;background-size: cover;height: 100svh;left: 0;position: fixed;top: 0;width: 100%; z-index: 4;">
-        <div class="greeting-message engage" style="background: white;">
-            <h1>
-                <?php echo 'Welcome' . esc_html($back) . ' to Escape to Orbem!'; ?>
-            </h1>
-                <?php if ('' === $require_login || true === is_user_logged_in()) : ?>
-                    <div class="greeting-buttons">
-                        <button type="button" class="engage" id="engage-explore">
-                            <?php echo false === empty($coordinates) ? esc_html__('Continue', 'miropelia') : esc_html__('Start Game', 'miropelia'); ?>
-                        </button>
-                        <?php if ( false === empty($coordinates) ) : ?>
-                            <button type="button" class="engage" id="new-explore">
-                                <?php esc_html_e('New Game', 'miropelia'); ?>
-                            </button>
-                        <?php endif; ?>
-                    </div>
-    			<?php endif; ?>
-                <?php if (false === is_user_logged_in()) : ?>
-                    <?php if ('' === $require_login) : ?>
-                        <p>
-                            <strong>OR</strong>
-                        </p>
-                    <?php endif; ?>
-                        <h2><?php esc_html_e('Login or register.', 'miropelia'); ?></h2>
-                        <h3><?php esc_html_e('If you want your game progress saved, login is required.', 'miropelia'); ?></h3>
-                        <br>
-                        <div class="login-form form-wrapper">
-                            <?php echo \Miropelia\Register::googleLogin('Login with Google'); ?>
-                            <span style="text-align: center; width: 100%; margin-top:30px;display:block;">--OR--</span>
-                            <?php echo wp_login_form(); ?>
-                        </div>
+        <?php if ((false === empty($signin_screen) && false !== stripos($signin_screen, '.webm')) || (false === empty($signin_screen) && false !== stripos($signin_screen, '.mp4'))): ?>
+            <video style="object-fit:cover;position:absolute;z-index: 0;width: 100%;height:100svh;top:0; left:0;" src="<?php echo esc_url($signin_screen); ?>" autoplay loop muted></video>
+        <?php endif; ?>
+        <div class="greeting-message engage">
+            <div class="greeting-buttons">
+                <?php the_content(); ?>
 
-                        <div class="register-form" style="display: none;">
-                            <?php echo do_shortcode('[register-form explore="true"]'); ?>
-                        </div>
-                    </p>
-                    <p>
-                    </p>
+                <?php if (true === is_user_logged_in() && false === empty($coordinates) ) : ?>
+                    <button type="button" class="engage" id="engage-explore">
+                        <?php esc_html_e('Continue', 'miropelia'); ?>
+                    </button>
+                <?php endif; ?>
+                <?php if ('' === $require_login || true === is_user_logged_in()) : ?>
+                    <button type="button" class="engage" id="<?php echo esc_attr($new_type); ?>">
+                        <?php esc_html_e('New Game', 'miropelia'); ?>
+                    </button>
+                <?php endif; ?>
+                <?php if (false === is_user_logged_in()) : ?>
+                    <button type="button" class="engage" id="login-register">
+                        <?php esc_html_e('Login or register.', 'miropelia'); ?>
+                    </button>
+                <?php endif; ?>
+            </div>
+
+            <?php if (false === is_user_logged_in()) : ?>
+                <div class="game-login-create-container">
+                    <h2><?php esc_html_e('Login or register.', 'miropelia'); ?></h2>
+                    <div class="login-form form-wrapper">
+                        <?php echo Explore::googleLogin('Login with Google'); ?>
+                        <span style="text-align: center; width: 100%; margin-top:30px;display:block;">--OR--</span>
+                        <?php echo wp_login_form(); ?>
+                    </div>
+
+                    <div class="register-form" style="display: none;">
+                        <?php echo do_shortcode('[register-form explore="true"]'); ?>
+                    </div>
                     <p id="explore-create-account">
                         <?php esc_html_e('Create Account', 'miropelia'); ?>
                     </p>
                     <p id="explore-login-account" style="display: none;">
                         <?php esc_html_e('Already have an account', 'miropelia'); ?>
                     </p>
-                <?php endif; ?>
+                </div>
+            <?php endif; ?>
+            <?php if ('' === $require_login) : ?>
+                <div class="non-login-warning">
+                    <h2>WARNING!</h2>
+                    <p>If you start a new game without logging in, your game progress will <strong>NOT</strong> be saved.</p>
+                    <p>
+                        <button type="button" id="login-register">Login</button>
+                        <button type="button" id="engage-explore">Continue</button>
+                    </p>
+                </div>
+            <?php endif; ?>
         </div>
     </div>
     <div class="game-container <?php echo esc_attr($location); ?>" style="background: url(<?php echo esc_url($explore_area_map ?? ''); ?>) no-repeat left top; background-size: cover;">
@@ -125,6 +139,16 @@ include plugin_dir_path(__FILE__) . 'plugin-header.php';
             <div class="health-amount point-bar" data-type="health" data-amount="<?php echo esc_attr($health + ($point_widths['health'] - 100)); ?>" style="width: <?php echo isset($point_widths['health']) ? esc_attr($point_widths['health']) : 100; ?>px;"><div class="gauge"></div></div>
             <div class="mana-amount point-bar" data-type="mana" data-amount="<?php echo esc_attr($mana + ($point_widths['mana'] - 100)); ?>" style="width: <?php echo isset($point_widths['mana']) ? esc_attr($point_widths['mana']) : 100; ?>px;"><div class="gauge"></div></div>
             <div class="power-amount point-bar" data-type="power" data-amount="100" style="width: <?php echo isset($point_widths['power']) ? esc_attr($point_widths['power']) : 100; ?>px;"><div class="gauge"></div></div>
+            <div class="money-amount point-bar" data-type="money" data-amount="<?php echo esc_attr($money); ?>">
+                <div class="count">
+                    <?php if (false === empty($money_img)): ?>
+                        <img class="money-image" src="<?php echo esc_url($money_img); ?>" />
+                    <?php else : ?>
+                        $
+                    <?php endif; ?>
+                    <span class="money-text"><?php echo esc_html($money); ?></span>
+                </div>
+            </div>
             <div class="point-amount point-bar" data-type="point" data-amount="<?php echo esc_attr($point); ?>" style="width: <?php echo isset($point_widths['point']) ? esc_attr($point_widths['point']) : 100; ?>px;">
                 <div class="gauge"></div>
             </div>
@@ -132,12 +156,21 @@ include plugin_dir_path(__FILE__) . 'plugin-header.php';
                 <span class="current-level">lvl. <?php echo esc_html($current_level); ?></span>
                 <span class="current-points">
                     <span class="my-points"><?php echo esc_html($point);?></span>/<span class="next-level-points"><?php echo esc_html($max_points[$current_level]); ?></span>
+                </span>
             </div>
-            <?php if (true === $is_admin) : ?>
+        </div>
+        <?php if (true === $is_admin) : ?>
+            <div class="dev-mode-menu-toggle">DEVMODE</div>
+            <div class="dev-mode-menu">
+                <div id="new-addition">
+                    <div class="addition-content">
+                        <?php include $plugin_dir_path . '/components/new-additions.php'; ?>
+                    </div>
+                </div>
                 <?php include $plugin_dir_path . '/components/finder-list.php'; ?>
                 <?php include $plugin_dir_path . '/components/pinpoint.php'; ?>
-            <?php endif; ?>
-        </div>
+            </div>
+        <?php endif; ?>
         <div id="settings">
             <div class="setting-content">
                 <?php include $plugin_dir_path . '/components/explore-settings.php'; ?>
@@ -170,13 +203,6 @@ include plugin_dir_path(__FILE__) . 'plugin-header.php';
                 <?php include $plugin_dir_path . '/components/explore-magic.php'; ?>
             </div>
         </div>
-        <?php if (true === $is_admin) : ?>
-            <div id="new-addition">
-                <div class="addition-content">
-                    <?php include $plugin_dir_path . '/components/new-additions.php'; ?>
-                </div>
-            </div>
-        <?php endif; ?>
         <?php echo html_entity_decode(Explore::getExplainerHTML($explore_explainers, 'menu')); ?>
         <div class="touch-buttons">
             <span class="top-left">

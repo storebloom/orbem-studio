@@ -444,6 +444,7 @@ class Explore
                 'health' => ['points' => 100, 'positions' => []],
                 'mana' => ['points' => 100, 'positions' => []],
                 'point' => ['points' => 0, 'positions' => []],
+                'money' => ['points' => 0, 'positions' => []],
                 'gear' => ['positions' => []],
                 'weapons' => ['positions' => []]
             ];
@@ -1714,6 +1715,8 @@ class Explore
             $next_area = get_post_meta( $explore_cutscene->ID, 'explore-next-area', true );
             $minigame = get_post_meta( $explore_cutscene->ID, 'explore-cutscene-minigame', true);
             $mute_music = get_post_meta( $explore_cutscene->ID, 'explore-mute-music', true );
+            $value_type = get_post_meta( $explore_cutscene->ID, 'explore-value-type', true );
+            $value = get_post_meta( $explore_cutscene->ID, 'value', true );
             $has_video = has_block( 'video', $explore_cutscene );
             $cutscene_trigger = get_post_meta($explore_cutscene->ID, 'explore-cutscene-trigger', true);
             $character_position = get_post_meta($explore_cutscene->ID, 'explore-cutscene-character-position', true);
@@ -1738,6 +1741,21 @@ class Explore
 
             if (false === empty($mission_cutscene)) {
                 $html .= ' data-mission="' . esc_attr($mission_cutscene) . '" ';
+            }
+
+            // Add for use in making cutscene triggered by touching character.
+            if (false === empty($character)) {
+                $html .= ' data-character="' . $character . '"';
+            }
+
+            // Add for type of value you receive once completing this cutscene.
+            if (false === empty($value_type)) {
+                $html .= ' data-type="' . $value_type . '"';
+            }
+
+            // Add for type of value you receive once completing this cutscene.
+            if (false === empty($value)) {
+                $html .= ' data-value="' . $value . '"';
             }
 
             if (false === empty($mission_dependent)) {
@@ -2059,7 +2077,7 @@ class Explore
         $user = get_current_user_id();
         $gear = get_user_meta($user, 'explore_current_gear', true);
         $weapons = get_user_meta($user, 'explore_current_weapons', true);
-        $types = ['health', 'mana', 'power'];
+        $types = ['health', 'mana', 'power', 'money'];
         $final_amounts = [
             'mana' => 100,
             'health' => 100
@@ -2210,6 +2228,72 @@ class Explore
                 <button type="button" class="upload_image_button button"><?php _e('Select', 'orbem-game-engine'); ?></button>
                 <button type="button" class="remove_image_button button"><?php _e('Remove', 'orbem-game-engine'); ?></button>
             </p>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    /**
+     * @action init
+     * @return void
+     */
+    public function handle_google_oauth_callback() {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && strpos($_SERVER['REQUEST_URI'], '/google-oauth-callback') !== false) {
+            $credential = $_POST['credential'];
+            $client_id = '1004491888851-ac0lv5l2gteb0kgmor65ehnasv3phcda.apps.googleusercontent.com';
+
+            $payload = json_decode(base64_decode(str_replace('_', '/', str_replace('-', '+', explode('.', $credential)[1]))), true);
+            if ($payload['aud'] !== $client_id) {
+                wp_send_json(['success' => false, 'message' => 'Invalid audience']);
+            }
+
+            $email = sanitize_email($payload['email']);
+            $first_name = sanitize_user($payload['given_name']);
+
+            $user = get_user_by('email', $email);
+
+            if (!$user) {
+                // Create new user
+                $username = sanitize_user($first_name);
+                if (username_exists($username)) {
+                    $username .= '_' . wp_generate_password(4, false);
+                }
+                $user_id = wp_create_user($username, wp_generate_password(), $email);
+                wp_update_user([
+                    'ID' => $user_id,
+                    'first_name' => $first_name,
+                ]);
+                $user = get_user_by('id', $user_id);
+            }
+
+            // Log in the user
+            wp_set_current_user($user->ID);
+            wp_set_auth_cookie($user->ID);
+            do_action('wp_login', $user->user_login, $user);
+
+            wp_send_json(['success' => true]);
+        }
+    }
+
+    public static function googleLogin($data_text)
+    {
+        ob_start();
+        ?>
+        <div id="g_id_onload"
+             data-client_id="1004491888851-ac0lv5l2gteb0kgmor65ehnasv3phcda.apps.googleusercontent.com"
+             data-context="signin"
+             data-ux_mode="popup"
+             data-callback="handleCredentialResponse"
+             data-auto_prompt="false">
+        </div>
+
+        <div class="g_id_signin"
+             data-type="standard"
+             data-shape="rectangular"
+             data-theme="outline"
+             data-text="sign_in_with"
+             data-size="large"
+             data-logo_alignment="left">
         </div>
         <?php
         return ob_get_clean();

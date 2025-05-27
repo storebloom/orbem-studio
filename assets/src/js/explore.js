@@ -192,10 +192,10 @@ document.addEventListener("DOMContentLoaded", function(){
             const amount = point.getAttribute('data-amount');
             const gauge = point.querySelector('.gauge');
 
-            if ( gauge && false === point.classList.contains( 'point-amount' ) ) {
+            if ( gauge && ( false === point.classList.contains( 'point-amount' ) && false === point.classList.contains( 'money-amount' ) )  ) {
                 point.setAttribute( 'data-amount', amount );
                 gauge.style.width = amount + 'px';
-            } else {
+            } else if (true === point.classList.contains( 'point-amount' )) {
                 const newLevel = getCurrentLevel( amount );
                 if ( levelMaps ) {
                     window.nextLevelPointAmount = JSON.parse(levelMaps)[newLevel];
@@ -203,17 +203,39 @@ document.addEventListener("DOMContentLoaded", function(){
                     point.setAttribute('data-amount', amount);
                     gauge.style.width = getPointsGaugeAmount(amount);
                 }
+            } else if (true === point.classList.contains( 'money-amount' ) ) {
+                point.dataset.amount = amount;
+                point.querySelector('.money-text').textContent = amount;
             }
         } );
     }
 
     document.body.style.position = 'fixed';
     const engageExplore = document.getElementById('engage-explore');
+    const tryEngageExplore = document.getElementById('try-engage-explore');
+    const loginRegisters = document.querySelectorAll('#login-register');
+    const nonLoginWarning = document.querySelector( '.non-login-warning' );
+    const loginRegisterCont = document.querySelector('.game-login-create-container');
 
     if (engageExplore) {
         engageExplore.addEventListener( 'click', function () {
             engageExploreGame();
         } );
+    }
+
+    if (tryEngageExplore) {
+        tryEngageExplore.addEventListener( 'click', function () {
+            nonLoginWarning.classList.add('engage');
+        } );
+    }
+
+    if (loginRegisters) {
+        loginRegisters.forEach( loginRegister => {
+            loginRegister.addEventListener('click', function () {
+                loginRegisterCont.classList.add('engage');
+                nonLoginWarning.classList.remove('engage');
+            });
+        });
     }
 
     // Reset triggered so start game.
@@ -518,8 +540,8 @@ function addUserPoints(amount, type, position, collectable, missionName = '') {
         removeItemFromStorage(position, type);
     }
 
-    // Make sure amount is always 100 or less. NOt for points.
-    if ( amount > 100 && 'point' !== type ) {
+    // Make sure amount is always 100 or less. NOt for points or money.
+    if ( amount > 100 && ( 'point' !== type && 'money' !== type ) ) {
         amount = 100;
     }
 
@@ -544,7 +566,7 @@ function addUserPoints(amount, type, position, collectable, missionName = '') {
         });
     }
 
-    if ( gauge && 'point' !== type ) {
+    if ( gauge && ( 'point' !== type && 'money' !== type ) ) {
         bar.setAttribute( 'data-amount', amount );
         gauge.style.width = amount + 'px';
     } else if ( 'point' === type ) {
@@ -554,13 +576,17 @@ function addUserPoints(amount, type, position, collectable, missionName = '') {
 
         // Unlock abilities as points grow.
         unlockAbilities( amount );
+    } else if ( 'money' === type ) {
+        bar.setAttribute( 'data-amount', amount );
+
+        gauge.style.width = getPointsGaugeAmount( amount );
     }
 
     if ( 'health' === type && 0 === amount ) {
         triggerGameOver();
     }
 
-    if ( '' !== position && true === ['point', 'health', 'mana'].includes( type ) && position !== missionName ) {
+    if ( '' !== position && true === ['money', 'point', 'health', 'mana'].includes( type ) && position !== missionName ) {
         persistItemRemoval( position, type, amount );
     }
 }
@@ -683,9 +709,11 @@ function saveMission( mission, value, position ) {
 
             const missionBlockade = theMission.dataset.blockade;
 
+            console.log(theMission.className);
+
             // Remove blockade if exists.
             if ('' !== missionBlockade && '0' !== JSON.parse(missionBlockade).top) {
-                document.querySelector('.' + theMission.className.replace('engage ', '').replace('next-mission ', '' ).replace('mission-item ', '') + '-blockade').remove();
+                document.querySelector('.' + theMission.className.replace('engage', '').replace('next-mission', '' ).replace('mission-item', '').replace(/\s+/g, '') + '-blockade').remove();
             }
 
             theMission.style.textDecoration = 'line-through';
@@ -2086,7 +2114,13 @@ function shouldRemoveItemOnload( mapItem ) {
  * Engages the explore page game functions.
  */
 function engageExploreGame() {
+    const container = document.querySelector('.game-container');
     const touchButtons = document.querySelector( '.touch-buttons' );
+
+    // Show the game container.
+    if ( container ) {
+        container.style.display = 'block';
+    }
 
     // Set all first cutscene dialogues to engage.
     const allFirstDialogues = document.querySelectorAll( '.map-cutscene .wp-block-orbem-paragraph-mp3:first-of-type' );
@@ -2410,6 +2444,13 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
                 // Pause NPC from moving if touching MC.
                 if ( 'explore-character' === value.dataset.genre && '' !== value.dataset.path ) {
                     value.dataset.canmove = 'false';
+
+                    const characterName = cleanClassName(value.className);
+                    const cutsceneTrigger = document.querySelector( `.map-cutscene[data-character="${characterName}"]`);
+
+                    if ( cutsceneTrigger ) {
+                        engageCutscene(cutsceneTrigger);
+                    }
                 }
             } else if ( 'false' === value.dataset?.canmove ) {
                 // Reset NPC to allow movement.
@@ -3147,7 +3188,7 @@ function storeExploreItem( item ) {
  * cut scene logic
  */
 function engageCutscene( position, areaCutscene = false, isVideo = false ) {
-    const cutscene = document.querySelector('.' + position + '-map-cutscene');
+    const cutscene = undefined === position?.className ? document.querySelector('.' + position + '-map-cutscene') : position;
 
     if ( cutscene && ( undefined === cutscene.dataset.video || 'false' === cutscene.dataset.video ) ) {
         const dialogues = cutscene.querySelectorAll( 'p, .wp-block-orbem-paragraph-mp3' );
@@ -3163,7 +3204,6 @@ function engageCutscene( position, areaCutscene = false, isVideo = false ) {
                 playSong( cutscene.dataset.music, position );
             }
 
-            console.log(cutscene.dataset.mutemusic);
             // Mute current if mute is flagged.
             if ('yes' === cutscene.dataset?.mutemusic && window.currentMusic) {
                 window.currentMusic.pause();
@@ -3471,6 +3511,11 @@ function afterCutscene( cutscene, areaCutscene = false ) {
     // Hide indicator.
     if ( indicator ) {
         indicator.classList.remove( 'engage' );
+    }
+
+    // Give points if value type is specified.
+    if ( '' !== cutscene.dataset?.type && undefined !== cutscene.dataset?.type ) {
+        runPointAnimation(cutscene, cutsceneName, false, cutscene.dataset.value, '');
     }
 
     // Hide cutscene images.
@@ -4171,10 +4216,13 @@ function getMenuType( type ) {
  * @param missionPoints
  */
 function runPointAnimation( value, position, isMission, missionPoints, missionName ) {
-    value.classList.add( 'engage' );
-
-    let positionType = value.getAttribute('data-type');
+    let positionType = value.dataset.type;
     positionType = positionType && '' !== positionType ? positionType : 'point';
+
+    if ( false === value.classList.contains('map-cutscene')) {
+        value.classList.add('engage');
+    }
+
     const thePoints = document.querySelector( `#explore-points .${ positionType }-amount` );
     let currentPoints = 100;
 
@@ -4971,4 +5019,32 @@ function spinMiroLogo(element,name) {
         },
         1000
     );
+}
+
+if (typeof window.handleCredentialResponse !== 'function') {
+    window.handleCredentialResponse = function(response) {
+        const token = response.credential;
+
+        fetch('/google-oauth-callback', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams({
+                credential: token
+            })
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    console.log('Login successful');
+                    window.location.reload();
+                } else {
+                    console.error('Login failed:', data.message);
+                }
+            })
+            .catch(err => {
+                console.error('Network or server error:', err);
+            });
+    };
 }

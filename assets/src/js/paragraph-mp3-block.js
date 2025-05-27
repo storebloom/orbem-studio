@@ -4,27 +4,11 @@ import { Button, PanelBody, SelectControl } from '@wordpress/components';
 import { useSelect } from '@wordpress/data';
 import { __ } from '@wordpress/i18n';
 
-function useExploreVoiceMeta(postSlug) {
+function useExploreVoiceMeta(postId) {
     const exploreVoiceMeta = useSelect((select) => {
-        // Get the post by its slug
-        const post = select('core').getEntityRecords('postType', 'explore-character', {
-            slug: postSlug,
-            per_page: 1,
-        });
-
-        // Check if post is defined and not empty
-        if (!post || post.length === 0) {
-            return null; // Post not found
-        }
-
-        // Get the post ID
-        const postId = post[0].id;
-
-        // Get the post meta for 'explore-voice'
         const meta = select('core').getEntityRecord('postType', 'explore-character', postId)?.meta;
-
         return meta ? meta['explore-voice'] : null;
-    }, [postSlug]);
+    }, [postId]);
 
     return exploreVoiceMeta;
 }
@@ -47,9 +31,9 @@ registerBlockType('orbem/paragraph-mp3', {
             type: 'string',
             default: '',
         },
-        selectedTerm: {
-            type: 'string',
-            default: '',
+        selectedCharacter: {
+            type: 'number',
+            default: null,
         },
         selectedVoice: {
             type: 'string',
@@ -58,23 +42,20 @@ registerBlockType('orbem/paragraph-mp3', {
     },
 
     edit: ({ attributes, setAttributes }) => {
-        const terms = useSelect((select) => {
-            return select('core').getEntityRecords('taxonomy', 'explore-character-point', { per_page: -1 });
+        const characters = useSelect((select) => {
+            return select('core').getEntityRecords('postType', 'explore-character', { per_page: -1 });
         }, []);
 
-        const { content, mp3Url, selectedTerm, selectedVoice } = attributes;
+        const { content, mp3Url, selectedCharacter, selectedVoice } = attributes;
 
-        // Fetch the voice meta for the selected term
-        const voiceMeta = useExploreVoiceMeta(selectedTerm);
+        const voiceMeta = useExploreVoiceMeta(selectedCharacter);
 
-        // Update selectedVoice when voiceMeta changes
-        if (selectedVoice !== voiceMeta || ( undefined === selectedVoice || null === selectedVoice ) ) {
-            setAttributes({selectedVoice: voiceMeta});
+        if (selectedVoice !== voiceMeta || (undefined === selectedVoice || null === selectedVoice)) {
+            setAttributes({ selectedVoice: voiceMeta });
         }
 
-        // Function to handle term selection
-        const onChangeTerm = (termId) => {
-            setAttributes({selectedTerm: termId, selectedVoice: voiceMeta});
+        const onChangeCharacter = (postId) => {
+            setAttributes({ selectedCharacter: parseInt(postId, 10), selectedVoice: voiceMeta });
         };
 
         return (
@@ -99,30 +80,30 @@ registerBlockType('orbem/paragraph-mp3', {
                         )}
                     </PanelBody>
                     <PanelBody title={__('Explore Character Select', 'custom')}>
-                        {Array.isArray(terms) ? (
-                            terms.length > 0 ? (
+                        {Array.isArray(characters) ? (
+                            characters.length > 0 ? (
                                 <SelectControl
                                     label={__('Select a Character', 'custom')}
-                                    value={selectedTerm}
+                                    value={selectedCharacter}
                                     options={[
                                         { label: __('None', 'custom'), value: null },
-                                        ...terms.map((term) => ({
-                                            label: term.name,
-                                            value: term.slug,
+                                        ...characters.map((character) => ({
+                                            label: character.title.rendered,
+                                            value: character.id,
                                         })),
                                     ]}
-                                    onChange={onChangeTerm}
+                                    onChange={onChangeCharacter}
                                 />
                             ) : (
-                                <p>{__('No terms found.', 'custom')}</p>
+                                <p>{__('No characters found.', 'custom')}</p>
                             )
                         ) : (
-                            <p>{__('Loading terms...', 'custom')}</p>
+                            <p>{__('Loading characters...', 'custom')}</p>
                         )}
                     </PanelBody>
                 </InspectorControls>
 
-                <span className={selectedTerm} data-voice={selectedVoice}>
+                <span className={`explore-character-${selectedCharacter}`} data-voice={selectedVoice}>
                     <RichText
                         tagName="p"
                         value={content}
@@ -130,7 +111,7 @@ registerBlockType('orbem/paragraph-mp3', {
                         placeholder={__('Write your paragraph here...', 'custom')}
                     />
                     {mp3Url && (
-                        <audio controls src={mp3Url} style={{ position:'absolute',left:'-56000px' }} />
+                        <audio controls src={mp3Url} style={{ position: 'absolute', left: '-56000px' }} />
                     )}
                 </span>
             </>
@@ -138,13 +119,13 @@ registerBlockType('orbem/paragraph-mp3', {
     },
 
     save: ({ attributes }) => {
-        const { content, mp3Url, selectedTerm, selectedVoice } = attributes;
-        const termClass = selectedTerm ? selectedTerm : '';
+        const { content, mp3Url, selectedCharacter, selectedVoice } = attributes;
+        const characterClass = selectedCharacter ? `explore-character-${selectedCharacter}` : '';
 
         return (
-            <span className={termClass} data-voice={selectedVoice}>
+            <span className={characterClass} data-voice={selectedVoice}>
                 <RichText.Content tagName="p" value={content} />
-                {mp3Url && <audio controls src={mp3Url} style={{ position:'absolute',left:'-56000px' }} />}
+                {mp3Url && <audio controls src={mp3Url} style={{ position: 'absolute', left: '-56000px' }} />}
             </span>
         );
     },

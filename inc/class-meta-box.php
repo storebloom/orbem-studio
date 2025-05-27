@@ -129,10 +129,10 @@ class Meta_Box {
         $explore_cutscene_array = $this->util->getOrbemArray('explore-cutscene');
         $explore_hazard_array = $this->util->getOrbemArray('explore-point', false, 'explore-interaction-type', 'hazard');
         $explore_value_array = [
-            'none',
             'point',
             'mana',
-            'health'
+            'health',
+            'money'
         ];
 
         $post_type_specific = [
@@ -177,6 +177,9 @@ class Meta_Box {
                 ],
                 'explore-trigger-enemy' => [
                     'select' => [$explore_enemy_array]
+                ],
+                'explore-value-type' => [
+                    'select' => [$explore_value_array]
                 ],
             ],
             'explore-cutscene' => [
@@ -233,6 +236,9 @@ class Meta_Box {
                         'yes',
                         'no'
                     ]
+                ],
+                'explore-value-type' => [
+                    'select' => [$explore_value_array]
                 ]
             ],
             'explore-weapon' => [

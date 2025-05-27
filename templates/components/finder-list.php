@@ -3,7 +3,7 @@
  */
 ?>
 <div class="open-close-item-list">open/close item list ></div>
-<div class="explore-item-list" style="background-color: rgba(255,255,255,0.82); padding: 1rem;">
+<div class="explore-item-list">
     <?php $class_end = '-map-item';
     foreach($item_list as $explore_item) :
         switch ($explore_item->post_type) {
