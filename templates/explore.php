@@ -14,6 +14,7 @@ if (false === $first_area) {
 }
 
 $require_login = get_option('explore_require_login', false);
+$money_img = get_option('explore_money_image', false);
 $plugin_dir = str_replace( '/templates/', '', plugin_dir_url( __FILE__ ));
 $plugin_dir_path = plugin_dir_path( __FILE__ );
 $userid = get_current_user_id();
@@ -244,7 +245,7 @@ include plugin_dir_path(__FILE__) . 'plugin-header.php';
             <?php if (false !== $explore_area): ?>
                 <?php echo Explore::getMapSVG($explore_area); ?>
                 <?php echo html_entity_decode(Explore::getMapItemHTML($explore_points, get_current_user_id(), $explore_area->post_name)); ?>
-                <?php echo html_entity_decode(Explore::getMapCutsceneHTML($explore_cutscenes, $explore_area->post_name)); ?>
+                <?php echo html_entity_decode(Explore::getMapCutsceneHTML($explore_cutscenes, $explore_area->post_name, get_current_user_id())); ?>
             <?php endif;?>
             <?php echo html_entity_decode(Explore::getMinigameHTML($explore_minigames)); ?>
             <?php echo html_entity_decode(Explore::getMapAbilitiesHTML($explore_abilities)); ?>

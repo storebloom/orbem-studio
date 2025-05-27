@@ -540,7 +540,7 @@ function addUserPoints(amount, type, position, collectable, missionName = '') {
         removeItemFromStorage(position, type);
     }
 
-    // Make sure amount is always 100 or less. NOt for points or money.
+    // Make sure amount is always 100 or less. Not for points or money.
     if ( amount > 100 && ( 'point' !== type && 'money' !== type ) ) {
         amount = 100;
     }
@@ -579,7 +579,8 @@ function addUserPoints(amount, type, position, collectable, missionName = '') {
     } else if ( 'money' === type ) {
         bar.setAttribute( 'data-amount', amount );
 
-        gauge.style.width = getPointsGaugeAmount( amount );
+        const moneyText = bar.querySelector('.money-text');
+        moneyText.textContent = amount;
     }
 
     if ( 'health' === type && 0 === amount ) {
@@ -2041,7 +2042,7 @@ function getPositionAtCenter(element) {
  * Helper function to add no points class to areas that have points already.
  */
 function addNoPoints() {
-    const types = ['health', 'mana', 'point', 'gear', 'weapons']
+    const types = ['health', 'mana', 'point', 'gear', 'weapons', 'money']
 
     types.forEach( type => {
         const selectedCharacterPositions = undefined !== explorePoints[type] ? explorePoints[type]['positions'] : [];
@@ -2050,8 +2051,13 @@ function addNoPoints() {
         if ( selectedCharacterPositions ) {
             selectedCharacterPositions.forEach( value => {
                 const mapItem = document.querySelector('.' + value + '-map-item');
+                const cutSceneItem = document.querySelector('.' + value + '-map-cutscene');
                 const materializeMapItem = document.querySelector( '.' + value + '-materialize-item-map-item' );
                 const dragDestMapItem = document.querySelector( '.' + value + '-drag-dest-map-item' );
+
+                if ( cutSceneItem ) {
+                    cutSceneItem.classList.add( 'been-viewed' );
+                }
 
                 if (mapItem) {
                     // If collected already don't show item.
@@ -2409,6 +2415,7 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
     const modal = document.querySelectorAll( '.map-item:not(.drag-dest), .projectile, .enemy-item, [data-hazard="true"]' );
     let weaponEl = document.querySelector( '.map-weapon' );
     const magicEl = document.querySelector( '.magic-weapon' );
+    const area = document.querySelector('.game-container').className.replace('game-container ', '');
 
     // Reset weapon element as magic element.
     if ( magicEl ) {
@@ -2646,6 +2653,9 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
 
                         engageCutscene(position);
 
+                        // Persist trigger so it isn't triggerable again.
+                        saveMaterializedItem(area, [cleanClassName(value.className)]);
+
                         // Remove trigger.
                         value.remove();
                     } else {
@@ -2670,7 +2680,6 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
                         dragDest.style.display = 'block';
                     }
 
-                    const area = document.querySelector('.game-container').className.replace('game-container ', '');
                     materializedItemsArray.push(itemName);
 
                     saveMaterializedItemTimeout = setTimeout(() => {
@@ -2974,13 +2983,6 @@ function canCharacterInteract( item, character, type ) {
  * @param item
  */
 function interactWithItem( item, mapChar ) {
-    // For explore signs.
-    if ( 'explore-sign' === item.dataset.genre ) {
-        item.classList.add( 'open-up' );
-
-        document.addEventListener( 'click', () => {item.classList.remove( 'open-up' );}, { once: true } );
-    }
-
     // For minigames.
     if ( ( ( 'true' === item.dataset.draggable &&
                 true === item.classList.contains( 'no-point') ) ||
@@ -3479,6 +3481,20 @@ function engageSign( signname ) {
     item.classList.add( 'open-up' );
 
     document.addEventListener( 'click', () => {item.classList.remove( 'open-up' );}, { once: true } );
+
+    // Close on action key
+    document.addEventListener('keydown', closeSign);
+
+    /**
+     * Close event using spacebar for focus view.
+     * @param event
+     */
+    function closeSign(event) {
+        if ('Space' === event.code) {
+            item.classList.remove('open-up');
+            document.removeEventListener('keydown', closeSign);
+        }
+    }
 }
 
 /**
@@ -4985,6 +5001,9 @@ function playStartScreenMusic(play = true) {
     }
 }
 
+/**
+ * Check if you should be hurt by the hazard.
+ */
 function checkIfHazardHurts() {
     setInterval( () => {
         if ( true === inHazard ) {
@@ -5008,7 +5027,6 @@ function checkIfHazardHurts() {
  * Helper function for logo spin and adds/removes class shortly.
  *
  * @param element
- * @param elementArr
  * @param name
  */
 function spinMiroLogo(element,name) {
@@ -5021,6 +5039,7 @@ function spinMiroLogo(element,name) {
     );
 }
 
+// Add the SSO response function for login/signin if it doesn't exist in the theme.
 if (typeof window.handleCredentialResponse !== 'function') {
     window.handleCredentialResponse = function(response) {
         const token = response.credential;
@@ -5037,14 +5056,8 @@ if (typeof window.handleCredentialResponse !== 'function') {
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
-                    console.log('Login successful');
                     window.location.reload();
-                } else {
-                    console.error('Login failed:', data.message);
                 }
-            })
-            .catch(err => {
-                console.error('Network or server error:', err);
             });
     };
 }

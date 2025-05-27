@@ -177,6 +177,7 @@ class Explore
             'explore_game_page' => ['select', 'Game Page Title', $pages],
             'explore_first_area' => ['select', 'Starting Area', $areas],
             'explore_require_login' => ['checkbox', 'Require Login'],
+            'explore_money_image' => ['upload', 'Money Icon'],
             'explore_indicator_icon' => ['upload', 'Indicator Icon'],
             'explore_arrow_icon' => ['upload', 'Arrow Icon'],
             'explore_intro_video' => ['upload', 'Intro Video'],
@@ -908,7 +909,7 @@ class Explore
         $explore_abilities = Explore::getExploreAbilities();
         $map_items = self::getMapItemHTML($explore_points, $userid, $position);
         $minigames = self::getMinigameHTML($explore_minigames);
-        $map_cutscenes = self::getMapCutsceneHTML($explore_cutscenes, $position);
+        $map_cutscenes = self::getMapCutsceneHTML($explore_cutscenes, $position, $userid);
         $map_abilities = self::getMapAbilitiesHTML($explore_abilities);
 
         ob_start();
@@ -1700,7 +1701,8 @@ class Explore
      *
      * @return string
      */
-    public static function getMapCutsceneHTML($explore_cutscenes, $position) {
+    public static function getMapCutsceneHTML($explore_cutscenes, $position, $userid) {
+        $userid = $userid ?? get_current_user_id();
         $html = '';
         $area = get_posts(['post_type' => 'explore-area', 'name' => $position, 'posts_per_page' => 1]);
         $is_area_cutscene = 'yes' === get_post_meta($area[0]->ID, 'explore-is-cutscene', true);
@@ -1734,6 +1736,7 @@ class Explore
             $cutscene_trigger_type = get_post_meta($explore_cutscene->ID, 'explore-trigger-type', true) ?? '';
             $next_area_datapoint = false === empty($next_area) ? ' data-nextarea="' . $next_area . '"' : '';
             $cutscene_name = false === $is_area_cutscene || true === $has_video ? $explore_cutscene->post_name : $area[0]->post_name;
+            $is_cutscene_triggered = self::isMaterializedItemTriggered($explore_cutscene->post_name, $area[0]->post_name, $userid);
 
 
             $html .= '<div class="wp-block-group map-cutscene ' . esc_attr($cutscene_name) . '-map-cutscene is-layout-flow wp-block-group-is-layout-flow"';
@@ -1826,7 +1829,7 @@ class Explore
             $character_class = false === empty($character) ? $character . '-map-item' : '';
 
             // Trigger Cutscene.
-            if (false === in_array( '', [$path_trigger_width, $path_trigger_height], true)) {
+            if (false === in_array( '', [$path_trigger_width, $path_trigger_height], true) && false === $is_cutscene_triggered) {
                 $html .= '<div id="' . $explore_cutscene->ID . '-t" class="cutscene-trigger wp-block-group map-item ' . $explore_cutscene->post_name . '-cutscene-trigger-map-item is-layout-flow wp-block-group-is-layout-flow"';
                 $html .= 'style="left:' . $path_trigger_left . 'px;top:' . $path_trigger_top . 'px;height:' . $path_trigger_height . 'px; width:' . $path_trigger_width . 'px;"';
                 $html .= 'data-trigger="true" data-triggee="' . $character_class . '"';

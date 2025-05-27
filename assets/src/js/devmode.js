@@ -24,7 +24,7 @@ document.addEventListener("DOMContentLoaded", function() {
                     if ( triggers ) {
                         triggers.forEach(trigger => {
                             trigger.style.backgroundColor = '';
-                            trigger.style.opacity = 'inherit';
+                            trigger.style.opacity = '';
                         });
                     }
                 }
