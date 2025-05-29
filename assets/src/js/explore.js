@@ -2447,7 +2447,7 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
             const indicator = document.querySelector('.indicator-icon');
 
             // Touching with buffer.
-            if (value && box && elementsOverlap(box.getBoundingClientRect(), value.getBoundingClientRect(), 5)) {
+            if (value && box && elementsOverlap(value.getBoundingClientRect(), box.getBoundingClientRect(), 5)) {
                 // Pause NPC from moving if touching MC.
                 if ( 'explore-character' === value.dataset.genre && '' !== value.dataset.path ) {
 
@@ -4209,10 +4209,10 @@ function getBlockDirection(collisionWalls, box, finalTop, finalLeft, enemy) {
  * @returns {boolean}
  */
 function elementsOverlap(rect1, rect2, buffer = 0) {
-    return !((rect1.right + buffer) < ( rect2.left - buffer ) ||
+    return false === ((rect1.right + buffer) < ( rect2.left - buffer ) ||
         ( rect1.left + buffer ) > ( rect2.right - buffer ) ||
-        ( rect1.bottom - buffer ) < ( rect2.top + buffer ) ||
-        ( rect1.top + buffer ) > ( rect2.bottom - buffer ));
+        ( rect1.bottom + buffer ) < ( rect2.top - buffer ) ||
+        ( rect1.top - buffer ) > ( rect2.bottom + buffer ));
 }
 
 /**

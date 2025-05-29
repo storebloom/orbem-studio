@@ -939,7 +939,9 @@ html {
         }
         .pinpoint-container {
           bottom: 13rem;
+          left: 1rem;
           position: fixed;
+          z-index: 9;
 
           #open-pinpoint {
             cursor: pointer;
