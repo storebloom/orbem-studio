@@ -997,6 +997,7 @@ html {
 
           &.point-amount {
             height: 2px;
+
             .gauge {
               background: #787878;
               height: 100%;
@@ -1094,15 +1095,6 @@ html {
               top: 50%;
               transform: translate(-50%, -50%);
               width: 95%;
-
-              &:before {
-                content: 'X';
-                cursor: pointer;
-                font-size: 2rem;
-                position: absolute;
-                right: 0;
-                top: 0;
-              }
             }
 
             &:not(.open-up) {

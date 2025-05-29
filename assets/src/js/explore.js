@@ -2450,6 +2450,7 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
             if (value && box && elementsOverlap(box.getBoundingClientRect(), value.getBoundingClientRect(), 5)) {
                 // Pause NPC from moving if touching MC.
                 if ( 'explore-character' === value.dataset.genre && '' !== value.dataset.path ) {
+
                     value.dataset.canmove = 'false';
 
                     const characterName = cleanClassName(value.className);
@@ -3306,7 +3307,7 @@ function engageCutscene( position, areaCutscene = false, isVideo = false ) {
          */
         function cutsceneKeys ( event ) {
             if ( true === window.allowCutscene ) {
-                if ( ( event.code === 'ArrowRight' ||  event.code === 'Space' ) && dialogues && cutscene.classList.contains( 'engage' ) ) {
+                if ( event.code === 'Space' && dialogues && cutscene.classList.contains( 'engage' ) ) {
                     nextDialogue();
                 }
             }
@@ -3554,6 +3555,13 @@ function afterCutscene( cutscene, areaCutscene = false ) {
 
     // Trigger walking path if selected and has path.
     const pathTriggerPosition = document.querySelector( '[data-trigger-cutscene="' + cutsceneName + '"]' );
+    const character = document.querySelector( `.${cutscene.dataset.character}-map-item[data-genre="explore-character"]`);
+
+    // Push MC if NPC needs to walk after cutscene.
+    if ( character && '' !== character.dataset?.path && undefined !== character.dataset?.path ) {
+        // Push MC away from character.
+        pushMC(30);
+    }
 
     if ( pathTriggerPosition ) {
         moveNPC( pathTriggerPosition );
@@ -5060,4 +5068,32 @@ if (typeof window.handleCredentialResponse !== 'function') {
                 }
             });
     };
+}
+
+/**
+ * Push main character away from direction facing.
+ *
+ * @param dist The amount of pixels to push character.
+ */
+function pushMC(dist) {
+    const mc = document.getElementById('map-character' );
+    const left = parseInt(mc.style.left.replace('px', ''));
+    const top = parseInt(mc.style.top.replace('px', ''));
+    const dir = mc.className.replace('-dir', '');
+
+    switch(dir) {
+        case 'right' :
+            console.log(left - dist);
+            mc.style.left = (left - dist) + 'px';
+            break;
+        case 'left' :
+            mc.style.left = (left + dist) + 'px';
+            break;
+        case 'top' :
+            mc.style.top = (top + dist) + 'px';
+            break;
+        case 'down' :
+            mc.style.top = (left - dist) + 'px';
+            break;
+    }
 }
