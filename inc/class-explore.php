@@ -1746,6 +1746,10 @@ class Explore
                 $html .= ' data-mission="' . esc_attr($mission_cutscene) . '" ';
             }
 
+            if (false === empty($cutscene_trigger_type)) {
+                $html .= ' data-triggertype="' . $cutscene_trigger_type . '"';
+            }
+
             // Add for use in making cutscene triggered by touching character.
             if (false === empty($character)) {
                 $html .= ' data-character="' . $character . '"';

@@ -2445,16 +2445,15 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
             }
 
             const indicator = document.querySelector('.indicator-icon');
+            const characterName = cleanClassName(value.className);
+            const cutsceneTrigger = document.querySelector( `.map-cutscene[data-character="${characterName}"]`);
 
             // Touching with buffer.
-            if (value && box && elementsOverlap(value.getBoundingClientRect(), box.getBoundingClientRect(), 5)) {
+            if (value && box && elementsOverlap(value.getBoundingClientRect(), box.getBoundingClientRect(), 5) && ( cutsceneTrigger && 'engagement' !== cutsceneTrigger.dataset.triggertype )) {
                 // Pause NPC from moving if touching MC.
                 if ( 'explore-character' === value.dataset.genre && '' !== value.dataset.path ) {
 
                     value.dataset.canmove = 'false';
-
-                    const characterName = cleanClassName(value.className);
-                    const cutsceneTrigger = document.querySelector( `.map-cutscene[data-character="${characterName}"]`);
 
                     if ( cutsceneTrigger ) {
                         engageCutscene(cutsceneTrigger);
@@ -2525,6 +2524,8 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
                         triggee.classList.add('show-explainer');
                         triggee.style.zIndex = '5';
                         value.classList.add('already-hit');
+                        window.allowMovement = false;
+                        window.allowHit = false;
 
                         const text = Array.from(triggee.querySelector('p').childNodes)
                             .filter(node => node.nodeType === Node.TEXT_NODE)
@@ -2587,6 +2588,8 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
 
                         // Close explainer on click.
                         triggee.addEventListener('click', () => {
+                            window.allowMovement = true;
+                            window.allowHit = true;
                             triggee.remove();
                         });
 
@@ -2596,6 +2599,8 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
 
                     function closeExplainer(event) {
                         if ('Space' === event.code) {
+                            window.allowMovement = true;
+                            window.allowHit = true;
                             triggee.remove('show-explainer');
                             document.removeEventListener('keydown', closeExplainer);
                         }
