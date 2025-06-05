@@ -44,6 +44,7 @@ if (false === empty($explore_area)) {
 $explore_points = Explore::getExplorePoints($location);
 $explore_cutscenes = Explore::getExplorePosts($location, 'explore-cutscene');
 $explore_minigames = Explore::getExplorePosts($location, 'explore-minigame');
+$explore_walls = Explore::getExplorePosts($location, 'explore-wall');
 $explore_explainers = Explore::getExplorePosts($location, 'explore-explainer');
 $explore_missions = Explore::getExplorePosts($location, 'explore-mission');
 $explore_abilities = Explore::getExploreAbilities();
@@ -60,11 +61,13 @@ $weapon_strength = false === empty($explore_attack) ? wp_json_encode($explore_at
 $intro_video = get_option('explore_intro_video', false);
 $signin_screen = get_option('explore_signin_screen', '');
 $start_music = get_option('explore_start_music', false);
-$main_character_info = Explore::getCharacterImages('mc', $location);
+$main_character = get_option('explore_main_character', false);
+$main_character_info = Explore::getCharacterImages($main_character, $location);
 $direction_images = $main_character_info['direction_images'] ?? [];
+$main_character_id = $main_character_info['id'] ?? false;
 $is_admin = user_can(get_current_user_id(), 'manage_options');
 if ( $is_admin ) {
-    $item_list = array_merge($explore_points, $explore_minigames, $explore_explainers);
+    $item_list = array_merge($explore_points, $explore_minigames, $explore_explainers, $explore_walls);
     $triggers = \OrbemGameEngine\Dev_Mode::getTriggers($item_list, $explore_cutscenes, $explore_missions);
     $item_list = array_merge($item_list, $triggers);
 }
@@ -75,64 +78,8 @@ $new_type = is_user_logged_in() && false !== empty($coordinates) ? 'engage-explo
 include plugin_dir_path(__FILE__) . 'plugin-header.php';
 ?>
 <main id="primary"<?php echo esc_attr(true === $is_admin ? ' data-devmode=true' : ''); ?> class="site-main<?php echo esc_attr($rst); ?>">
-    <div class="explore-overlay engage" style="background: url(<?php echo esc_attr($signin_screen); ?>) no-repeat center;background-size: cover;height: 100svh;left: 0;position: fixed;top: 0;width: 100%; z-index: 4;">
-        <?php if ((false === empty($signin_screen) && false !== stripos($signin_screen, '.webm')) || (false === empty($signin_screen) && false !== stripos($signin_screen, '.mp4'))): ?>
-            <video style="object-fit:cover;position:absolute;z-index: 0;width: 100%;height:100svh;top:0; left:0;" src="<?php echo esc_url($signin_screen); ?>" autoplay loop muted></video>
-        <?php endif; ?>
-        <div class="greeting-message engage">
-            <div class="greeting-buttons">
-                <?php the_content(); ?>
-
-                <?php if (true === is_user_logged_in() && false === empty($coordinates) ) : ?>
-                    <button type="button" class="engage" id="engage-explore">
-                        <?php esc_html_e('Continue', 'miropelia'); ?>
-                    </button>
-                <?php endif; ?>
-                <?php if ('' === $require_login || true === is_user_logged_in()) : ?>
-                    <button type="button" class="engage" id="<?php echo esc_attr($new_type); ?>">
-                        <?php esc_html_e('New Game', 'miropelia'); ?>
-                    </button>
-                <?php endif; ?>
-                <?php if (false === is_user_logged_in()) : ?>
-                    <button type="button" class="engage" id="login-register">
-                        <?php esc_html_e('Login or register.', 'miropelia'); ?>
-                    </button>
-                <?php endif; ?>
-            </div>
-
-            <?php if (false === is_user_logged_in()) : ?>
-                <div class="game-login-create-container">
-                    <h2><?php esc_html_e('Login or register.', 'miropelia'); ?></h2>
-                    <div class="login-form form-wrapper">
-                        <?php echo Explore::googleLogin('Login with Google'); ?>
-                        <span style="text-align: center; width: 100%; margin-top:30px;display:block;">--OR--</span>
-                        <?php echo wp_login_form(); ?>
-                    </div>
-
-                    <div class="register-form" style="display: none;">
-                        <?php echo do_shortcode('[register-form explore="true"]'); ?>
-                    </div>
-                    <p id="explore-create-account">
-                        <?php esc_html_e('Create Account', 'miropelia'); ?>
-                    </p>
-                    <p id="explore-login-account" style="display: none;">
-                        <?php esc_html_e('Already have an account', 'miropelia'); ?>
-                    </p>
-                </div>
-            <?php endif; ?>
-            <?php if ('' === $require_login) : ?>
-                <div class="non-login-warning">
-                    <h2>WARNING!</h2>
-                    <p>If you start a new game without logging in, your game progress will <strong>NOT</strong> be saved.</p>
-                    <p>
-                        <button type="button" id="login-register">Login</button>
-                        <button type="button" id="engage-explore">Continue</button>
-                    </p>
-                </div>
-            <?php endif; ?>
-        </div>
-    </div>
-    <div class="game-container <?php echo esc_attr($location); ?>" style="background: url(<?php echo esc_url($explore_area_map ?? ''); ?>) no-repeat left top; background-size: cover;">
+    <?php include $plugin_dir_path . 'start-screen.php'; ?>
+    <div class="game-container <?php echo esc_attr($location); ?>" data-main="<?php echo esc_attr($main_character); ?>" style="background: url(<?php echo esc_url($explore_area_map ?? ''); ?>) no-repeat left top; background-size: cover;">
         <?php if ((false === empty($explore_area_map) && false !== stripos($explore_area_map, '.webm')) || (false === empty($explore_area_map) && false !== stripos($explore_area_map, '.mp4'))): ?>
             <video style="position:absolute;z-index: 1;width: 100%;height:100%;top:0; left:0;" src="<?php echo esc_attr($explore_area_map); ?>" autoplay loop muted></video>
         <?php endif; ?>
@@ -228,11 +175,11 @@ include plugin_dir_path(__FILE__) . 'plugin-header.php';
         <span id="key-guide" href="<?php echo esc_url($game_url); ?>">
             <img src="<?php echo $plugin_dir . '/assets/src/images/keys.png'; ?>" />
         </span>
-        <div style="top: <?php echo false === empty($coordinates['top']) ? esc_attr($coordinates['top']) : 3518; ?>px; left: <?php echo false === empty($coordinates['left']) ? esc_attr($coordinates['left']) : 1942; ?>px" class="down-dir" id="map-character" data-ability="<?php echo false === empty($main_character_info['ability']) ? esc_attr($main_character_info['ability']) : ''; ?>">
+        <div style="top: <?php echo false === empty($coordinates['top']) ? esc_attr($coordinates['top']) : $explore_area_start_top; ?>px; left: <?php echo false === empty($coordinates['left']) ? esc_attr($coordinates['left']) : $explore_area_start_left; ?>px" class="down-dir" data-mainid="<?php echo esc_attr($main_character_id); ?>" id="map-character" data-ability="<?php echo false === empty($main_character_info['ability']) ? esc_attr($main_character_info['ability']) : ''; ?>">
             <?php foreach($direction_images as $direction_label => $direction_image):
                 $fight_animation = false !== stripos($direction_label, 'punch') ? ' fight-image' : '';
                 ?>
-                <img height="<?php echo false === empty($main_character_info['height']) ? esc_attr($main_character_info['height']) : 185; ?>px" width="<?php echo false === empty($main_character_info['width']) ? esc_attr($main_character_info['width']) : 115; ?>px" class="map-character-icon<?php echo 'static' === $direction_label ? ' engage' : ''; echo esc_attr($fight_animation); ?>" id="mc-<?php echo esc_attr($direction_label); ?>" src="<?php echo esc_url($direction_image); ?>" />
+                <img height="<?php echo false === empty($main_character_info['height']) ? esc_attr($main_character_info['height']) : 185; ?>px" width="<?php echo false === empty($main_character_info['width']) ? esc_attr($main_character_info['width']) : 115; ?>px" class="map-character-icon<?php echo 'static' === $direction_label ? ' engage' : ''; echo esc_attr($fight_animation); ?>" id="<?php echo esc_attr($main_character . '-' . $direction_label); ?>" src="<?php echo esc_url($direction_image); ?>" />
             <?php endforeach; ?>
         </div>
         <div style="top: <?php echo false === empty($coordinates['top']) ? esc_attr( intval($coordinates['top']) + 500) : 4018; ?>px; left: <?php echo false === empty($coordinates['left']) ? esc_attr(intval($coordinates['left'] + 500)) : 2442; ?>px" class="map-weapon" data-direction="down" data-projectile="<?php echo esc_attr($is_it_projectile); ?>" data-weapon="<?php echo esc_attr( $equipped_weapon->post_name ); ?>" data-strength=<?php echo esc_attr($weapon_strength); ?>>

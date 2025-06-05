@@ -22,11 +22,14 @@ let pulsewaveInterval;
 let timerCountDownInterval;
 let currentLocation = ''
 let timerCountDownHit = false;
+let npcBreak = false;
+window.mainCharacter = '';
 window.godMode = false;
 window.noTouch = false;
 
 document.addEventListener("DOMContentLoaded", function(){
     currentLocation = document.querySelector( '.game-container' );
+    window.mainCharacter = currentLocation.dataset?.main;
     currentLocation = currentLocation.className.replace( 'game-container ', '');
 
     // var socket = io.connect('https://localhost:3030');
@@ -409,9 +412,10 @@ function moveNPC( npc ) {
         const walkingSpeed = npc.dataset.speed;
         const timeBetween = npc.dataset.timebetween;
         const repeatPath = npc.dataset.repeat;
+        const wanderer = 'yes' === npc.dataset?.wanderer;
 
         // Check if walking path exists.
-        if ( walkingPath ) {
+        if ( walkingPath && false === wanderer ) {
             const pathArray = JSON.parse(walkingPath);
             pathArray.unshift({'top': npc.style.top.replace('px', ''), 'left': npc.style.left.replace('px', '')});
             const pathCount = pathArray.length - 1;
@@ -521,8 +525,198 @@ function moveNPC( npc ) {
                 npc.style.left = pathArray[nextPosition].left + 'px';
                 npc.style.top = pathArray[nextPosition].top + 'px';
             }
+        } else if ( true === wanderer ) {
+            makeNPCWander( npc, walkingSpeed, timeBetween );
         }
     }
+}
+
+function makeNPCWander( npc, walkingSpeed, timeBetween ) {
+    let startDir = getRandomDir();
+    let moveDir = '';
+    let triedDown = false;
+    let triedLeft = false;
+    let triedRight = false;
+    let triedUp = false;
+    let noCollideCount = 0;
+    let collisionCount = 0;
+    let preMoveDir = '';
+    let swap = 0;
+
+    function startRandomNpcPause() {
+        const pauseTime = Math.floor(Math.random() * (25000 - 15000 + 1)) + 15000;
+
+        setTimeout(() => {
+            pauseNpc(timeBetween); // Call your function
+
+            // Schedule the next pause with a new random time
+            startRandomNpcPause();
+        }, pauseTime);
+    }
+
+    startRandomNpcPause(); // Start the loop
+
+    const wanderInterval = setInterval( () => {
+        if ( false === npcBreak ) {
+            const currentLeft = npc.style.left.replace('px', '');
+            const currentTop = npc.style.top.replace('px', '');
+            const finalPos = blockMovement(currentTop, currentLeft, npc);
+
+            switch (startDir) {
+                case 'down' :
+                    npc.style.top = (finalPos.top + 1) + 'px';
+
+                    break;
+                case 'up' :
+                    npc.style.top = (finalPos.top - 1) + 'px';
+
+                    break;
+                case 'left' :
+                    npc.style.left = (finalPos.left - 1) + 'px';
+
+                    break;
+                case 'right' :
+                    npc.style.left = (finalPos.left + 1) + 'px';
+
+                    break;
+            }
+
+            preMoveDir = moveDir;
+
+            if ((finalPos.left > currentLeft || finalPos.left < currentLeft) && true === finalPos.collide && false === triedDown && (startDir === 'left' || startDir === 'right') || (true === finalPos.collide && finalPos.top > currentTop)) {
+                moveDir = swap % 2 === 0 ? 'down' : 'up';
+            }
+
+            if (
+                (('down' === moveDir && finalPos.top < currentTop) || ('up' === moveDir && finalPos.top > currentTop)) &&
+                true === finalPos.collide &&
+                (startDir === 'left' || startDir === 'right') ||
+                (finalPos.left > currentLeft && true === triedDown)) {
+                moveDir = 'down' === moveDir ? 'up' : 'down';
+                triedDown = true;
+            }
+
+            if (finalPos.top > currentTop && true === finalPos.collide && true === triedDown && (startDir === 'left' || startDir === 'right')) {
+                triedUp = true;
+            }
+
+            // Up / down checks.
+            if ((finalPos.top > currentTop || finalPos.top < currentTop) && true === finalPos.collide && false === triedLeft && (startDir === 'up' || startDir === 'down')) {
+                moveDir = swap % 2 === 0 ? 'left' : 'right';
+            }
+
+            if (
+                (
+                    ('left' === moveDir && finalPos.left > currentLeft) ||
+                    ('right' === moveDir && finalPos.left < currentLeft)
+                ) &&
+                true === finalPos.collide &&
+                (startDir === 'up' || startDir === 'down') ||
+                (finalPos.top > currentTop && true === triedLeft)
+            ) {
+                moveDir = ('left' === moveDir || 'down' === moveDir) ? 'right' : 'left';
+                triedLeft = true;
+            }
+
+            if (finalPos.left < currentLeft && true === finalPos.collide && true === triedLeft) {
+                triedRight = true;
+            }
+
+            if ((true === triedLeft && true === triedRight) || (true === triedUp && true === triedDown)) {
+                moveDir = '';
+                startDir = getRandomDir(startDir);
+                triedLeft = false;
+                triedRight = false;
+                triedUp = false;
+                triedDown = false;
+                swap++;
+            }
+
+            switch (moveDir) {
+                case 'down' :
+                    if ('up' !== startDir) {
+                        npc.style.top = (finalPos.top + 1) + 'px';
+                    } else {
+                        moveDir = '';
+                    }
+                    break;
+                case 'up' :
+                    if ('down' !== startDir) {
+                        npc.style.top = (finalPos.top - 1) + 'px';
+                    } else {
+                        moveDir = '';
+                    }
+                    break;
+                case 'left' :
+                    if ('right' !== startDir) {
+                        npc.style.left = (finalPos.left - 1) + 'px';
+                    } else {
+                        moveDir = '';
+                    }
+                    break;
+                case 'right' :
+                    if ('left' !== startDir) {
+                        npc.style.left = (finalPos.left + 1) + 'px';
+                    } else {
+                        moveDir = '';
+                    }
+                    break;
+            }
+
+            if (false === finalPos.collide) {
+                noCollideCount++;
+            } else {
+                noCollideCount = 0;
+
+                if (preMoveDir !== moveDir) {
+                    collisionCount++
+                }
+            }
+
+            if (collisionCount > 100) {
+                pauseNpc(timeBetween);
+                moveDir = '';
+            }
+
+            if (noCollideCount > 20) {
+                collisionCount = 0;
+                triedDown = false;
+                triedUp = false;
+                triedLeft = false;
+                triedRight = false;
+                moveDir = '';
+                swap++
+            }
+        } else {
+            startDir = getRandomDir(startDir);
+        }
+    }, walkingSpeed );
+}
+
+function pauseNpc ( timeBetween ) {
+    npcBreak = true;
+    setTimeout( () => {
+        npcBreak = false;
+    }, timeBetween);
+}
+
+function getRandomDir(currentDir = []) {
+    const dirs = ['up', 'down', 'left', 'right'];
+
+    // Normalize currentDir to an array if it's not already
+    const excludeDirs = Array.isArray(currentDir) ? currentDir : [currentDir];
+
+    // Filter out any directions in excludeDirs
+    const filteredDirs = dirs.filter(dir => !excludeDirs.includes(dir));
+
+    // If no directions left, return null or handle gracefully
+    if (filteredDirs.length === 0) {
+        return null;
+    }
+
+    // Pick a random direction from the remaining ones
+    const randomIndex = Math.floor(Math.random() * filteredDirs.length);
+    return filteredDirs[randomIndex];
 }
 
 /**
@@ -709,8 +903,6 @@ function saveMission( mission, value, position ) {
             showNextMission(theMission);
 
             const missionBlockade = theMission.dataset.blockade;
-
-            console.log(theMission.className);
 
             // Remove blockade if exists.
             if ('' !== missionBlockade && '0' !== JSON.parse(missionBlockade).top) {
@@ -1314,7 +1506,7 @@ const enterNewArea = (function () {
                             }
                         }
 
-                        // Set starting position incase you die.
+                        // Set starting position in case you die.
                         newDefaultMap.dataset.starttop = newMapItems['start-top'];
                         newDefaultMap.dataset.startleft = newMapItems['start-left'];
 
@@ -1673,21 +1865,21 @@ function selectNewCharacter(character) {
     const currentCharacter = document.querySelector( '#map-character' );
 
     if ( charImage && currentCharacter ) {
-        const oldCurrentCharName = undefined === currentCharacter.dataset.currentchar ? 'mc' : currentCharacter.dataset.currentchar;
-        const mainCharacter = document.querySelectorAll( '#map-character .map-character-icon' );
+        const oldCurrentCharName = undefined === currentCharacter.dataset.currentchar ? window.mainCharacter : currentCharacter.dataset.currentchar;
+        const mc = document.querySelectorAll( '#map-character .map-character-icon' );
         const newCharacter = character.querySelectorAll( '.character-images .character-icon' );
 
-        if ( mainCharacter ) {
-            mainCharacter.forEach( (mainCharacterImage, index) => {
-                const mainCharacterImageUrl = mainCharacterImage.src;
-                const mainCharacterAbility = currentCharacter.dataset.ability;
-                mainCharacterImage.src = newCharacter[index].src;
-                newCharacter[index].src = mainCharacterImageUrl;
+        if ( mc ) {
+            mc.forEach( (mcImage, index) => {
+                const mcImageUrl = mcImage.src;
+                const mcAbility = currentCharacter.dataset.ability;
+                mcImage.src = newCharacter[index].src;
+                newCharacter[index].src = mcImageUrl;
 
                 // set new character
                 currentCharacter.setAttribute( 'data-currentchar', character.dataset.charactername );
                 currentCharacter.setAttribute( 'data-ability', character.dataset.ability );
-                character.dataset.ability = mainCharacterAbility;
+                character.dataset.ability = mcAbility;
             } );
         }
 
@@ -1701,7 +1893,7 @@ function selectNewCharacter(character) {
             // Change weapon to fist.
             const fist = document.querySelector( '.storage-item[title="fist"]');
             changeWeapon( fist );
-        } else if ( true === character.dataset.charactername.includes( 'mc' ) ) {
+        } else if ( true === character.dataset.charactername.includes( window.mainCharacter ) ) {
             const equipped = document.querySelector('.storage-item[data-type="weapons"].equipped')
             changeWeapon(equipped);
 
@@ -1735,7 +1927,7 @@ function selectNewCharacter(character) {
             movementIntFunc();
         }
 
-        character.dataset.charactername = oldCurrentCharName ? oldCurrentCharName : 'mc';
+        character.dataset.charactername = oldCurrentCharName ? oldCurrentCharName : window.mainCharacter;
     }
 }
 
@@ -2119,7 +2311,7 @@ function shouldRemoveItemOnload( mapItem ) {
 /**
  * Engages the explore page game functions.
  */
-function engageExploreGame() {
+export function engageExploreGame() {
     const container = document.querySelector('.game-container');
     const touchButtons = document.querySelector( '.touch-buttons' );
 
@@ -2451,7 +2643,7 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
             // Touching with buffer.
             if (value && box && elementsOverlap(value.getBoundingClientRect(), box.getBoundingClientRect(), 5) && ( cutsceneTrigger && 'engagement' !== cutsceneTrigger.dataset.triggertype )) {
                 // Pause NPC from moving if touching MC.
-                if ( 'explore-character' === value.dataset.genre && '' !== value.dataset.path ) {
+                if ( 'explore-character' === value.dataset.genre && '' !== value.dataset.path && false === cutsceneTrigger.classList.contains('been-viewed') ) {
 
                     value.dataset.canmove = 'false';
 
@@ -2531,7 +2723,7 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
                             .filter(node => node.nodeType === Node.TEXT_NODE)
                             .map(node => node.textContent)
                             .join('');
-                        const mcVoice = document.querySelector('.wp-block-orbem-paragraph-mp3.mc').dataset.voice;
+                        const mcVoice = document.querySelector('.wp-block-orbem-paragraph-mp3.' + window.mainCharacter).dataset.voice;
                         const providedAudio = document.getElementById(triggee.id + '-s') ?? false;
 
                         // Do text to speech.
@@ -2812,7 +3004,7 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
             switch (goThisWay) {
                 case 38 :
                     box.classList.remove('engage');
-                    newCharacterImage = document.getElementById('mc-up');
+                    newCharacterImage = document.getElementById(window.mainCharacter + '-up');
                     if (newCharacterImage) {
                         newCharacterImage.classList.add('engage');
                     }
@@ -2825,7 +3017,7 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
                     break;
                 case 37 :
                     box.classList.remove('engage');
-                    newCharacterImage = document.getElementById('mc-left');
+                    newCharacterImage = document.getElementById(window.mainCharacter + '-left');
                     if (newCharacterImage) {
                         newCharacterImage.classList.add('engage');
                     }
@@ -2837,7 +3029,7 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
                     break;
                 case 39 :
                     box.classList.remove('engage');
-                    newCharacterImage = document.getElementById('mc-right');
+                    newCharacterImage = document.getElementById(window.mainCharacter + '-right');
                     if (newCharacterImage) {
                         newCharacterImage.classList.add('engage');
                     }
@@ -2849,7 +3041,7 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
                     break;
                 case 40 :
                     box.classList.remove('engage');
-                    newCharacterImage = document.getElementById('mc-down');
+                    newCharacterImage = document.getElementById(window.mainCharacter + '-down');
                     if (newCharacterImage) {
                         newCharacterImage.classList.add('engage');
                     }
@@ -2861,7 +3053,7 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
                     break;
                 case 87 :
                     box.classList.remove('engage');
-                    newCharacterImage = document.getElementById('mc-up');
+                    newCharacterImage = document.getElementById(window.mainCharacter + '-up');
                     if (newCharacterImage) {
                         newCharacterImage.classList.add('engage');
                     }
@@ -2874,7 +3066,7 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
                     break;
                 case 65 :
                     box.classList.remove('engage');
-                    newCharacterImage = document.getElementById('mc-left');
+                    newCharacterImage = document.getElementById(window.mainCharacter + '-left');
                     if (newCharacterImage) {
                         newCharacterImage.classList.add('engage');
                     }
@@ -2886,7 +3078,7 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
                     break;
                 case 68 :
                     box.classList.remove('engage');
-                    newCharacterImage = document.getElementById('mc-right');
+                    newCharacterImage = document.getElementById(window.mainCharacter + '-right');
                     if (newCharacterImage) {
                         newCharacterImage.classList.add('engage');
                     }
@@ -2898,7 +3090,7 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
                     break;
                 case 83 :
                     box.classList.remove('engage');
-                    newCharacterImage = document.getElementById('mc-down');
+                    newCharacterImage = document.getElementById(window.mainCharacter + '-down');
                     if (newCharacterImage) {
                         newCharacterImage.classList.add('engage');
                     }
@@ -3197,6 +3389,7 @@ function storeExploreItem( item ) {
  */
 function engageCutscene( position, areaCutscene = false, isVideo = false ) {
     const cutscene = undefined === position?.className ? document.querySelector('.' + position + '-map-cutscene') : position;
+    position = undefined === position?.className ? position : cleanClassName( position.className );
 
     if ( cutscene && ( undefined === cutscene.dataset.video || 'false' === cutscene.dataset.video ) ) {
         const dialogues = cutscene.querySelectorAll( 'p, .wp-block-orbem-paragraph-mp3' );
@@ -3205,6 +3398,7 @@ function engageCutscene( position, areaCutscene = false, isVideo = false ) {
             // stop movement.
             window.allowMovement = false;
             window.allowHit = false;
+            npcBreak = true;
             cutscene.classList.add('engage');
 
             // start music if exists.
@@ -3265,20 +3459,20 @@ function engageCutscene( position, areaCutscene = false, isVideo = false ) {
 
         function moveDialogueBox(firstText = '') {
             const currentDialogue = cutscene.querySelector( '.wp-block-orbem-paragraph-mp3.engage' );
+            const mainMapCharacter = document.getElementById('map-character');
             let providedAudio = currentDialogue.querySelector( 'audio' );
             providedAudio = providedAudio ?? false;
-            const dialogueChar = currentDialogue.className.replace(' engage', '').replace('engage ', '').replace('wp-block-orbem-paragraph-mp3 ', '');
-            const dialogueCharClass = '.' + dialogueChar + '-map-item';
-            const currentDialogueChar = '.mc-map-item' !== dialogueCharClass ? document.querySelector( dialogueCharClass ) : document.querySelector( '#map-character' );
+            const dialogueChar = currentDialogue.className.replace(' engage', '').replace('engage ', '').replace('wp-block-orbem-paragraph-mp3 ', '').replace('explore-character-');
+            const currentDialogueChar = mainMapCharacter.dataset?.mainid !== dialogueChar ? document.querySelector( '#' + dialogueChar ) : mainMapCharacter;
             let voice = currentDialogue.dataset.voice;
-            const theCharacter = currentDialogue.className.replace( 'wp-block-orbem-paragraph-mp3', '' ).replace( 'engage', '').trim();
+            const theCharacter = currentDialogue.className.replace( 'wp-block-orbem-paragraph-mp3', '' ).replace( 'engage', '').replace('explore-character-', '').trim();
             const theCharacterEl = document.querySelector( '.cut-character[data-character="' + theCharacter + '"]' );
 
             // Move dialogue box to talker.
             if ( true === areaCutscene ) {
                 if ( currentDialogueChar && cutscene ) {
-                    const currentDialogueCharLeft = '.mc-map-item' !== dialogueCharClass ? parseInt( currentDialogueChar.style.left.replace('px', '') ) + 20 : parseInt( currentDialogueChar.style.left.replace('px', '') ) + 470;
-                    const currentDialogueCharTop = '.mc-map-item' !== dialogueCharClass ? parseInt( currentDialogueChar.style.top.replace('px', '') ) + 20 : parseInt( currentDialogueChar.style.top.replace('px', '') ) + 470;
+                    const currentDialogueCharLeft = mainMapCharacter.dataset?.mainid !== dialogueChar ? parseInt( currentDialogueChar.style.left.replace('px', '') ) + 20 : parseInt( currentDialogueChar.style.left.replace('px', '') ) + 470;
+                    const currentDialogueCharTop = mainMapCharacter.dataset?.mainid !== dialogueChar ? parseInt( currentDialogueChar.style.top.replace('px', '') ) + 20 : parseInt( currentDialogueChar.style.top.replace('px', '') ) + 470;
 
                     cutscene.style.position = 'absolute';
                     cutscene.style.display = 'table';
@@ -3414,7 +3608,8 @@ function engageCutscene( position, areaCutscene = false, isVideo = false ) {
 
                 // If not area cutscene reset MC cutscene character.
                 if ( 'yes' !== document.querySelector( '.default-map' ).dataset.iscutscene ) {
-                    document.querySelector('div[data-character="mc"]').classList.remove('engage');
+                    const mapMainCharacter = document.getElementById( 'map-character');
+                    document.querySelector('div[data-character="' + mapMainCharacter.dataset?.mainid + '"].cut-character').classList.remove('engage');
                 }
 
                 // Reengage movement.
@@ -3541,7 +3736,7 @@ function afterCutscene( cutscene, areaCutscene = false ) {
     }
 
     // Hide cutscene images.
-    const mcImage = document.querySelector('[data-character="mc"]');
+    const mcImage = document.querySelector('[data-character="' + window.mainCharacter + '"]');
 
     if ( mcImage ) {
         mcImage.classList.remove( 'engage' );
@@ -3604,6 +3799,10 @@ function afterCutscene( cutscene, areaCutscene = false ) {
     setTimeout(() => {
         window.allowHit = true;
 
+        if ( true === npcBreak ) {
+            npcBreak = false;
+        }
+
         if ( bossFight && '' !== bossFight ) {
             const daBoss = document.querySelector( '.' + bossFight + '-map-item' );
 
@@ -3658,10 +3857,10 @@ function stopWalkSound() {
 /**
  * Enter an explore position if it is enterable.
  */
-function enterExplorePoint(value) {
+export function enterExplorePoint(value, mapUrl = false) {
     // Add enter buttons to map items.
-    const position = cleanClassName(value.className);
-    const mapUrl = value.getAttribute( 'data-map-url' );
+    const position = undefined !== value?.className ? cleanClassName(value.className) : value;
+    mapUrl = false !== mapUrl ? mapUrl : value.getAttribute( 'data-map-url' );
 
     // Add data point to button.
     const weaponEl = document.querySelector( '.map-weapon' );
@@ -3737,7 +3936,7 @@ function movementIntFunc() {
             const currentCharacterImage = document.querySelector('.map-character-icon.engage');
 
             if ( currentCharacterImage && '' === window.currentCharacterAutoDirection ) {
-                const staticVersion = document.getElementById(currentCharacterImage.id.replace('left-punch', 'left').replace('right-punch', 'right').replace('up-punch', 'up').replace('down-punch', 'down').replace( 'mc-', 'mc-static-' ) );
+                const staticVersion = document.getElementById(currentCharacterImage.id.replace('left-punch', 'left').replace('right-punch', 'right').replace('up-punch', 'up').replace('down-punch', 'down').replace( window.mainCharacter + '-', window.mainCharacter + '-static-' ) );
 
                 if ( staticVersion ) {
                     currentCharacterImage.classList.remove( 'engage' );
@@ -3986,7 +4185,7 @@ function addCharacterHit() {
         const direction = 'top' === weapon.dataset.direction ? 'up' : weapon.dataset.direction;
         const mapChar =  document.querySelector( '#map-character' );
         let currentImageMapCharacter = mapChar.querySelector( '.map-character-icon.engage');
-        const weaponAnimation = mapChar.querySelector( `#mc-${direction}-${weaponType}`);
+        const weaponAnimation = mapChar.querySelector( `#${window.mainCharacter}-${direction}-${weaponType}`);
 
         if ( false !== window.allowHit ) {
             const manaPoints = document.querySelector(`#explore-points .mana-amount`);
@@ -4137,17 +4336,19 @@ function addCharacterHit() {
  * Block movement if intersecting with the walls.
  * @param top
  * @param left
+ * @param box
  * @returns {{top, left}}
  */
-function blockMovement(top, left) {
+function blockMovement(top, left, box = false) {
     let finalTop = top;
     let finalLeft = left;
-    const box = document.querySelector( '.map-character-icon.engage' ).getBoundingClientRect();
+    const mainChar = box !== false ? '.map-character-icon.engage, ' : '';
+    box = false === box ? document.querySelector( '.map-character-icon.engage' ) : box;
     const collisionWalls = document.querySelectorAll(
-        '.default-map svg rect, .map-item:not(.explainer-container):not(.materialize-item-trigger):not(.drag-dest):not([data-hazard="true"]):not([data-trigger="true"]):not(.currently-dragging):not(.passable):not([data-genre="explore-sign"]):not([data-foreground="true"]), .enemy-item'
+        mainChar + '.default-map svg rect, .map-item:not([data-wanderer="yes"]):not(.explainer-container):not(.materialize-item-trigger):not(.drag-dest):not([data-hazard="true"]):not([data-trigger="true"]):not(.currently-dragging):not(.passable):not([data-genre="explore-sign"]):not([data-foreground="true"]), .enemy-item'
     );
 
-    return getBlockDirection(collisionWalls, box, finalTop, finalLeft, false);
+    return getBlockDirection(collisionWalls, box, parseInt(finalTop), parseInt(finalLeft), false, ('' !== mainChar));
 }
 
 /**
@@ -4158,26 +4359,30 @@ function blockMovement(top, left) {
  * @param finalTop The top position to move if not blocked.
  * @param finalLeft The left position to move if not blocked.
  * @param enemy The enemy.
+ * @param npc
  * @returns {{top: *, left: *, collide: *}}
  */
-function getBlockDirection(collisionWalls, box, finalTop, finalLeft, enemy) {
+function getBlockDirection(collisionWalls, box, finalTop, finalLeft, enemy, npc) {
     const left = finalLeft;
     const top = finalTop;
     let final = {top: finalTop, left: finalLeft, collide: false};
 
     if ( collisionWalls && false === window.godMode ) {
-        collisionWalls.forEach( collisionWall => {
-            collisionWall = collisionWall.getBoundingClientRect();
+        collisionWalls.forEach( collisionWallEle => {
+            const collisionWall = collisionWallEle.getBoundingClientRect();
 
-            if ( elementsOverlap( box, collisionWall ) ) {
+            if ( box !== collisionWallEle && elementsOverlap( box.getBoundingClientRect(), collisionWall ) ) {
+                const character = box.getBoundingClientRect();
+
                 // set collide true since we're overlapping.
                 final.collide = true;
 
-                const topCollision = collisionWall.bottom > box.top && collisionWall.top < box.top && collisionWall.bottom < ( box.top + 10 );
-                const bottomCollision = collisionWall.top < box.bottom && collisionWall.bottom > box.bottom && collisionWall.top > ( box.bottom - 10 );
-                const leftCollision = collisionWall.right > box.left && collisionWall.left < box.left;
-                const rightCollision = collisionWall.left < box.right && collisionWall.right > box.right;
-                const adjust = true === enemy ? 5 : 3;
+                const topCollision = collisionWall.bottom > character.top && collisionWall.top < character.top && collisionWall.bottom < ( character.top + 10 );
+                const bottomCollision = collisionWall.top < character.bottom && collisionWall.bottom > character.bottom && collisionWall.top > ( character.bottom - 10 );
+                const leftCollision = collisionWall.right > character.left && collisionWall.left < character.left;
+                const rightCollision = collisionWall.left < character.right && collisionWall.right > character.right;
+                let adjust = true === enemy ? 5 : 3;
+                adjust = true === npc ? 1 : adjust;
 
                 if (leftCollision && !rightCollision && !topCollision && !bottomCollision) {
                     final.left = left + adjust;
@@ -4570,7 +4775,7 @@ function moveCharacter(mapCharacter, newTop, newLeft, gradual, cutscene ) {
                 if ( currentMovementImage && false === currentMovementImage.id.includes('static') ) {
                     currentMovementImage.classList.remove( 'engage' );
 
-                    const newStaticImage = document.getElementById( currentMovementImage.id.replace( 'mc', 'mc-static' ) );
+                    const newStaticImage = document.getElementById( currentMovementImage.id.replace( window.mainCharacter, window.mainCharacter + '-static' ) );
 
                     if ( newStaticImage ) {
                         newStaticImage.classList.add( 'engage' );
@@ -4603,7 +4808,7 @@ function directCharacter( topDown, leftRight, box, mapCharacter ) {
     const currentImage = mapCharacter.querySelector( '.map-character-icon.engage' );
 
     if ( direction !== window.currentCharacterAutoDirection ) {
-        const newImage = mapCharacter.querySelector( '#mc-' + direction );
+        const newImage = mapCharacter.querySelector( '#' + window.mainCharacter + '-' + direction );
 
         window.currentCharacterAutoDirection = direction;
         mapCharacter.classList.add( direction + '-dir' );
@@ -5088,7 +5293,6 @@ function pushMC(dist) {
 
     switch(dir) {
         case 'right' :
-            console.log(left - dist);
             mc.style.left = (left - dist) + 'px';
             break;
         case 'left' :

@@ -1,6 +1,25 @@
 import { initImageUpload } from './image-upload';
+import { enterExplorePoint, engageExploreGame } from './explore';
 document.addEventListener("DOMContentLoaded", function() {
     window.devmode = false;
+    // Select level
+    const levels = document.querySelector( '.level-selector' );
+    const levelButton = document.getElementById('select-level');
+
+    if ( levels && levelButton ) {
+        levelButton.addEventListener('click', function (e) {
+            levels.classList.add('engage');
+
+            levels.querySelectorAll('img').forEach( level => {
+                level.addEventListener( 'click', event => {
+                    const mapUrl = level.src;
+                    const area = level.dataset.name;
+                    engageExploreGame();
+                    enterExplorePoint(area, mapUrl);
+                })
+            })
+        })
+    }
     const devmodeMenuToggle = document.querySelector(".dev-mode-menu-toggle");
 
     if ( devmodeMenuToggle ) {
@@ -10,7 +29,7 @@ document.addEventListener("DOMContentLoaded", function() {
             if (devModeMenu) {
                 devModeMenu.classList.toggle("engage");
                 devmodeMenuToggle.classList.toggle("engage");
-                const triggers = document.querySelectorAll('.explainer-container, [data-trigger="true"], [data-genre="explore-area"], [data-genre="blockade"]');
+                const triggers = document.querySelectorAll('.explainer-container, [data-genre="explore-wall"], [data-trigger="true"], [data-genre="explore-area"], [data-genre="blockade"]');
 
                 if ( devModeMenu.classList.contains('engage')) {
                     if ( triggers ) {

@@ -54,6 +54,7 @@ class Explore
             'explore-sign',
             'explore-minigame',
             'explore-explainer',
+            'explore-wall',
         ];
 
         add_menu_page(
@@ -139,6 +140,7 @@ class Explore
             'explore-sign',
             'explore-minigame',
             'explore-explainer',
+            'explore-wall',
         ];
 
         $current_post_type = $screen->post_type;
@@ -171,11 +173,14 @@ class Explore
      * @return void
      */
     public function registerGameOptions() {
-        $pages = get_posts(['post_type' => 'page', 'post_status' => 'publish', 'posts_per_page' => 50]);
-        $areas = get_posts(['post_type' => 'explore-area', 'post_status' => 'publish', 'posts_per_page' => 100]);
+        $pages = get_posts(['post_type' => 'page', 'post_status' => 'publish', 'posts_per_page' => 200]);
+        $areas = get_posts(['post_type' => 'explore-area', 'post_status' => 'publish', 'posts_per_page' => 200]);
+        $characters = get_posts(['post_type' => 'explore-character', 'post_status' => 'publish', 'posts_per_page' => 200]);
+
         $settings = [
             'explore_game_page' => ['select', 'Game Page Title', $pages],
             'explore_first_area' => ['select', 'Starting Area', $areas],
+            'explore_main_character' => ['select', 'Main Character', $characters],
             'explore_require_login' => ['checkbox', 'Require Login'],
             'explore_money_image' => ['upload', 'Money Icon'],
             'explore_indicator_icon' => ['upload', 'Indicator Icon'],
@@ -913,15 +918,15 @@ class Explore
         $map_abilities = self::getMapAbilitiesHTML($explore_abilities);
 
         ob_start();
-        include_once $this->plugin->dir_path . '/../templates/style-scripts.php';
+        include_once $this->plugin->dir_path . 'templates/style-scripts.php';
         $area_item_styles_scripts = ob_get_clean();
 
         ob_start();
-        include_once $this->plugin->dir_path . '/../page-templates/components/explore-missions.php';
+        include_once $this->plugin->dir_path . 'templates/components/explore-missions.php';
         $map_missions = ob_get_clean();
 
         ob_start();
-        include_once $this->plugin->dir_path . '/../page-templates/components/explore-characters.php';
+        include_once $this->plugin->dir_path . 'templates/components/explore-characters.php';
         $map_characters = ob_get_clean();
 
         update_user_meta($userid, 'current_location', $position);
@@ -994,7 +999,7 @@ class Explore
                     }
                 }
             }
-            
+
             // Return the post content for the supplied item.
             wp_send_json_success(wp_json_encode($content));
         } else {
@@ -1109,7 +1114,7 @@ class Explore
 
         $args = [
             'numberposts' => -1,
-            'post_type' => ['explore-weapon', 'explore-area', 'explore-point', 'explore-character', 'explore-enemy', 'explore-sign'],
+            'post_type' => ['explore-weapon', 'explore-area', 'explore-point', 'explore-character', 'explore-enemy', 'explore-sign', 'explore-wall'],
             'meta_query' => [
                 [
                     'key'     => 'explore-area',
@@ -1323,6 +1328,7 @@ class Explore
             $path_trigger_width = false === empty($path_trigger['width']) ? $path_trigger['width'] : '';
             $path_trigger_cutscene = false === empty($path_trigger['cutscene']) ? $path_trigger['cutscene'] : '';
             $materialize_item_trigger = get_post_meta($explore_point->ID, 'explore-materialize-item-trigger', true);
+            $wanderer = get_post_meta( $explore_point->ID, 'explore-wanderer', true);
             $materialize_item_trigger = $materialize_item_trigger ?? false;
             $is_materialized_item_triggered = self::isMaterializedItemTriggered($explore_point->post_name, $current_location, $userid);
             $has_minigame = get_post_meta($explore_point->ID, 'explore-minigame', true);
@@ -1395,6 +1401,10 @@ class Explore
                     $html .= ' data-map-url="' . $map_url . '" ';
                 }
 
+                if (false === empty($wanderer)) {
+                    $html .= 'data-wanderer="' . esc_attr($wanderer) . '" ';
+                }
+
                 // Explore character crew mate.
                 if ('explore-character' === $explore_point->post_type && 'yes' === $crew_mate) {
                     $html .= ' data-crewmate="' . $crew_mate . '"';
@@ -1464,6 +1474,7 @@ class Explore
                     $hazard_remove = get_post_meta($enemy_missions[0]->ID, 'explore-hazard-remove', true);
                     $hazard_remove = false === empty($hazard_remove) && true === in_array($explore_point->post_name, explode(',', $hazard_remove));
                 }
+
 
                 $explore_path = false === empty($walking_path) ? wp_json_encode($walking_path) : '[{"top":"0","left":"0"}]';
 
@@ -1704,12 +1715,13 @@ class Explore
     public static function getMapCutsceneHTML($explore_cutscenes, $position, $userid) {
         $userid = $userid ?? get_current_user_id();
         $html = '';
+        $main_character = get_option( 'explore_main_character', false);
         $area = get_posts(['post_type' => 'explore-area', 'name' => $position, 'posts_per_page' => 1]);
         $is_area_cutscene = 'yes' === get_post_meta($area[0]->ID, 'explore-is-cutscene', true);
-        $mc = get_posts( ['post_type' => 'explore-character', 'name' => 'mc', 'posts_per_page' => 1]);
+        $mc = get_posts( ['post_type' => 'explore-character', 'name' => $main_character, 'posts_per_page' => 1]);
 
         if (false === $is_area_cutscene) {
-            $html .= '<div data-character="mc" class="cut-character"><img src="' . get_the_post_thumbnail_url($mc[0]). '"/></div>';
+            $html .= '<div data-character="' . $mc[0]->ID . '" class="cut-character main"><img src="' . get_the_post_thumbnail_url($mc[0]). '"/></div>';
         }
 
         foreach( $explore_cutscenes as $explore_cutscene ) {
@@ -1815,7 +1827,7 @@ class Explore
             if (false === $is_area_cutscene && false === empty($character)) {
                 $character_post = get_posts( ['post_type' => ['explore-character', 'explore-enemy'], 'posts_per_page' => 1, 'name' => $character] );
 
-                $html .= '<div data-character="' . $character . '" class="cut-character"><img src="' . get_the_post_thumbnail_url($character_post[0]->ID) . '"/></div>';
+                $html .= '<div data-character="' . $character_post[0]->ID . '" class="cut-character"><img src="' . get_the_post_thumbnail_url($character_post[0]->ID) . '"/></div>';
             }
 
             $html .= 'explore-area' !== $explore_cutscene->post_type ? $explore_cutscene->post_content : '';
@@ -2025,6 +2037,10 @@ class Explore
                 'Explainers',
                 'supports' => [ 'title', 'editor', 'thumbnail' ]
             ],
+            'explore-wall' => [
+                'Walls',
+                'supports' => [ 'title' ]
+            ]
         ];
 
         $taxo_types = [
@@ -2207,6 +2223,7 @@ class Explore
                         'height' => get_post_meta($main_character->ID, 'explore-height', true),
                         'width' => get_post_meta($main_character->ID, 'explore-width', true),
                         'ability' => get_post_meta($main_character->ID, 'explore-ability', true),
+                        'id' => $main_character->ID,
                     ];
                 }
             }

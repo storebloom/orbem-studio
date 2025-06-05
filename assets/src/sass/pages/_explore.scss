@@ -13,6 +13,39 @@ html {
       cursor: pointer;
     }
 
+    #select-level {
+      position: fixed;
+      z-index: 99;
+    }
+
+    .level-selector {
+      align-items: center;
+      background: white;
+      display: none;
+      gap: 2rem;
+      height: 100%;
+      justify-content: center;
+      left: 0;
+      padding: 3rem;
+      position: fixed;
+      top: 0;
+      width: 100%;
+
+      img {
+        box-shadow: 5px 5px 5px 5px rgba(0, 0, 0, 0.38);
+        cursor:pointer;
+        max-width: 300px;
+
+        &:hover {
+          border: solid 3px deepskyblue;
+        }
+      }
+
+      &.engage {
+        display: flex;
+      }
+    }
+
     .game-login-create-container {
       background: white;
       border-radius: 8px;
@@ -173,11 +206,11 @@ html {
 
     .map-cutscene {
       display: flex;
-      justify-content: space-between;
       position: fixed;
       bottom: -1500px;
       left: 50%;
       max-height: 300px;
+      max-width: 1000px;
       transform: translatex(-50%);
       transition: bottom .3s;
       width: 80vw;
@@ -190,6 +223,7 @@ html {
           bottom: unset;
           height: 100vh;
           max-height: 100%;
+          max-width: 100%;
           top: 0;
           width: 100%;
 
@@ -238,7 +272,7 @@ html {
       }
     }
 
-    div[data-character="mc"] {
+    div.main.cut-character {
       opacity: 0;
       position: fixed;
       bottom: 0;
