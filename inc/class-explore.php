@@ -911,11 +911,17 @@ class Explore
         $explore_points = self::getExplorePoints($position);
         $explore_cutscenes = self::getExplorePosts($position, 'explore-cutscene');
         $explore_minigames = self::getExplorePosts($position, 'explore-minigame');
+        $explore_walls = self::getExplorePosts($position, 'explore-wall');
+        $explore_explainers = self::getExplorePosts($position, 'explore-explainer');
         $explore_abilities = Explore::getExploreAbilities();
         $map_items = self::getMapItemHTML($explore_points, $userid, $position);
+        $explainers_menu = self::getExplainerHTML($explore_explainers, 'menu');
+        $explainers_map = self::getExplainerHTML($explore_explainers, 'map');
         $minigames = self::getMinigameHTML($explore_minigames);
         $map_cutscenes = self::getMapCutsceneHTML($explore_cutscenes, $position, $userid);
         $map_abilities = self::getMapAbilitiesHTML($explore_abilities);
+        $is_admin = user_can($userid, 'manage_options');
+        $dev_mode = '';
 
         ob_start();
         include_once $this->plugin->dir_path . 'templates/style-scripts.php';
@@ -935,6 +941,14 @@ class Explore
             return;
         }
 
+        if ( $is_admin ) {
+            $item_list = array_merge($explore_points, $explore_minigames, $explore_explainers, $explore_walls);
+            $triggers = Dev_Mode::getTriggers($item_list, $explore_cutscenes, Explore::getExplorePosts($position, 'explore-mission'));
+            $item_list = array_merge($item_list, $triggers);
+
+            $dev_mode = Dev_Mode::getDevModeHTML($item_list);
+        }
+
         wp_send_json_success(
             wp_json_encode(
                 [
@@ -943,12 +957,15 @@ class Explore
                     'map-cutscenes' => $map_cutscenes,
                     'map-missions' => $map_missions,
                     'map-characters' => $map_characters,
+                    'map-explainers' => $explainers_map,
+                    'menu-explainers' => $explainers_menu,
                     'map-abilities' => $map_abilities,
                     'map-item-styles-scripts' => $area_item_styles_scripts,
                     'start-top' => get_post_meta($area[0]->ID, 'explore-start-top', true),
                     'start-left' => get_post_meta($area[0]->ID, 'explore-start-left', true),
                     'map-svg' => self::getMapSVG($area[0]),
-                    'is-cutscene' => $is_area_cutscene
+                    'is-cutscene' => $is_area_cutscene,
+                    'dev-mode' => $dev_mode,
                 ]
             )
         );
@@ -2224,6 +2241,7 @@ class Explore
                         'width' => get_post_meta($main_character->ID, 'explore-width', true),
                         'ability' => get_post_meta($main_character->ID, 'explore-ability', true),
                         'id' => $main_character->ID,
+                        'voice' => get_post_meta($main_character->ID, 'explore-voice', true),
                     ];
                 }
             }

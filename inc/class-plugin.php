@@ -43,17 +43,12 @@ class Plugin extends Plugin_Base {
         $page = get_queried_object();
 
         if (false === empty($game_page) && false === empty($page->post_name) && $game_page === $page->post_name) {
-            self::enqueueScript('orbem-order/explore');
-
-            if (true === current_user_can('manage_options')) {
-                self::enqueueScript('orbem-order/devmode');
-            }
-
+            self::enqueueScript('orbem-order/app');
             self::enqueueStyle('orbem-order/app');
 
             // Register the WebSocket script
             //wp_enqueue_script('socket-io', 'https://cdn.socket.io/4.0.1/socket.io.min.js', array(), null, true);
-            wp_add_inline_script('orbem-order/explore',
+            wp_add_inline_script('orbem-order/app',
                 'const gameURL = "' . get_option('explore_game_url', get_home_url()) . '";
             const wpThemeURL = "' . str_replace(['https://', 'http://', 'www'], '', get_home_url()) . '";',
             );
@@ -77,7 +72,7 @@ class Plugin extends Plugin_Base {
             }
 
             wp_add_inline_script(
-                'orbem-order/explore',
+                'orbem-order/app',
                 'const currentUserId ="' . get_current_user_id() . '";' .
                 'const explorePoints = ' . wp_json_encode($explore_points) . ';' .
                 'const exploreAbilities = ' . wp_json_encode($explore_abilities) . ';' .
@@ -197,7 +192,7 @@ class Plugin extends Plugin_Base {
         $localizes = array();
 
         switch ( $handle ) {
-            case 'orbem-order/explore':
+            case 'orbem-order/app':
                 $current_user_id = get_current_user_id();
 
                 $explore_points = get_user_meta($current_user_id, 'explore_points', true);

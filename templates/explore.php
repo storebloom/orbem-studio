@@ -5,6 +5,7 @@
  */
 
 use OrbemGameEngine\Explore;
+use OrbemGameEngine\Dev_Mode;
 
 $first_area = get_option('explore_first_area', false);
 
@@ -68,7 +69,7 @@ $main_character_id = $main_character_info['id'] ?? false;
 $is_admin = user_can(get_current_user_id(), 'manage_options');
 if ( $is_admin ) {
     $item_list = array_merge($explore_points, $explore_minigames, $explore_explainers, $explore_walls);
-    $triggers = \OrbemGameEngine\Dev_Mode::getTriggers($item_list, $explore_cutscenes, $explore_missions);
+    $triggers = Dev_Mode::getTriggers($item_list, $explore_cutscenes, $explore_missions);
     $item_list = array_merge($item_list, $triggers);
 }
 
@@ -108,16 +109,7 @@ include plugin_dir_path(__FILE__) . 'plugin-header.php';
             </div>
         </div>
         <?php if (true === $is_admin) : ?>
-            <div class="dev-mode-menu-toggle">DEVMODE</div>
-            <div class="dev-mode-menu">
-                <div id="new-addition">
-                    <div class="addition-content">
-                        <?php include $plugin_dir_path . '/components/new-additions.php'; ?>
-                    </div>
-                </div>
-                <?php include $plugin_dir_path . '/components/finder-list.php'; ?>
-                <?php include $plugin_dir_path . '/components/pinpoint.php'; ?>
-            </div>
+            <?php echo html_entity_decode(Dev_Mode::getDevModeHTML($item_list)); ?>
         <?php endif; ?>
         <div id="settings">
             <div class="setting-content">
@@ -175,7 +167,7 @@ include plugin_dir_path(__FILE__) . 'plugin-header.php';
         <span id="key-guide" href="<?php echo esc_url($game_url); ?>">
             <img src="<?php echo $plugin_dir . '/assets/src/images/keys.png'; ?>" />
         </span>
-        <div style="top: <?php echo false === empty($coordinates['top']) ? esc_attr($coordinates['top']) : $explore_area_start_top; ?>px; left: <?php echo false === empty($coordinates['left']) ? esc_attr($coordinates['left']) : $explore_area_start_left; ?>px" class="down-dir" data-mainid="<?php echo esc_attr($main_character_id); ?>" id="map-character" data-ability="<?php echo false === empty($main_character_info['ability']) ? esc_attr($main_character_info['ability']) : ''; ?>">
+        <div style="top: <?php echo false === empty($coordinates['top']) ? esc_attr($coordinates['top']) : $explore_area_start_top; ?>px; left: <?php echo false === empty($coordinates['left']) ? esc_attr($coordinates['left']) : $explore_area_start_left; ?>px" class="down-dir" data-mainid="<?php echo esc_attr($main_character_id); ?>" id="map-character" data-voice="<?php echo esc_attr($main_character_info['voice'] ?? '');?>" data-ability="<?php echo false === empty($main_character_info['ability']) ? esc_attr($main_character_info['ability']) : ''; ?>">
             <?php foreach($direction_images as $direction_label => $direction_image):
                 $fight_animation = false !== stripos($direction_label, 'punch') ? ' fight-image' : '';
                 ?>

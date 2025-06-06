@@ -1,17 +1,43 @@
 import { initImageUpload } from './image-upload';
 import { enterExplorePoint, engageExploreGame } from './explore';
-document.addEventListener("DOMContentLoaded", function() {
+
+export function engageDevMode() {
     window.devmode = false;
+
+    // Engage wall builder.
+    engageWallBuilder();
+
+    // Settings.
+    const settingCog = document.querySelector('#new-addition');
+
+    if ( settingCog ) {
+
+        settingCog.addEventListener('click', (e) => {
+            if ( false === e.target.classList.contains( 'close-settings') && false === e.target.parentNode.classList.contains( 'character-item') ) {
+                settingCog.classList.add( 'engage' );
+            }
+        });
+
+        settingCog.querySelector('.close-settings').addEventListener( 'click', () => {
+            const description = document.querySelector( '.retrieval-points #item-description' );
+            settingCog.classList.remove('engage');
+
+            if ( description ) {
+                description.innerHTML = '';
+            }
+        } );
+    }
+
     // Select level
-    const levels = document.querySelector( '.level-selector' );
+    const levels = document.querySelector('.level-selector');
     const levelButton = document.getElementById('select-level');
 
-    if ( levels && levelButton ) {
-        levelButton.addEventListener('click', function (e) {
+    if (levels && levelButton) {
+        levelButton.addEventListener('click', function(e) {
             levels.classList.add('engage');
 
-            levels.querySelectorAll('img').forEach( level => {
-                level.addEventListener( 'click', event => {
+            levels.querySelectorAll('img').forEach(level => {
+                level.addEventListener('click', event => {
                     const mapUrl = level.src;
                     const area = level.dataset.name;
                     engageExploreGame();
@@ -22,7 +48,7 @@ document.addEventListener("DOMContentLoaded", function() {
     }
     const devmodeMenuToggle = document.querySelector(".dev-mode-menu-toggle");
 
-    if ( devmodeMenuToggle ) {
+    if (devmodeMenuToggle) {
         devmodeMenuToggle.addEventListener("click", function() {
             const devModeMenu = document.querySelector(".dev-mode-menu");
 
@@ -31,8 +57,8 @@ document.addEventListener("DOMContentLoaded", function() {
                 devmodeMenuToggle.classList.toggle("engage");
                 const triggers = document.querySelectorAll('.explainer-container, [data-genre="explore-wall"], [data-trigger="true"], [data-genre="explore-area"], [data-genre="blockade"]');
 
-                if ( devModeMenu.classList.contains('engage')) {
-                    if ( triggers ) {
+                if (devModeMenu.classList.contains('engage')) {
+                    if (triggers) {
                         triggers.forEach(trigger => {
                             trigger.style.backgroundColor = 'rgb(0,146,255)';
                             trigger.style.opacity = .3;
@@ -40,7 +66,7 @@ document.addEventListener("DOMContentLoaded", function() {
                         });
                     }
                 } else {
-                    if ( triggers ) {
+                    if (triggers) {
                         triggers.forEach(trigger => {
                             trigger.style.backgroundColor = '';
                             trigger.style.opacity = '';
@@ -51,24 +77,24 @@ document.addEventListener("DOMContentLoaded", function() {
         })
     }
 
-    setTimeout( () => {
+    setTimeout(() => {
         const items = document.querySelectorAll('.map-item');
         const findItems = document.querySelectorAll('.find-explore-item');
         const mainCharacter = document.getElementById('map-character');
         const addNewListItems = document.querySelectorAll('#add-new-list li');
-        const godMode = document.getElementById( 'god-mode' );
-        const noTouch = document.getElementById( 'no-touch' );
-        const showCollision = document.getElementById( 'show-collision-map' );
+        const godMode = document.getElementById('god-mode');
+        const noTouch = document.getElementById('no-touch');
+        const showCollision = document.getElementById('show-collision-map');
         let recordThePath = false;
 
         // Pinpoint.
         const pinPointIcon = document.getElementById('open-pinpoint');
 
-        if ( pinPointIcon ) {
+        if (pinPointIcon) {
             pinPointIcon.addEventListener('click', () => {
                 document.body.style.cursor = 'copy';
 
-                setTimeout( () => {
+                setTimeout(() => {
                     document.addEventListener('click', getMouseCoordinates);
                     document.addEventListener('mousemove', trackMouseCoordinates);
                 }, 0);
@@ -88,7 +114,7 @@ document.addEventListener("DOMContentLoaded", function() {
             }
 
             function trackMouseCoordinates(event) {
-                const mapRect = document.querySelector( '.game-container' ).getBoundingClientRect();
+                const mapRect = document.querySelector('.game-container').getBoundingClientRect();
                 window.mouseX = parseInt(event.clientX - mapRect.left);
                 window.mouseY = parseInt(event.clientY - mapRect.top);
             }
@@ -97,11 +123,11 @@ document.addEventListener("DOMContentLoaded", function() {
         window.godMode = false;
         window.noTouch = false;
 
-        if ( godMode && noTouch && showCollision ) {
+        if (godMode && noTouch && showCollision) {
             showCollision.addEventListener('change', () => {
-                const collisionMap = document.querySelector( '.default-map > svg' );
+                const collisionMap = document.querySelector('.default-map > svg');
 
-                if ( showCollision.checked ) {
+                if (showCollision.checked) {
                     collisionMap.style.opacity = '1';
                 } else {
                     collisionMap.style.opacity = '0';
@@ -109,7 +135,7 @@ document.addEventListener("DOMContentLoaded", function() {
             });
 
             godMode.addEventListener('change', () => {
-                if ( godMode.checked ) {
+                if (godMode.checked) {
                     window.godMode = true;
                 } else {
                     window.godMode = false;
@@ -117,7 +143,7 @@ document.addEventListener("DOMContentLoaded", function() {
             });
 
             noTouch.addEventListener('change', () => {
-                if ( noTouch.checked ) {
+                if (noTouch.checked) {
                     window.noTouch = true;
                     mainCharacter.style.zIndex = '0';
                 } else {
@@ -126,8 +152,8 @@ document.addEventListener("DOMContentLoaded", function() {
             });
         }
 
-        if ( addNewListItems ) {
-            addNewListItems.forEach(function (item) {
+        if (addNewListItems) {
+            addNewListItems.forEach(function(item) {
                 item.addEventListener('click', () => {
                     const postType = item.dataset.type;
 
@@ -153,23 +179,23 @@ document.addEventListener("DOMContentLoaded", function() {
 
                             return response.json();
                         }).then(data => {
-                            const addNewFields = document.querySelector('.add-new-fields');
+                        const addNewFields = document.querySelector('.add-new-fields');
 
-                            if ( addNewFields ) {
-                                addNewFields.innerHTML = data.data;
+                        if (addNewFields) {
+                            addNewFields.innerHTML = data.data;
 
-                                if ( typeof initImageUpload === 'function' ) {
-                                    initImageUpload();
-                                    makeNewFormSub();
-                                }
+                            if (typeof initImageUpload === 'function') {
+                                initImageUpload();
+                                makeNewFormSub();
                             }
+                        }
                     });
                 })
             })
         }
 
-        if ( findItems && findItems.length > 0 ) {
-            findItems.forEach( item => {
+        if (findItems && findItems.length > 0) {
+            findItems.forEach(item => {
                 const itemTitle = item.querySelector('.find-title');
                 const editButton = item.querySelector('.edit-item-button');
                 const showItem = item.querySelector('.show-hide-item');
@@ -181,7 +207,7 @@ document.addEventListener("DOMContentLoaded", function() {
                     const theNewSizeItem = document.getElementById(theID);
 
                     showItem.addEventListener('click', e => {
-                        if (true === showItem.classList.contains( 'show' )) {
+                        if (true === showItem.classList.contains('show')) {
                             theNewSizeItem.style.display = 'none';
                             showItem.textContent = '🫣';
                         } else {
@@ -271,7 +297,7 @@ document.addEventListener("DOMContentLoaded", function() {
                                             editButton.classList.remove('created');
                                             closeButton.style.display = 'none';
 
-                                            if ( theNewSizeItem ) {
+                                            if (theNewSizeItem) {
                                                 theNewSizeItem.style.height = `${heightInput.value}px`;
                                                 theNewSizeItem.style.width = `${widthInput.value}px`;
                                             }
@@ -291,18 +317,18 @@ document.addEventListener("DOMContentLoaded", function() {
                 itemTitle.addEventListener('click', (e) => {
                     const theFinderItem = e.target.closest('.find-explore-item');
                     const theItem = document.querySelector('.' + theFinderItem.dataset.class + '[data-genre="' + theFinderItem.dataset.posttype + '"]');
-                    const currentSelected = document.querySelector( '.map-item.selected');
+                    const currentSelected = document.querySelector('.map-item.selected');
                     const currentListSelected = document.querySelector('.find-explore-item.selected');
 
-                    if ( currentSelected ) {
-                        currentSelected.classList.remove( 'selected' );
+                    if (currentSelected) {
+                        currentSelected.classList.remove('selected');
                     }
 
-                    if ( currentListSelected ) {
-                        currentListSelected.classList.remove( 'selected' );
+                    if (currentListSelected) {
+                        currentListSelected.classList.remove('selected');
                     }
 
-                    if ( theItem ) {
+                    if (theItem) {
                         mainCharacter.style.left = (parseInt(theItem.style.left.replace('px', '')) - 200) + 'px';
                         mainCharacter.style.top = (parseInt(theItem.style.top.replace('px', '')) - 200) + 'px';
                         theItem.scrollIntoView();
@@ -313,7 +339,7 @@ document.addEventListener("DOMContentLoaded", function() {
             })
         }
 
-        if ( items && items.length ) {
+        if (items && items.length) {
 
             // Drag logic.
             let draggedContainer = null;
@@ -347,7 +373,7 @@ document.addEventListener("DOMContentLoaded", function() {
             function handleMouseMove(event) {
                 if (draggedContainer) {
                     // Calculate the mouse position relative to the .default-map element
-                    const mapRect = document.querySelector( '.game-container' ).getBoundingClientRect();
+                    const mapRect = document.querySelector('.game-container').getBoundingClientRect();
 
                     const mouseX = 'menu' === draggedContainer.dataset.type ? event.clientX : event.clientX - mapRect.left;
                     const mouseY = 'menu' === draggedContainer.dataset.type ? event.clientY : event.clientY - mapRect.top;
@@ -409,7 +435,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 }
             }
 
-            items.forEach( item => {
+            items.forEach(item => {
                 item.draggable = true;
                 item.addEventListener('dragstart', handleDragStart);
                 item.addEventListener('mouseup', handleDragEnd);
@@ -423,12 +449,15 @@ document.addEventListener("DOMContentLoaded", function() {
     if (exploreItemList) {
         const openClose = document.querySelector('.open-close-item-list');
 
-        if ( openClose ) {
+        if (openClose) {
             openClose.addEventListener('click', event => {
                 exploreItemList.classList.toggle('engage');
             });
         }
     }
+}
+document.addEventListener("DOMContentLoaded", function() {
+    engageDevMode();
 } );
 
 function makeNewFormSub() {
@@ -496,4 +525,8 @@ function parseFormDataToNestedObject(formData) {
     }
 
     return result;
+}
+
+function engageWallBuilder() {
+
 }

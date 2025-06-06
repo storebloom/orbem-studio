@@ -1,5 +1,7 @@
 "use strict";
 
+import { engageDevMode } from './devmode';
+
 let persistTimeout;
 let saveMissionTimeout;
 let saveMaterializedItemTimeout;
@@ -244,11 +246,11 @@ document.addEventListener("DOMContentLoaded", function(){
     // Reset triggered so start game.
     const primary = document.getElementById( 'primary' );
     if ( primary && true === primary.classList.contains('reset')) {
-        engageExploreGame();
+        //engageExploreGame();
     }
 
     // Settings.
-    const settingCogs = document.querySelectorAll('#settings, #storage, #characters, #new-addition');
+    const settingCogs = document.querySelectorAll('#settings, #storage, #characters');
 
     if ( settingCogs ) {
         settingCogs.forEach( settingCog => {
@@ -1345,6 +1347,31 @@ const enterNewArea = (function () {
         clearInterval(window.runnerInt);
         clearInterval(window.walkingInterval);
 
+        // Remove menu explainers.
+        const menuExplainers = document.querySelectorAll( '.game-container > .explainer-container, .game-container > .explainer-trigger');
+
+        if ( menuExplainers ) {
+            menuExplainers.forEach( explainer => {
+                explainer.remove();
+            });
+        }
+
+        // Remove old devmmode.
+        const devModeButton = document.querySelector('.dev-mode-menu-toggle');
+        const devModeMenu = document.querySelector('.dev-mode-menu');
+
+        if ( devModeMenu && devModeButton ) {
+            devModeMenu.remove();
+            devModeButton.remove();
+        }
+        
+        // Remove current explore finder list items. DEVMODE
+        const finderItems = document.querySelector('.explore-item-list');
+        
+        if ( finderItems ) {
+            finderItems.innerHTML = '';
+        }
+
         // Remove old items.
         const defaultMap = document.querySelector( '.default-map' );
 
@@ -1389,6 +1416,15 @@ const enterNewArea = (function () {
                 const chracterItem = document.getElementById( 'map-character' );
                 const container = document.querySelector( '.game-container' );
                 const head = document.querySelector( 'head' );
+                let devMode = '';
+
+                if ( newMapItems['dev-mode'] && '' !== newMapItems['dev-mode']) {
+                    devMode = newMapItems['dev-mode'];
+                }
+
+                if ( container && newMapItems['menu-explainers'] ) {
+                    container.innerHTML = newMapItems['menu-explainers'] + devMode + container.innerHTML
+                }
 
                 // Delete old area styles/maps.
                 if ( mapItemStyles ) {
@@ -1439,6 +1475,9 @@ const enterNewArea = (function () {
                     // Add hazard check.
                     checkIfHazardHurts();
 
+                    // Engage dev mode.
+                    engageDevMode();
+
                     // Add close menu event.
                     const characterMenu = document.getElementById( 'characters' );
                     const closeCharacter = characterMenu.querySelector( '.close-settings' );
@@ -1461,7 +1500,7 @@ const enterNewArea = (function () {
                         // Create new default map.
                         const newDefaultMap = document.createElement( 'div' );
                         newDefaultMap.className = 'default-map';
-                        newDefaultMap.innerHTML = newMapItems['map-items'] + newMapItems['map-cutscenes'] + newMapItems['minigames'] + newMapItems['map-svg'];
+                        newDefaultMap.innerHTML = newMapItems['map-explainers'] + newMapItems['map-items'] + newMapItems['map-cutscenes'] + newMapItems['minigames'] + newMapItems['map-svg'];
 
                         if ( container ) {
                             container.append( newDefaultMap );
@@ -2368,7 +2407,9 @@ export function engageExploreGame() {
     }
 
     // Hide start screen.
-    document.querySelector( '.explore-overlay' ).remove();
+    if ( document.querySelector( '.explore-overlay' ) ) {
+        document.querySelector('.explore-overlay').remove();
+    }
     document.body.style.position = 'unset';
 
     if ( touchButtons ) {
@@ -2723,7 +2764,7 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
                             .filter(node => node.nodeType === Node.TEXT_NODE)
                             .map(node => node.textContent)
                             .join('');
-                        const mcVoice = document.querySelector('.wp-block-orbem-paragraph-mp3.' + window.mainCharacter).dataset.voice;
+                        const mcVoice = mapChar.dataset.voice;
                         const providedAudio = document.getElementById(triggee.id + '-s') ?? false;
 
                         // Do text to speech.

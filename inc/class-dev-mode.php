@@ -248,4 +248,28 @@ class Dev_Mode
 
         return $trigger;
     }
+
+    /**
+     * Get the dev mode html.
+     * @param $item_list
+     * @return false|string
+     */
+    public static function getDevModeHTML($item_list)
+    {
+        ob_start();
+        ?>
+        <div class="dev-mode-menu-toggle">DEVMODE</div>
+        <div class="dev-mode-menu">
+            <div id="new-addition">
+                <div class="addition-content">
+                    <?php include plugin_dir_path(__FILE__) . '../templates/components/new-additions.php'; ?>
+                </div>
+            </div>
+            <?php include  plugin_dir_path(__FILE__) . '../templates/components/finder-list.php'; ?>
+            <?php include  plugin_dir_path(__FILE__) . '../templates/components/wall-builder.php'; ?>
+            <?php include  plugin_dir_path(__FILE__) . '../templates/components/pinpoint.php'; ?>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
 }
