@@ -203,7 +203,7 @@ class Dev_Mode
             wp_send_json_error('create failed');
         }
 
-        wp_send_json_success('success');
+        wp_send_json_success($post_id);
     }
 
     public static function getTriggers($items, $cutscenes, $missions) {

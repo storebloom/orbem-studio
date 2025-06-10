@@ -4,9 +4,6 @@ import { enterExplorePoint, engageExploreGame } from './explore';
 export function engageDevMode() {
     window.devmode = false;
 
-    // Engage wall builder.
-    engageWallBuilder();
-
     // Settings.
     const settingCog = document.querySelector('#new-addition');
 
@@ -89,10 +86,12 @@ export function engageDevMode() {
 
         // Pinpoint.
         const pinPointIcon = document.getElementById('open-pinpoint');
+        const pinPointContainer = document.querySelector('.pinpoint-container');
 
         if (pinPointIcon) {
             pinPointIcon.addEventListener('click', () => {
                 document.body.style.cursor = 'copy';
+                pinPointContainer.classList.add('engage');
 
                 setTimeout(() => {
                     document.addEventListener('click', getMouseCoordinates);
@@ -108,9 +107,11 @@ export function engageDevMode() {
                 topPinpoint.value = mouseY;
                 leftPinpoint.value = mouseX;
 
+                pinPointContainer.classList.remove('engage');
+
                 document.removeEventListener('click', getMouseCoordinates);
                 document.removeEventListener('mousemove', trackMouseCoordinates);
-                document.body.style.cursor = 'inherit';
+                document.body.style.cursor = 'default';
             }
 
             function trackMouseCoordinates(event) {
@@ -440,6 +441,127 @@ export function engageDevMode() {
                 item.addEventListener('dragstart', handleDragStart);
                 item.addEventListener('mouseup', handleDragEnd);
             });
+
+            const engageWallBuilder = document.getElementById('engage-wallbuilder');
+            const wallBuilderContainer = document.querySelector('.wallbuilder-container');
+            const defaultMap = document.querySelector('.default-map');
+            let isDragging = false;
+
+            if (engageWallBuilder) {
+                engageWallBuilder.addEventListener('click', () => {
+                    wallBuilderContainer.classList.toggle('engage');
+
+                    if (wallBuilderContainer.classList.contains('engage')) {
+                        document.body.style.cursor = 'cell';
+
+                        document.addEventListener('mousedown', handleWallDragStart);
+                    } else {
+                        document.body.style.cursor = 'default';
+                        document.removeEventListener('mousedown', handleWallDragStart);
+                    }
+                });
+
+                let offsetX = 0;
+                let offsetY = 0;
+
+                // Handle the dragstart event
+                function handleWallDragStart(event) {
+                    isDragging = true;
+                    event.preventDefault();
+                    const wallElement = document.createElement('div');
+                    wallElement.draggable = true;
+
+                    // Calculate the mouse position relative to the .default-map element
+                    const mapRect = document.querySelector('.game-container').getBoundingClientRect();
+
+                    const mouseX = event.clientX - mapRect.left;
+                    const mouseY = event.clientY - mapRect.top;
+
+                    // Set the starting position of the wall basedon when you began to drag the mouse.
+                    wallElement.className = 'wp-block-group map-item';
+                    wallElement.style.left = `${mouseX - offsetX}px`;
+                    wallElement.style.top = `${mouseY - offsetY}px`;
+                    wallElement.style.backgroundColor = 'rgb(0,146,255)';
+                    wallElement.style.opacity = .3;
+                    wallElement.style.zIndex = 1;
+                    wallElement.dataset.genre = 'explore-wall';
+
+                    defaultMap.appendChild(wallElement);
+
+                    // Handle the mousemove event to update container position
+                    function handleWallMouseMove(event) {
+                        if (!isDragging) return;
+
+                        if (wallElement) {
+                            const mapRect = document.querySelector('.game-container').getBoundingClientRect();
+
+                            const mouseX = event.clientX - mapRect.left;
+                            const mouseY = event.clientY - mapRect.top;
+                            const wallElementLeft = parseInt(wallElement.style.left.replace('px', ''));
+                            const wallElementTop = parseInt(wallElement.style.top.replace('px', ''));
+
+                            wallElement.style.width = (mouseX - wallElementLeft) + 'px';
+                            wallElement.style.height = (mouseY - wallElementTop) + 'px';
+                        }
+                    }
+
+                    // Handle the dragend event
+                    function handleWallDragEnd() {
+                        isDragging = false;
+                        const filehref = `https://${wpThemeURL}/wp-json/orbemorder/v1/add-new/`;
+
+                        let currentLocation = document.querySelector('.game-container');
+                        currentLocation = currentLocation.className.replace('game-container ', '');
+                        const topPos = wallElement.style.top.replace('px', '');
+                        const leftPos = wallElement.style.left.replace('px', '');
+                        const width = wallElement.style.width.replace('px', '');
+                        const height = wallElement.style.height.replace('px', '');
+
+                        const jsonString = {
+                            type: 'explore-wall',
+                            area: currentLocation ?? '',
+                            values: {
+                                'title': 'wall-' + currentLocation + '-' + topPos + '-' + leftPos,
+                                'explore-width': width,
+                                'explore-height': height,
+                                'explore-top': topPos,
+                                'explore-left': leftPos,
+                            },
+                        }
+                        // Save position of item.
+                        fetch(filehref, {
+                            method: 'POST', // Specify the HTTP method.
+                            headers: {
+                                'Content-Type': 'application/json', // Set the content type to JSON.
+                            },
+                            body: JSON.stringify(jsonString) // The JSON stringified payload.
+                        })
+                            .then(response => {
+                                // Check if the response status is in the range 200-299.
+                                if (!response.ok) {
+                                    throw new Error('Network response was not ok ' + response.statusText);
+                                }
+
+                                return response.json();
+                            })
+                            .then(data => {
+                                wallElement.id = data.data;
+                                wallElement.className = wallElement.className + ' wall-' + currentLocation + '-' + topPos.toString().replace('.', '-') + '-' + leftPos.toString().replace('.', '-') + '-map-item is-layout-flow wp-block-group-is-layout-flow';
+                                wallElement.dataset.width = width;
+                                wallElement.dataset.height = height;
+
+                                wallElement.addEventListener('dragstart', handleDragStart);
+                                wallElement.addEventListener('mouseup', handleDragEnd);
+                            });
+                        document.removeEventListener('mousemove', handleWallMouseMove);
+                        document.removeEventListener('mouseup', handleWallDragEnd);
+                    }
+
+                    // Add mousemove event listener to update container position
+                    document.addEventListener('mousemove', handleWallMouseMove);
+                    document.addEventListener('mouseup', handleWallDragEnd);
+                }
+            }
         }
     }, 2500);
 
@@ -525,8 +647,4 @@ function parseFormDataToNestedObject(formData) {
     }
 
     return result;
-}
-
-function engageWallBuilder() {
-
 }

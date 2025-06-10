@@ -24,7 +24,6 @@ let pulsewaveInterval;
 let timerCountDownInterval;
 let currentLocation = ''
 let timerCountDownHit = false;
-let npcBreak = false;
 window.mainCharacter = '';
 window.godMode = false;
 window.noTouch = false;
@@ -415,6 +414,7 @@ function moveNPC( npc ) {
         const timeBetween = npc.dataset.timebetween;
         const repeatPath = npc.dataset.repeat;
         const wanderer = 'yes' === npc.dataset?.wanderer;
+        let walkingInterval;
 
         // Check if walking path exists.
         if ( walkingPath && false === wanderer ) {
@@ -434,7 +434,7 @@ function moveNPC( npc ) {
                 let currentWorldY = pathArray[position].top;
                 let didPauseNPC = false;
 
-                window.walkingInterval = setInterval(() => {
+                walkingInterval = setInterval(() => {
                     if ( 'false' !== npc.dataset?.canmove ) {
                         const currentImage = npc.querySelector('.character-icon.engage');
 
@@ -485,7 +485,7 @@ function moveNPC( npc ) {
 
                                     // If not repeat and position is at end, clear interval.
                                 } else if ( pathCount === nextPosition ) {
-                                    clearInterval(window.walkingInterval);
+                                    clearInterval(walkingInterval);
                                 }
 
                                 // if it is the first run, set to false and iterate on position and loopcount.
@@ -549,7 +549,7 @@ function makeNPCWander( npc, walkingSpeed, timeBetween ) {
         const pauseTime = Math.floor(Math.random() * (25000 - 15000 + 1)) + 15000;
 
         setTimeout(() => {
-            pauseNpc(timeBetween); // Call your function
+            pauseNpc(timeBetween, npc); // Call your function
 
             // Schedule the next pause with a new random time
             startRandomNpcPause();
@@ -558,8 +558,8 @@ function makeNPCWander( npc, walkingSpeed, timeBetween ) {
 
     startRandomNpcPause(); // Start the loop
 
-    const wanderInterval = setInterval( () => {
-        if ( false === npcBreak ) {
+    setInterval( () => {
+        if ( 'true' !== npc.dataset?.break ) {
             const currentLeft = npc.style.left.replace('px', '');
             const currentTop = npc.style.top.replace('px', '');
             const finalPos = blockMovement(currentTop, currentLeft, npc);
@@ -676,7 +676,7 @@ function makeNPCWander( npc, walkingSpeed, timeBetween ) {
             }
 
             if (collisionCount > 100) {
-                pauseNpc(timeBetween);
+                pauseNpc(timeBetween, npc);
                 moveDir = '';
             }
 
@@ -695,10 +695,10 @@ function makeNPCWander( npc, walkingSpeed, timeBetween ) {
     }, walkingSpeed );
 }
 
-function pauseNpc ( timeBetween ) {
-    npcBreak = true;
+function pauseNpc ( timeBetween, npc ) {
+    npc.dataset.break = 'true';
     setTimeout( () => {
-        npcBreak = false;
+        npc.dataset.break = 'false';
     }, timeBetween);
 }
 
@@ -1510,7 +1510,7 @@ const enterNewArea = (function () {
                         }
 
                         // Move npcs
-                        const moveableCharacters = document.querySelectorAll( '.path-onload[data-path]:not([data-path=""])');
+                        const moveableCharacters = document.querySelectorAll( '.path-onload[data-path]:not([data-path=""]), [data-wanderer="yes"]');
 
                         if ( moveableCharacters ) {
                             moveableCharacters.forEach( moveableCharacter => {
@@ -2448,7 +2448,7 @@ export function engageExploreGame() {
     }, 10000 );
 
     // Move npcs
-    const moveableCharacters = document.querySelectorAll( '.path-onload[data-path]:not([data-path=""])');
+    const moveableCharacters = document.querySelectorAll( '.path-onload[data-path]:not([data-path=""]), [data-wanderer="yes"]');
 
     if ( moveableCharacters ) {
         moveableCharacters.forEach( moveableCharacter => {
@@ -2755,7 +2755,7 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
 
                     if (triggee) {
                         triggee.classList.add('show-explainer');
-                        triggee.style.zIndex = '5';
+                        triggee.style.zIndex = '6';
                         value.classList.add('already-hit');
                         window.allowMovement = false;
                         window.allowHit = false;
@@ -3434,12 +3434,17 @@ function engageCutscene( position, areaCutscene = false, isVideo = false ) {
 
     if ( cutscene && ( undefined === cutscene.dataset.video || 'false' === cutscene.dataset.video ) ) {
         const dialogues = cutscene.querySelectorAll( 'p, .wp-block-orbem-paragraph-mp3' );
+        const npc = document.querySelector( '[data-trigger-cutscene="' + position + '"]' );
 
         if ( false === cutscene.classList.contains( 'been-viewed' ) ) {
             // stop movement.
             window.allowMovement = false;
             window.allowHit = false;
-            npcBreak = true;
+
+            if ( npc ) {
+                npc.dataset.break = 'true';
+            }
+
             cutscene.classList.add('engage');
 
             // start music if exists.
@@ -3840,8 +3845,8 @@ function afterCutscene( cutscene, areaCutscene = false ) {
     setTimeout(() => {
         window.allowHit = true;
 
-        if ( true === npcBreak ) {
-            npcBreak = false;
+        if ( 'true' === pathTriggerPosition.dataset?.break ) {
+            pathTriggerPosition.dataset.break = 'false';
         }
 
         if ( bossFight && '' !== bossFight ) {

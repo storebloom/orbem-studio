@@ -1495,10 +1495,16 @@ class Explore
 
                 $explore_path = false === empty($walking_path) ? wp_json_encode($walking_path) : '[{"top":"0","left":"0"}]';
 
+                if ( $walking_speed ) {
+                    $html .= ' data-speed="' . $walking_speed . '" ';
+                }
+
+                if ( $time_between ) {
+                    $html .= ' data-timebetween="' . $time_between . '" ';
+                }
+
                 if ('[{"top":"0","left":"0"}]' !== $explore_path && true === in_array($explore_point->post_type, ['explore-character', 'explore-enemy'])) {
                     $html .= ' data-path=\'' . $explore_path . '\' ';
-                    $html .= ' data-speed="' . $walking_speed . '" ';
-                    $html .= ' data-timebetween="' . $time_between . '" ';
 
                     if ('yes' === $repeat) {
                         $html .= ' data-repeat="true" ';
