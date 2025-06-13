@@ -285,10 +285,11 @@ html {
     div.main.cut-character {
       opacity: 0;
       position: fixed;
-      bottom: 0;
-      left: 5%;
-      height: 300px;
+      bottom: 37px;
+      left: 50%;
+      height: 258px;
       text-align: right;
+      transform: translateX(-171%);
       width: 300px;
 
       &.engage {

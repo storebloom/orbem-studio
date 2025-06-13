@@ -4413,7 +4413,7 @@ function getBlockDirection(collisionWalls, box, finalTop, finalLeft, enemy, npc)
     const top = finalTop;
     let final = {top: finalTop, left: finalLeft, collide: false};
 
-    if ( collisionWalls && false === window.godMode ) {
+    if ( collisionWalls && ( ( false === window.godMode && true !== npc ) || true === npc ) ) {
         collisionWalls.forEach( collisionWallEle => {
             const collisionWall = collisionWallEle.getBoundingClientRect();
 
