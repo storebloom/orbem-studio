@@ -5,7 +5,12 @@
 <div class="open-close-item-list">open/close item list ></div>
 <div class="explore-item-list">
     <?php $class_end = '-map-item';
-    foreach($item_list as $explore_item) :
+    foreach($post_types as $post_type) : $item_available = true; ?>
+    <div class="explore-list-group"><?php foreach($item_list as $explore_item) :
+            if ( $post_type === $explore_item->post_type ) :
+                if ( true === $item_available) : ?>
+                    <h3 class="item-post-type"><?php echo esc_html(ucwords(str_replace('-', ' ', $post_type))); ?></h3>
+               <?php $item_available = false; endif;
         switch ($explore_item->post_type) {
             case 'explore-explainer':
                 $class_end = '-explainer-item';
@@ -29,5 +34,7 @@
             <a href="<?php echo esc_url(admin_url() . 'post.php?post=' . $explore_item->ID . '&action=edit'); ?>" />edit item</a>
             <span class="close-item-button" style="display: none;">X</span>
         </p>
-    <?php endforeach; ?>
+        <?php endif; endforeach;?></div>
+   <?php endforeach;
+    ?>
 </div>

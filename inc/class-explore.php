@@ -42,20 +42,7 @@ class Explore
         $parent_slug  = 'orbem-game-engine';
         $parent_title = 'Game Engine';
 
-        $post_types = [
-            'explore-area',
-            'explore-point',
-            'explore-character',
-            'explore-cutscene',
-            'explore-enemy',
-            'explore-weapon',
-            'explore-magic',
-            'explore-mission',
-            'explore-sign',
-            'explore-minigame',
-            'explore-explainer',
-            'explore-wall',
-        ];
+        $post_types = $this->getCurrentPostTypes();
 
         add_menu_page(
             $parent_title,
@@ -1094,12 +1081,17 @@ class Explore
                 'verify_peer_name' => false,
             ],
         ]);
+        $map_url = get_the_post_thumbnail_url($explore_area->ID, 'full');
 
-        // Fetch the image data using the created context
-        $imageData = file_get_contents(get_the_post_thumbnail_url($explore_area->ID, 'full'), false, $context);
-        $find_string   = '<svg';
-        $position = strpos($imageData, $find_string);
-        return substr($imageData, $position);
+        if ( false === empty($map_url) ) {
+            // Fetch the image data using the created context
+            $imageData = file_get_contents($map_url, false, $context);
+            $find_string = '<svg';
+            $position = strpos($imageData, $find_string);
+            return substr($imageData, $position);
+        }
+
+        return false;
     }
 
     /**
@@ -1267,6 +1259,7 @@ class Explore
         $userid = $userid ?? get_current_user_id();
         $dead_ones = get_user_meta($userid, 'explore_enemies', true);
         $dead_ones = false === empty($dead_ones) ? $dead_ones : [];
+
         $missions_for_triggers = get_posts(
             [
                 'post_type' => 'explore-mission',
@@ -2345,5 +2338,27 @@ class Explore
         </div>
         <?php
         return ob_get_clean();
+    }
+
+    /**
+     * util to get post types.
+     * @return string[]
+     */
+    public function getCurrentPostTypes()
+    {
+        return [
+            'explore-area',
+            'explore-point',
+            'explore-character',
+            'explore-cutscene',
+            'explore-enemy',
+            'explore-weapon',
+            'explore-magic',
+            'explore-mission',
+            'explore-sign',
+            'explore-minigame',
+            'explore-explainer',
+            'explore-wall',
+        ];
     }
 }

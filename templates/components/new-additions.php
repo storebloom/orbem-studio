@@ -2,8 +2,6 @@
 /**
  * Characters panel for game.
  */
-
-$post_types = get_post_types();
 ?>
 
 <div class="add-new-form">

@@ -338,6 +338,28 @@ export function engageDevMode() {
                     }
                 })
             })
+
+            // Remove empty posttype lists.
+            const finderListContainers = document.querySelectorAll('.explore-list-group');
+
+            if (finderListContainers.length > 0) {
+                finderListContainers.forEach(finder => {
+                    if ('' === finder.textContent) {
+                        finder.remove();
+                    }
+
+                    // finder show/hide list.
+                    const finderCat = finder.querySelector( '.item-post-type' );
+
+                    if ( finderCat ) {
+                        finderCat.addEventListener( 'click', () => {
+                            console.log('hey');
+                            finder.classList.toggle('engage');
+                        });
+                    }
+
+                })
+            }
         }
 
         if (items && items.length) {

@@ -3434,13 +3434,14 @@ function engageCutscene( position, areaCutscene = false, isVideo = false ) {
 
     if ( cutscene && ( undefined === cutscene.dataset.video || 'false' === cutscene.dataset.video ) ) {
         const dialogues = cutscene.querySelectorAll( 'p, .wp-block-orbem-paragraph-mp3' );
-        const npc = document.querySelector( '[data-trigger-cutscene="' + position + '"]' );
+        const npc = document.querySelector( '.' + cutscene.dataset?.character + '-map-item[data-genre="explore-character"]' );
 
         if ( false === cutscene.classList.contains( 'been-viewed' ) ) {
             // stop movement.
             window.allowMovement = false;
             window.allowHit = false;
 
+            console.log(npc);
             if ( npc ) {
                 npc.dataset.break = 'true';
             }
@@ -3845,7 +3846,7 @@ function afterCutscene( cutscene, areaCutscene = false ) {
     setTimeout(() => {
         window.allowHit = true;
 
-        if ( 'true' === pathTriggerPosition.dataset?.break ) {
+        if ( pathTriggerPosition && 'true' === pathTriggerPosition.dataset?.break ) {
             pathTriggerPosition.dataset.break = 'false';
         }
 

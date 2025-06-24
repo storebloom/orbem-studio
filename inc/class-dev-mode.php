@@ -8,6 +8,7 @@
 namespace OrbemGameEngine;
 
 use OrbemGameEngine\Meta_Box;
+use OrbemGameEngine\Explore;
 
 /**
  * DevMode Class
@@ -32,6 +33,7 @@ class Dev_Mode
     public function __construct($plugin)
     {
         $this->plugin = $plugin;
+        $this->explore = new Explore($plugin);
     }
 
     /**
@@ -256,6 +258,21 @@ class Dev_Mode
      */
     public static function getDevModeHTML($item_list)
     {
+        $post_types =  [
+        'explore-area',
+        'explore-point',
+        'explore-character',
+        'explore-cutscene',
+        'explore-enemy',
+        'explore-weapon',
+        'explore-magic',
+        'explore-mission',
+        'explore-sign',
+        'explore-minigame',
+        'explore-explainer',
+        'explore-wall',
+        ];
+
         ob_start();
         ?>
         <div class="dev-mode-menu-toggle">DEVMODE</div>
