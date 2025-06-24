@@ -4,6 +4,37 @@ import { enterExplorePoint, engageExploreGame } from './explore';
 export function engageDevMode() {
     window.devmode = false;
 
+    // Zoom feature.
+    const zoomIn = document.getElementById('zoom-in');
+    const zoomOut = document.getElementById('zoom-out');
+
+    if ( zoomIn && zoomOut ) {
+        zoomIn.addEventListener('click', e => {
+            zoomGameContainer('in');
+        });
+
+        zoomOut.addEventListener('click', e => {
+            zoomGameContainer('out');
+        })
+
+        function zoomGameContainer(whichWay) {
+            const gameContainer = document.querySelector( '.game-container' );
+            const zoomDisplay = document.getElementById('zoom-amount');
+
+            if ( gameContainer ) {
+                let currentZoom = undefined !== gameContainer.style?.transform && '' !== gameContainer.style.transform ? gameContainer.style.transform : '1';
+                currentZoom = parseFloat(currentZoom.replace('scale(', '').replace(')', ''));
+                currentZoom = 'in' === whichWay ? +(currentZoom + 0.1).toFixed(10) : +(currentZoom - 0.1).toFixed(10);
+
+                if ( zoomDisplay ) {
+                    zoomDisplay.textContent = currentZoom * 100;
+                }
+
+                gameContainer.style.transform = 'scale(' + currentZoom + ')';
+            }
+        }
+    }
+
     // Settings.
     const settingCog = document.querySelector('#new-addition');
 

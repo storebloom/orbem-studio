@@ -428,6 +428,266 @@ html {
         display: block;
       }
     }
+
+    .right-bottom-devmode {
+      bottom: 1rem;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      right: 1rem;
+      position: fixed;
+      z-index: 9;
+
+      &.engage {
+        color: blue;
+        font-weight: bold;
+      }
+
+      .zoom-in-out {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .5rem;
+        justify-content: center;
+        width: 85px;
+
+        span {
+          text-align: center;
+          width: 100%;
+        }
+
+        #zoom-in, #zoom-out {
+          background: white;
+          border: 1px solid black;
+          border-radius: 100px;
+          cursor: pointer;
+          font-weight: bold;
+          padding: .5rem;
+          width: 20px;
+
+          &:hover {
+            background: blue;
+            color: white;
+          }
+        }
+      }
+    }
+
+    .dev-mode-menu {
+      display: none;
+
+      &.engage {
+        display: block;
+      }
+
+      #new-addition {
+        position: fixed;
+        right: 6.75rem;
+        top: 1rem;
+        max-width: 700px;
+        width: max-content;
+
+        &:not(.engage) {
+          width: 300px;
+          z-index: 5;
+
+          &:hover {
+            &:before {
+              font-size: 50px;
+            }
+          }
+
+          &:before {
+            content: '🧰';
+            color: black;
+            cursor: pointer;
+            line-height: 30px;
+            text-shadow: 1px 1px 2px white;
+            font-size: 50px;
+            position: absolute;
+            right: 0;
+            top: 0;
+          }
+        }
+
+        &.engage {
+          z-index: 6;
+          overflow: scroll;
+          max-height: 95vh;
+
+          .add-new-fields {
+            width: 50%;
+            input {
+              border: 1px solid grey;
+            }
+          }
+
+          .addition-content {
+            display: block;
+
+            ul {
+              background: #c8c8c8;
+              padding: 01.5rem;
+              width: 40%;
+              min-width: 171px;
+              border-radius: 8px;
+              li {
+                padding-left: 0;
+                cursor: pointer;
+
+                &.engage {
+                  color: blue;
+                }
+
+                &:hover {
+                  font-weight: bold;
+                }
+              }
+            }
+          }
+        }
+
+        .addition-content {
+          background: white;
+          border: 1px solid black;
+          border-radius: 10px;
+          display: none;
+          padding: 1rem;
+
+          h2 {
+            margin-top: 0;
+          }
+
+          .add-new-form {
+            display: flex;
+            flex-wrap: wrap;
+            flex-direction: row;
+            gap: 1rem;
+            position: relative;
+            width: 100%;
+
+            .close-settings {
+              cursor: pointer;
+              position: absolute;
+              right: .25rem;
+              top: .25rem;
+            }
+
+            h2 {
+              width: 100%;
+            }
+
+            a {
+              margin-top: 1rem;
+            }
+          }
+        }
+      }
+
+      .open-close-item-list {
+        cursor: pointer;
+        left: 12rem;
+        position: fixed;
+        z-index: 9;
+      }
+
+      .explore-item-list {
+        background-color: white;
+        border-radius: 4px;
+        padding: 2rem;
+        max-height: 80vh;
+        overflow: scroll;
+        left: -1000px;
+        position: fixed;
+        top: 2rem;
+        transition: left .3s;
+        width: 0;
+        z-index: 10;
+
+        .show-hide-item {
+          cursor: pointer;
+        }
+
+        &.engage {
+          left: 0;
+          width: auto;
+        }
+
+        .explore-list-group {
+          h3 {
+            cursor: pointer;
+
+            &:hover {
+              color: blue;
+            }
+          }
+
+          &.engage {
+            h3 {
+              color: blue;
+            }
+          }
+
+          &:not(.engage) {
+            .find-explore-item {
+              display: none;
+            }
+          }
+        }
+
+        .find-explore-item {
+          &.selected {
+            color: blue;
+            cursor: pointer;
+            font-weight: bold;
+          }
+        }
+      }
+      .wallbuilder-container {
+        top: 15rem;
+        left: 1rem;
+        position: fixed;
+        z-index: 9;
+
+        #engage-wallbuilder {
+          cursor: pointer;
+          font-size: 40px;
+        }
+
+        &.engage {
+          #engage-wallbuilder {
+            border-radius: 8px;
+            animation: glowPulse .5s infinite alternate;
+            box-shadow: 0 0 5px #0ff, 0 0 10px #0ff, 0 0 15px #0ff;
+          }
+        }
+      }
+      .pinpoint-container {
+        bottom: 13rem;
+        left: 1rem;
+        position: fixed;
+        z-index: 9;
+
+        #open-pinpoint {
+          cursor: pointer;
+          font-size: 40px;
+        }
+
+        &.engage {
+          #open-pinpoint {
+            border-radius: 8px;
+            animation: glowPulse .5s infinite alternate;
+            box-shadow: 0 0 5px #0ff, 0 0 10px #0ff, 0 0 15px #0ff;
+          }
+        }
+
+        input {
+          border: 1px solid #00cee3;
+          border-radius: 4px;
+        }
+      }
+    }
+
     .game-container {
       background-size: cover;
       background-repeat: no-repeat;
@@ -820,233 +1080,6 @@ html {
         text-shadow: 1px 1px 2px white;
         top: 11rem;
         z-index: 9;
-      }
-
-      .dev-mode-menu-toggle {
-        bottom: 1rem;
-        cursor: pointer;
-        right: 1rem;
-        position: fixed;
-        z-index: 9;
-
-        &.engage {
-          color: blue;
-          font-weight: bold;
-        }
-      }
-      .dev-mode-menu {
-        display: none;
-
-        &.engage {
-          display: block;
-        }
-
-        #new-addition {
-          position: fixed;
-          right: 6.75rem;
-          top: 1rem;
-          max-width: 700px;
-          width: max-content;
-
-          &:not(.engage) {
-            width: 300px;
-            z-index: 5;
-
-            &:hover {
-              &:before {
-                font-size: 50px;
-              }
-            }
-
-            &:before {
-              content: '🧰';
-              color: black;
-              cursor: pointer;
-              line-height: 30px;
-              text-shadow: 1px 1px 2px white;
-              font-size: 50px;
-              position: absolute;
-              right: 0;
-              top: 0;
-            }
-          }
-
-          &.engage {
-            z-index: 6;
-            overflow: scroll;
-            max-height: 95vh;
-
-            .add-new-fields {
-              width: 50%;
-              input {
-                border: 1px solid grey;
-              }
-            }
-
-            .addition-content {
-              display: block;
-
-              ul {
-                background: #c8c8c8;
-                padding: 01.5rem;
-                width: 40%;
-                min-width: 171px;
-                border-radius: 8px;
-                li {
-                  padding-left: 0;
-                  cursor: pointer;
-
-                  &.engage {
-                    color: blue;
-                  }
-
-                  &:hover {
-                    font-weight: bold;
-                  }
-                }
-              }
-            }
-          }
-
-          .addition-content {
-            background: white;
-            border: 1px solid black;
-            border-radius: 10px;
-            display: none;
-            padding: 1rem;
-
-            h2 {
-              margin-top: 0;
-            }
-
-            .add-new-form {
-              display: flex;
-              flex-wrap: wrap;
-              flex-direction: row;
-              gap: 1rem;
-              position: relative;
-              width: 100%;
-
-              .close-settings {
-                cursor: pointer;
-                position: absolute;
-                right: .25rem;
-                top: .25rem;
-              }
-
-              h2 {
-                width: 100%;
-              }
-
-              a {
-                margin-top: 1rem;
-              }
-            }
-          }
-        }
-
-        .open-close-item-list {
-          cursor: pointer;
-          left: 12rem;
-          position: fixed;
-          z-index: 9;
-        }
-
-        .explore-item-list {
-          background-color: white;
-          border-radius: 4px;
-          padding: 2rem;
-          max-height: 80vh;
-          overflow: scroll;
-          left: -1000px;
-          position: fixed;
-          top: 2rem;
-          transition: left .3s;
-          width: 0;
-          z-index: 10;
-
-          .show-hide-item {
-            cursor: pointer;
-          }
-
-          &.engage {
-            left: 0;
-            width: auto;
-          }
-
-          .explore-list-group {
-            h3 {
-              cursor: pointer;
-
-              &:hover {
-                color: blue;
-              }
-            }
-
-            &.engage {
-              h3 {
-                color: blue;
-              }
-            }
-
-            &:not(.engage) {
-              .find-explore-item {
-                display: none;
-              }
-            }
-          }
-
-          .find-explore-item {
-            &.selected {
-              color: blue;
-              cursor: pointer;
-              font-weight: bold;
-            }
-          }
-        }
-        .wallbuilder-container {
-          top: 15rem;
-          left: 1rem;
-          position: fixed;
-          z-index: 9;
-
-          #engage-wallbuilder {
-            cursor: pointer;
-            font-size: 40px;
-          }
-
-          &.engage {
-            #engage-wallbuilder {
-              border-radius: 8px;
-              animation: glowPulse .5s infinite alternate;
-              box-shadow: 0 0 5px #0ff, 0 0 10px #0ff, 0 0 15px #0ff;
-            }
-          }
-        }
-        .pinpoint-container {
-          bottom: 13rem;
-          left: 1rem;
-          position: fixed;
-          z-index: 9;
-
-          #open-pinpoint {
-            cursor: pointer;
-            font-size: 40px;
-          }
-
-          &.engage {
-            #open-pinpoint {
-              border-radius: 8px;
-              animation: glowPulse .5s infinite alternate;
-              box-shadow: 0 0 5px #0ff, 0 0 10px #0ff, 0 0 15px #0ff;
-            }
-          }
-
-          input {
-            border: 1px solid #00cee3;
-            border-radius: 4px;
-          }
-        }
       }
 
       #explore-points {

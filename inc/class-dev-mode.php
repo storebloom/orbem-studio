@@ -275,7 +275,14 @@ class Dev_Mode
 
         ob_start();
         ?>
-        <div class="dev-mode-menu-toggle">DEVMODE</div>
+        <div class="right-bottom-devmode">
+            <div class="zoom-in-out">
+                <span>ZOOM(<small id="zoom-amount">100</small>%)</span>
+                <span id="zoom-in">+</span>
+                <span id="zoom-out">-</span>
+            </div>
+            <div class="dev-mode-menu-toggle">DEVMODE</div>
+        </div>
         <div class="dev-mode-menu">
             <div id="new-addition">
                 <div class="addition-content">
