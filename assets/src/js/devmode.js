@@ -3,6 +3,7 @@ import { enterExplorePoint, engageExploreGame } from './explore';
 
 export function engageDevMode() {
     window.devmode = false;
+    let devZoom = 1;
 
     // Zoom feature.
     const zoomIn = document.getElementById('zoom-in');
@@ -29,6 +30,8 @@ export function engageDevMode() {
                 if ( zoomDisplay ) {
                     zoomDisplay.textContent = currentZoom * 100;
                 }
+
+                devZoom = currentZoom;
 
                 gameContainer.style.transform = 'scale(' + currentZoom + ')';
             }
@@ -218,7 +221,7 @@ export function engageDevMode() {
 
                             if (typeof initImageUpload === 'function') {
                                 initImageUpload();
-                                makeNewFormSub();
+                                makeNewFormSub(devZoom);
                             }
                         }
                     });
@@ -310,7 +313,7 @@ export function engageDevMode() {
                                     height: heightInput.value,
                                     width: widthInput.value,
                                     id: theID,
-                                    meta: item.dataset?.meta
+                                    meta: item.dataset?.meta,
                                 }
                                 // Save position of item.
                                 fetch(filehref, {
@@ -413,8 +416,8 @@ export function engageDevMode() {
                 if (draggedContainer) {
                     // Calculate the offset of the mouse from the top-left corner of the container
                     const rect = draggedContainer.getBoundingClientRect();
-                    offsetX = event.clientX - rect.left;
-                    offsetY = event.clientY - rect.top;
+                    offsetX = ( event.clientX - rect.left );
+                    offsetY = ( event.clientY - rect.top );
 
                     event.dataTransfer.setData('text/plain', '');
 
@@ -433,8 +436,8 @@ export function engageDevMode() {
                     const mouseY = 'menu' === draggedContainer.dataset.type ? event.clientY : event.clientY - mapRect.top;
 
                     // Update container position based on mouse position relative to the container
-                    draggedContainer.style.left = `${mouseX - offsetX}px`;
-                    draggedContainer.style.top = `${mouseY - offsetY}px`;
+                    draggedContainer.style.left = `${( mouseX / devZoom ) - offsetX}px`;
+                    draggedContainer.style.top = `${( mouseY / devZoom ) - offsetY}px`;
                 }
             }
 
@@ -527,8 +530,8 @@ export function engageDevMode() {
                     // Calculate the mouse position relative to the .default-map element
                     const mapRect = document.querySelector('.game-container').getBoundingClientRect();
 
-                    const mouseX = event.clientX - mapRect.left;
-                    const mouseY = event.clientY - mapRect.top;
+                    const mouseX = ( event.clientX - mapRect.left ) / devZoom;
+                    const mouseY = ( event.clientY - mapRect.top ) / devZoom;
 
                     // Set the starting position of the wall basedon when you began to drag the mouse.
                     wallElement.className = 'wp-block-group map-item';
@@ -548,13 +551,13 @@ export function engageDevMode() {
                         if (wallElement) {
                             const mapRect = document.querySelector('.game-container').getBoundingClientRect();
 
-                            const mouseX = event.clientX - mapRect.left;
-                            const mouseY = event.clientY - mapRect.top;
-                            const wallElementLeft = parseInt(wallElement.style.left.replace('px', ''));
-                            const wallElementTop = parseInt(wallElement.style.top.replace('px', ''));
+                            const mouseX = ( event.clientX - mapRect.left ) / devZoom;
+                            const mouseY = ( event.clientY - mapRect.top ) / devZoom;
+                            const wallElementLeft = parseFloat(wallElement.style.left.replace('px', ''));
+                            const wallElementTop = parseFloat(wallElement.style.top.replace('px', ''));
 
-                            wallElement.style.width = (mouseX - wallElementLeft) + 'px';
-                            wallElement.style.height = (mouseY - wallElementTop) + 'px';
+                            wallElement.style.width = ( mouseX - wallElementLeft ) + 'px';
+                            wallElement.style.height = ( mouseY - wallElementTop ) + 'px';
                         }
                     }
 
@@ -635,7 +638,7 @@ document.addEventListener("DOMContentLoaded", function() {
     engageDevMode();
 } );
 
-function makeNewFormSub() {
+function makeNewFormSub(devZoom) {
     const submitNewItem = document.getElementById('add-new-form');
 
     if ( submitNewItem ) {
