@@ -387,7 +387,6 @@ export function engageDevMode() {
 
                     if ( finderCat ) {
                         finderCat.addEventListener( 'click', () => {
-                            console.log('hey');
                             finder.classList.toggle('engage');
                         });
                     }
@@ -497,82 +496,84 @@ export function engageDevMode() {
                 item.addEventListener('dragstart', handleDragStart);
                 item.addEventListener('mouseup', handleDragEnd);
             });
+        }
 
-            const engageWallBuilder = document.getElementById('engage-wallbuilder');
-            const wallBuilderContainer = document.querySelector('.wallbuilder-container');
-            const defaultMap = document.querySelector('.default-map');
-            let isDragging = false;
+        const engageWallBuilder = document.getElementById('engage-wallbuilder');
+        const wallBuilderContainer = document.querySelector('.wallbuilder-container');
+        const defaultMap = document.querySelector('.default-map');
+        let isDragging = false;
 
-            if (engageWallBuilder) {
-                engageWallBuilder.addEventListener('click', () => {
-                    wallBuilderContainer.classList.toggle('engage');
+        if (engageWallBuilder) {
+            engageWallBuilder.addEventListener('click', () => {
+                wallBuilderContainer.classList.toggle('engage');
 
-                    if (wallBuilderContainer.classList.contains('engage')) {
-                        document.body.style.cursor = 'cell';
+                if (wallBuilderContainer.classList.contains('engage')) {
+                    document.body.style.cursor = 'cell';
 
-                        document.addEventListener('mousedown', handleWallDragStart);
-                    } else {
-                        document.body.style.cursor = 'default';
-                        document.removeEventListener('mousedown', handleWallDragStart);
+                    document.addEventListener('mousedown', handleWallDragStart);
+                } else {
+                    document.body.style.cursor = 'default';
+                    document.removeEventListener('mousedown', handleWallDragStart);
+                }
+            });
+
+            let offsetX = 0;
+            let offsetY = 0;
+
+            // Handle the dragstart event
+            function handleWallDragStart(event) {
+                isDragging = true;
+                event.preventDefault();
+                const wallElement = document.createElement('div');
+                wallElement.draggable = true;
+
+                // Calculate the mouse position relative to the .default-map element
+                const mapRect = document.querySelector('.game-container').getBoundingClientRect();
+
+                const mouseX = ( event.clientX - mapRect.left ) / devZoom;
+                const mouseY = ( event.clientY - mapRect.top ) / devZoom;
+
+                // Set the starting position of the wall basedon when you began to drag the mouse.
+                wallElement.className = 'wp-block-group map-item';
+                wallElement.style.left = `${mouseX - offsetX}px`;
+                wallElement.style.top = `${mouseY - offsetY}px`;
+                wallElement.style.backgroundColor = 'rgb(0,146,255)';
+                wallElement.style.opacity = .3;
+                wallElement.style.zIndex = 1;
+                wallElement.dataset.genre = 'explore-wall';
+
+                defaultMap.appendChild(wallElement);
+
+                // Handle the mousemove event to update container position
+                function handleWallMouseMove(event) {
+                    if (!isDragging) return;
+
+                    if (wallElement) {
+                        const mapRect = document.querySelector('.game-container').getBoundingClientRect();
+
+                        const mouseX = ( event.clientX - mapRect.left ) / devZoom;
+                        const mouseY = ( event.clientY - mapRect.top ) / devZoom;
+                        const wallElementLeft = parseFloat(wallElement.style.left.replace('px', ''));
+                        const wallElementTop = parseFloat(wallElement.style.top.replace('px', ''));
+
+                        wallElement.style.width = ( mouseX - wallElementLeft ) + 'px';
+                        wallElement.style.height = ( mouseY - wallElementTop ) + 'px';
                     }
-                });
+                }
 
-                let offsetX = 0;
-                let offsetY = 0;
+                // Handle the dragend event
+                function handleWallDragEnd() {
+                    isDragging = false;
+                    const filehref = `https://${wpThemeURL}/wp-json/orbemorder/v1/add-new/`;
 
-                // Handle the dragstart event
-                function handleWallDragStart(event) {
-                    isDragging = true;
-                    event.preventDefault();
-                    const wallElement = document.createElement('div');
-                    wallElement.draggable = true;
+                    let currentLocation = document.querySelector('.game-container');
+                    currentLocation = currentLocation.className.replace('game-container ', '');
+                    const topPos = wallElement.style.top.replace('px', '');
+                    const leftPos = wallElement.style.left.replace('px', '');
+                    const width = wallElement.style.width.replace('px', '');
+                    const height = wallElement.style.height.replace('px', '');
 
-                    // Calculate the mouse position relative to the .default-map element
-                    const mapRect = document.querySelector('.game-container').getBoundingClientRect();
-
-                    const mouseX = ( event.clientX - mapRect.left ) / devZoom;
-                    const mouseY = ( event.clientY - mapRect.top ) / devZoom;
-
-                    // Set the starting position of the wall basedon when you began to drag the mouse.
-                    wallElement.className = 'wp-block-group map-item';
-                    wallElement.style.left = `${mouseX - offsetX}px`;
-                    wallElement.style.top = `${mouseY - offsetY}px`;
-                    wallElement.style.backgroundColor = 'rgb(0,146,255)';
-                    wallElement.style.opacity = .3;
-                    wallElement.style.zIndex = 1;
-                    wallElement.dataset.genre = 'explore-wall';
-
-                    defaultMap.appendChild(wallElement);
-
-                    // Handle the mousemove event to update container position
-                    function handleWallMouseMove(event) {
-                        if (!isDragging) return;
-
-                        if (wallElement) {
-                            const mapRect = document.querySelector('.game-container').getBoundingClientRect();
-
-                            const mouseX = ( event.clientX - mapRect.left ) / devZoom;
-                            const mouseY = ( event.clientY - mapRect.top ) / devZoom;
-                            const wallElementLeft = parseFloat(wallElement.style.left.replace('px', ''));
-                            const wallElementTop = parseFloat(wallElement.style.top.replace('px', ''));
-
-                            wallElement.style.width = ( mouseX - wallElementLeft ) + 'px';
-                            wallElement.style.height = ( mouseY - wallElementTop ) + 'px';
-                        }
-                    }
-
-                    // Handle the dragend event
-                    function handleWallDragEnd() {
-                        isDragging = false;
-                        const filehref = `https://${wpThemeURL}/wp-json/orbemorder/v1/add-new/`;
-
-                        let currentLocation = document.querySelector('.game-container');
-                        currentLocation = currentLocation.className.replace('game-container ', '');
-                        const topPos = wallElement.style.top.replace('px', '');
-                        const leftPos = wallElement.style.left.replace('px', '');
-                        const width = wallElement.style.width.replace('px', '');
-                        const height = wallElement.style.height.replace('px', '');
-
+                    if ( 0 < parseInt(width) && 0 < parseInt(height) ) {
                         const jsonString = {
                             type: 'explore-wall',
                             area: currentLocation ?? '',
@@ -609,14 +610,17 @@ export function engageDevMode() {
                                 wallElement.addEventListener('dragstart', handleDragStart);
                                 wallElement.addEventListener('mouseup', handleDragEnd);
                             });
-                        document.removeEventListener('mousemove', handleWallMouseMove);
-                        document.removeEventListener('mouseup', handleWallDragEnd);
+                    } else {
+                        wallElement.addEventListener('dragstart', handleDragStart);
+                        wallElement.addEventListener('mouseup', handleDragEnd);
                     }
-
-                    // Add mousemove event listener to update container position
-                    document.addEventListener('mousemove', handleWallMouseMove);
-                    document.addEventListener('mouseup', handleWallDragEnd);
+                    document.removeEventListener('mousemove', handleWallMouseMove);
+                    document.removeEventListener('mouseup', handleWallDragEnd);
                 }
+
+                // Add mousemove event listener to update container position
+                document.addEventListener('mousemove', handleWallMouseMove);
+                document.addEventListener('mouseup', handleWallDragEnd);
             }
         }
     }, 2500);

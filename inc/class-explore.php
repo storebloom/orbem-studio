@@ -1858,13 +1858,12 @@ class Explore
             $path_trigger_top = false === empty($cutscene_trigger['top']) && 0 !== $cutscene_trigger['top'] ? $cutscene_trigger['top'] : '';
             $path_trigger_height = false === empty($cutscene_trigger['height']) && 0 !== $cutscene_trigger['height'] ? $cutscene_trigger['height'] : '';
             $path_trigger_width = false === empty($cutscene_trigger['width']) && 0 !== $cutscene_trigger['width'] ? $cutscene_trigger['width'] : '';
-            $character_class = false === empty($character) ? $character . '-map-item' : '';
 
             // Trigger Cutscene.
             if (false === in_array( '', [$path_trigger_width, $path_trigger_height], true) && false === $is_cutscene_triggered) {
                 $html .= '<div id="' . $explore_cutscene->ID . '-t" class="cutscene-trigger wp-block-group map-item ' . $explore_cutscene->post_name . '-cutscene-trigger-map-item is-layout-flow wp-block-group-is-layout-flow"';
                 $html .= 'style="left:' . $path_trigger_left . 'px;top:' . $path_trigger_top . 'px;height:' . $path_trigger_height . 'px; width:' . $path_trigger_width . 'px;"';
-                $html .= 'data-trigger="true" data-triggee="' . $character_class . '"';
+                $html .= 'data-trigger="true" data-triggee="' . $explore_cutscene->post_name . '"';
                 $html .= ' data-triggertype="' . $cutscene_trigger_type . '"';
                 $html .= ' data-meta="explore-cutscene-trigger"';
                 $html .= '></div>';

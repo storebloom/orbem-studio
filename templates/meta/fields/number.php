@@ -4,9 +4,10 @@
 </br>
 <input class="top"
        type="number"
+       step="0.01"
        name="<?php echo false === $main_key ? esc_attr($key) : esc_attr($main_key . '[' . $key. ']'); ?>"
        id="<?php echo esc_attr($key); ?>"
-       value="<?php echo intval(false !== $main_key ? ($meta_values[$main_key][$key] ?? 0) : ($meta_values[$key] ?? 0)); ?>"
+       value="<?php echo floatval(false !== $main_key ? ($meta_values[$main_key][$key] ?? 0) : ($meta_values[$key] ?? 0)); ?>"
 />
 </label>
 </p>

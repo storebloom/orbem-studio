@@ -1357,7 +1357,7 @@ const enterNewArea = (function () {
         }
 
         // Remove old devmmode.
-        const devModeButton = document.querySelector('.dev-mode-menu-toggle');
+        const devModeButton = document.querySelector('.right-bottom-devmode');
         const devModeMenu = document.querySelector('.dev-mode-menu');
 
         if ( devModeMenu && devModeButton ) {
@@ -1397,9 +1397,9 @@ const enterNewArea = (function () {
             fetch(filehref, {
                 method: 'POST', // Specify the HTTP method
                 headers: {
-                    'Content-Type': 'application/json', // Set the content type to JSON
+                    'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(jsonString) // The JSON stringified payload
+                body: JSON.stringify(jsonString)
             })
             .then(response => {
                 // Check if the response status is in the range 200-299
@@ -1410,11 +1410,10 @@ const enterNewArea = (function () {
             })
                 .then(data => {
 
-                let newMapItems =  data;
+                let newMapItems = data;
                 newMapItems = JSON.parse( newMapItems.data );
                 const mapItemStyles = document.getElementById( 'map-item-styles' );
-                const chracterItem = document.getElementById( 'map-character' );
-                const container = document.querySelector( '.game-container' );
+                const mainCont = document.querySelector( '.site-main' );
                 const head = document.querySelector( 'head' );
                 let devMode = '';
 
@@ -1422,8 +1421,8 @@ const enterNewArea = (function () {
                     devMode = newMapItems['dev-mode'];
                 }
 
-                if ( container && newMapItems['menu-explainers'] ) {
-                    container.innerHTML = newMapItems['menu-explainers'] + devMode + container.innerHTML
+                if ( '' !== devMode ) {
+                    mainCont.innerHTML = devMode + mainCont.innerHTML;
                 }
 
                 // Delete old area styles/maps.
@@ -1462,7 +1461,6 @@ const enterNewArea = (function () {
                 if ( characterList ) {
                     characterList.innerHTML = newMapItems['map-characters'];
 
-
                     const characterItems = characterList.querySelectorAll( '.character-item' );
 
                     if ( 0 < characterItems.length ) {
@@ -1497,17 +1495,29 @@ const enterNewArea = (function () {
                 // Replace items.
                 if ( defaultMap ) {
                     setTimeout(() => {
+                        const container = document.querySelector('.game-container');
                         // Create new default map.
                         const newDefaultMap = document.createElement( 'div' );
                         newDefaultMap.className = 'default-map';
+                        // engage cutscene.
+                        if ( 'yes' === newMapItems['is-cutscene'] ) {
+                            newDefaultMap.dataset.iscutscene = 'yes';
+                            engageCutscene( position, true );
+
+                            if ( container ) {
+                                window.previousCutsceneArea = container.className.replace( 'game-container ', '');
+                            }
+                        }
+
+                        // Set starting position in case you die.
+                        newDefaultMap.dataset.starttop = newMapItems['start-top'];
+                        newDefaultMap.dataset.startleft = newMapItems['start-left'];
                         newDefaultMap.innerHTML = newMapItems['map-explainers'] + newMapItems['map-items'] + newMapItems['map-cutscenes'] + newMapItems['minigames'] + newMapItems['map-svg'];
 
-                        if ( container ) {
-                            container.append( newDefaultMap );
+                        container.innerHTML = newMapItems['menu-explainers'] + container.innerHTML + newDefaultMap.outerHTML;
 
-                            // Run no point class adder again
-                            addNoPoints();
-                        }
+                        // Run no point class adder again
+                        addNoPoints();
 
                         // Move npcs
                         const moveableCharacters = document.querySelectorAll( '.path-onload[data-path]:not([data-path=""]), [data-wanderer="yes"]');
@@ -1532,22 +1542,6 @@ const enterNewArea = (function () {
                                 firstDialogue.classList.add( 'engage' );
                             });
                         }
-
-                        // engage cutscene.
-                        if ( 'yes' === newMapItems['is-cutscene'] ) {
-                            newDefaultMap.dataset.iscutscene = 'yes';
-                            engageCutscene( position, true );
-
-                            const container = document.querySelector( '.game-container' );
-
-                            if ( container ) {
-                                window.previousCutsceneArea = container.className.replace( 'game-container ', '');
-                            }
-                        }
-
-                        // Set starting position in case you die.
-                        newDefaultMap.dataset.starttop = newMapItems['start-top'];
-                        newDefaultMap.dataset.startleft = newMapItems['start-left'];
 
                         // If the previous area was a cutscene, remove items set to be removed after that cutscene area.
                         if ( '' !== window.previousCutsceneArea ) {
@@ -1575,19 +1569,20 @@ const enterNewArea = (function () {
                 }
 
                 setTimeout(() => {
+                    const container = document.querySelector( '.game-container' );
+                    const characterItem = document.getElementById( 'map-character' );
+
                     if ( nextAreaPosition ) {
                         newMapItems['start-top'] = JSON.parse( nextAreaPosition ).top;
                         newMapItems['start-left'] = JSON.parse( nextAreaPosition ).left;
                     }
 
-                    chracterItem.style.top = newMapItems['start-top'] + 'px';
-                    chracterItem.style.left = newMapItems['start-left'] + 'px';
-                    chracterItem.scrollIntoView({ behavior: "instant", block: "center", inline: "center" });
+                    characterItem.style.top = newMapItems['start-top'] + 'px';
+                    characterItem.style.left = newMapItems['start-left'] + 'px';
+                    characterItem.scrollIntoView({ behavior: "instant", block: "center", inline: "center" });
 
-                    const mapContainer = document.querySelector( '.game-container' );
-
-                    mapContainer.className = 'game-container ' + position;
-                    mapContainer.style.backgroundImage = 'url(' + mapUrl + ')';
+                    container.className = 'game-container ' + position;
+                    container.style.backgroundImage = 'url(' + mapUrl + ')';
                     currentLocation = position;
 
                     playSong(newMusic, position);
@@ -2354,11 +2349,6 @@ export function engageExploreGame() {
     const container = document.querySelector('.game-container');
     const touchButtons = document.querySelector( '.touch-buttons' );
 
-    // Show the game container.
-    if ( container ) {
-        container.style.display = 'block';
-    }
-
     // Set all first cutscene dialogues to engage.
     const allFirstDialogues = document.querySelectorAll( '.map-cutscene .wp-block-orbem-paragraph-mp3:first-of-type' );
 
@@ -2507,11 +2497,16 @@ export function engageExploreGame() {
     // Hazard hurt me check.
     checkIfHazardHurts();
 
+    // Show the game container.
+    if (container) {
+        container.style.display = 'block';
+    }
+
     // Scroll to center.
     const mapChar = document.getElementById( 'map-character' );
 
     if ( mapChar ) {
-        mapChar.scrollIntoView({ behavior: "instant", block: "center", inline: "center" });
+      mapChar.scrollIntoView({ behavior: "instant", block: "center", inline: "center" });
     }
 }
 
@@ -2874,7 +2869,7 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
                     value.remove();
                 }
 
-                const cutsceneTriggee = value.getAttribute('data-triggee');
+                const cutsceneTriggee = value.dataset.triggee;
 
                 // Change position to triggee if cutscene trigger hit.
                 position = cutsceneTriggee && '' !== cutsceneTriggee ? cleanClassName(cutsceneTriggee) : position;
@@ -3432,7 +3427,7 @@ function engageCutscene( position, areaCutscene = false, isVideo = false ) {
     const cutscene = undefined === position?.className ? document.querySelector('.' + position + '-map-cutscene') : position;
     position = undefined === position?.className ? position : cleanClassName( position.className );
 
-    if ( cutscene && ( undefined === cutscene.dataset.video || 'false' === cutscene.dataset.video ) ) {
+    if ( cutscene && ( undefined === cutscene.dataset?.video || 'false' === cutscene.dataset?.video ) ) {
         const dialogues = cutscene.querySelectorAll( 'p, .wp-block-orbem-paragraph-mp3' );
         const npc = document.querySelector( '.' + cutscene.dataset?.character + '-map-item[data-genre="explore-character"]' );
 
@@ -3441,7 +3436,10 @@ function engageCutscene( position, areaCutscene = false, isVideo = false ) {
             window.allowMovement = false;
             window.allowHit = false;
 
-            console.log(npc);
+            setTimeout( () => {
+                npc.scrollIntoView({behavior: 'smooth', block: 'center', inline: 'center'});
+            }, 500)
+
             if ( npc ) {
                 npc.dataset.break = 'true';
             }
@@ -3679,7 +3677,7 @@ function engageCutscene( position, areaCutscene = false, isVideo = false ) {
                 cutscene.style.removeProperty('top' );
             }
         }
-    } else if ( 'true' === cutscene.dataset.video ) {
+    } else if ( cutscene && 'true' === cutscene.dataset?.video ) {
         if ( false === cutscene.classList.contains( 'been-viewed' ) ) {
             const cutsceneVideo = cutscene.querySelector( 'video' );
             // stop movement.
@@ -4159,9 +4157,9 @@ function movementIntFunc() {
                     draggableItem.style.left = window.dragLeft.left ? ( ( myLeft + 450 ) - window.dragLeft.offset ) + 'px' : ( ( myLeft + 450 ) + window.dragLeft.offset ) + 'px';
                 }
             }
-        }
 
-        box.scrollIntoView({block: 'nearest'});
+           box.scrollIntoView({block: 'nearest'});
+        }
     }, 20 );
 }
 
@@ -4810,8 +4808,6 @@ function moveCharacter(mapCharacter, newTop, newLeft, gradual, cutscene ) {
 
                 // Change character image based on direction;
                 directCharacter( topDown, leftRight, box, mapCharacter );
-
-                mapCharacter.scrollIntoView();
             } else {
                 // Reenable cutscene click events.
                 window.allowCutscene = true;
