@@ -1424,7 +1424,7 @@ html {
         &:before {
           bottom: 30%;
           content: 'POINTS';
-          color: gold;
+          color: #000000;
           left:47.5%;
           opacity: 0;
           position: absolute;
@@ -1436,6 +1436,27 @@ html {
           &:before {
             bottom: 50%;
             opacity: 1;
+          }
+
+          &.money {
+            &:before {
+              content: 'MONEY';
+              color: gold;
+            }
+          }
+
+          &.health {
+            &:before {
+              content: 'HEALTH';
+              color: green;
+            }
+          }
+
+          &.health {
+            &:before {
+              content: 'MANA';
+              color: #4a0d87;
+            }
           }
         }
 

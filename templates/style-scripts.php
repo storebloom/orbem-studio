@@ -1,4 +1,7 @@
 <?php foreach($explore_points as $explore_point):
+    if ('explore-character' == $explore_point->post_type) {
+        continue;
+    }
 $height = get_post_meta($explore_point->ID, 'explore-height', true) . 'px';
 $width = get_post_meta($explore_point->ID, 'explore-width', true) . 'px';
 $map_url = get_the_post_thumbnail_url($explore_point->ID);

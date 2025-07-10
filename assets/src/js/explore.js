@@ -428,10 +428,14 @@ function moveNPC( npc ) {
             let firstRun = true;
             let moveDirection;
             let newImage;
+            let npcIsStopped = false;
+            const npcName = cleanClassName(npc.className);
 
             if (pathArray && 1 !== pathArray.length) {
                 let currentWorldX = pathArray[position].left;
                 let currentWorldY = pathArray[position].top;
+                let previousWorldX;
+                let previousWorldY;
                 let didPauseNPC = false;
 
                 walkingInterval = setInterval(() => {
@@ -457,10 +461,11 @@ function moveNPC( npc ) {
                                 npc.style.top = pathArray[nextPosition].top + 'px';
 
                                 // Update NPC direction image.
-                                newImage = npc.querySelector('#' + cleanClassName(npc.className) + moveDirection);
+                                newImage = npc.querySelector('#' + npcName + moveDirection);
 
                                 if (newImage) {
                                     newImage.classList.add('engage');
+                                    npcIsStopped = false;
                                 }
                             }
 
@@ -499,8 +504,15 @@ function moveNPC( npc ) {
 
                         // Live track NPC movement.
                         function trackNPC() {
+                            if (parseInt(pathArray[nextPosition].left) === npc.offsetLeft && parseInt(pathArray[nextPosition].top) === npc.offsetTop && true !== npcIsStopped) {
+                                setStaticNPCImage(moveDirection, npcName, npc, newImage);
+                                npcIsStopped = true;
+                            }
+
                             currentWorldX = npc.offsetLeft;
                             currentWorldY = npc.offsetTop;
+                            previousWorldX = npc.offsetLeft;
+                            previousWorldY = npc.offsetTop;
                             requestAnimationFrame(trackNPC);
                         }
 
@@ -530,6 +542,15 @@ function moveNPC( npc ) {
         } else if ( true === wanderer ) {
             makeNPCWander( npc, walkingSpeed, timeBetween );
         }
+    }
+}
+
+function setStaticNPCImage(moveDirection, npcName, npc, currentImage) {
+    currentImage.classList.remove('engage');
+
+    const newImage = npc.querySelector('#' + npcName + 'static-' + moveDirection );
+    if (newImage) {
+        newImage.classList.add('engage');
     }
 }
 
@@ -1251,9 +1272,7 @@ const hurtTheEnemy = (function () {
     let called = false;
 
     return function(theWeapon, value) {
-        if (
-            value && theWeapon && elementsOverlap( theWeapon.getBoundingClientRect(), value.getBoundingClientRect() )
-        ) {
+        if (value && theWeapon && elementsOverlap( theWeapon, value )) {
             if ( called === false ) {
                 if ('explore-enemy' === value.dataset.genre && false === theWeapon.classList.contains( 'protection' )) {
                     const enemyHealth = value.dataset.health;
@@ -2110,7 +2129,7 @@ function shootProjectile(projectile, mapCharacterLeft, mapCharacterTop, enemy, p
 
         if ( collisionWalls && projectile ) {
             collisionWalls.forEach( collisionWall => {
-                if ( elementsOverlap( projectile.getBoundingClientRect(), collisionWall.getBoundingClientRect() ) ) {
+                if ( elementsOverlap( projectile, collisionWall ) ) {
                     // If projectile collides with player than take health of player.
                     if ( true === collisionWall.classList.includes('map-character-icon') && '.map-weapon' !== projectileClass ) {
                         const enemyValue = parseInt(projectile.getAttribute('data-value'));
@@ -2675,15 +2694,21 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
             const indicator = document.querySelector('.indicator-icon');
             const characterName = cleanClassName(value.className);
             const cutsceneTrigger = document.querySelector( `.map-cutscene[data-character="${characterName}"]`);
+            const finalCharPos = {
+                offsetLeft: mapChar.offsetLeft + (400 - (box.offsetWidth / 2 )),
+                offsetWidth: box.offsetWidth,
+                offsetTop: mapChar.offsetTop + (300 - (box.offsetHeight / 2 )),
+                offsetHeight: box.offsetHeight,
+            };
 
             // Touching with buffer.
-            if (value && box && elementsOverlap(value.getBoundingClientRect(), box.getBoundingClientRect(), 5) && ( cutsceneTrigger && 'engagement' !== cutsceneTrigger.dataset.triggertype )) {
+            if (value && box && elementsOverlap(finalCharPos, value, 5)) {
                 // Pause NPC from moving if touching MC.
-                if ( 'explore-character' === value.dataset.genre && '' !== value.dataset.path && false === cutsceneTrigger.classList.contains('been-viewed') ) {
+                if ( 'explore-character' === value.dataset.genre && '' !== value.dataset.path ) {
 
                     value.dataset.canmove = 'false';
 
-                    if ( cutsceneTrigger ) {
+                    if ( cutsceneTrigger && false === cutsceneTrigger.classList.contains('been-viewed')  && 'engagement' !== cutsceneTrigger.dataset.triggertype) {
                         engageCutscene(cutsceneTrigger);
                     }
                 }
@@ -2692,9 +2717,7 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
                 value.dataset.canmove = 'true';
             }
 
-            if (value && box && elementsOverlap(box.getBoundingClientRect(), value.getBoundingClientRect())) {
-                navigator.vibrate(1000);
-
+            if (value && box && elementsOverlap(finalCharPos, value)) {
                 // Add indicator if touching sign.
                 if ('explore-sign' === value.dataset.genre && false === value.classList.contains( 'engage' ) ) {
                     triggerIndicator(value, false);
@@ -2750,7 +2773,7 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
 
                     if (triggee) {
                         triggee.classList.add('show-explainer');
-                        triggee.style.zIndex = '6';
+                        triggee.style.zIndex = '10';
                         value.classList.add('already-hit');
                         window.allowMovement = false;
                         window.allowHit = false;
@@ -2894,7 +2917,7 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
                         value.remove();
                     } else {
                         value.classList.add('engage');
-                        triggerIndicator(document.querySelector('.' + position + '-map-item'));
+                        triggerIndicator(document.querySelector('.' + theCutScene.dataset?.character + '-map-item'));
                     }
                 }
 
@@ -2950,7 +2973,7 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
 
             // For breakables and other interactions.
             if (weaponEl) {
-                if (elementsOverlap(weaponEl.getBoundingClientRect(), value.getBoundingClientRect())) {
+                if (elementsOverlap(weaponEl, value)) {
 
                     // Timer trigger logic.
                     const triggeeName = cleanClassName(value.className);
@@ -3437,7 +3460,7 @@ function engageCutscene( position, areaCutscene = false, isVideo = false ) {
             window.allowHit = false;
 
             setTimeout( () => {
-                npc.scrollIntoView({behavior: 'smooth', block: 'center', inline: 'center'});
+                npc.scrollIntoView({behavior: 'smooth', block: 'nearest', inline: 'center'});
             }, 500)
 
             if ( npc ) {
@@ -4411,21 +4434,35 @@ function getBlockDirection(collisionWalls, box, finalTop, finalLeft, enemy, npc)
     const left = finalLeft;
     const top = finalTop;
     let final = {top: finalTop, left: finalLeft, collide: false};
+    const mapChar = document.getElementById('map-character');
+    const finalCharPos = true === npc ? box : {
+        offsetLeft: mapChar.offsetLeft + (400 - (box.offsetWidth / 2 )),
+        offsetWidth: box.offsetWidth,
+        offsetTop: mapChar.offsetTop + (300 - (box.offsetHeight / 2 )),
+        offsetHeight: box.offsetHeight,
+    };
 
     if ( collisionWalls && ( ( false === window.godMode && true !== npc ) || true === npc ) ) {
         collisionWalls.forEach( collisionWallEle => {
-            const collisionWall = collisionWallEle.getBoundingClientRect();
+            const collisionWall = collisionWallEle;
 
-            if ( box !== collisionWallEle && elementsOverlap( box.getBoundingClientRect(), collisionWall ) ) {
-                const character = box.getBoundingClientRect();
+            if ( box !== collisionWallEle && elementsOverlap( finalCharPos, collisionWall ) ) {
+                const collisionWallRight = collisionWall.offsetLeft + collisionWall.offsetWidth;
+                const collisionWallLeft = collisionWall.offsetLeft;
+                const collisionWallTop = collisionWall.offsetTop;
+                const collisionWallBottom = collisionWall.offsetTop + collisionWall.offsetHeight;
+                const characterRight = finalCharPos.offsetLeft + finalCharPos.offsetWidth;
+                const characterLeft = finalCharPos.offsetLeft;
+                const characterTop = finalCharPos.offsetTop;
+                const characterBottom = finalCharPos.offsetTop + finalCharPos.offsetHeight;
 
                 // set collide true since we're overlapping.
                 final.collide = true;
 
-                const topCollision = collisionWall.bottom > character.top && collisionWall.top < character.top && collisionWall.bottom < ( character.top + 10 );
-                const bottomCollision = collisionWall.top < character.bottom && collisionWall.bottom > character.bottom && collisionWall.top > ( character.bottom - 10 );
-                const leftCollision = collisionWall.right > character.left && collisionWall.left < character.left;
-                const rightCollision = collisionWall.left < character.right && collisionWall.right > character.right;
+                const topCollision = collisionWallBottom > characterTop && collisionWallTop < characterTop && collisionWallBottom < ( characterTop + 10 );
+                const bottomCollision = collisionWallTop < characterBottom && collisionWallBottom > characterBottom && collisionWallTop > ( characterBottom - 10 );
+                const leftCollision = collisionWallRight > characterLeft && collisionWallLeft < characterLeft;
+                const rightCollision = collisionWallLeft < characterRight && collisionWallRight > characterRight;
                 let adjust = true === enemy ? 5 : 3;
                 adjust = true === npc ? 1 : adjust;
 
@@ -4464,10 +4501,19 @@ function getBlockDirection(collisionWalls, box, finalTop, finalLeft, enemy, npc)
  * @returns {boolean}
  */
 function elementsOverlap(rect1, rect2, buffer = 0) {
-    return false === ((rect1.right + buffer) < ( rect2.left - buffer ) ||
-        ( rect1.left + buffer ) > ( rect2.right - buffer ) ||
-        ( rect1.bottom + buffer ) < ( rect2.top - buffer ) ||
-        ( rect1.top - buffer ) > ( rect2.bottom + buffer ));
+    const rect1Right = rect1.offsetLeft + rect1.offsetWidth;
+    const rect1Left = rect1.offsetLeft;
+    const rect1Top = rect1.offsetTop;
+    const rect1Bottom = rect1.offsetTop + rect1.offsetHeight;
+    const rect2Right = rect2.offsetLeft + rect2.offsetWidth;
+    const rect2Left = rect2.offsetLeft;
+    const rect2Top = rect2.offsetTop;
+    const rect2Bottom = rect2.offsetTop + rect2.offsetHeight;
+
+    return false === ((rect1Right + buffer) < ( rect2Left - buffer ) ||
+        ( rect1Left + buffer ) > ( rect2Right - buffer ) ||
+        ( rect1Bottom + buffer ) < ( rect2Top - buffer ) ||
+        ( rect1Top - buffer ) > ( rect2Bottom + buffer ));
 }
 
 /**
@@ -4553,7 +4599,7 @@ function runPointAnimation( value, position, isMission, missionPoints, missionNa
         const collectable = value.classList.contains( 'storage-item' );
 
         // Play sound effect for points.
-        playPointSound();
+        playPointSound(positionType);
 
         // Add new point count to DB.
         addUserPoints( parseInt( currentPoints ) + parseInt( objectAmount ), positionType, position, collectable, missionName );
@@ -4569,16 +4615,26 @@ function playInterestSound() {
     return false;
 }
 
-function playPointSound() {
+function playPointSound(pointType = '') {
     const character = document.getElementById('map-character');
 
     // Show point graphic.
     character.classList.add( 'point' );
 
+    // Add point type
+    if ( '' !== pointType ) {
+        character.classList.add( pointType );
+    }
+
     setTimeout(function() {
         character.classList.add( 'over');
 
         setTimeout(function() {
+            // Add point type
+            if ( '' !== pointType ) {
+                character.classList.remove( pointType );
+            }
+
             character.classList.remove( 'point');
             character.classList.remove( 'over');
         }, 500);
@@ -5000,7 +5056,7 @@ function engageMinigameLogic(minigameTrigger) {
                                     solderPoints.forEach(solderPoint => {
                                         if (wires) {
                                             wires.forEach(wire => {
-                                                if (elementsOverlap(solderPoint.getBoundingClientRect(), wire.getBoundingClientRect())) {
+                                                if (elementsOverlap(solderPoint, wire)) {
                                                     overlapping = true;
                                                 }
                                             });
