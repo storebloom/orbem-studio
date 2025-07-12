@@ -71,6 +71,8 @@ document.addEventListener("DOMContentLoaded", function(){
     if ( introVideo ) {
         const introVideoContainer = document.querySelector('.intro-video.engage');
 
+        introVideo.play();
+
         // Unmute introvideo.
         const unmute = document.getElementById( 'unmute' );
 
@@ -1359,6 +1361,9 @@ const enterNewArea = (function () {
     window.runningPointFunction = false;
     let called = false;
 
+    // Incase using level selector.
+    playStartScreenMusic(false);
+
     return function(position, weapon, mapUrl, nextAreaPosition) {
         window.allowMovement = false;
         // Clear enemy interval.
@@ -1886,6 +1891,10 @@ function getCurrentPoints(type) {
 }
 
 function playSong(path, name) {
+    if (!path || '' === path) {
+        return;
+    }
+
     const audio = document.createElement('audio');
     audio.setAttribute('loop', '');
     audio.src = path;
@@ -3022,7 +3031,6 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
 
                     // For collectables.
                     if ('true' === value.getAttribute('data-breakable') && false === value.classList.contains( 'interacted-with' ) && false === value.classList.contains( 'no-point' ) ) {
-
                         // Add item to storage menu.
                         storeExploreItem(value);
 
@@ -3553,7 +3561,7 @@ function engageCutscene( position, areaCutscene = false, isVideo = false ) {
                 }
             } else {
                 const currentCharImage = document.querySelector( '.engage.cut-character' );
-                if ( currentCharImage ) {
+                if ( currentCharImage && theCharacterEl ) {
                     currentCharImage.classList.remove('engage');
                     theCharacterEl.classList.add( 'engage' );
                 }
@@ -5302,7 +5310,7 @@ function playStartScreenMusic(play = true) {
     const fadeStep = 0.1; // Volume increment step
     const intervalTime = fadeDuration * fadeStep;
 
-    if ( startMusic && play ) {
+    if ( startMusic && false !== play ) {
         startMusic.volume = 0; // Start with volume at 0
         startMusic.play(); // Start playing the audio
 
@@ -5313,8 +5321,8 @@ function playStartScreenMusic(play = true) {
                 clearInterval(fadeInInterval); // Stop the interval when volume reaches 1
             }
         }, intervalTime);
-    } else if (startMusic && false === play) {
-        startMusic.pause();
+    } else if ( startMusic ) {
+        startMusic.remove();
     }
 }
 

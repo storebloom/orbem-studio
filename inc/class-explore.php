@@ -96,7 +96,7 @@ class Explore
                 );
             }
 
-            // Remove original top-level CPT menu
+            // Remove original top-level CPT menu.
             remove_menu_page("edit.php?post_type=$cpt");
         }
     }
