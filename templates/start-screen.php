@@ -65,7 +65,7 @@ if (true === $is_admin) {
         <div class="level-selector" data-first="<?php echo esc_attr($first_area); ?>">
             <?php foreach($areas as $area): ?>
             <div class="level-option">
-                <img data-name="<?php echo esc_attr($area->post_name ?? ''); ?>" src="<?php echo esc_url(get_post_meta($area->ID ?? 0, 'explore-map-svg', true)); ?>"/>
+                <img data-name="<?php echo esc_attr($area->post_name ?? ''); ?>" src="<?php echo esc_url(get_post_meta($area->ID ?? 0, 'explore-map', true)); ?>"/>
                 <h3><?php echo esc_html($area->post_title); ?></h3>
             </div>
             <?php endforeach; ?>

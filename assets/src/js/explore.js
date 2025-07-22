@@ -24,6 +24,8 @@ let pulsewaveInterval;
 let timerCountDownInterval;
 let currentLocation = ''
 let timerCountDownHit = false;
+let weaponPosTop = 300;
+let weaponPosLeft = 400;
 window.mainCharacter = '';
 window.godMode = false;
 window.noTouch = false;
@@ -250,75 +252,7 @@ document.addEventListener("DOMContentLoaded", function(){
         //engageExploreGame();
     }
 
-    // Settings.
-    const settingCogs = document.querySelectorAll('#settings, #storage, #characters');
-
-    if ( settingCogs ) {
-        settingCogs.forEach( settingCog => {
-            if ( 'storage' === settingCog.id ) {
-                // Show item description in storage menu.
-                const menuItems = document.querySelectorAll('.retrieval-points .storage-item' );
-
-                if ( menuItems ) {
-                    menuItems.forEach( menuItem => {
-                        menuItem.addEventListener( 'click', () => {
-                            showItemDescription(menuItem);
-                        });
-                    } );
-                }
-            }
-
-            settingCog.addEventListener('click', (e) => {
-                if ( false === e.target.classList.contains( 'close-settings') && false === e.target.parentNode.classList.contains( 'character-item') ) {
-                    settingCog.classList.add( 'engage' );
-                }
-            });
-
-            settingCog.querySelector('.close-settings').addEventListener( 'click', () => {
-                const description = document.querySelector( '.retrieval-points #item-description' );
-                settingCog.classList.remove('engage');
-
-                if ( description ) {
-                    description.innerHTML = '';
-                }
-            } );
-        } );
-    }
-
-    const updateSettings = document.getElementById('update-settings');
-
-    // Save settings.
-    const musicSettings = document.getElementById('music-volume');
-    const sfxSettings = document.getElementById('sfx-volume');
-    const talkingSettings = document.getElementById('talking-volume');
-
-    if ( updateSettings ) {
-        if ( sfxSettings && musicSettings && talkingSettings ) {
-            window.sfxVolume = sfxSettings.value / 100;
-            window.talkingVolume = talkingSettings.value;
-
-            // Volume listeners.
-            musicSettings.addEventListener("input", (event) => {
-                window.currentMusic.volume = event.target.value / 100;
-            });
-
-            // Volume listeners.
-            talkingSettings.addEventListener("input", (event) => {
-                window.talkingVolume = event.target.value;
-            });
-
-            // Volume listeners.
-            sfxSettings.addEventListener("input", (event) => {
-                window.sfxVolume = event.target.value / 100;
-            });
-        }
-
-        updateSettings.addEventListener('click', () => {
-            if ( musicSettings && sfxSettings && talkingSettings ) {
-                saveSettings(musicSettings.value, sfxSettings.value, talkingSettings.value);
-            }
-        });
-    }
+    engageSettingsMenus();
 
     // Storage menu functionality.
     // Tab logic.
@@ -527,6 +461,8 @@ function moveNPC( npc ) {
                             loopAmount = loopAmount + 1;
                             position = 0 < position ? position - 1 : pathCount;
 
+                            setStaticNPCImage(moveDirection, npcName, npc, newImage);
+
 
                             npc.style.left = currentWorldX + 'px';
                             npc.style.top = currentWorldY + 'px';
@@ -544,6 +480,78 @@ function moveNPC( npc ) {
         } else if ( true === wanderer ) {
             makeNPCWander( npc, walkingSpeed, timeBetween );
         }
+    }
+}
+
+function engageSettingsMenus() {
+    // Settings.
+    const settingCogs = document.querySelectorAll('#settings, #storage, #characters');
+
+    if ( settingCogs ) {
+        settingCogs.forEach( settingCog => {
+            if ( 'storage' === settingCog.id ) {
+                // Show item description in storage menu.
+                const menuItems = document.querySelectorAll('.retrieval-points .storage-item' );
+
+                if ( menuItems ) {
+                    menuItems.forEach( menuItem => {
+                        menuItem.addEventListener( 'click', () => {
+                            showItemDescription(menuItem);
+                        });
+                    } );
+                }
+            }
+
+            settingCog.addEventListener('click', (e) => {
+                if ( false === e.target.classList.contains( 'close-settings') && false === e.target.parentNode.classList.contains( 'character-item') ) {
+                    settingCog.classList.add( 'engage' );
+                }
+            });
+
+            settingCog.querySelector('.close-settings').addEventListener( 'click', () => {
+                const description = document.querySelector( '.retrieval-points #item-description' );
+                settingCog.classList.remove('engage');
+
+                if ( description ) {
+                    description.innerHTML = '';
+                }
+            } );
+        } );
+    }
+
+    const updateSettings = document.getElementById('update-settings');
+
+    // Save settings.
+    const musicSettings = document.getElementById('music-volume');
+    const sfxSettings = document.getElementById('sfx-volume');
+    const talkingSettings = document.getElementById('talking-volume');
+
+    if ( updateSettings ) {
+        if ( sfxSettings && musicSettings && talkingSettings ) {
+            window.sfxVolume = sfxSettings.value / 100;
+            window.talkingVolume = talkingSettings.value;
+
+            // Volume listeners.
+            musicSettings.addEventListener("input", (event) => {
+                window.currentMusic.volume = event.target.value / 100;
+            });
+
+            // Volume listeners.
+            talkingSettings.addEventListener("input", (event) => {
+                window.talkingVolume = event.target.value;
+            });
+
+            // Volume listeners.
+            sfxSettings.addEventListener("input", (event) => {
+                window.sfxVolume = event.target.value / 100;
+            });
+        }
+
+        updateSettings.addEventListener('click', () => {
+            if ( musicSettings && sfxSettings && talkingSettings ) {
+                saveSettings(musicSettings.value, sfxSettings.value, talkingSettings.value);
+            }
+        });
     }
 }
 
@@ -572,17 +580,17 @@ function makeNPCWander( npc, walkingSpeed, timeBetween ) {
         const pauseTime = Math.floor(Math.random() * (25000 - 15000 + 1)) + 15000;
 
         setTimeout(() => {
-            pauseNpc(timeBetween, npc); // Call your function
+            pauseNpc(timeBetween, npc);
 
             // Schedule the next pause with a new random time
             startRandomNpcPause();
         }, pauseTime);
     }
 
-    startRandomNpcPause(); // Start the loop
+    startRandomNpcPause();
 
     setInterval( () => {
-        if ( 'true' !== npc.dataset?.break ) {
+        if ( 'true' !== npc.dataset?.break && 'true' !== npc.dataset?.cutscenebreak ) {
             const currentLeft = npc.style.left.replace('px', '');
             const currentTop = npc.style.top.replace('px', '');
             const finalPos = blockMovement(currentTop, currentLeft, npc);
@@ -1479,38 +1487,6 @@ const enterNewArea = (function () {
                     }
                 }
 
-                // Add characters.
-                const characterList = document.querySelector( '.characters-content' );
-
-                if ( characterList ) {
-                    characterList.innerHTML = newMapItems['map-characters'];
-
-                    const characterItems = characterList.querySelectorAll( '.character-item' );
-
-                    if ( 0 < characterItems.length ) {
-                        document.getElementById( 'characters' ).style.display = 'block';
-                    }
-
-                    // Add character selection events.
-                    engageCharacterSelection();
-
-                    // Add hazard check.
-                    checkIfHazardHurts();
-
-                    // Engage dev mode.
-                    engageDevMode();
-
-                    // Add close menu event.
-                    const characterMenu = document.getElementById( 'characters' );
-                    const closeCharacter = characterMenu.querySelector( '.close-settings' );
-
-                    if ( closeCharacter ) {
-                        closeCharacter.addEventListener( 'click', () => {
-                            characterMenu.classList.remove( 'engage' );
-                        } );
-                    }
-                }
-
                 // Add new map styles and map urls.
                 if (head) {
                     head.append( newStyles );
@@ -1542,6 +1518,41 @@ const enterNewArea = (function () {
 
                         // Run no point class adder again
                         addNoPoints();
+
+                        // Engage settings menus.
+                        engageSettingsMenus();
+
+                        // Add characters.
+                        const characterList = document.querySelector( '.characters-content' );
+
+                        if ( characterList ) {
+                            characterList.innerHTML = newMapItems['map-characters'];
+
+                            const characterItems = characterList.querySelectorAll( '.character-item' );
+
+                            if ( 0 < characterItems.length ) {
+                                document.getElementById( 'characters' ).style.display = 'block';
+                            }
+
+                            // Add character selection events.
+                            engageCharacterSelection();
+
+                            // Add hazard check.
+                            checkIfHazardHurts();
+
+                            // Engage dev mode.
+                            engageDevMode();
+
+                            // Add close menu event.
+                            const characterMenu = document.getElementById( 'characters' );
+                            const closeCharacter = characterMenu.querySelector( '.close-settings' );
+
+                            if ( closeCharacter ) {
+                                closeCharacter.addEventListener( 'click', () => {
+                                    characterMenu.classList.remove( 'engage' );
+                                } );
+                            }
+                        }
 
                         // Move npcs
                         const moveableCharacters = document.querySelectorAll( '.path-onload[data-path]:not([data-path=""]), [data-wanderer="yes"]');
@@ -2362,7 +2373,8 @@ function shouldRemoveItemOnload( mapItem ) {
         'true' === mapItem.dataset.hazard ||
         'true' === mapItem.dataset.collectable ||
         ( 'true' === mapItem.dataset.breakable && 'false' !== mapItem.dataset?.disappear )  ||
-        ('true' === mapItem.dataset.removable && 'false' !== mapItem.dataset?.disappear )
+        ('true' === mapItem.dataset.removable && 'false' !== mapItem.dataset?.disappear ) ||
+        (undefined !== mapItem.dataset?.removeaftercutscene)
     ) {
         return true;
     }
@@ -2926,7 +2938,7 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
                         value.remove();
                     } else {
                         value.classList.add('engage');
-                        triggerIndicator(document.querySelector('.' + theCutScene.dataset?.character + '-map-item'));
+                        triggerIndicator(document.querySelector('.' + theCutScene.dataset?.character + '-map-item'), true, value);
                     }
                 }
 
@@ -2983,7 +2995,6 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
             // For breakables and other interactions.
             if (weaponEl) {
                 if (elementsOverlap(weaponEl, value)) {
-
                     // Timer trigger logic.
                     const triggeeName = cleanClassName(value.className);
                     const triggee = document.querySelector('[data-timertriggee="' + triggeeName + '"]');
@@ -3334,7 +3345,7 @@ function enableAbility(ability) {
 /**
  * Trigger indicator.
  */
-function triggerIndicator(indicateMe, isCutscene = true) {
+function triggerIndicator(indicateMe, isCutscene = true, trigger = false) {
     window.allowHit = false;
     const indicator = document.querySelector( '.indicator-icon' );
 
@@ -3351,7 +3362,7 @@ function triggerIndicator(indicateMe, isCutscene = true) {
 
             if ( true === isCutscene ) {
                 indicator.dataset.sign = '';
-                indicator.dataset.cutscene =  indicateMe.getAttribute('data-trigger-cutscene');
+                indicator.dataset.cutscene =  trigger.dataset.triggee;
             }
 
             if ( false === isCutscene ) {
@@ -3468,11 +3479,11 @@ function engageCutscene( position, areaCutscene = false, isVideo = false ) {
             window.allowHit = false;
 
             setTimeout( () => {
-                npc.scrollIntoView({behavior: 'smooth', block: 'nearest', inline: 'center'});
+                npc.scrollIntoView({behavior: 'smooth', block: 'nearest'});
             }, 500)
 
             if ( npc ) {
-                npc.dataset.break = 'true';
+                npc.dataset.cutscenebreak = 'true';
             }
 
             cutscene.classList.add('engage');
@@ -3631,7 +3642,7 @@ function engageCutscene( position, areaCutscene = false, isVideo = false ) {
             } else {
                 window.nextDialogueTimeout = setTimeout( () => {
                     nextDialogue();
-                }, 2000 );
+                }, 3000 );
             }
         }
 
@@ -3799,6 +3810,7 @@ function afterCutscene( cutscene, areaCutscene = false ) {
     window.nextAreaMissionComplete = '';
     const cutsceneName = cleanClassName( cutscene.className ).replace( ' ', '' );
     const bossFight = cutscene.dataset.boss;
+    const cutsceneCharacter = document.querySelector( '.' + cutscene.dataset.character + '-map-item' );
     const indicator = document.querySelector( '.indicator-icon' );
 
     // Hide indicator.
@@ -3875,8 +3887,12 @@ function afterCutscene( cutscene, areaCutscene = false ) {
     setTimeout(() => {
         window.allowHit = true;
 
-        if ( pathTriggerPosition && 'true' === pathTriggerPosition.dataset?.break ) {
-            pathTriggerPosition.dataset.break = 'false';
+        if ( pathTriggerPosition && 'true' === pathTriggerPosition.dataset?.cutscenebreak ) {
+            pathTriggerPosition.dataset.cutscenebreak = 'false';
+        }
+
+        if ( cutsceneCharacter && 'true' === cutsceneCharacter.dataset?.cutscenebreak ) {
+            cutsceneCharacter.dataset.cutscenebreak = 'false';
         }
 
         if ( bossFight && '' !== bossFight ) {
@@ -4175,8 +4191,8 @@ function movementIntFunc() {
             box.style.left = myLeft + 'px';
 
             if ( weapon && true === window.weaponConnection ) {
-                weapon.style.top = ( myTop + 300 ) + 'px';
-                weapon.style.left = ( myLeft + 400 ) + 'px';
+                weapon.style.top = ( myTop + weaponPosTop ) + 'px';
+                weapon.style.left = ( myLeft + weaponPosLeft ) + 'px';
             }
 
             if ( draggableItem ) {
@@ -4284,6 +4300,22 @@ function addCharacterHit() {
                     if ('true' === weapon.dataset.projectile || (true === isSpell && 0 < currentPoints) || false === isSpell && false === chargeAttackInProgress) {
                         weapon.classList.add('engage');
 
+                        // Move weapon based on direction
+                        switch (direction) {
+                            case 'up':
+                                weaponPosTop = 210;
+                                break;
+                            case 'down':
+                                weaponPosTop = 390;
+                                break;
+                            case 'left':
+                                weaponPosLeft = 350;
+                                break;
+                            case 'right':
+                                weaponPosLeft = 450;
+                                break;
+                        }
+
                         if ( currentImageMapCharacter ) {
                             currentImageMapCharacter.classList.add('punched');
 
@@ -4324,6 +4356,22 @@ function addCharacterHit() {
                                 currentImageMapCharacter.classList.remove('punched');
 
                                 weaponAnimation.classList.remove( 'engage' );
+
+                                // Reset weapon based on direction
+                                switch (direction) {
+                                    case 'up':
+                                        weaponPosTop = 300;
+                                        break;
+                                    case 'down':
+                                        weaponPosTop = 300;
+                                        break;
+                                    case 'left':
+                                        weaponPosLeft = 400;
+                                        break;
+                                    case 'right':
+                                        weaponPosLeft = 400;
+                                        break;
+                                }
                             }
                         }, weaponTime);
                     } else if (true === shiftIsPressed) {
@@ -4338,6 +4386,22 @@ function addCharacterHit() {
                             currentImageMapCharacter.classList.remove('punched');
 
                             weaponAnimation.classList.remove( 'engage' );
+
+                            // Reset weapon based on direction
+                            switch (direction) {
+                                case 'up':
+                                    weaponPosTop = 300;
+                                    break;
+                                case 'down':
+                                    weaponPosTop = 300;
+                                    break;
+                                case 'left':
+                                    weaponPosLeft = 400;
+                                    break;
+                                case 'right':
+                                    weaponPosLeft = 400;
+                                    break;
+                            }
 
                             shiftIsPressed = false;
                         }, 500);
@@ -4421,7 +4485,7 @@ function blockMovement(top, left, box = false) {
     const mainChar = box !== false ? '.map-character-icon.engage, ' : '';
     box = false === box ? document.querySelector( '.map-character-icon.engage' ) : box;
     const collisionWalls = document.querySelectorAll(
-        mainChar + '.default-map svg rect, .map-item:not([data-wanderer="yes"]):not(.explainer-container):not(.materialize-item-trigger):not(.drag-dest):not([data-hazard="true"]):not([data-trigger="true"]):not(.currently-dragging):not(.passable):not([data-genre="explore-sign"]):not([data-foreground="true"]), .enemy-item'
+        mainChar + '.default-map svg rect, .map-item:not([data-wanderer="yes"]):not(.explainer-container):not(.materialize-item-trigger):not(.drag-dest):not([data-hazard="true"]):not([data-trigger="true"]):not(.currently-dragging):not(.passable):not([data-genre="explore-sign"]):not([data-foreground="true"]):not([data-background="true"]), .enemy-item'
     );
 
     return getBlockDirection(collisionWalls, box, parseInt(finalTop), parseInt(finalLeft), false, ('' !== mainChar));
@@ -4443,16 +4507,22 @@ function getBlockDirection(collisionWalls, box, finalTop, finalLeft, enemy, npc)
     const top = finalTop;
     let final = {top: finalTop, left: finalLeft, collide: false};
     const mapChar = document.getElementById('map-character');
-    const finalCharPos = true === npc ? box : {
+    const mainCharPos = {
         offsetLeft: mapChar.offsetLeft + (400 - (box.offsetWidth / 2 )),
         offsetWidth: box.offsetWidth,
         offsetTop: mapChar.offsetTop + (300 - (box.offsetHeight / 2 )),
         offsetHeight: box.offsetHeight,
     };
 
+    const finalCharPos = true === npc ? box : mainCharPos;
+
     if ( collisionWalls && ( ( false === window.godMode && true !== npc ) || true === npc ) ) {
         collisionWalls.forEach( collisionWallEle => {
-            const collisionWall = collisionWallEle;
+            let collisionWall = collisionWallEle;
+
+            if (true === collisionWall.id.includes('mc-')) {
+                collisionWall = mainCharPos;
+            }
 
             if ( box !== collisionWallEle && elementsOverlap( finalCharPos, collisionWall ) ) {
                 const collisionWallRight = collisionWall.offsetLeft + collisionWall.offsetWidth;

@@ -128,6 +128,7 @@ class Explore
             'explore-minigame',
             'explore-explainer',
             'explore-wall',
+            'explore-communicate'
         ];
 
         $current_post_type = $screen->post_type;
@@ -897,7 +898,9 @@ class Explore
         $userid = $return['userid'] ?? get_current_user_id();
         $explore_points = self::getExplorePoints($position);
         $explore_cutscenes = self::getExplorePosts($position, 'explore-cutscene');
+        $explore_communicate = self::getExplorePosts($position, 'explore-communicate');
         $explore_minigames = self::getExplorePosts($position, 'explore-minigame');
+        $explore_missions = self::getExplorePosts($position, 'explore-mission');
         $explore_walls = self::getExplorePosts($position, 'explore-wall');
         $explore_explainers = self::getExplorePosts($position, 'explore-explainer');
         $explore_abilities = Explore::getExploreAbilities();
@@ -905,6 +908,7 @@ class Explore
         $explainers_menu = self::getExplainerHTML($explore_explainers, 'menu');
         $explainers_map = self::getExplainerHTML($explore_explainers, 'map');
         $minigames = self::getMinigameHTML($explore_minigames);
+        $map_communicate = self::getMapCommunicateHTML($explore_communicate, $position, $userid);
         $map_cutscenes = self::getMapCutsceneHTML($explore_cutscenes, $position, $userid);
         $map_abilities = self::getMapAbilitiesHTML($explore_abilities);
         $is_admin = user_can($userid, 'manage_options');
@@ -1328,6 +1332,8 @@ class Explore
             $passable = false === empty($passable) && 'yes' === $passable;
             $foreground = get_post_meta($explore_point->ID, 'explore-foreground', true);
             $foreground = false === empty($foreground) && 'yes' === $foreground;
+            $background = get_post_meta($explore_point->ID, 'explore-background', true);
+            $background = false === empty($background) && 'yes' === $background;
             $interacted_with = get_post_meta($explore_point->ID, 'explore-interacted', true);
             $crew_mate = get_post_meta($explore_point->ID, 'explore-crew-mate', true);
             $path_trigger = get_post_meta($explore_point->ID, 'explore-path-trigger', true);
@@ -1406,7 +1412,7 @@ class Explore
                 $html .= '<div style="left:' . intval($left) . 'px; top:' . intval($top) . 'px;" id="' . $explore_point->ID . '" data-genre="' . $explore_point->post_type . '" data-type="' . esc_attr($type) . '" data-value="' . intval($value) . '"';
                 $html .= 'data-image="' . get_the_post_thumbnail_url($explore_point->ID) . '" ';
                 if ('explore-area' === $explore_point->post_type) {
-                    $map_url = get_post_meta($explore_point->ID, 'explore-map-svg', true);
+                    $map_url = get_post_meta($explore_point->ID, 'explore-map', true);
 
                     $html .= ' data-map-url="' . $map_url . '" ';
                 }
@@ -1443,6 +1449,11 @@ class Explore
                 // Will be foreground?
                 if ( true === $foreground ) {
                     $html .= ' data-foreground="true" ';
+                }
+
+                // Will be background?
+                if ( true === $background ) {
+                    $html .= ' data-background="true" ';
                 }
 
                 if ( false === empty($height) && false === empty($width) ) {
@@ -1835,7 +1846,158 @@ class Explore
 
                 $html .= $next_area_datapoint;
                 $html .= false === empty($next_area_position_top) ? ' data-nextarea-position={"left":"' . $next_area_position_left . '","top":"' . $next_area_position_top . '"}' : '';
-                $html .= ' data-mapurl="' . get_the_post_thumbnail_url($area_obj[0]->ID) . '"';
+                $html .= ' data-mapurl="' . get_post_meta($area_obj[0]->ID, 'explore-map', true) . '"';
+            }
+
+            $html .= '>';
+
+            if (false === $is_area_cutscene && false === empty($character)) {
+                $character_post = get_posts( ['post_type' => ['explore-character', 'explore-enemy'], 'posts_per_page' => 1, 'name' => $character] );
+
+                $html .= '<div data-character="' . $character_post[0]->ID . '" class="cut-character"><img src="' . get_the_post_thumbnail_url($character_post[0]->ID) . '"/></div>';
+            }
+
+            $html .= 'explore-area' !== $explore_cutscene->post_type ? $explore_cutscene->post_content : '';
+
+            if (true === $has_video) {
+                $html .= '<span id="skip-cutscene-video">SKIP</span>';
+            }
+
+            $html .= '</div>';
+
+            $path_trigger_left = false === empty($cutscene_trigger['left']) && 0 !== $cutscene_trigger['left'] ? $cutscene_trigger['left'] : '';
+            $path_trigger_top = false === empty($cutscene_trigger['top']) && 0 !== $cutscene_trigger['top'] ? $cutscene_trigger['top'] : '';
+            $path_trigger_height = false === empty($cutscene_trigger['height']) && 0 !== $cutscene_trigger['height'] ? $cutscene_trigger['height'] : '';
+            $path_trigger_width = false === empty($cutscene_trigger['width']) && 0 !== $cutscene_trigger['width'] ? $cutscene_trigger['width'] : '';
+
+            // Trigger Cutscene.
+            if (false === in_array( '', [$path_trigger_width, $path_trigger_height], true) && false === $is_cutscene_triggered) {
+                $html .= '<div id="' . $explore_cutscene->ID . '-t" class="cutscene-trigger wp-block-group map-item ' . $explore_cutscene->post_name . '-cutscene-trigger-map-item is-layout-flow wp-block-group-is-layout-flow"';
+                $html .= 'style="left:' . $path_trigger_left . 'px;top:' . $path_trigger_top . 'px;height:' . $path_trigger_height . 'px; width:' . $path_trigger_width . 'px;"';
+                $html .= 'data-trigger="true" data-triggee="' . $explore_cutscene->post_name . '"';
+                $html .= ' data-triggertype="' . $cutscene_trigger_type . '"';
+                $html .= ' data-meta="explore-cutscene-trigger"';
+                $html .= '></div>';
+            }
+        }
+
+        return $html;
+    }
+
+    /**
+     * Build html for map items.
+     * @param $explore_communicate
+     *
+     * @return string
+     */
+    public static function getMapCommunicateHTML($explore_communicate, $position, $userid) {
+        $userid = $userid ?? get_current_user_id();
+        $html = '';
+        $main_character = get_option( 'explore_main_character', false);
+        $area = get_posts(['post_type' => 'explore-area', 'name' => $position, 'posts_per_page' => 1]);
+        $is_area_cutscene = 'yes' === get_post_meta($area[0]->ID, 'explore-is-cutscene', true);
+        $mc = get_posts( ['post_type' => 'explore-character', 'name' => $main_character, 'posts_per_page' => 1]);
+
+        if (false === $is_area_cutscene) {
+            $html .= '<div data-character="' . $mc[0]->ID . '" class="cut-character main"><img src="' . get_the_post_thumbnail_url($mc[0]). '"/></div>';
+        }
+
+        foreach( $explore_cutscenes as $explore_cutscene ) {
+            $character = get_post_meta( $explore_cutscene->ID, 'explore-character', true );
+            $next_area = get_post_meta( $explore_cutscene->ID, 'explore-next-area', true );
+            $minigame = get_post_meta( $explore_cutscene->ID, 'explore-cutscene-minigame', true);
+            $mute_music = get_post_meta( $explore_cutscene->ID, 'explore-mute-music', true );
+            $value_type = get_post_meta( $explore_cutscene->ID, 'explore-value-type', true );
+            $value = get_post_meta( $explore_cutscene->ID, 'value', true );
+            $has_video = has_block( 'video', $explore_cutscene );
+            $cutscene_trigger = get_post_meta($explore_cutscene->ID, 'explore-cutscene-trigger', true);
+            $character_position = get_post_meta($explore_cutscene->ID, 'explore-cutscene-character-position', true);
+            $next_area_position = get_post_meta($explore_cutscene->ID, 'explore-cutscene-next-area-position', true);
+            $mission_dependent = get_post_meta($explore_cutscene->ID, 'explore-mission-dependent', true);
+            $character_position_left = $character_position['left'] ?? '';
+            $character_position_top = $character_position['top'] ?? '';
+            $next_area_position_left = $next_area_position['left'] ?? '';
+            $next_area_position_top = $next_area_position['top'] ?? '';
+            $character_position_trigger = $character_position['trigger'] ?? '';
+            $mission_cutscene = get_post_meta($explore_cutscene->ID, 'explore-mission-cutscene', true);
+            $music = get_post_meta($explore_cutscene->ID, 'explore-cutscene-music', true);
+            $mission_complete_cutscene = get_post_meta($explore_cutscene->ID, 'explore-mission-complete-cutscene', true);
+            $boss_fight = get_post_meta($explore_cutscene->ID, 'explore-cutscene-boss', true);
+            $cutscene_trigger_type = get_post_meta($explore_cutscene->ID, 'explore-trigger-type', true) ?? '';
+            $next_area_datapoint = false === empty($next_area) ? ' data-nextarea="' . $next_area . '"' : '';
+            $cutscene_name = false === $is_area_cutscene || true === $has_video ? $explore_cutscene->post_name : $area[0]->post_name;
+            $is_cutscene_triggered = self::isMaterializedItemTriggered($explore_cutscene->post_name, $area[0]->post_name, $userid);
+
+
+            $html .= '<div class="wp-block-group map-cutscene ' . esc_attr($cutscene_name) . '-map-cutscene is-layout-flow wp-block-group-is-layout-flow"';
+            $html .= ' id="' . esc_attr($explore_cutscene->ID) . '"';
+
+            if (false === empty($mission_cutscene)) {
+                $html .= ' data-mission="' . esc_attr($mission_cutscene) . '" ';
+            }
+
+            if (false === empty($cutscene_trigger_type)) {
+                $html .= ' data-triggertype="' . $cutscene_trigger_type . '"';
+            }
+
+            // Add for use in making cutscene triggered by touching character.
+            if (false === empty($character)) {
+                $html .= ' data-character="' . $character . '"';
+            }
+
+            // Add for type of value you receive once completing this cutscene.
+            if (false === empty($value_type)) {
+                $html .= ' data-type="' . $value_type . '"';
+            }
+
+            // Add for type of value you receive once completing this cutscene.
+            if (false === empty($value)) {
+                $html .= ' data-value="' . $value . '"';
+            }
+
+            if (false === empty($mission_dependent)) {
+                $html .= 'data-dependent="' . esc_attr($mission_dependent) . '" ';
+            }
+
+            if (false === empty($music)) {
+                $html .= 'data-music="' . esc_attr($music) . '" ';
+            }
+
+            if (false === empty($mute_music) && 'yes' === $mute_music) {
+                $html .= 'data-mutemusic="' . esc_attr($mute_music) . '" ';
+            }
+
+            // Minigame that triggers cutscene.
+            if (false === empty($minigame) && false === is_array($minigame)) {
+                $html .= 'data-minigame="' . esc_attr($minigame) . '" ';
+            }
+
+            // Has video in content.
+            if (true === $has_video) {
+                $html .= 'data-video="true" ';
+            }
+
+            // Boss Fight.
+            if (false === empty($boss_fight)) {
+                $html .= 'data-boss="' . esc_attr($boss_fight) . '" ';
+            }
+
+            // Add data point for the mission that is complete by having this cutscene.
+            if (false === empty($mission_complete_cutscene)) {
+                $html .= 'data-missioncomplete="' . esc_attr($mission_complete_cutscene) . '" ';
+            }
+
+            // Add character position point if selected.
+            if (false === empty($character_position_top)) {
+                $html .= 'data-character-position=[{"left":"' . $character_position_left . '","top":"' . $character_position_top . '","trigger":"' . $character_position_trigger . '"}]';
+            }
+
+            if (false === empty($next_area)) {
+                $area_obj = get_posts(['name' => $next_area, 'post_type' => 'explore-area', 'post_status' => 'publish', 'posts_per_page' => 1]);
+
+                $html .= $next_area_datapoint;
+                $html .= false === empty($next_area_position_top) ? ' data-nextarea-position={"left":"' . $next_area_position_left . '","top":"' . $next_area_position_top . '"}' : '';
+                $html .= ' data-mapurl="' . get_post_meta($area_obj[0]->ID, 'explore-map', true) . '"';
             }
 
             $html .= '>';
@@ -2055,7 +2217,11 @@ class Explore
             'explore-wall' => [
                 'Walls',
                 'supports' => [ 'title' ]
-            ]
+            ],
+            'explore-communicate' => [
+                'Communication',
+                'supports' => [ 'title', 'editor', 'thumbnail' ]
+            ],
         ];
 
         $taxo_types = [
@@ -2197,7 +2363,7 @@ class Explore
             [
                 [
                     'slug'  => 'orbem-order-game-engine',
-                    'title' => __( 'Orbem Order Game Engine', 'orbem-game-engine' ),
+                    'title' => __( 'Orbem Game Engine', 'orbem-game-engine' ),
                 ],
             ]
         );
@@ -2315,6 +2481,11 @@ class Explore
         }
     }
 
+    /**
+     * Call back for google login.
+     * @param $data_text
+     * @return false|string
+     */
     public static function googleLogin($data_text)
     {
         ob_start();
@@ -2358,6 +2529,7 @@ class Explore
             'explore-minigame',
             'explore-explainer',
             'explore-wall',
+            'explore-communicate'
         ];
     }
 }

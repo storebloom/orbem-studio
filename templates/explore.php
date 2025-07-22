@@ -37,7 +37,7 @@ $explore_area = $explore_area[0] ?? false;
 
 if (false === empty($explore_area)) {
     $is_area_cutscene = get_post_meta($explore_area->ID, 'explore-is-cutscene', true);
-    $explore_area_map = get_post_meta($explore_area->ID, 'explore-map-svg', true);
+    $explore_area_map = get_post_meta($explore_area->ID, 'explore-map', true);
     $explore_area_start_top = get_post_meta($explore_area->ID, 'explore-start-top', true);
     $explore_area_start_left = get_post_meta($explore_area->ID, 'explore-start-left', true);
 }

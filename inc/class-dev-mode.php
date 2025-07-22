@@ -271,6 +271,7 @@ class Dev_Mode
         'explore-minigame',
         'explore-explainer',
         'explore-wall',
+        'explore-communicate'
         ];
 
         ob_start();

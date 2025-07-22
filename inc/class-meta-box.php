@@ -55,7 +55,7 @@ class Meta_Box {
 	 */
 	public function explore_metabox() {
 		// Get all post types available.
-		$post_types = ['explore-explainer', 'explore-minigame', 'explore-point', 'explore-area', 'explore-character', 'explore-enemy', 'explore-weapon', 'explore-magic', 'explore-cutscene', 'explore-mission', 'explore-sign', 'explore-wall'];
+		$post_types = ['explore-explainer', 'explore-minigame', 'explore-point', 'explore-area', 'explore-character', 'explore-enemy', 'explore-weapon', 'explore-magic', 'explore-cutscene', 'explore-mission', 'explore-sign', 'explore-wall', 'explore-communicate'];
 
 		// Add the Explore Point meta box to editor pages.
 		add_meta_box( 'explore-point', esc_html__( 'Configuration', 'orbem-game-engine' ), [$this, 'explore_point_box'], $post_types, 'normal', 'high' );
@@ -138,7 +138,7 @@ class Meta_Box {
         $post_type_specific = [
             'explore-area' => [
                 'explore-music' => 'upload',
-                'explore-map-svg' => 'upload',
+                'explore-map' => 'upload',
                 'explore-is-cutscene' => [
                     'radio' => [
                         'yes',
@@ -479,6 +479,12 @@ class Meta_Box {
                     ]
                 ],
                 'explore-passable' => [
+                    'radio' => [
+                        'yes',
+                        'no'
+                    ]
+                ],
+                'explore-background' => [
                     'radio' => [
                         'yes',
                         'no'
