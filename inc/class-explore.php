@@ -443,12 +443,27 @@ class Explore
                 'weapons' => ['positions' => []]
             ];
 
+            if ('communicate' === $type) {
+                $current_communicates = get_user_meta($userid, 'explore_received_communicates', true);
+                $current_communicates = false === empty($current_communicates) ? $current_communicates : [];
+
+                if ( false === isset($current_communicates[$amount]) || true === is_array($current_communicates[$amount]) && false === in_array($item, $current_communicates[$amount], true) ) {
+                    $current_communicates[$amount][] = intval($item[0]);
+                }
+
+                update_user_meta($userid, 'explore_received_communicates', $current_communicates);
+            }
+
             if (true === $reset) {
                 $explore_points['health']['points'] = 100;
                 $explore_points['mana']['points'] = 100;
             }
 
-            $explore_points[$type]['points'] = $amount;
+            if ('communicate' !== $type) {
+                $explore_points[$type]['points'] = $amount;
+            } else {
+                $type = 'point';
+            }
 
             // Add position to list of positions received points on.
             if (true === is_array($item)) {
@@ -898,7 +913,6 @@ class Explore
         $userid = $return['userid'] ?? get_current_user_id();
         $explore_points = self::getExplorePoints($position);
         $explore_cutscenes = self::getExplorePosts($position, 'explore-cutscene');
-        $explore_communicate = self::getExplorePosts($position, 'explore-communicate');
         $explore_minigames = self::getExplorePosts($position, 'explore-minigame');
         $explore_missions = self::getExplorePosts($position, 'explore-mission');
         $explore_walls = self::getExplorePosts($position, 'explore-wall');
@@ -908,7 +922,7 @@ class Explore
         $explainers_menu = self::getExplainerHTML($explore_explainers, 'menu');
         $explainers_map = self::getExplainerHTML($explore_explainers, 'map');
         $minigames = self::getMinigameHTML($explore_minigames);
-        $map_communicate = self::getMapCommunicateHTML($explore_communicate, $position, $userid);
+        $map_communicate = self::getMapCommunicateHTML($position, $userid);
         $map_cutscenes = self::getMapCutsceneHTML($explore_cutscenes, $position, $userid);
         $map_abilities = self::getMapAbilitiesHTML($explore_abilities);
         $is_admin = user_can($userid, 'manage_options');
@@ -948,6 +962,7 @@ class Explore
                     'map-cutscenes' => $map_cutscenes,
                     'map-missions' => $map_missions,
                     'map-characters' => $map_characters,
+                    'map-communicate' => $map_communicate,
                     'map-explainers' => $explainers_map,
                     'menu-explainers' => $explainers_menu,
                     'map-abilities' => $map_abilities,
@@ -1072,6 +1087,7 @@ class Explore
         delete_user_meta($current_user, 'explore_characters');
         delete_user_meta($current_user, 'explore_materialized_items');
         delete_user_meta($current_user, 'explore_abilities');
+        delete_user_meta($current_user, 'explore_received_communicates');
     }
 
     /**
@@ -1886,77 +1902,70 @@ class Explore
 
     /**
      * Build html for map items.
-     * @param $explore_communicate
      *
      * @return string
      */
-    public static function getMapCommunicateHTML($explore_communicate, $position, $userid) {
-        $userid = $userid ?? get_current_user_id();
+    public static function getMapCommunicateHTML($location, $userid) {
         $html = '';
-        $main_character = get_option( 'explore_main_character', false);
-        $area = get_posts(['post_type' => 'explore-area', 'name' => $position, 'posts_per_page' => 1]);
-        $is_area_cutscene = 'yes' === get_post_meta($area[0]->ID, 'explore-is-cutscene', true);
-        $mc = get_posts( ['post_type' => 'explore-character', 'name' => $main_character, 'posts_per_page' => 1]);
+        $trhtml = '';
 
-        if (false === $is_area_cutscene) {
-            $html .= '<div data-character="' . $mc[0]->ID . '" class="cut-character main"><img src="' . get_the_post_thumbnail_url($mc[0]). '"/></div>';
-        }
+        $location_obj = get_posts(['name' => $location, 'post_type' => 'explore-area', 'numberposts' => 1]);
+        $location_communicate_type = get_post_meta($location_obj[0]->ID, 'explore-communicate-type', true);
+        $communication_type = get_term_by('name', $location_communicate_type, 'explore-communication-type');
+        $communication_background = get_term_meta($communication_type->term_id, 'explore-background', true);
+        $current_received = get_user_meta($userid, 'explore_received_communicates', true);
 
-        foreach( $explore_cutscenes as $explore_cutscene ) {
-            $character = get_post_meta( $explore_cutscene->ID, 'explore-character', true );
-            $next_area = get_post_meta( $explore_cutscene->ID, 'explore-next-area', true );
-            $minigame = get_post_meta( $explore_cutscene->ID, 'explore-cutscene-minigame', true);
-            $mute_music = get_post_meta( $explore_cutscene->ID, 'explore-mute-music', true );
-            $value_type = get_post_meta( $explore_cutscene->ID, 'explore-value-type', true );
-            $value = get_post_meta( $explore_cutscene->ID, 'value', true );
-            $has_video = has_block( 'video', $explore_cutscene );
-            $cutscene_trigger = get_post_meta($explore_cutscene->ID, 'explore-cutscene-trigger', true);
-            $character_position = get_post_meta($explore_cutscene->ID, 'explore-cutscene-character-position', true);
-            $next_area_position = get_post_meta($explore_cutscene->ID, 'explore-cutscene-next-area-position', true);
-            $mission_dependent = get_post_meta($explore_cutscene->ID, 'explore-mission-dependent', true);
-            $character_position_left = $character_position['left'] ?? '';
-            $character_position_top = $character_position['top'] ?? '';
-            $next_area_position_left = $next_area_position['left'] ?? '';
-            $next_area_position_top = $next_area_position['top'] ?? '';
-            $character_position_trigger = $character_position['trigger'] ?? '';
-            $mission_cutscene = get_post_meta($explore_cutscene->ID, 'explore-mission-cutscene', true);
-            $music = get_post_meta($explore_cutscene->ID, 'explore-cutscene-music', true);
-            $mission_complete_cutscene = get_post_meta($explore_cutscene->ID, 'explore-mission-complete-cutscene', true);
-            $boss_fight = get_post_meta($explore_cutscene->ID, 'explore-cutscene-boss', true);
-            $cutscene_trigger_type = get_post_meta($explore_cutscene->ID, 'explore-trigger-type', true) ?? '';
-            $next_area_datapoint = false === empty($next_area) ? ' data-nextarea="' . $next_area . '"' : '';
-            $cutscene_name = false === $is_area_cutscene || true === $has_video ? $explore_cutscene->post_name : $area[0]->post_name;
-            $is_cutscene_triggered = self::isMaterializedItemTriggered($explore_cutscene->post_name, $area[0]->post_name, $userid);
+        $html .= '<div style="background: url(' . $communication_background . ') no-repeat; background-size: contain;" class="communication-wrapper" id="' . $communication_type->term_id . '">';
 
+        $explore_communicates = get_posts(
+            [
+                'post_per_page' => -1,
+                'post_type' => 'explore-communicate',
+                'tax_query' => [
+                    [
+                        'taxonomy' => 'explore-communication-type',
+                        'field' => 'name',
+                        'terms' => $location_communicate_type,
+                    ]
+                ],
+                'meta_query' => [
+                    [
+                        'key' => 'explore-area',
+                        'value' => $location,
+                    ]
+                ],
+            ]
+        );
 
-            $html .= '<div class="wp-block-group map-cutscene ' . esc_attr($cutscene_name) . '-map-cutscene is-layout-flow wp-block-group-is-layout-flow"';
-            $html .= ' id="' . esc_attr($explore_cutscene->ID) . '"';
+        $included_posts = get_posts([
+            'posts_per_page' => -1,
+            'post_type' => 'explore-communicate',
+            'post__in' => $current_received[$communication_type->term_id],
+        ]);
 
-            if (false === empty($mission_cutscene)) {
-                $html .= ' data-mission="' . esc_attr($mission_cutscene) . '" ';
-            }
+        $explore_communicates = array_unique(
+            array_merge($explore_communicates, $included_posts),
+            SORT_REGULAR
+        );
 
-            if (false === empty($cutscene_trigger_type)) {
-                $html .= ' data-triggertype="' . $cutscene_trigger_type . '"';
-            }
+        foreach ($explore_communicates as $explore_communicate) {
+            $character = get_post_meta($explore_communicate->ID, 'explore-character', true);
+            $mute_music = get_post_meta($explore_communicate->ID, 'explore-mute-music', true);
+            $communicate_trigger_top = get_post_meta($explore_communicate->ID, 'explore-top', true);
+            $communicate_trigger_left = get_post_meta($explore_communicate->ID, 'explore-left', true);
+            $communicate_trigger_height = get_post_meta($explore_communicate->ID, 'explore-height', true);
+            $communicate_trigger_width = get_post_meta($explore_communicate->ID, 'explore-width', true);
+            $communicate_type = get_post_meta($explore_communicate->ID, 'explore-communicate-type', true);
+            $mission_communicate = get_post_meta($explore_communicate->ID, 'explore-mission-communicate', true);
+            $music = get_post_meta($explore_communicate->ID, 'explore-communicate-music', true);
+            $communicate_name = $explore_communicate->post_name;
 
-            // Add for use in making cutscene triggered by touching character.
-            if (false === empty($character)) {
-                $html .= ' data-character="' . $character . '"';
-            }
+            $html .= '<div class="wp-block-group map-communicate ' . esc_attr($communicate_name) . '-map-communicate is-layout-flow wp-block-group-is-layout-flow"';
+            $html .= ' id="' . esc_attr($explore_communicate->ID) . '"';
 
-            // Add for type of value you receive once completing this cutscene.
-            if (false === empty($value_type)) {
-                $html .= ' data-type="' . $value_type . '"';
-            }
-
-            // Add for type of value you receive once completing this cutscene.
-            if (false === empty($value)) {
-                $html .= ' data-value="' . $value . '"';
-            }
-
-            if (false === empty($mission_dependent)) {
-                $html .= 'data-dependent="' . esc_attr($mission_dependent) . '" ';
+            // The mission that will start a communication.
+            if (false === empty($mission_communicate)) {
+                $html .= ' data-mission="' . esc_attr($mission_communicate) . '" ';
             }
 
             if (false === empty($music)) {
@@ -1967,70 +1976,35 @@ class Explore
                 $html .= 'data-mutemusic="' . esc_attr($mute_music) . '" ';
             }
 
-            // Minigame that triggers cutscene.
-            if (false === empty($minigame) && false === is_array($minigame)) {
-                $html .= 'data-minigame="' . esc_attr($minigame) . '" ';
-            }
-
-            // Has video in content.
-            if (true === $has_video) {
-                $html .= 'data-video="true" ';
-            }
-
-            // Boss Fight.
-            if (false === empty($boss_fight)) {
-                $html .= 'data-boss="' . esc_attr($boss_fight) . '" ';
-            }
-
-            // Add data point for the mission that is complete by having this cutscene.
-            if (false === empty($mission_complete_cutscene)) {
-                $html .= 'data-missioncomplete="' . esc_attr($mission_complete_cutscene) . '" ';
-            }
-
-            // Add character position point if selected.
-            if (false === empty($character_position_top)) {
-                $html .= 'data-character-position=[{"left":"' . $character_position_left . '","top":"' . $character_position_top . '","trigger":"' . $character_position_trigger . '"}]';
-            }
-
-            if (false === empty($next_area)) {
-                $area_obj = get_posts(['name' => $next_area, 'post_type' => 'explore-area', 'post_status' => 'publish', 'posts_per_page' => 1]);
-
-                $html .= $next_area_datapoint;
-                $html .= false === empty($next_area_position_top) ? ' data-nextarea-position={"left":"' . $next_area_position_left . '","top":"' . $next_area_position_top . '"}' : '';
-                $html .= ' data-mapurl="' . get_post_meta($area_obj[0]->ID, 'explore-map', true) . '"';
+            if (false === empty($communicate_type)) {
+                $html .= 'data-type="' . esc_attr($communicate_type) . '" ';
             }
 
             $html .= '>';
 
-            if (false === $is_area_cutscene && false === empty($character)) {
-                $character_post = get_posts( ['post_type' => ['explore-character', 'explore-enemy'], 'posts_per_page' => 1, 'name' => $character] );
+            if (false === empty($character)) {
+                $character_post = get_posts(['post_type' => ['explore-character', 'explore-enemy'], 'posts_per_page' => 1, 'name' => $character]);
 
-                $html .= '<div data-character="' . $character_post[0]->ID . '" class="cut-character"><img src="' . get_the_post_thumbnail_url($character_post[0]->ID) . '"/></div>';
+                $html .= '<div data-character="' . $character_post[0]->ID . '" class="communiate-character"><img src="' . get_the_post_thumbnail_url($character_post[0]->ID) . '"/></div>';
             }
 
-            $html .= 'explore-area' !== $explore_cutscene->post_type ? $explore_cutscene->post_content : '';
-
-            if (true === $has_video) {
-                $html .= '<span id="skip-cutscene-video">SKIP</span>';
-            }
+            $html .= $explore_communicate->post_content;
 
             $html .= '</div>';
 
-            $path_trigger_left = false === empty($cutscene_trigger['left']) && 0 !== $cutscene_trigger['left'] ? $cutscene_trigger['left'] : '';
-            $path_trigger_top = false === empty($cutscene_trigger['top']) && 0 !== $cutscene_trigger['top'] ? $cutscene_trigger['top'] : '';
-            $path_trigger_height = false === empty($cutscene_trigger['height']) && 0 !== $cutscene_trigger['height'] ? $cutscene_trigger['height'] : '';
-            $path_trigger_width = false === empty($cutscene_trigger['width']) && 0 !== $cutscene_trigger['width'] ? $cutscene_trigger['width'] : '';
-
-            // Trigger Cutscene.
-            if (false === in_array( '', [$path_trigger_width, $path_trigger_height], true) && false === $is_cutscene_triggered) {
-                $html .= '<div id="' . $explore_cutscene->ID . '-t" class="cutscene-trigger wp-block-group map-item ' . $explore_cutscene->post_name . '-cutscene-trigger-map-item is-layout-flow wp-block-group-is-layout-flow"';
-                $html .= 'style="left:' . $path_trigger_left . 'px;top:' . $path_trigger_top . 'px;height:' . $path_trigger_height . 'px; width:' . $path_trigger_width . 'px;"';
-                $html .= 'data-trigger="true" data-triggee="' . $explore_cutscene->post_name . '"';
-                $html .= ' data-triggertype="' . $cutscene_trigger_type . '"';
-                $html .= ' data-meta="explore-cutscene-trigger"';
-                $html .= '></div>';
+            // Trigger communicate.
+            if (false === in_array('', [$communicate_trigger_top, $communicate_trigger_height], true)) {
+                $trhtml .= '<div id="' . $explore_communicate->ID . '-t" class="communicate-trigger wp-block-group map-item ' . $explore_communicate->post_name . '-communicate-trigger-map-item is-layout-flow wp-block-group-is-layout-flow"';
+                $trhtml .= 'style="left:' . $communicate_trigger_left . 'px;top:' . $communicate_trigger_top . 'px;height:' . $communicate_trigger_height . 'px; width:' . $communicate_trigger_width . 'px;"';
+                $trhtml .= 'data-trigger="true" data-triggee="' . $explore_communicate->post_name . '"';
+                $trhtml .= ' data-meta="explore-communicate-trigger"';
+                $trhtml .= '></div>';
             }
         }
+
+        $html .= '</div>';
+
+        $html .= $trhtml;
 
         return $html;
     }
@@ -2233,6 +2207,10 @@ class Explore
                 'name' => 'Minigame Type',
                 'post-types' => ['explore-minigame']
             ],
+            'explore-communication-type' => [
+                'name' => 'Communication Type',
+                'post-types' => ['explore-communicate']
+            ]
         ];
 
         foreach($post_types as $slug => $info) {

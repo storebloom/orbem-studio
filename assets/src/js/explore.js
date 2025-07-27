@@ -1512,7 +1512,7 @@ const enterNewArea = (function () {
                         // Set starting position in case you die.
                         newDefaultMap.dataset.starttop = newMapItems['start-top'];
                         newDefaultMap.dataset.startleft = newMapItems['start-left'];
-                        newDefaultMap.innerHTML = newMapItems['map-explainers'] + newMapItems['map-items'] + newMapItems['map-cutscenes'] + newMapItems['minigames'] + newMapItems['map-svg'];
+                        newDefaultMap.innerHTML = newMapItems['map-explainers'] + newMapItems['map-items'] + newMapItems['map-cutscenes'] + newMapItems['minigames'] + newMapItems['map-svg'] + newMapItems['map-communicate'];
 
                         container.innerHTML = newMapItems['menu-explainers'] + container.innerHTML + newDefaultMap.outerHTML;
 
@@ -1569,8 +1569,11 @@ const enterNewArea = (function () {
                         // Load blockades.
                         loadMissionBlockades()
 
+                        // Engage communicate click.
+                        communicateParentClick();
+
                         // Set all first cutscene dialogues to engage.
-                        const allFirstDialogues = document.querySelectorAll( '.map-cutscene .wp-block-orbem-paragraph-mp3:first-of-type' );
+                        const allFirstDialogues = document.querySelectorAll( '.map-cutscene .wp-block-orbem-paragraph-mp3:first-of-type, .map-communicate .wp-block-orbem-paragraph-mp3:first-of-type' );
 
                         if ( allFirstDialogues ) {
                             allFirstDialogues.forEach( firstDialogue => {
@@ -2315,10 +2318,22 @@ function addNoPoints() {
         // Add no point class to positions already gotten.
         if ( selectedCharacterPositions ) {
             selectedCharacterPositions.forEach( value => {
-                const mapItem = document.querySelector('.' + value + '-map-item');
-                const cutSceneItem = document.querySelector('.' + value + '-map-cutscene');
-                const materializeMapItem = document.querySelector( '.' + value + '-materialize-item-map-item' );
-                const dragDestMapItem = document.querySelector( '.' + value + '-drag-dest-map-item' );
+                const valNum = parseInt( value ) > 0;
+                const mapItem = valNum ? null : document.querySelector('.' + value + '-map-item');
+                const cutSceneItem = valNum ? null : document.querySelector('.' + value + '-map-cutscene');
+                const materializeMapItem = valNum ? null : document.querySelector( '.' + value + '-materialize-item-map-item' );
+                const dragDestMapItem = valNum ? null : document.querySelector( '.' + value + '-drag-dest-map-item' );
+                const communicateTrigger = document.getElementById( value + '-t' );
+
+                if ( communicateTrigger ) {
+                    const communicateMessage = document.getElementById( value );
+
+                    if ( communicateMessage ) {
+                        communicateMessage.classList.add( 'engage' );
+
+                        communicateTrigger.remove();
+                    }
+                }
 
                 if ( cutSceneItem ) {
                     cutSceneItem.classList.add( 'been-viewed' );
@@ -2390,7 +2405,7 @@ export function engageExploreGame() {
     const touchButtons = document.querySelector( '.touch-buttons' );
 
     // Set all first cutscene dialogues to engage.
-    const allFirstDialogues = document.querySelectorAll( '.map-cutscene .wp-block-orbem-paragraph-mp3:first-of-type' );
+    const allFirstDialogues = document.querySelectorAll( '.map-cutscene .wp-block-orbem-paragraph-mp3:first-of-type, .map-communicate .wp-block-orbem-paragraph-mp3:first-of-type' );
 
     if ( allFirstDialogues ) {
         allFirstDialogues.forEach( firstDialogue => {
@@ -2400,6 +2415,9 @@ export function engageExploreGame() {
 
     // Stop start music.
     playStartScreenMusic(false);
+
+    // Engage communicate click.
+    communicateParentClick();
 
     // Set true by default.
     window.weaponConnection = true;
@@ -2732,6 +2750,10 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
                     if ( cutsceneTrigger && false === cutsceneTrigger.classList.contains('been-viewed')  && 'engagement' !== cutsceneTrigger.dataset.triggertype) {
                         engageCutscene(cutsceneTrigger);
                     }
+                }
+
+                if ( true === value.classList.contains('communicate-trigger') ) {
+                    engageCommunicate(value?.dataset.triggee, value);
                 }
             } else if ( 'false' === value.dataset?.canmove ) {
                 // Reset NPC to allow movement.
@@ -3755,6 +3777,84 @@ function engageCutscene( position, areaCutscene = false, isVideo = false ) {
                     });
                 }
             }
+        }
+    }
+}
+
+/**
+ * Parent communicate click to avoid multiple events per trigger engagement.
+ */
+function communicateParentClick() {
+    const communicateParents = document.querySelectorAll( '.communication-wrapper' );
+
+    if ( communicateParents ) {
+        communicateParents.forEach( communicateParent => {
+            communicateParent.addEventListener('click', (e) => {
+                if (false === e.target.parentNode.classList.contains('map-communicate') && false === e.target.classList.contains('map-communicate') || false === communicateParent.classList.contains('engage')) {
+                    if (false === communicateParent.classList.contains('engage')) {
+                        communicateParent.classList.add('engage');
+                        communicateParent.classList.remove('notify');
+                    } else {
+                        communicateParent.classList.remove('engage');
+                    }
+                }
+            });
+        } );
+    }
+}
+
+/**
+ * Communicate logic
+ */
+function engageCommunicate( communicate, communicateTrigger ) {
+    const communicateEl = document.querySelector( '.' + communicate + '-map-communicate');
+    const communicateParent = communicateEl.parentNode;
+
+    if ( communicateTrigger ) {
+        communicateTrigger.remove();
+        persistItemRemoval(communicateEl.id, 'communicate', communicateParent.id);
+    }
+
+    // Show communicate.
+    communicateEl.classList.add('engage');
+
+    if ( communicateParent && false === communicateParent.classList.contains('notify')) {
+        const dialogues = communicateEl.querySelectorAll( 'p, .wp-block-orbem-paragraph-mp3' );
+        const communicateType = communicateEl.dataset.type;
+
+        communicateParent.classList.add('notify');
+
+        communicateEl.addEventListener( 'click', () => {
+            if ( 'voicemail' === communicateType && true === communicateParent.classList.contains('engage') ) {
+                let textContainer = dialogues[0];
+
+                const text = textContainer.innerText;
+
+                moveDialogueBox(text);
+
+                function moveDialogueBox(firstText = '') {
+                    const currentDialogue = communicateEl.querySelector('.wp-block-orbem-paragraph-mp3.engage');
+                    let providedAudio = currentDialogue.querySelector('audio');
+                    providedAudio = providedAudio ?? false
+                    let voice = currentDialogue.dataset.voice;
+
+                    if ('' !== firstText) {
+                        makeTalk(firstText, voice, providedAudio);
+                    }
+                }
+            } else if ( true === communicateParent.classList.contains('engage') ) {
+                communicateEl.classList.add( 'engage' );
+            }
+        });
+
+        // start music if exists.
+        if ( communicateEl.dataset.music && '' !== communicateEl.dataset.music ) {
+            playSong( communicateEl.dataset.music, communicate );
+        }
+
+        // Mute current if mute is flagged.
+        if ('yes' === communicateEl.dataset?.mutemusic && window.currentMusic) {
+            window.currentMusic.pause();
         }
     }
 }
@@ -5261,6 +5361,7 @@ function textToBinary(str) {
 }
 
 async function makeTalk(text, voiceName, providedAudio = false) {
+
     if ( true === text.includes('**') || '' === text || '...' === text ) {
         return;
     }

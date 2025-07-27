@@ -189,6 +189,7 @@ include plugin_dir_path(__FILE__) . 'plugin-header.php';
             <?php echo html_entity_decode(Explore::getMinigameHTML($explore_minigames)); ?>
             <?php echo html_entity_decode(Explore::getMapAbilitiesHTML($explore_abilities)); ?>
             <?php echo html_entity_decode(Explore::getExplainerHTML($explore_explainers, 'map')); ?>
+            <?php echo html_entity_decode(Explore::getMapCommunicateHTML($location, get_current_user_id())); ?>
         </div>
     </div>
 

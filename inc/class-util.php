@@ -42,8 +42,7 @@ class Util
     {
         $explore_array = [];
         if ($taxo) {
-            $explore_taxos = get_terms(['taxonomy' => $post_type]);
-
+            $explore_taxos = get_terms($post_type);
             foreach($explore_taxos as $explore_taxo) {
                 $explore_array[] = $explore_taxo->name;
             }

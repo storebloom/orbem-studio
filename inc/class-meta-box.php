@@ -121,6 +121,7 @@ class Meta_Box {
     {
         $explore_item_array = $this->util->getOrbemArray('explore-point');
         $explore_area_array = $this->util->getOrbemArray('explore-area');
+        $explore_communicate_array = $this->util->getOrbemArray('explore-communication-type', true);
         $explore_character_array = $this->util->getOrbemArray('explore-character');
         $explore_enemy_array = $this->util->getOrbemArray('explore-enemy');
         $explore_weapon_array = $this->util->getOrbemArray('explore-weapon');
@@ -147,6 +148,11 @@ class Meta_Box {
                 ],
                 'explore-start-top' => 'number',
                 'explore-start-left' => 'number',
+                'explore-communicate-type' => [
+                    'select' => [
+                        $explore_communicate_array
+                    ],
+                ]
             ],
             'explore-mission' => [
                 'explore-ability' => [
@@ -418,6 +424,14 @@ class Meta_Box {
             ],
             'explore-minigame' => [
                 'explore-minigame-music' => 'upload',
+            ],
+            'explore-communicate' => [
+                'explore-communicate-type' => [
+                    'radio' => [
+                        'text',
+                        'voicemail'
+                    ]
+                ]
             ],
             'explore-explainer' => [
                 'explore-explainer-type' => [
@@ -1134,6 +1148,15 @@ class Meta_Box {
         ];
     }
 
+    /**
+     * Get meta html.
+     * @param $key
+     * @param $value
+     * @param $meta_values
+     * @param $main_key
+     * @param $sub_value
+     * @return false|string
+     */
     public static function getMetaHtml($key, $value, $meta_values, $main_key = false, $sub_value = false)
     {
         ob_start();
@@ -1142,5 +1165,31 @@ class Meta_Box {
         }
 
         return ob_get_clean();
+    }
+
+    /**
+     * @action explore-communication-type_edit_form_fields
+     * @param $term_id
+     * @return void
+     */
+    public function addTaxonomyImageUpload($term)
+    {
+        $meta_values['explore-background'] = get_term_meta($term->term_id, 'explore-background', true);
+        $key = 'explore-background';
+        $main_key = false;
+
+        include plugin_dir_path(__FILE__) . "../templates/meta/fields/upload.php";
+    }
+
+    /**
+     * Save communication type term meta
+     * @action edited_explore-communication-type
+     */
+    public function saveCommunicationTypeMeta($term_id) {
+        $background_url = filter_input(INPUT_POST, 'explore-background', FILTER_SANITIZE_URL);
+
+        if (true === isset($background_url)) {
+            update_term_meta($term_id, 'explore-background', $background_url);
+        }
     }
 }
