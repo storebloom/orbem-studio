@@ -26,6 +26,8 @@ let currentLocation = ''
 let timerCountDownHit = false;
 let weaponPosTop = 300;
 let weaponPosLeft = 400;
+let walkingInterval;
+
 window.mainCharacter = '';
 window.godMode = false;
 window.noTouch = false;
@@ -302,7 +304,6 @@ document.addEventListener("DOMContentLoaded", function(){
 function unlockAbilities( pointAmount ) {
     const unlockables = document.querySelectorAll( '[data-unlockable]' );
 
-
     if ( unlockables ) {
         unlockables.forEach( unlockable => {
             const whenToUnlock = unlockable.dataset.unlockable;
@@ -342,19 +343,33 @@ function engageCharacterSelection() {
  * Make npc follow walking path if it exists.
  *
  * @param npc
+ * @param cutscene
  */
-function moveNPC( npc ) {
+function moveNPC( npc, cutscene = false ) {
     if ( npc ) {
+        clearInterval(walkingInterval);
+
+        let oldNpc = false;
+
+        if ( false !== cutscene ) {
+            oldNpc = npc;
+            npc = cutscene;
+        }
+
         const walkingPath = npc.dataset.path;
         const walkingSpeed = npc.dataset.speed;
         const timeBetween = npc.dataset.timebetween;
-        const repeatPath = npc.dataset.repeat;
+        const repeatPath = npc.dataset?.repeat;
         const wanderer = 'yes' === npc.dataset?.wanderer;
-        let walkingInterval;
+
+        if ( false !== cutscene && oldNpc ) {
+            npc = oldNpc;
+        }
 
         // Check if walking path exists.
         if ( walkingPath && false === wanderer ) {
             const pathArray = JSON.parse(walkingPath);
+
             pathArray.unshift({'top': npc.style.top.replace('px', ''), 'left': npc.style.left.replace('px', '')});
             const pathCount = pathArray.length - 1;
             let position = 0;
@@ -556,9 +571,11 @@ function engageSettingsMenus() {
 }
 
 function setStaticNPCImage(moveDirection, npcName, npc, currentImage) {
-    currentImage.classList.remove('engage');
+    if (currentImage) {
+        currentImage.classList.remove('engage');
+    }
 
-    const newImage = npc.querySelector('#' + npcName + 'static-' + moveDirection );
+    const newImage = npc.querySelector('#' + npcName + 'static-' + moveDirection);
     if (newImage) {
         newImage.classList.add('engage');
     }
@@ -898,6 +915,19 @@ function persistItemRemoval( item, type = 'point', amount = 0, timeoutTime = 200
                     // Check if the response status is in the range 200-299
                     if (!response.ok) {
                         throw new Error('Network response was not ok ' + response.statusText);
+                    }
+
+                    if ( type === 'communicate' ) {
+                        type = 'point';
+                    }
+
+                    // Add to explore points var.
+                    if ( explorePoints && type ) {
+                        if ( explorePoints[type].positions && Array.isArray(explorePoints[type].positions)) {
+                            explorePoints[type].positions = explorePoints[type].positions.concat(persistItems);
+                        } else {
+                            explorePoints[type].positions = persistItems;
+                        }
                     }
 
                     persistItems = [];
@@ -1377,7 +1407,6 @@ const enterNewArea = (function () {
         // Clear enemy interval.
         clearInterval(window.shooterInt);
         clearInterval(window.runnerInt);
-        clearInterval(window.walkingInterval);
 
         // Remove menu explainers.
         const menuExplainers = document.querySelectorAll( '.game-container > .explainer-container, .game-container > .explainer-trigger');
@@ -1516,9 +1545,6 @@ const enterNewArea = (function () {
 
                         container.innerHTML = newMapItems['menu-explainers'] + container.innerHTML + newDefaultMap.outerHTML;
 
-                        // Run no point class adder again
-                        addNoPoints();
-
                         // Engage settings menus.
                         engageSettingsMenus();
 
@@ -1603,6 +1629,9 @@ const enterNewArea = (function () {
                                 characterCount++
                             }, 1000);
                         }
+
+                        // Run no point class adder again
+                        addNoPoints();
                     }, 700 );
                 }
 
@@ -2327,11 +2356,16 @@ function addNoPoints() {
 
                 if ( communicateTrigger ) {
                     const communicateMessage = document.getElementById( value );
+                    const communicateParent = communicateMessage.parentNode;
 
                     if ( communicateMessage ) {
                         communicateMessage.classList.add( 'engage' );
 
                         communicateTrigger.remove();
+                    }
+
+                    if ( communicateParent && false === communicateParent.classList.contains('dependent') ) {
+                        communicateParent.classList.add('dependent');
                     }
                 }
 
@@ -2908,7 +2942,7 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
                     // Move triggered NPC.
                     moveNPC(triggee);
 
-                    value.classList.add('already-hit');
+                    value.remove();
                 }
 
                 // For collectables.
@@ -3539,27 +3573,6 @@ function engageCutscene( position, areaCutscene = false, isVideo = false ) {
             // Before Cutscene.
             beforeCutscene( cutscene );
 
-            // Close cutscene if click out.
-            cutscene.addEventListener( 'click', ( e ) => {
-                if ( false === cutscene.contains( e.target ) ) {
-                    dialogues.forEach( dialogue => {
-                        dialogue.classList.remove( 'engage' )
-                    } );
-
-                    cutscene.classList.remove( 'engage' );
-
-                    // reset dialogue.
-                    dialogues[0].classList.add( 'engage' );
-
-                    // Stop typewriter.
-                    clearTimeout( typeWriterTimeout );
-                    clearTimeout( window.nextDialogueTimeout );
-
-                    // After cutscene.
-                    afterCutscene( cutscene );
-                }
-            } );
-
             moveDialogueBox(text);
 
             // Add a keydown event listener to the document to detect spacebar press
@@ -3621,27 +3634,6 @@ function engageCutscene( position, areaCutscene = false, isVideo = false ) {
             }
         }
 
-        function closeCutscene() {
-            window.allowMovement = true;
-
-            cutscene.removeEventListener( 'click', cutsceneKeys );
-            document.removeEventListener( 'keydown', cutsceneKeys );
-
-            // reset dialogue.
-            dialogues.forEach( dialogue => {
-                dialogue.classList.remove( 'engage' )
-            } );
-
-            dialogues[0].classList.add( 'engage' );
-
-            // Stop talking noise.
-            clearTimeout( window.nextDialogueTimeout );
-            clearTimeout( typeWriterTimeout );
-
-            // After cutscene.
-            afterCutscene( cutscene );
-        }
-
         let wordCount = 0;
 
         function typeWriter(element, text, i) {
@@ -3689,16 +3681,12 @@ function engageCutscene( position, areaCutscene = false, isVideo = false ) {
             } );
 
             if ( nextDialogue ) {
-
                 nextDialogue.classList.add( 'engage' );
 
                 let providedAudio = nextDialogue.querySelector( 'audio' );
                 providedAudio = providedAudio ?? false;
 
-
                 const nextP = nextDialogue.querySelector( 'p' );
-
-
                 const text = nextP.innerText;
 
                 nextP.innerText = '';
@@ -3912,6 +3900,21 @@ function afterCutscene( cutscene, areaCutscene = false ) {
     const bossFight = cutscene.dataset.boss;
     const cutsceneCharacter = document.querySelector( '.' + cutscene.dataset.character + '-map-item' );
     const indicator = document.querySelector( '.indicator-icon' );
+    const communicateDevice = cutscene.dataset?.communicate;
+    const materializeCutscene = document.querySelector('[data-materializecutscene="' + cutsceneName + '"]');
+
+    if ( materializeCutscene && false === materializeCutscene.classList.contains('enable') ) {
+        materializeCutscene.classList.add( 'enable' );
+    }
+
+    // Show dependent communication devices.
+    if (communicateDevice && '' !== communicateDevice) {
+        const communicateDeviceEl = document.querySelector('.' + communicateDevice + '-map-item');
+
+        if ( communicateDeviceEl ) {
+            communicateDeviceEl.classList.add( 'dependent' );
+        }
+    }
 
     // Hide indicator.
     if ( indicator ) {
@@ -3946,13 +3949,20 @@ function afterCutscene( cutscene, areaCutscene = false ) {
     const character = document.querySelector( `.${cutscene.dataset.character}-map-item[data-genre="explore-character"]`);
 
     // Push MC if NPC needs to walk after cutscene.
-    if ( character && '' !== character.dataset?.path && undefined !== character.dataset?.path ) {
+    if ( ( character && '' !== character.dataset?.path && undefined !== character.dataset?.path ) || undefined !== cutscene.dataset?.path ) {
         // Push MC away from character.
         pushMC(30);
     }
 
     if ( pathTriggerPosition ) {
         moveNPC( pathTriggerPosition );
+    }
+
+    const cutsceneHasPath = undefined !== cutscene.dataset?.path;
+
+    // If cutscene has walking path. Move NPC after cutscene.
+    if ( cutsceneHasPath ) {
+        moveNPC(cutsceneCharacter, cutscene);
     }
 
     // Remove after cutscene.

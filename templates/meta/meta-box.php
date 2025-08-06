@@ -22,7 +22,7 @@ use OrbemGameEngine\Explore;
         <?php if (false === is_array($value)) : ?>
             <?php echo Meta_Box::getMetaHtml($key, $value, $values); ?>
         <?php else : ?>
-            <h2><?php echo esc_html(ucfirst(str_replace(['explore-', '-'],['', ' '],$key))); ?></h2>
+            <h2><?php echo esc_html(ucfirst(str_replace(['explore-', '-'],['', ' '],\OrbemGameEngine\Meta_Box::getMetaboxLabel($key)))); ?></h2>
             <?php foreach($value as $sub_key => $sub_value):
                 if (false === is_array($sub_value) || true === in_array($sub_key, ['select', 'radio', 'repeater'])) :
                     if (false === in_array($sub_key, ['select', 'radio', 'repeater'])) : ?>
@@ -38,7 +38,7 @@ use OrbemGameEngine\Explore;
                     <?php endif;
                 else :
                     foreach($sub_value as $sub_value_key_1 => $sub_value_value_1):?>
-                        <h2><?php echo esc_html(ucfirst(str_replace(['explore-', '-'],['', ' '],$sub_key))); ?></h2>
+                        <h2><?php echo esc_html(ucfirst(str_replace(['explore-', '-'],['', ' '],\OrbemGameEngine\Meta_Box::getMetaboxLabel($sub_key)))); ?></h2>
                         <?php if (false === in_array($sub_value_key_1, ['select', 'radio', 'repeater'])) : ?>
                             <?php echo Meta_Box::getMetaHtml($sub_value_key_1, $sub_value_value_1, $values, $key); ?>
                         <?php elseif ('repeater' !== $sub_value_key_1) :?>

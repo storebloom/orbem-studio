@@ -130,6 +130,12 @@ html {
       }
     }
 
+    .cutscene-trigger[data-materializecutscene] {
+      &:not(.enable) {
+        display: none;
+      }
+    }
+
     .explainer-trigger {
       position: absolute;
     }
@@ -218,7 +224,7 @@ html {
 
     .communication-wrapper {
       bottom: -550px;
-      display: flex;
+      display: none;
       flex-direction: column;
       font-size: 20px;
       gap: 1rem;
@@ -230,6 +236,10 @@ html {
       max-width: 355px;
       width: 100%;
       z-index: 9;
+
+      &.dependent {
+        display: flex;
+      }
 
       .map-communicate {
         border-bottom: 2px solid #000;

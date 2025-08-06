@@ -1,6 +1,6 @@
 <p>
 <label>
-    <?php echo esc_html(ucfirst(str_replace(['explore-', '-'],['', ' '],$key))); ?>
+    <?php echo esc_html(ucfirst(str_replace(['explore-', '-'],['', ' '], \OrbemGameEngine\Meta_Box::getMetaboxLabel($key)))); ?>
 </br>
 <input class="top"
        type="number"

@@ -67,7 +67,8 @@ class Plugin extends Plugin_Base {
                     'mana' => ['points' => 100, 'positions' => []],
                     'point' => ['points' => 0, 'positions' => []],
                     'gear' => ['positions' => []],
-                    'weapons' => ['positions' => []]
+                    'weapons' => ['positions' => []],
+                    'money' => ['positions' => []],
                 ];
             }
 

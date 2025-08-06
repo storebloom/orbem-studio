@@ -245,7 +245,18 @@ class Meta_Box {
                 ],
                 'explore-value-type' => [
                     'select' => [$explore_value_array]
-                ]
+                ],
+                'explore-engage-communicate' => [
+                    'select' => [$explore_communicate_array]
+                ],
+                'explore-path-after-cutscene' => [
+                    'repeater' => [
+                        'top' => 'number',
+                        'left' => 'number'
+                    ]
+                ],
+                'explore-speed' => 'number',
+                'explore-time-between' => 'number',
             ],
             'explore-weapon' => [
                 'explore-attack' => [
@@ -520,12 +531,6 @@ class Meta_Box {
                         'select' => [$explore_mission_array]
                     ],
                 ],
-                'explore-materialize-item-trigger' => [
-                    'top' => 'number',
-                    'left' => 'number',
-                    'width' => 'number',
-                    'height' => 'number',
-                ],
                 'explore-value-type' => [
                     'select' => [$explore_value_array]
                 ]
@@ -548,8 +553,17 @@ class Meta_Box {
             'explore-remove-after-cutscene' => [
                 'select' => [$explore_cutscene_array]
             ],
+            'explore-materialize-after-cutscene' => [
+                'select' => [$explore_cutscene_array]
+            ],
             'explore-area' => [
                 'select' => [$explore_area_array]
+            ],
+            'explore-materialize-item-trigger' => [
+                'top' => 'number',
+                'left' => 'number',
+                'width' => 'number',
+                'height' => 'number',
             ],
         ];
 
@@ -1146,6 +1160,20 @@ class Meta_Box {
             ['name' => 'yue-HK-Standard-C', 'language' => 'yue-HK', 'gender' => 'FEMALE'],
             ['name' => 'yue-HK-Standard-D', 'language' => 'yue-HK', 'gender' => 'MALE'],
         ];
+    }
+
+    public static function getMetaboxLabel($field_name)
+    {
+        $meta_labels = [
+            'explore-mission-complete-cutscene' => 'Mission to complete after cutscene',
+            'explore-mission-cutscene' => 'Mission that triggers this cutscene',
+        ];
+
+        if ($field_name) {
+            return $meta_labels[$field_name] ?? $field_name;
+        }
+
+        return $field_name;
     }
 
     /**
