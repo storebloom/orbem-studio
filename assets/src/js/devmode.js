@@ -445,7 +445,7 @@ export function engageDevMode() {
                 if (draggedContainer) {
                     sendItemCoodinateTimeout = setTimeout(() => {
                         const filehref = `https://${wpThemeURL}/wp-json/orbemorder/v1/set-item-position/`;
-                        const theID = 'true' === draggedContainer.dataset.trigger ? draggedContainer.id.replace('-t', '') : draggedContainer.id;
+                        const theID = 'true' === draggedContainer.dataset.trigger || true === draggedContainer.classList.contains('drag-dest') ? draggedContainer.id.replace('-t', '').replace('-d', '') : draggedContainer.id;
                         const jsonString = {
                             top: draggedContainer.style.top.replace('px', ''),
                             left: draggedContainer.style.left.replace('px', ''),

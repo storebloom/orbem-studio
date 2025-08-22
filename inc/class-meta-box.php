@@ -170,7 +170,7 @@ class Meta_Box {
                     'select' => [$explore_hazard_array]
                 ],
                 'explore-next-mission' => [
-                    'select' => [$explore_mission_array]
+                    'multiselect' => [$explore_mission_array]
                 ],
                 'explore-mission-trigger' => [
                     'top' => 'number',
@@ -216,6 +216,12 @@ class Meta_Box {
                     ]
                 ],
                 'explore-mission-dependent' => [
+                    'radio' => [
+                        'yes',
+                        'no'
+                    ]
+                ],
+                'explore-npc-face-me' => [
                     'radio' => [
                         'yes',
                         'no'
@@ -307,17 +313,23 @@ class Meta_Box {
                 'explore-character-images' => [
                     'static' => 'upload',
                     'static-up' => 'upload',
-                    'up' => 'upload',
-                    'up-punch' => 'upload',
-                    'static-down' => 'upload',
-                    'down' => 'upload',
-                    'down-punch' => 'upload',
                     'static-left' => 'upload',
-                    'left' => 'upload',
-                    'left-punch' => 'upload',
                     'static-right' => 'upload',
+                    'static-down' => 'upload',
+                    'static-up-drag' => 'upload',
+                    'static-left-drag' => 'upload',
+                    'static-right-drag' => 'upload',
+                    'up' => 'upload',
+                    'down' => 'upload',
+                    'left' => 'upload',
                     'right' => 'upload',
-                    'right-punch' => 'upload'
+                    'up-punch' => 'upload',
+                    'down-punch' => 'upload',
+                    'left-punch' => 'upload',
+                    'right-punch' => 'upload',
+                    'up-drag' => 'upload',
+                    'left-drag' => 'upload',
+                    'right-drag' => 'upload',
                 ],
                 'explore-ability' => [
                     'select' => [
@@ -530,6 +542,12 @@ class Meta_Box {
                     'mission' => [
                         'select' => [$explore_mission_array]
                     ],
+                    'remove-after' => [
+                        'radio' => [
+                            'yes',
+                            'no'
+                        ]
+                    ]
                 ],
                 'explore-value-type' => [
                     'select' => [$explore_value_array]
@@ -555,6 +573,9 @@ class Meta_Box {
             ],
             'explore-materialize-after-cutscene' => [
                 'select' => [$explore_cutscene_array]
+            ],
+            'explore-materialize-after-mission' => [
+                'select' => [$explore_mission_array]
             ],
             'explore-area' => [
                 'select' => [$explore_area_array]
@@ -1165,8 +1186,9 @@ class Meta_Box {
     public static function getMetaboxLabel($field_name)
     {
         $meta_labels = [
-            'explore-mission-complete-cutscene' => 'Mission to complete after cutscene',
-            'explore-mission-cutscene' => 'Mission that triggers this cutscene',
+            'explore-mission-complete-cutscene' => 'Mission to complete after cutscene.',
+            'explore-mission-cutscene' => 'Mission that triggers this cutscene.',
+            'explore-mission-trigger' => 'Triggers the completion of this mission.'
         ];
 
         if ($field_name) {
@@ -1205,6 +1227,7 @@ class Meta_Box {
         $meta_values['explore-background'] = get_term_meta($term->term_id, 'explore-background', true);
         $key = 'explore-background';
         $main_key = false;
+
 
         include plugin_dir_path(__FILE__) . "../templates/meta/fields/upload.php";
     }

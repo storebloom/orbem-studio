@@ -92,7 +92,16 @@ class Dev_Mode
         $walking_path = sanitize_text_field($data['walkingPath']);
 
         if (false === empty($meta) && 'true' !== $walking_path) {
-            update_post_meta($item, $meta, ['top' => $top, 'left' => $left, 'height' => $height, 'width' => $width]);
+            $current_meta = get_post_meta($item, $meta, true);
+
+            if (false === empty($current_meta)) {
+                $current_meta['top'] = $top;
+                $current_meta['left'] = $left;
+                $current_meta['height'] = $height;
+                $current_meta['width'] = $width;
+
+                update_post_meta($item, $meta, $current_meta);
+            }
         } elseif ('true' === $walking_path) {
             $current_walking_path = get_post_meta($item, 'explore-path', true);
 
@@ -182,6 +191,7 @@ class Dev_Mode
 
         $post_type = sanitize_text_field(wp_unslash($data['type']));
         $area = sanitize_text_field(wp_unslash($data['area']));
+        $area = false === empty($area) ? $area : get_user_meta(get_current_user_id(), 'current_location');
         $post_values = $data['values'];
 
         $post_id = wp_insert_post(['post_status' => 'publish', 'post_type' => $post_type, 'post_title' => $post_values['title']], true);

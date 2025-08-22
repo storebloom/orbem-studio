@@ -203,12 +203,15 @@ include plugin_dir_path(__FILE__) . 'plugin-header.php';
     <?php if (false === empty($intro_video) && true === empty($coordinates)) : ?>
         <div class="intro-video engage">
             <span id="skip-intro-video">SKIP</span>
-            <span id="unmute"><?php echo false === is_user_logged_in() ? '🔇' : '🔉' ; ?></span>
-            <video id="intro-video" src="<?php echo esc_attr($intro_video); ?>" <?php echo $muted = true === is_user_logged_in() ? '' : ' muted'; ?>></video>
+            <span id="unmute">🔇</span>
+            <video id="intro-video" src="<?php echo esc_attr($intro_video); ?>"  muted></video>
         </div>
     <?php endif; ?>
     <?php if (false === empty($start_music)) : ?>
-        <audio id="start-screen-music" src="<?php echo esc_attr($start_music); ?>" loop <?php echo false === empty($coordinates) ? 'autoplay' : ''; ?>></audio>
+        <div class="start-screen-music">
+            <span id="music-unmute">🔇</span>
+        </div>
+        <audio id="start-screen-music" src="<?php echo esc_attr($start_music); ?>" loop <?php echo false === empty($coordinates) ? 'autoplay' : ''; ?> muted></audio>
     <?php endif; ?>
     <?php if (false !== $walking_sound) : ?>
         <audio id="walking" src="<?php echo esc_attr($walking_sound); ?>"></audio>

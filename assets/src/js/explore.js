@@ -31,6 +31,7 @@ let walkingInterval;
 window.mainCharacter = '';
 window.godMode = false;
 window.noTouch = false;
+window.isDragging = '';
 
 document.addEventListener("DOMContentLoaded", function(){
     currentLocation = document.querySelector( '.game-container' );
@@ -89,7 +90,7 @@ document.addEventListener("DOMContentLoaded", function(){
 
         introVideo.addEventListener('ended', () => {
            if ( introVideoContainer ) {
-               introVideoContainer.classList.remove( 'engage' );
+               introVideoContainer.remove( );
                playStartScreenMusic();
            }
         });
@@ -101,12 +102,14 @@ document.addEventListener("DOMContentLoaded", function(){
                 introVideo.pause();
 
                 if ( introVideoContainer ) {
-                    introVideoContainer.classList.remove( 'engage' );
+                    introVideoContainer.remove();
                 }
 
                 playStartScreenMusic();
             });
         }
+    } else {
+        playStartScreenMusic();
     }
 
     // Create account / login swap.
@@ -456,7 +459,7 @@ function moveNPC( npc, cutscene = false ) {
                         // Live track NPC movement.
                         function trackNPC() {
                             if (parseInt(pathArray[nextPosition].left) === npc.offsetLeft && parseInt(pathArray[nextPosition].top) === npc.offsetTop && true !== npcIsStopped) {
-                                setStaticNPCImage(moveDirection, npcName, npc, newImage);
+                                setStaticNPCImage(moveDirection,npc);
                                 npcIsStopped = true;
                             }
 
@@ -476,8 +479,7 @@ function moveNPC( npc, cutscene = false ) {
                             loopAmount = loopAmount + 1;
                             position = 0 < position ? position - 1 : pathCount;
 
-                            setStaticNPCImage(moveDirection, npcName, npc, newImage);
-
+                            setStaticNPCImage(moveDirection, npc);
 
                             npc.style.left = currentWorldX + 'px';
                             npc.style.top = currentWorldY + 'px';
@@ -570,12 +572,15 @@ function engageSettingsMenus() {
     }
 }
 
-function setStaticNPCImage(moveDirection, npcName, npc, currentImage) {
+function setStaticNPCImage(moveDirection, npc) {
+    const currentImage = npc.querySelector('.character-icon.engage')
+    const npcName = cleanClassName(npc.className);
+
     if (currentImage) {
         currentImage.classList.remove('engage');
     }
 
-    const newImage = npc.querySelector('#' + npcName + 'static-' + moveDirection);
+    const newImage = document.getElementById(npcName + 'static-' + moveDirection);
     if (newImage) {
         newImage.classList.add('engage');
     }
@@ -957,6 +962,13 @@ function saveMission( mission, value, position ) {
     saveMissionTimeout = setTimeout(() => {
         // Cross off mission.
         const theMission = document.querySelector('.' + mission + '-mission-item');
+
+        // Materialize commuincation.
+        const communicate = document.querySelector( '[data-materializemission="' + mission + '"]');
+
+        if ( communicate ) {
+            communicate.style.display = 'block';
+        }
 
         if (theMission) {
             const missionPoints = theMission.dataset.points;
@@ -1399,10 +1411,10 @@ const enterNewArea = (function () {
     window.runningPointFunction = false;
     let called = false;
 
-    // Incase using level selector.
-    playStartScreenMusic(false);
-
     return function(position, weapon, mapUrl, nextAreaPosition) {
+        // Incase using level selector.
+        playStartScreenMusic(false);
+
         window.allowMovement = false;
         // Clear enemy interval.
         clearInterval(window.shooterInt);
@@ -2381,10 +2393,11 @@ function addNoPoints() {
                         if ( materializeMapItem ) {
                             materializeMapItem.remove();
                         }
+                    }
 
-                        if ( dragDestMapItem && 'true' === dragDestMapItem.dataset.removable ) {
-                            dragDestMapItem.remove();
-                        }
+                    // Remove drag dest if removable and map item has one.
+                    if ( dragDestMapItem && 'true' === dragDestMapItem.dataset.removable ) {
+                        dragDestMapItem.remove();
                     }
 
                     if ( 'false' === mapItem.dataset?.disappear) {
@@ -2676,7 +2689,7 @@ function playFrequency(frequency, audioContext) {
 }
 
 /**
- * Load blockades from missions.
+ * Load blockades and hide communicate triggers from missions.
  */
 function loadMissionBlockades() {
     // Add mission blockade.
@@ -2685,8 +2698,14 @@ function loadMissionBlockades() {
     if ( missions ) {
         missions.forEach( mission => {
             const blockade = mission.dataset.blockade;
+            const missionName = cleanClassName(mission.className);
+            const communicate = document.querySelector( '[data-materializemission="' + missionName + '"]');
 
-            if ( '' !== blockade ) {
+            if ( communicate ) {
+                communicate.style.display = 'none';
+            }
+
+            if ( blockade && '' !== blockade ) {
                 const blockadeSpecs = JSON.parse( blockade );
 
                 if ( '0' !== blockadeSpecs.height ) {
@@ -2703,7 +2722,7 @@ function loadMissionBlockades() {
                     missionBlockadeEl.id = mission.id;
                     missionBlockadeEl.draggable = true;
 
-                    if (true === missionBlockadeEl.classList.contains('next-mission')) {
+                    if (false === mission.classList.contains( 'engage' ) && true === mission.classList.contains( 'next-mission' ) ) {
                         missionBlockadeEl.style.display = 'none';
                     }
 
@@ -2766,7 +2785,7 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
 
             const indicator = document.querySelector('.indicator-icon');
             const characterName = cleanClassName(value.className);
-            const cutsceneTrigger = document.querySelector( `.map-cutscene[data-character="${characterName}"]`);
+            const cutsceneEl = document.querySelector( `.map-cutscene[data-character="${characterName}"]`);
             const finalCharPos = {
                 offsetLeft: mapChar.offsetLeft + (400 - (box.offsetWidth / 2 )),
                 offsetWidth: box.offsetWidth,
@@ -2781,8 +2800,10 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
 
                     value.dataset.canmove = 'false';
 
-                    if ( cutsceneTrigger && false === cutsceneTrigger.classList.contains('been-viewed')  && 'engagement' !== cutsceneTrigger.dataset.triggertype) {
-                        engageCutscene(cutsceneTrigger);
+                    const cutsceneTrigger = document.getElementById(cutsceneEl.id + '-t');
+
+                    if ( !cutsceneTrigger && cutsceneEl && false === cutsceneEl.classList.contains('been-viewed')  && 'engagement' !== cutsceneEl.dataset.triggertype) {
+                        engageCutscene(cutsceneEl);
                     }
                 }
 
@@ -2828,6 +2849,7 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
                 if (
                     'true' === value.dataset.draggable &&
                     false === value.classList.contains('dragme') &&
+                    !document.querySelector('.dragme') &&
                     canCharacterInteract(value, mapChar, 'strength') &&
                     dragMission
                 ) {
@@ -3130,15 +3152,17 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
 
     // Engage/disengage walking class.
     if (d[37] || d[38] || d[39] || d[40] || d[87] || d[65] || d[68] || d[83] ) {
-        const direction = getKeyByValue(d, true);
-        const goThisWay = true === d[$newest] ? $newest : parseInt(direction);
+        const goThisWay = true === d[$newest] ? $newest : parseInt(getKeyByValue(d, true));
+        const isDragging = window.isDragging;
+        let direction;
         let newCharacterImage;
 
-        if ( false === box.classList.contains( 'fight-image' ) ) {
+        if ( false === box.classList.contains( 'fight-image' ) && true === window.allowMovement ) {
             switch (goThisWay) {
                 case 38 :
                     box.classList.remove('engage');
-                    newCharacterImage = document.getElementById(window.mainCharacter + '-up');
+                    direction = '' !== isDragging ? window.draggingDirection : 'up'
+                    newCharacterImage = document.getElementById(window.mainCharacter + '-' + direction + isDragging);
                     if (newCharacterImage) {
                         newCharacterImage.classList.add('engage');
                     }
@@ -3151,7 +3175,8 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
                     break;
                 case 37 :
                     box.classList.remove('engage');
-                    newCharacterImage = document.getElementById(window.mainCharacter + '-left');
+                    direction = '' !== isDragging ? window.draggingDirection : 'left'
+                    newCharacterImage = document.getElementById(window.mainCharacter + '-' + direction + isDragging);
                     if (newCharacterImage) {
                         newCharacterImage.classList.add('engage');
                     }
@@ -3163,7 +3188,8 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
                     break;
                 case 39 :
                     box.classList.remove('engage');
-                    newCharacterImage = document.getElementById(window.mainCharacter + '-right');
+                    direction = '' !== isDragging ? window.draggingDirection : 'right'
+                    newCharacterImage = document.getElementById(window.mainCharacter + '-' + direction + isDragging);
                     if (newCharacterImage) {
                         newCharacterImage.classList.add('engage');
                     }
@@ -3175,7 +3201,8 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
                     break;
                 case 40 :
                     box.classList.remove('engage');
-                    newCharacterImage = document.getElementById(window.mainCharacter + '-down');
+                    direction = '' !== isDragging ? window.draggingDirection : 'down'
+                    newCharacterImage = document.getElementById(window.mainCharacter + '-' + direction + isDragging);
                     if (newCharacterImage) {
                         newCharacterImage.classList.add('engage');
                     }
@@ -3187,7 +3214,8 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
                     break;
                 case 87 :
                     box.classList.remove('engage');
-                    newCharacterImage = document.getElementById(window.mainCharacter + '-up');
+                    direction = '' !== isDragging ? window.draggingDirection : 'up'
+                    newCharacterImage = document.getElementById(window.mainCharacter + '-' + direction + isDragging);
                     if (newCharacterImage) {
                         newCharacterImage.classList.add('engage');
                     }
@@ -3200,7 +3228,8 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
                     break;
                 case 65 :
                     box.classList.remove('engage');
-                    newCharacterImage = document.getElementById(window.mainCharacter + '-left');
+                    direction = '' !== isDragging ? window.draggingDirection : 'left'
+                    newCharacterImage = document.getElementById(window.mainCharacter + '-' + direction + isDragging);
                     if (newCharacterImage) {
                         newCharacterImage.classList.add('engage');
                     }
@@ -3212,7 +3241,8 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
                     break;
                 case 68 :
                     box.classList.remove('engage');
-                    newCharacterImage = document.getElementById(window.mainCharacter + '-right');
+                    direction = '' !== isDragging ? window.draggingDirection : 'right'
+                    newCharacterImage = document.getElementById(window.mainCharacter + '-' + direction + isDragging);
                     if (newCharacterImage) {
                         newCharacterImage.classList.add('engage');
                     }
@@ -3224,7 +3254,8 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
                     break;
                 case 83 :
                     box.classList.remove('engage');
-                    newCharacterImage = document.getElementById(window.mainCharacter + '-down');
+                    direction = '' !== isDragging ? window.draggingDirection : 'down'
+                    newCharacterImage = document.getElementById(window.mainCharacter + '-' + direction + isDragging);
                     if (newCharacterImage) {
                         newCharacterImage.classList.add('engage');
                     }
@@ -3654,9 +3685,14 @@ function engageCutscene( position, areaCutscene = false, isVideo = false ) {
                     typeWriter(element, text, i);
                 }, 50); // Adjust the delay here
             } else {
-                window.nextDialogueTimeout = setTimeout( () => {
-                    nextDialogue();
-                }, 3000 );
+                window.nextDialogueTimeout = setInterval( () => {
+                    if (true === window.nextDialogue ) {
+                        nextDialogue();
+
+                        clearInterval(window.nextDialogueTimeout);
+                        window.nextDialogue = false;
+                    }
+                }, 500 );
             }
         }
 
@@ -3671,7 +3707,7 @@ function engageCutscene( position, areaCutscene = false, isVideo = false ) {
             }
 
             // Clear timeout incase manually triggered.
-            clearTimeout( window.nextDialogueTimeout );
+            clearInterval( window.nextDialogueTimeout );
 
             const currentDialogue = cutscene.querySelector( 'p.engage, .wp-block-orbem-paragraph-mp3.engage' );
             let nextDialogue = currentDialogue.nextElementSibling;
@@ -3696,7 +3732,7 @@ function engageCutscene( position, areaCutscene = false, isVideo = false ) {
                 makeTalk(text, nextDialogue.dataset.voice, providedAudio );
             } else {
                 clearTimeout( typeWriterTimeout );
-                clearTimeout( window.nextDialogueTimeout );
+                clearInterval( window.nextDialogueTimeout );
 
                 // At end of dialogue. Close cutscene and make walking available.
                 cutscene.classList.remove( 'engage' );
@@ -3743,6 +3779,7 @@ function engageCutscene( position, areaCutscene = false, isVideo = false ) {
                 }
 
                 cutsceneVideo.play();
+                cutsceneVideo.muted = false;
 
                 cutsceneVideo.addEventListener( 'ended', () => {
                     // Reengage movement.
@@ -3879,11 +3916,64 @@ function engageSign( signname ) {
  */
 function beforeCutscene( cutscene ) {
     const characterPosition = JSON.parse( cutscene.getAttribute( 'data-character-position' ) );
+    const mapCharacter = document.getElementById( 'map-character' );
+
+    // Face NPC before talking to them. Good manners.
+    faceNPC(mapCharacter, cutscene.dataset.character, cutscene);
 
     if ( characterPosition && 0 < characterPosition.length && undefined !== characterPosition[0] ) {
         window.allowCutscene = false;
         // Trigger character move before cutscene starts.
-        moveCharacter( document.getElementById( 'map-character' ), characterPosition[0].top, characterPosition[0].left, true, cutscene );
+        moveCharacter( mapCharacter, characterPosition[0].top, characterPosition[0].left, true, cutscene );
+    }
+}
+
+function faceNPC(mapCharacter, npc, cutscene) {
+    const npcEl = document.querySelector( '.' + npc + '-map-item');
+    const mcImage = mapCharacter.querySelector( '.map-character-icon.engage' );
+
+    if ( npcEl ) {
+        const npcLeft = parseInt( npcEl.style.left.replace( 'px', '')) + 25;
+        const npcTop = parseInt( npcEl.style.top.replace( 'px', '' )) + 25;
+        const npcRight = (npcLeft + npcEl.offsetWidth) - 50;
+        const npcBottom = (npcTop + npcEl.offsetHeight) - 50;
+        const mcLeftCont = parseInt(mapCharacter.style.left.replace( 'px', '' ));
+        const mcTopCont = parseInt(mapCharacter.style.top.replace( 'px', ''));
+        const mcLeft = mcLeftCont + ( 400 - (mcImage.offsetWidth / 2));
+        const mcRight = mcLeft + mcImage.offsetWidth
+        const mcTop = mcTopCont + ( 300 - (mcImage.offsetHeight / 2));
+        const mcBottom = mcTop + mcImage.offsetHeight;
+
+        let direction;
+        let npcDirection = false;
+
+        direction = mcLeft > npcRight ? 'left' : false;
+        direction = mcRight < npcLeft ? 'right' : direction;
+        direction = mcTop > npcBottom ? 'up' : direction;
+        direction = mcBottom < npcTop ? 'down' : direction;
+
+        switch (direction) {
+            case 'left' :
+                npcDirection = 'right';
+                break;
+            case 'right' :
+                npcDirection = 'left';
+                break;
+            case 'up' :
+                npcDirection = 'down';
+                break;
+            case 'down' :
+                npcDirection = 'up';
+                break;
+        }
+
+        if (false !== direction) {
+            setStaticMCImage(mapCharacter, direction);
+
+            if ('no' !== cutscene.dataset?.npcfaceme) {
+                setStaticNPCImage(npcDirection, npcEl);
+            }
+        }
     }
 }
 
@@ -3996,6 +4086,9 @@ function afterCutscene( cutscene, areaCutscene = false ) {
     // Reengage hit.
     setTimeout(() => {
         window.allowHit = true;
+
+        // Reset after cutscene for face npc logic:
+        window.faceNPC = '';
 
         if ( pathTriggerPosition && 'true' === pathTriggerPosition.dataset?.cutscenebreak ) {
             pathTriggerPosition.dataset.cutscenebreak = 'false';
@@ -4134,19 +4227,7 @@ function movementIntFunc() {
                 }
             }, 1000);
 
-            // Change to static image.
-            const currentCharacterImage = document.querySelector('.map-character-icon.engage');
-
-            if ( currentCharacterImage && '' === window.currentCharacterAutoDirection ) {
-                const staticVersion = document.getElementById(currentCharacterImage.id.replace('left-punch', 'left').replace('right-punch', 'right').replace('up-punch', 'up').replace('down-punch', 'down').replace( window.mainCharacter + '-', window.mainCharacter + '-static-' ) );
-
-                if ( staticVersion ) {
-                    currentCharacterImage.classList.remove( 'engage' );
-                    staticVersion.classList.add( 'engage' );
-
-                    mapChar.dataset.static = 'true';
-                }
-            }
+            setStaticMCImage(mapChar);
         }
     }
 
@@ -4348,6 +4429,33 @@ function cleanClassName(classes) {
             .replace( ' selected', '')
             .replace( '-cutscene-trigger', '')
             .replace( 'cutscene-trigger ', '')
+            .replace( 'next-mission ', '')
+            .replace( '-mission-item', '')
+            .replace( 'mission-item ', '')
+    }
+}
+
+function setStaticMCImage(mapChar, direction = '') {
+    // Change to static image.
+    const currentCharacterImage = document.querySelector('.map-character-icon.engage');
+
+    if ( ( currentCharacterImage && '' === window.currentCharacterAutoDirection ) || ( currentCharacterImage && '' !== direction ) ) {
+        let staticId = currentCharacterImage.id.replace('left-punch', 'left').replace('right-punch', 'right').replace('up-punch', 'up').replace('down-punch', 'down').replace( window.mainCharacter + '-', window.mainCharacter + '-static-' );
+
+        direction = '' !== isDragging ? window.draggingDirection : direction
+
+        if ( '' !== direction ) {
+            staticId = window.mainCharacter + '-static-' + direction + window.isDragging;
+        }
+
+        const staticVersion = document.getElementById(staticId);
+
+        if ( staticVersion ) {
+            currentCharacterImage.classList.remove( 'engage' );
+            staticVersion.classList.add( 'engage' );
+
+            mapChar.dataset.static = 'true';
+        }
     }
 }
 
@@ -4595,7 +4703,7 @@ function blockMovement(top, left, box = false) {
     const mainChar = box !== false ? '.map-character-icon.engage, ' : '';
     box = false === box ? document.querySelector( '.map-character-icon.engage' ) : box;
     const collisionWalls = document.querySelectorAll(
-        mainChar + '.default-map svg rect, .map-item:not([data-wanderer="yes"]):not(.explainer-container):not(.materialize-item-trigger):not(.drag-dest):not([data-hazard="true"]):not([data-trigger="true"]):not(.currently-dragging):not(.passable):not([data-genre="explore-sign"]):not([data-foreground="true"]):not([data-background="true"]), .enemy-item'
+        mainChar + '.default-map svg rect, .map-item:not([data-wanderer="yes"]):not(.explainer-container):not(.materialize-item-trigger):not(.drag-dest):not([data-hazard="true"]):not([data-trigger="true"]):not(.currently-dragging):not([data-passable="true"].no-point):not(.passable):not([data-genre="explore-sign"]):not([data-foreground="true"]):not([data-background="true"]), .enemy-item'
     );
 
     return getBlockDirection(collisionWalls, box, parseInt(finalTop), parseInt(finalLeft), false, ('' !== mainChar));
@@ -4866,7 +4974,7 @@ function engageDraggableFunction() {
     document.addEventListener( 'keydown', e => {
         const dragmeitem = document.querySelector( '.dragme' );
         // If Shift is pressed start transport sequence.
-        if ( 16 === e.keyCode || 32 === e.keyCode ) {
+        if ( 'Space' === e.code ) {
             if ( dragmeitem && true === dragmeitem.classList.contains( 'currently-dragging' ) ) {
                 // Reengage hit.
                 setTimeout( () => {
@@ -4881,6 +4989,8 @@ function engageDraggableFunction() {
 
                 window.dragLeft = false;
                 window.dragTop = false;
+                window.isDragging = '';
+                window.draggingDirection = '';
 
                 // Check if drop position is on draggable destination.
                 const cleanClass = cleanClassName( dragmeitem.className );
@@ -4899,6 +5009,11 @@ function engageDraggableFunction() {
 
                         // Add completed mission so you can't keep getting points.
                         dragDest.classList.add( 'completed-mission' );
+                        dragmeitem.classList.add( 'no-point' );
+
+                        if ('true' === dragDest.dataset.removable) {
+                            dragDest.remove();
+                        }
                     }
                 }
 
@@ -4938,6 +5053,9 @@ function engageDraggableFunction() {
 function dragItem() {
     const itemToDrag = document.querySelector( '.dragme' );
     const mapCharacter = document.querySelector( '#map-character' );
+    const currentlyDragging = document.querySelector('.currently-dragging');
+    const mapCharacterImage = mapCharacter.querySelector( '.map-character-icon.engage' );
+    let dragDirection;
 
     if ( itemToDrag ) {
         window.allowHit = false;
@@ -4949,13 +5067,35 @@ function dragItem() {
 
         const itemIsHigher = itemToDragTop < mapCharacterTop;
         const itemIsLeft = itemToDragLeft < mapCharacterLeft;
-        const topOffset = itemToDragTop < mapCharacterTop ? mapCharacterTop - itemToDragTop : itemToDragTop - mapCharacterTop;
-        const leftOffset = itemToDragLeft < mapCharacterLeft ? mapCharacterLeft - itemToDragLeft : itemToDragLeft - mapCharacterLeft;
+        const topOffset = itemIsHigher ? mapCharacterTop - itemToDragTop : itemToDragTop - mapCharacterTop;
+        const leftOffset = itemIsLeft ? mapCharacterLeft - itemToDragLeft : itemToDragLeft - mapCharacterLeft;
+        const itemIsActuallyHigher = itemToDragTop < ( mapCharacterTop - 50 );
+        const itemIsActuallyLeft = itemToDragLeft < ( mapCharacterLeft - 50 );
+        const topActuallyOffset = itemIsActuallyHigher ? ( mapCharacterTop - (50 ) ) - itemToDragTop : itemToDragTop - ( mapCharacterTop - 50 );
+        const leftActuallyOffset = itemIsActuallyLeft ? ( mapCharacterLeft - ( 45 + ( mapCharacterImage.offsetWidth / 2 ) )) - itemToDragLeft : itemToDragLeft - ( mapCharacterLeft - ( 55 + ( mapCharacterImage.offsetWidth / 2 ) ));
 
         window.dragTop = {'offset': topOffset, 'higher': itemIsHigher};
         window.dragLeft = {'offset': leftOffset, 'left': itemIsLeft};
 
+        dragDirection = itemIsActuallyHigher && topActuallyOffset >= itemToDrag.offsetHeight ? 'up' : dragDirection;
+        dragDirection = false === itemIsActuallyHigher && topActuallyOffset >= mapCharacterImage.offsetHeight ? 'down' : dragDirection;
+        dragDirection = itemIsActuallyLeft && leftActuallyOffset >= itemToDrag.offsetWidth ? 'left' : dragDirection;
+        dragDirection = false === itemIsActuallyLeft && leftActuallyOffset >= mapCharacterImage.offsetWidth ? 'right' : dragDirection;
+
+        if ( undefined === dragDirection ) {
+            window.dragTop = false;
+            window.dragLeft = false;
+
+            return;
+        }
+
+        if ( currentlyDragging ) {
+            currentlyDragging.classList.remove( 'currently-dragging' );
+        }
+
         itemToDrag.classList.add( 'currently-dragging' );
+        window.isDragging = '-drag';
+        window.draggingDirection = dragDirection;
     } else {
         window.dragTop = false;
         window.dragLeft = false;
@@ -5051,7 +5191,7 @@ function moveCharacter(mapCharacter, newTop, newLeft, gradual, cutscene ) {
                 }
 
                 // Change character image based on direction;
-                directCharacter( topDown, leftRight, box, mapCharacter );
+                directCharacter( topDown, leftRight, mapCharacter );
             } else {
                 // Reenable cutscene click events.
                 window.allowCutscene = true;
@@ -5090,7 +5230,7 @@ function moveCharacter(mapCharacter, newTop, newLeft, gradual, cutscene ) {
     }
 }
 
-function directCharacter( topDown, leftRight, box, mapCharacter ) {
+function directCharacter( topDown, leftRight, mapCharacter ) {
     let direction = '' === topDown ? leftRight : topDown;
     const currentImage = mapCharacter.querySelector( '.map-character-icon.engage' );
 
@@ -5373,6 +5513,9 @@ function textToBinary(str) {
 async function makeTalk(text, voiceName, providedAudio = false) {
 
     if ( true === text.includes('**') || '' === text || '...' === text ) {
+        setTimeout( () => {
+            window.nextDialogue = true;
+        }, 1500 );
         return;
     }
 
@@ -5427,6 +5570,10 @@ async function makeTalk(text, voiceName, providedAudio = false) {
 
         talkAudio.volume = finalVolume;
         talkAudio.play();
+
+        talkAudio.addEventListener('ended', () => {
+            window.nextDialogue = true;
+        });
     } catch (error) {
         console.error("Error during TTS request:", error.message);
     }
@@ -5487,6 +5634,7 @@ function startTheTimer(timeAmount) {
 
 function playStartScreenMusic(play = true) {
     const startMusic = document.getElementById('start-screen-music');
+    const musicUnmute = document.getElementById( 'music-unmute' );
     const fadeDuration = 3000; // 3 seconds
     const fadeStep = 0.1; // Volume increment step
     const intervalTime = fadeDuration * fadeStep;
@@ -5494,6 +5642,16 @@ function playStartScreenMusic(play = true) {
     if ( startMusic && false !== play ) {
         startMusic.volume = 0; // Start with volume at 0
         startMusic.play(); // Start playing the audio
+        startMusic.muted = false;
+
+        if ( musicUnmute ) {
+            musicUnmute.textContent = '🔉';
+
+            musicUnmute.addEventListener('click', () => {
+                startMusic.muted = !startMusic.muted;
+                musicUnmute.textContent = startMusic.muted ? '🔇' : '🔉';
+            });
+        }
 
         const fadeInInterval = setInterval(() => {
             if (startMusic.volume < .7) {
@@ -5504,6 +5662,7 @@ function playStartScreenMusic(play = true) {
         }, intervalTime);
     } else if ( startMusic ) {
         startMusic.remove();
+        musicUnmute.remove();
     }
 }
 
@@ -5536,13 +5695,15 @@ function checkIfHazardHurts() {
  * @param name
  */
 function spinMiroLogo(element,name) {
-    element.classList.add( name );
-    setTimeout(
-        function() {
-            element.classList.remove( name );
-        },
-        1000
-    );
+    if (element) {
+        element.classList.add(name);
+        setTimeout(
+            function() {
+                element.classList.remove(name);
+            },
+            1000
+        );
+    }
 }
 
 // Add the SSO response function for login/signin if it doesn't exist in the theme.

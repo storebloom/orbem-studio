@@ -1194,7 +1194,8 @@ class Explore
                     'value'   => false === empty($position) ? $position : $first_area,
                     'compare' => '='
                 ]
-            ]
+            ],
+            'numberposts' => -1,
         ];
 
         return get_posts($args);
@@ -1677,7 +1678,6 @@ class Explore
                 // Draggable Destination.
                 if (true === $draggable) {
                     $drag_dest = get_post_meta($explore_point->ID, 'explore-drag-dest', true);
-                    $drag_dest = $drag_dest['explore-drag-dest'] ?? false;
 
                     if (false === empty($drag_dest)) {
                         $drag_top = $drag_dest['top'] ?? '';
@@ -1686,14 +1686,16 @@ class Explore
                         $drag_width = $drag_dest['width'] ?? '';
                         $drag_image = $drag_dest['image'] ?? '';
                         $drag_mission = $drag_dest['mission'] ?? '';
+                        $remove = $drag_dest['remove-after'] ?? 'no';
 
-                        $html .= '<div class="drag-dest wp-block-group map-item ' . $explore_point->post_name . '-drag-dest-map-item is-layout-flow wp-block-group-is-layout-flow"';
+                        $html .= '<div id="' . $explore_point->ID . '-d" class="drag-dest wp-block-group map-item ' . $explore_point->post_name . '-drag-dest-map-item is-layout-flow wp-block-group-is-layout-flow"';
                         $html .= 'style="z-index:0;left:' . esc_html($drag_left) . 'px;top:' . $drag_top . 'px;height:' . $drag_height . 'px; width:' . $drag_width . 'px;"';
 
-                        if (true === $hazard_remove) {
+                        if ('yes' === $remove) {
                             $html .= ' data-removable="true" ';
                         }
 
+                        $html .= 'data-meta="explore-drag-dest" ';
                         $html .= 'data-mission="' . $drag_mission . '">';
                         $html .= '<img height="' . $drag_height . 'px" width="' . $drag_width . 'px" src="' . $drag_image . '" alt="' . $explore_point->post_title . '-drag-dest">';
                         $html .= '</div>';
@@ -1779,6 +1781,7 @@ class Explore
             $character_position = get_post_meta($explore_cutscene->ID, 'explore-cutscene-character-position', true);
             $next_area_position = get_post_meta($explore_cutscene->ID, 'explore-cutscene-next-area-position', true);
             $mission_dependent = get_post_meta($explore_cutscene->ID, 'explore-mission-dependent', true);
+            $npc_face_me = get_post_meta($explore_cutscene->ID, 'explore-npc-face-me', true);
             $character_position_left = $character_position['left'] ?? '';
             $character_position_top = $character_position['top'] ?? '';
             $next_area_position_left = $next_area_position['left'] ?? '';
@@ -1808,6 +1811,10 @@ class Explore
 
             if (false === empty($cutscene_trigger_type)) {
                 $html .= ' data-triggertype="' . $cutscene_trigger_type . '"';
+            }
+
+            if (false === empty($npc_face_me)) {
+                $html .= ' data-npcfaceme="' . $npc_face_me . '"';
             }
 
             if (false === empty($communicate_engage)) {
@@ -1890,11 +1897,18 @@ class Explore
 
             $html .= '>';
 
-            if (false === $is_area_cutscene && false === empty($character)) {
-                $character_post = get_posts( ['post_type' => ['explore-character', 'explore-enemy'], 'posts_per_page' => 1, 'name' => $character] );
+            if (false === $is_area_cutscene) {
+                foreach (parse_blocks($explore_cutscene->post_content) as $blocks) {
+                    $character_ids[] = $blocks['attrs']['selectedCharacter'] ?? '';
+                }
 
-                $html .= '<div data-character="' . $character_post[0]->ID . '" class="cut-character"><img src="' . get_the_post_thumbnail_url($character_post[0]->ID) . '"/></div>';
+                foreach( array_unique($character_ids) as $character_id) {
+                    if (false === empty($character_id) && $character_id !== $mc[0]->ID ) {
+                        $html .= '<div data-character="' . $character_id . '" class="cut-character"><img src="' . get_the_post_thumbnail_url($character_id) . '"/></div>';
+                    }
+                }
             }
+
 
             $html .= 'explore-area' !== $explore_cutscene->post_type ? $explore_cutscene->post_content : '';
 
@@ -1993,6 +2007,7 @@ class Explore
             );
 
             foreach ($explore_communicates as $explore_communicate) {
+                $materialize_after_mission = get_post_meta($explore_communicate->ID, 'explore-materialize-after-mission', true); // The mission that makes this communicate appear.
                 $character = get_post_meta($explore_communicate->ID, 'explore-character', true);
                 $mute_music = get_post_meta($explore_communicate->ID, 'explore-mute-music', true);
                 $communicate_trigger_top = get_post_meta($explore_communicate->ID, 'explore-top', true);
@@ -2029,7 +2044,7 @@ class Explore
                 if (false === empty($character)) {
                     $character_post = get_posts(['post_type' => ['explore-character', 'explore-enemy'], 'posts_per_page' => 1, 'name' => $character]);
 
-                    $html .= '<div data-character="' . $character_post[0]->ID . '" class="communiate-character"><img src="' . get_the_post_thumbnail_url($character_post[0]->ID) . '"/></div>';
+                    $html .= '<div data-character="' . $character_post[0]->ID . '" class="communicate-character"><img src="' . get_the_post_thumbnail_url($character_post[0]->ID) . '"/></div>';
                 }
 
                 $html .= $explore_communicate->post_content;
@@ -2041,6 +2056,7 @@ class Explore
                     $trhtml .= '<div id="' . $explore_communicate->ID . '-t" class="communicate-trigger wp-block-group map-item ' . $explore_communicate->post_name . '-communicate-trigger-map-item is-layout-flow wp-block-group-is-layout-flow"';
                     $trhtml .= 'style="left:' . $communicate_trigger_left . 'px;top:' . $communicate_trigger_top . 'px;height:' . $communicate_trigger_height . 'px; width:' . $communicate_trigger_width . 'px;"';
                     $trhtml .= 'data-trigger="true" data-triggee="' . $explore_communicate->post_name . '"';
+                    $trhtml .= 'data-materializemission="' . $materialize_after_mission . '"';
                     $trhtml .= ' data-meta="explore-communicate-trigger"';
                     $trhtml .= '></div>';
                 }
@@ -2419,10 +2435,16 @@ class Explore
                             'static-down' => $images['static-down'] ?? '',
                             'static-left' => $images['static-left'] ?? '',
                             'static-right' => $images['static-right'] ?? '',
+                            'static-up-drag' => $images['static-up-drag'] ?? '',
+                            'static-right-drag' => $images['static-right-drag'] ?? '',
+                            'static-left-drag' => $images['static-left-drag'] ?? '',
                             'up-punch' => $images['up-punch'] ?? '',
                             'right-punch' => $images['right-punch'] ?? '',
                             'left-punch' => $images['left-punch'] ?? '',
                             'down-punch' => $images['down-punch'] ?? '',
+                            'up-drag' => $images['up-drag'] ?? '',
+                            'right-drag' => $images['right-drag'] ?? '',
+                            'left-drag' => $images['left-drag'] ?? '',
                         ],
                         'height' => get_post_meta($main_character->ID, 'explore-height', true),
                         'width' => get_post_meta($main_character->ID, 'explore-width', true),

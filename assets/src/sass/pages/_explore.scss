@@ -82,6 +82,15 @@ html {
       }
     }
 
+    #music-unmute {
+      bottom: 3rem;
+      cursor: pointer;
+      font-size: 40px;
+      left: 3rem;
+      position: fixed;
+      z-index: 9;
+    }
+
     #skip-intro-video, #skip-cutscene-video {
       background: #0a7aff;
       bottom: 3rem;
@@ -329,6 +338,7 @@ html {
 
           p {
             display: block;
+            font-size: 20px;
           }
         }
       }
@@ -1309,7 +1319,7 @@ html {
             border-radius: 4px;
           }
 
-          &[data-passable="true"].passable {
+          &[data-passable="true"].passable, &[data-passable="true"].no-point {
             z-index: 0;
           }
 

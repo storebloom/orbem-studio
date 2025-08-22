@@ -2,3 +2,11 @@
   background: #4a4a4a;
   padding-left: 2rem;
 }
+
+.multiselect-wrapper {
+  border: 1px solid lightgray;
+  border-radius: 5px;
+  max-height: 247px;
+  overflow: scroll;
+  padding: 0 .5rem 1rem;
+}
