@@ -1800,7 +1800,7 @@ class Explore
             $cutscene_name = false === $is_area_cutscene || true === $has_video ? $explore_cutscene->post_name : $area[0]->post_name;
             $is_cutscene_triggered = self::isMaterializedItemTriggered($explore_cutscene->post_name, $area[0]->post_name, $userid);
             $communicate_engage = get_post_meta($explore_cutscene->ID, 'explore-engage-communicate', true);
-
+            $character_ids = [];
 
             $html .= '<div class="wp-block-group map-cutscene ' . esc_attr($cutscene_name) . '-map-cutscene is-layout-flow wp-block-group-is-layout-flow"';
             $html .= ' id="' . esc_attr($explore_cutscene->ID) . '"';

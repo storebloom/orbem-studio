@@ -3558,10 +3558,12 @@ function engageCutscene( position, areaCutscene = false, isVideo = false ) {
 
     if ( cutscene && ( undefined === cutscene.dataset?.video || 'false' === cutscene.dataset?.video ) ) {
         const dialogues = cutscene.querySelectorAll( 'p, .wp-block-orbem-paragraph-mp3' );
-        const npc = document.querySelector( '.' + cutscene.dataset?.character + '-map-item[data-genre="explore-character"]' );
+        const mc = document.querySelector('.cut-character.main');
+        const character = cleanClassName(cutscene.querySelector('.wp-block-orbem-paragraph-mp3:not(.explore-character-' + mc.dataset.character + ')').className);
+        const npc = document.getElementById(character);
 
         if ( false === cutscene.classList.contains( 'been-viewed' ) ) {
-            // stop movement.
+            // Stop movement.
             window.allowMovement = false;
             window.allowHit = false;
 
@@ -3618,8 +3620,8 @@ function engageCutscene( position, areaCutscene = false, isVideo = false ) {
             const dialogueChar = currentDialogue.className.replace(' engage', '').replace('engage ', '').replace('wp-block-orbem-paragraph-mp3 ', '').replace('explore-character-');
             const currentDialogueChar = mainMapCharacter.dataset?.mainid !== dialogueChar ? document.querySelector( '#' + dialogueChar ) : mainMapCharacter;
             let voice = currentDialogue.dataset.voice;
-            const theCharacter = currentDialogue.className.replace( 'wp-block-orbem-paragraph-mp3', '' ).replace( 'engage', '').replace('explore-character-', '').trim();
-            const theCharacterEl = document.querySelector( '.cut-character[data-character="' + theCharacter + '"]' );
+            const theCharacter = cleanClassName(currentDialogue.className);
+            const theCharacterEl = mc.dataset.character === theCharacter ? mc : cutscene.querySelector( '.cut-character[data-character="' + theCharacter + '"]' );
 
             // Move dialogue box to talker.
             if ( true === areaCutscene ) {
@@ -4432,6 +4434,8 @@ function cleanClassName(classes) {
             .replace( 'next-mission ', '')
             .replace( '-mission-item', '')
             .replace( 'mission-item ', '')
+            .replace( 'wp-block-orbem-paragraph-mp3 ', '')
+            .replace( 'explore-character-', '')
     }
 }
 
