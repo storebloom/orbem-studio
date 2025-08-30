@@ -232,13 +232,14 @@ html {
     }
 
     .communication-wrapper {
-      bottom: -550px;
+      bottom: -600px;
       display: none;
       flex-direction: column;
       font-size: 20px;
       gap: 1rem;
       height: 600px;
       left: 50%;
+      padding-top: 4rem;
       position: fixed;
       transition: bottom .3s;
       transform: translateX(-50%);
@@ -251,33 +252,106 @@ html {
       }
 
       .map-communicate {
-        border-bottom: 2px solid #000;
+        border-bottom: 2px solid #dcdcdc;
+        cursor: pointer;
         display: none;
         left: 50%;
         min-height: 100px;
-        overflow: hidden;
         padding: 1rem 0;
         position: relative;
         transform: translateX(-51%);
         width: 77%;
 
+        .message-wrapper {
+          cursor: pointer;
+          height: 80px;
+          overflow: hidden;
+          width: 83%;
+
+          &:after {
+            bottom: 20px;
+            content: "▼";
+            height: 1px;
+            line-height: 0;
+            font-size: 12px;
+            left: 0;
+            position: absolute;
+            width: 100%;
+          }
+
+          .wp-block-orbem-paragraph-mp3 {
+            color: gray;
+            font-size: 14px;
+
+            p:first-of-type {
+              margin-top: 0;
+            }
+          }
+        }
+
+        .communicate-character {
+          border-radius: 100px;
+          height: 50px;
+          margin-right: .5rem;
+          overflow: hidden;
+          width: 50px;
+
+          img {
+            object-fit: cover;
+            width: 100%;
+          }
+        }
+
         &.engage {
-          display: block;
+          display: flex;
+
+          &.show {
+            .message-wrapper {
+              cursor: pointer;
+              height: 100%;
+
+              &:after {
+                box-shadow: none;
+                content: '▲'
+              }
+            }
+          }
         }
 
         &[data-type="voicemail"] {
           &:before {
-            content: "🔊";
-            font-size: 40px;
+            background: url("../../src/images/sound.svg") no-repeat;
+            background-size: contain;
+            content: "";
+            height: 35%;
             left: 50%;
             position: absolute;
             text-align: center;
             top: 50%;
-            transform: translate(-50%, -50%);
+            transform: translate(-50%, 21%);
+            width: 53%;
           }
 
-          .wp-block-orbem-paragraph-mp3 {
-            display: none;
+          .message-wrapper {
+            height: 80px;
+            overflow: hidden;
+            width: 83%;
+
+            &:after {
+              bottom: 20px;
+              box-shadow: none;
+              content: "▶";
+              font-size: 16px;
+              height: 1px;
+              line-height: 0;
+              left: 0;
+              position: absolute;
+              width: 100%;
+            }
+
+            .wp-block-orbem-paragraph-mp3 {
+              display: none;
+            }
           }
         }
       }

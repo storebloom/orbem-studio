@@ -2008,7 +2008,6 @@ class Explore
 
             foreach ($explore_communicates as $explore_communicate) {
                 $materialize_after_mission = get_post_meta($explore_communicate->ID, 'explore-materialize-after-mission', true); // The mission that makes this communicate appear.
-                $character = get_post_meta($explore_communicate->ID, 'explore-character', true);
                 $mute_music = get_post_meta($explore_communicate->ID, 'explore-mute-music', true);
                 $communicate_trigger_top = get_post_meta($explore_communicate->ID, 'explore-top', true);
                 $communicate_trigger_left = get_post_meta($explore_communicate->ID, 'explore-left', true);
@@ -2041,14 +2040,13 @@ class Explore
 
                 $html .= '>';
 
-                if (false === empty($character)) {
-                    $character_post = get_posts(['post_type' => ['explore-character', 'explore-enemy'], 'posts_per_page' => 1, 'name' => $character]);
+                $character_id = parse_blocks($explore_communicate->post_content)[0]['attrs']['selectedCharacter'] ?? '';
 
-                    $html .= '<div data-character="' . $character_post[0]->ID . '" class="communicate-character"><img src="' . get_the_post_thumbnail_url($character_post[0]->ID) . '"/></div>';
-                }
-
+                $html .= '<div data-character="' . $character_id . '" class="communicate-character"><img src="' . get_the_post_thumbnail_url($character_id) . '"/></div>';
+                $html .= '<div class="message-wrapper">';
+                $html .= '<span class="communicate-name">' . get_the_title($character_id) . '</span>';
                 $html .= $explore_communicate->post_content;
-
+                $html .= '</div>';
                 $html .= '</div>';
 
                 // Trigger communicate.

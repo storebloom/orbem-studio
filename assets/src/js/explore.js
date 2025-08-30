@@ -403,10 +403,12 @@ function moveNPC( npc, cutscene = false ) {
                         loopAmount = getLoopAmount(pathArray[position].left, pathArray[position].top, pathArray[nextPosition].left, pathArray[nextPosition].top, walkingSpeed, timeBetween);
 
                         // If loopAmount equals loop count, transition to next walking path.
-                        if (currentImage && (loopCount === (loopAmount - 1) || firstRun)) {
+                        if ((loopCount === (loopAmount - 1) || firstRun)) {
                             // Check that current position is not the last position. And move npc if it is not.
                             if (pathCount > position || (firstRun && pathCount === position)) {
-                                currentImage.classList.remove('engage');
+                                if ( currentImage ) {
+                                    currentImage.classList.remove('engage');
+                                }
 
                                 // Get user direction of movement path.
                                 moveDirection = regulateTransitionSpeed(pathArray[position].left, pathArray[position].top, pathArray[nextPosition].left, pathArray[nextPosition].top, npc, walkingSpeed);
@@ -1540,20 +1542,15 @@ const enterNewArea = (function () {
                         // Create new default map.
                         const newDefaultMap = document.createElement( 'div' );
                         newDefaultMap.className = 'default-map';
-                        // engage cutscene.
-                        if ( 'yes' === newMapItems['is-cutscene'] ) {
-                            newDefaultMap.dataset.iscutscene = 'yes';
-                            engageCutscene( position, true );
-
-                            if ( container ) {
-                                window.previousCutsceneArea = container.className.replace( 'game-container ', '');
-                            }
-                        }
 
                         // Set starting position in case you die.
                         newDefaultMap.dataset.starttop = newMapItems['start-top'];
                         newDefaultMap.dataset.startleft = newMapItems['start-left'];
                         newDefaultMap.innerHTML = newMapItems['map-explainers'] + newMapItems['map-items'] + newMapItems['map-cutscenes'] + newMapItems['minigames'] + newMapItems['map-svg'] + newMapItems['map-communicate'];
+
+                        if ( 'yes' === newMapItems['is-cutscene'] ) {
+                            newDefaultMap.dataset.iscutscene = 'yes';
+                        }
 
                         container.innerHTML = newMapItems['menu-explainers'] + container.innerHTML + newDefaultMap.outerHTML;
 
@@ -1611,12 +1608,19 @@ const enterNewArea = (function () {
                         communicateParentClick();
 
                         // Set all first cutscene dialogues to engage.
-                        const allFirstDialogues = document.querySelectorAll( '.map-cutscene .wp-block-orbem-paragraph-mp3:first-of-type, .map-communicate .wp-block-orbem-paragraph-mp3:first-of-type' );
+                        const allFirstDialogues = document.querySelectorAll( '.map-cutscene .wp-block-orbem-paragraph-mp3:first-of-type, .map-communicate .message-wrapper .wp-block-orbem-paragraph-mp3' );
 
                         if ( allFirstDialogues ) {
                             allFirstDialogues.forEach( firstDialogue => {
                                 firstDialogue.classList.add( 'engage' );
                             });
+                        }
+
+                        // engage cutscene.
+                        if ( 'yes' === newMapItems['is-cutscene'] ) {
+                            engageCutscene( position, true );
+
+                            window.previousCutsceneArea = position;
                         }
 
                         // If the previous area was a cutscene, remove items set to be removed after that cutscene area.
@@ -2452,7 +2456,7 @@ export function engageExploreGame() {
     const touchButtons = document.querySelector( '.touch-buttons' );
 
     // Set all first cutscene dialogues to engage.
-    const allFirstDialogues = document.querySelectorAll( '.map-cutscene .wp-block-orbem-paragraph-mp3:first-of-type, .map-communicate .wp-block-orbem-paragraph-mp3:first-of-type' );
+    const allFirstDialogues = document.querySelectorAll( '.map-cutscene .wp-block-orbem-paragraph-mp3:first-of-type, .map-communicate .wp-block-orbem-paragraph-mp3' );
 
     if ( allFirstDialogues ) {
         allFirstDialogues.forEach( firstDialogue => {
@@ -3371,7 +3375,7 @@ function interactWithItem( item, mapChar ) {
 }
 
 /**
- * Swatch alt image for intereacted items like breakables that don't disappear.
+ * Swatch alt image for interacted items like breakables that don't disappear.
  * @param item
  */
 function swapInteractedImage(item) {
@@ -3559,27 +3563,27 @@ function engageCutscene( position, areaCutscene = false, isVideo = false ) {
     if ( cutscene && ( undefined === cutscene.dataset?.video || 'false' === cutscene.dataset?.video ) ) {
         const dialogues = cutscene.querySelectorAll( 'p, .wp-block-orbem-paragraph-mp3' );
         const mc = document.querySelector('.cut-character.main');
-        const character = cleanClassName(cutscene.querySelector('.wp-block-orbem-paragraph-mp3:not(.explore-character-' + mc.dataset.character + ')').className);
+        const character = cleanClassName(cutscene.querySelector('.wp-block-orbem-paragraph-mp3:not(.explore-character-' + mc?.dataset?.character + ')')?.className);
         const npc = document.getElementById(character);
 
-        if ( false === cutscene.classList.contains( 'been-viewed' ) ) {
+        if (false === cutscene.classList.contains('been-viewed')) {
             // Stop movement.
             window.allowMovement = false;
             window.allowHit = false;
 
-            setTimeout( () => {
-                npc.scrollIntoView({behavior: 'smooth', block: 'nearest'});
-            }, 500)
-
             if ( npc ) {
+                setTimeout(() => {
+                    npc.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }, 500)
+
                 npc.dataset.cutscenebreak = 'true';
             }
 
             cutscene.classList.add('engage');
 
             // start music if exists.
-            if ( cutscene.dataset.music && '' !== cutscene.dataset.music ) {
-                playSong( cutscene.dataset.music, position );
+            if (cutscene.dataset.music && '' !== cutscene.dataset.music) {
+                playSong(cutscene.dataset.music, position);
             }
 
             // Mute current if mute is flagged.
@@ -3590,26 +3594,26 @@ function engageCutscene( position, areaCutscene = false, isVideo = false ) {
             let textContainer = dialogues[0];
 
             // on load.
-            if ( dialogues[0] && dialogues[0].classList.contains( 'wp-block-orbem-paragraph-mp3' ) ) {
-                textContainer = dialogues[0].querySelector( 'p' );
+            if (dialogues[0] && dialogues[0].classList.contains('wp-block-orbem-paragraph-mp3')) {
+                textContainer = dialogues[0].querySelector('p');
             }
 
             const text = textContainer.innerText;
             textContainer.innerText = '';
             typeWriter(textContainer, text, 0);
 
-            cutscene.classList.add( 'been-viewed' );
+            cutscene.classList.add('been-viewed');
 
-            // Set allow be default.
+            // Set allow by default.
             window.allowCutscene = true;
 
             // Before Cutscene.
-            beforeCutscene( cutscene );
+            beforeCutscene(cutscene);
 
             moveDialogueBox(text);
 
             // Add a keydown event listener to the document to detect spacebar press
-            document.addEventListener( 'keydown', cutsceneKeys );
+            document.addEventListener('keydown', cutsceneKeys);
         }
 
         function moveDialogueBox(firstText = '') {
@@ -3617,11 +3621,14 @@ function engageCutscene( position, areaCutscene = false, isVideo = false ) {
             const mainMapCharacter = document.getElementById('map-character');
             let providedAudio = currentDialogue.querySelector( 'audio' );
             providedAudio = providedAudio ?? false;
-            const dialogueChar = currentDialogue.className.replace(' engage', '').replace('engage ', '').replace('wp-block-orbem-paragraph-mp3 ', '').replace('explore-character-');
-            const currentDialogueChar = mainMapCharacter.dataset?.mainid !== dialogueChar ? document.querySelector( '#' + dialogueChar ) : mainMapCharacter;
+            const dialogueChar = cleanClassName(currentDialogue.className);
+            const currentDialogueChar = mainMapCharacter.dataset?.mainid !== dialogueChar ? document.getElementById( dialogueChar ) : mainMapCharacter;
             let voice = currentDialogue.dataset.voice;
-            const theCharacter = cleanClassName(currentDialogue.className);
-            const theCharacterEl = mc.dataset.character === theCharacter ? mc : cutscene.querySelector( '.cut-character[data-character="' + theCharacter + '"]' );
+            let theCharacterEl = false;
+
+            if ( mc ) {
+                theCharacterEl = mc.dataset.character === dialogueChar ? mc : cutscene.querySelector( '.cut-character[data-character="' + dialogueChar + '"]' );
+            }
 
             // Move dialogue box to talker.
             if ( true === areaCutscene ) {
@@ -3632,13 +3639,14 @@ function engageCutscene( position, areaCutscene = false, isVideo = false ) {
                     cutscene.style.position = 'absolute';
                     cutscene.style.display = 'table';
                     cutscene.style.width = '300px';
+                    cutscene.style.bottom = 'unset';
                     cutscene.style.maxHeight = 'unset';
                     cutscene.style.height = 'unset';
                     cutscene.style.transform = 'unset';
                     cutscene.style.left = ( currentDialogueCharLeft - 300 ) + 'px';
                     cutscene.style.top = ( currentDialogueCharTop - cutscene.offsetHeight ) + 'px';
                 }
-            } else {
+            } else if ( mc ) {
                 const currentCharImage = document.querySelector( '.engage.cut-character' );
                 if ( currentCharImage && theCharacterEl ) {
                     currentCharImage.classList.remove('engage');
@@ -3649,7 +3657,7 @@ function engageCutscene( position, areaCutscene = false, isVideo = false ) {
             if ('' !== firstText) {
                 makeTalk(firstText, voice, providedAudio);
 
-                if ( theCharacterEl ) {
+                if ( mc && theCharacterEl ) {
                     theCharacterEl.classList.add( 'engage' );
                 }
             }
@@ -3754,7 +3762,7 @@ function engageCutscene( position, areaCutscene = false, isVideo = false ) {
                 dialogues[0].classList.add( 'engage' );
 
                 // After cutscene.
-                afterCutscene( cutscene, areaCutscene );
+                afterCutscene( cutscene, areaCutscene, character );
 
                 // If cutscene area remove stuff.
                 cutscene.style.removeProperty('position' );
@@ -3817,7 +3825,8 @@ function communicateParentClick() {
     if ( communicateParents ) {
         communicateParents.forEach( communicateParent => {
             communicateParent.addEventListener('click', (e) => {
-                if (false === e.target.parentNode.classList.contains('map-communicate') && false === e.target.classList.contains('map-communicate') || false === communicateParent.classList.contains('engage')) {
+                const isCommunicate = e.target.closest( '.map-communicate' );
+                if (( !isCommunicate && false === e.target.classList.contains('map-communicate') ) || false === communicateParent.classList.contains('engage')) {
                     if (false === communicateParent.classList.contains('engage')) {
                         communicateParent.classList.add('engage');
                         communicateParent.classList.remove('notify');
@@ -3826,6 +3835,48 @@ function communicateParentClick() {
                     }
                 }
             });
+
+            const communicates = communicateParent.querySelectorAll('.map-communicate');
+
+            if ( communicates ) {
+                communicates.forEach( communicateEl => {
+                    const dialogues = communicateEl.querySelectorAll( 'p, .wp-block-orbem-paragraph-mp3' );
+                    const communicateType = communicateEl.dataset.type;
+
+                    communicateEl.addEventListener( 'click', () => {
+                        if ( 'voicemail' === communicateType && true === communicateParent.classList.contains('engage') ) {
+                            let textContainer = dialogues[0];
+
+                            const text = textContainer.innerText;
+
+                            moveDialogueBox(text);
+
+                            function moveDialogueBox(firstText = '') {
+                                const currentDialogue = communicateEl.querySelector('.wp-block-orbem-paragraph-mp3.engage');
+                                let providedAudio = currentDialogue.querySelector('audio');
+                                providedAudio = providedAudio ?? false
+                                let voice = currentDialogue.dataset.voice;
+
+                                if ('' !== firstText) {
+                                    makeTalk(firstText, voice, providedAudio);
+                                }
+                            }
+                        } else if ( true === communicateParent.classList.contains('engage') ) {
+                            communicateEl.classList.toggle( 'show' );
+                        }
+                    });
+
+                    // start music if exists.
+                    if ( communicateEl.dataset.music && '' !== communicateEl.dataset.music ) {
+                        playSong( communicateEl.dataset.music, communicate );
+                    }
+
+                    // Mute current if mute is flagged.
+                    if ('yes' === communicateEl.dataset?.mutemusic && window.currentMusic) {
+                        window.currentMusic.pause();
+                    }
+                })
+            }
         } );
     }
 }
@@ -3837,6 +3888,8 @@ function engageCommunicate( communicate, communicateTrigger ) {
     const communicateEl = document.querySelector( '.' + communicate + '-map-communicate');
     const communicateParent = communicateEl.parentNode;
 
+    communicateParent.classList.add('notify');
+
     if ( communicateTrigger ) {
         communicateTrigger.remove();
         persistItemRemoval(communicateEl.id, 'communicate', communicateParent.id);
@@ -3844,46 +3897,6 @@ function engageCommunicate( communicate, communicateTrigger ) {
 
     // Show communicate.
     communicateEl.classList.add('engage');
-
-    if ( communicateParent && false === communicateParent.classList.contains('notify')) {
-        const dialogues = communicateEl.querySelectorAll( 'p, .wp-block-orbem-paragraph-mp3' );
-        const communicateType = communicateEl.dataset.type;
-
-        communicateParent.classList.add('notify');
-
-        communicateEl.addEventListener( 'click', () => {
-            if ( 'voicemail' === communicateType && true === communicateParent.classList.contains('engage') ) {
-                let textContainer = dialogues[0];
-
-                const text = textContainer.innerText;
-
-                moveDialogueBox(text);
-
-                function moveDialogueBox(firstText = '') {
-                    const currentDialogue = communicateEl.querySelector('.wp-block-orbem-paragraph-mp3.engage');
-                    let providedAudio = currentDialogue.querySelector('audio');
-                    providedAudio = providedAudio ?? false
-                    let voice = currentDialogue.dataset.voice;
-
-                    if ('' !== firstText) {
-                        makeTalk(firstText, voice, providedAudio);
-                    }
-                }
-            } else if ( true === communicateParent.classList.contains('engage') ) {
-                communicateEl.classList.add( 'engage' );
-            }
-        });
-
-        // start music if exists.
-        if ( communicateEl.dataset.music && '' !== communicateEl.dataset.music ) {
-            playSong( communicateEl.dataset.music, communicate );
-        }
-
-        // Mute current if mute is flagged.
-        if ('yes' === communicateEl.dataset?.mutemusic && window.currentMusic) {
-            window.currentMusic.pause();
-        }
-    }
 }
 
 /**
@@ -3983,14 +3996,15 @@ function faceNPC(mapCharacter, npc, cutscene) {
  * Stuff that happens after a cutscene.
  * @param cutscene
  * @param areaCutscene
+ * @param character
  */
-function afterCutscene( cutscene, areaCutscene = false ) {
+function afterCutscene( cutscene, areaCutscene = false, character = false ) {
     cutscene.classList.remove( 'engage' );
 
     window.nextAreaMissionComplete = '';
     const cutsceneName = cleanClassName( cutscene.className ).replace( ' ', '' );
     const bossFight = cutscene.dataset.boss;
-    const cutsceneCharacter = document.querySelector( '.' + cutscene.dataset.character + '-map-item' );
+    const cutsceneCharacter = character ? document.getElementById( character ) : false;
     const indicator = document.querySelector( '.indicator-icon' );
     const communicateDevice = cutscene.dataset?.communicate;
     const materializeCutscene = document.querySelector('[data-materializecutscene="' + cutsceneName + '"]');
@@ -4000,8 +4014,8 @@ function afterCutscene( cutscene, areaCutscene = false ) {
     }
 
     // Show dependent communication devices.
-    if (communicateDevice && '' !== communicateDevice) {
-        const communicateDeviceEl = document.querySelector('.' + communicateDevice + '-map-item');
+    if ( communicateDevice && '' !== communicateDevice ) {
+        const communicateDeviceEl = document.querySelector( '.' + communicateDevice + '-map-item' );
 
         if ( communicateDeviceEl ) {
             communicateDeviceEl.classList.add( 'dependent' );
@@ -4038,10 +4052,10 @@ function afterCutscene( cutscene, areaCutscene = false ) {
 
     // Trigger walking path if selected and has path.
     const pathTriggerPosition = document.querySelector( '[data-trigger-cutscene="' + cutsceneName + '"]' );
-    const character = document.querySelector( `.${cutscene.dataset.character}-map-item[data-genre="explore-character"]`);
+    const cutsceneHasPath = undefined !== cutscene.dataset?.path;
 
     // Push MC if NPC needs to walk after cutscene.
-    if ( ( character && '' !== character.dataset?.path && undefined !== character.dataset?.path ) || undefined !== cutscene.dataset?.path ) {
+    if ( pathTriggerPosition || cutsceneHasPath ) {
         // Push MC away from character.
         pushMC(30);
     }
@@ -4049,8 +4063,6 @@ function afterCutscene( cutscene, areaCutscene = false ) {
     if ( pathTriggerPosition ) {
         moveNPC( pathTriggerPosition );
     }
-
-    const cutsceneHasPath = undefined !== cutscene.dataset?.path;
 
     // If cutscene has walking path. Move NPC after cutscene.
     if ( cutsceneHasPath ) {
