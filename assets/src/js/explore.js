@@ -2004,48 +2004,53 @@ function selectNewCharacter(character) {
             } );
         }
 
-        // Set speed level if ioana.
-        if ( true === character.dataset.charactername.includes( 'ioana' ) ) {
-            clearInterval(window.movementInt);
-            window.moveSpeed = 10;
-            window.attackMultiplier = 5;
-            movementIntFunc();
+        switch (character.dataset?.ability) {
+            case 'speed' :
 
-            // Change weapon to fist.
-            const fist = document.querySelector( '.storage-item[title="fist"]');
-            changeWeapon( fist );
-        } else if ( true === character.dataset.charactername.includes( window.mainCharacter ) ) {
-            const equipped = document.querySelector('.storage-item[data-type="weapons"].equipped')
-            changeWeapon(equipped);
+                clearInterval(window.movementInt);
+                window.moveSpeed = 10;
+                window.attackMultiplier = 5;
+                movementIntFunc();
 
-            // Normal Speed.
-            clearInterval(window.movementInt);
-            window.moveSpeed = 20;
-            window.attackMultiplier = 0;
-            movementIntFunc();
+                // Change weapon.
+                changeWeapon(document.querySelector('.storage-item[title="' + character.dataset?.weapon + '"]'));
+            break;
+            case 'programming' :
+                    const equipped = document.querySelector('.storage-item[data-type="weapons"].equipped')
+                    changeWeapon(equipped);
 
-        } else if ( true === character.dataset.charactername.includes( 'john' ) ) {
-            clearInterval(window.movementInt);
-            window.moveSpeed = 20;
-            movementIntFunc();
+                    clearInterval(window.movementInt);
+                    window.moveSpeed = 20;
+                    window.attackMultiplier = 0;
+                    movementIntFunc();
+                    break;
 
-            // Change weapon to fist.
-            const fist = document.querySelector('.storage-item[title="fist"]');
-            window.attackMultiplier = 10;
-            changeWeapon(fist);
-        } else if ( true === character.dataset.charactername.includes( 'genie' ) ) {
-            clearInterval(window.movementInt);
-            window.moveSpeed = 20;
-            movementIntFunc();
+            case 'strong' :
+                    clearInterval(window.movementInt);
+                    window.moveSpeed = 20;
+                    movementIntFunc();
 
-            // Change weapon to fist.
-            const knives = document.querySelector('.storage-item[title="throwing-knives"]');
-            window.attackMultiplier = 0;
-            changeWeapon(knives);
-        } else {
-            clearInterval(window.movementInt);
-            window.moveSpeed = 20;
-            movementIntFunc();
+                    // Change weapon.
+                    changeWeapon(document.querySelector('.storage-item[title="' + character.dataset?.weapon + '"]'));
+                    window.attackMultiplier = 10;
+               break;
+            case 'hazard' :
+                    clearInterval(window.movementInt);
+                    window.moveSpeed = 20;
+                    movementIntFunc();
+
+                    // Change weapon.
+                    changeWeapon(document.querySelector('.storage-item[title="' + character.dataset?.weapon + '"]'));
+                    window.attackMultiplier = 0;
+                    changeWeapon(knives);
+                break;
+            case 'default' :
+                    clearInterval(window.movementInt);
+                    window.moveSpeed = 20;
+                    // Change weapon.
+                    changeWeapon(document.querySelector('.storage-item[title="' + character.dataset?.weapon + '"]'));
+                    movementIntFunc();
+            break;
         }
 
         character.dataset.charactername = oldCurrentCharName ? oldCurrentCharName : window.mainCharacter;

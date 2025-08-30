@@ -2447,6 +2447,7 @@ class Explore
                         'height' => get_post_meta($main_character->ID, 'explore-height', true),
                         'width' => get_post_meta($main_character->ID, 'explore-width', true),
                         'ability' => get_post_meta($main_character->ID, 'explore-ability', true),
+                        'weapon' => get_post_meta($main_character->ID, 'explore-weapon-choice', true),
                         'id' => $main_character->ID,
                         'voice' => get_post_meta($main_character->ID, 'explore-voice', true),
                     ];

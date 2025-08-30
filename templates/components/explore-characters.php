@@ -16,11 +16,9 @@ $characters = get_user_meta($userid, 'explore_characters', true);
         if (false === empty($characters)) :
         foreach( $characters as $character ) :
             $character_post = get_posts(['name' => $character, 'post_type' => 'explore-character', 'post_status' => 'publish', 'posts_per_page' => 1]);
-            $character_weapon = get_post_meta($character_post[0]->ID, 'explore-weapon-choice', true);
-            $character_ability = get_post_meta($character_post[0]->ID, 'explore-ability', true);
             $character_images = Explore::getCharacterImages($character_post[0], '');
         ?>
-            <div class="character-item" data-ability="<?php echo esc_attr( $character_ability ); ?>" data-charactername="<?php echo esc_attr( $character_post[0]->post_name ); ?>" data-weapon="<?php echo false === empty($character_weapon) ? esc_attr($character_weapon) : ''; ?>">
+            <div class="character-item" data-ability="<?php echo esc_attr( $character_images['ability'] ); ?>" data-charactername="<?php echo esc_attr( $character_post[0]->post_name ); ?>" data-weapon="<?php echo false === empty($character_images['weapon']) ? esc_attr($character_images['weapon']) : ''; ?>">
                 <div class="character-images">
                     <?php $non_main_direction_images = $character_images['direction_images'] ?? false; ?>
 
