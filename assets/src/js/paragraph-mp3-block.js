@@ -1,6 +1,6 @@
 import { InspectorControls, MediaUpload, MediaUploadCheck, RichText } from '@wordpress/block-editor';
 import { registerBlockType } from '@wordpress/blocks';
-import { Button, PanelBody, SelectControl } from '@wordpress/components';
+import { Button, PanelBody, SelectControl, CheckboxControl } from '@wordpress/components';
 import { useSelect } from '@wordpress/data';
 import { __ } from '@wordpress/i18n';
 
@@ -38,6 +38,10 @@ registerBlockType('orbem/paragraph-mp3', {
         selectedVoice: {
             type: 'string',
             default: '',
+        },
+        triggerPath: {
+            type: 'boolean',
+            default: false,
         },
     },
 
@@ -101,9 +105,16 @@ registerBlockType('orbem/paragraph-mp3', {
                             <p>{__('Loading characters...', 'custom')}</p>
                         )}
                     </PanelBody>
+                    <PanelBody title={__('Trigger Path', 'custom')}>
+                        <CheckboxControl
+                            label={__('Enable Trigger Path', 'custom')}
+                            checked={attributes.triggerPath}
+                            onChange={(newValue) => setAttributes({ triggerPath: newValue })}
+                        />
+                    </PanelBody>
                 </InspectorControls>
 
-                <span className={`explore-character-${selectedCharacter}`} data-voice={selectedVoice}>
+                <span className={`explore-character-${selectedCharacter}`} data-voice={selectedVoice} {...(attributes.triggerPath ? { 'data-triggerpath': 'true' } : {})}>
                     <RichText
                         tagName="p"
                         value={content}
@@ -123,7 +134,7 @@ registerBlockType('orbem/paragraph-mp3', {
         const characterClass = selectedCharacter ? `explore-character-${selectedCharacter}` : '';
 
         return (
-            <span className={characterClass} data-voice={selectedVoice}>
+            <span className={characterClass} data-voice={selectedVoice} {...(attributes.triggerPath ? { 'data-triggerpath': 'true' } : {})}>
                 <RichText.Content tagName="p" value={content} />
                 {mp3Url && <audio controls src={mp3Url} style={{ position: 'absolute', left: '-56000px' }} />}
             </span>

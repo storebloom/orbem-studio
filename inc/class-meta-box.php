@@ -281,6 +281,7 @@ class Meta_Box {
                 ],
             ],
             'explore-character' => [
+                'explore-character-name' => 'text',
                 'explore-time-between' => 'number',
                 'explore-voice' => [
                     'select' => [$this->getVoices()]
@@ -362,6 +363,7 @@ class Meta_Box {
                 ],
             ],
             'explore-enemy' => [
+                'explore-character-name' => 'text',
                 'explore-time-between' => 'number',
                 'explore-voice' => [
                     'select' => [$this->getVoices()]

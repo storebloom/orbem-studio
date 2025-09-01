@@ -26,7 +26,6 @@ let currentLocation = ''
 let timerCountDownHit = false;
 let weaponPosTop = 300;
 let weaponPosLeft = 400;
-let walkingInterval;
 
 window.mainCharacter = '';
 window.godMode = false;
@@ -349,8 +348,9 @@ function engageCharacterSelection() {
  * @param cutscene
  */
 function moveNPC( npc, cutscene = false ) {
+    let walkingInterval;
+
     if ( npc ) {
-        clearInterval(walkingInterval);
 
         let oldNpc = false;
 
@@ -522,7 +522,7 @@ function engageSettingsMenus() {
             }
 
             settingCog.addEventListener('click', (e) => {
-                if ( false === e.target.classList.contains( 'close-settings') && false === e.target.parentNode.classList.contains( 'character-item') ) {
+                if ( false === e.target.classList.contains( 'close-settings') && !e.target.closest( '.character-item') ) {
                     settingCog.classList.add( 'engage' );
                 }
             });
@@ -1414,6 +1414,8 @@ const enterNewArea = (function () {
     let called = false;
 
     return function(position, weapon, mapUrl, nextAreaPosition) {
+        fadeOutScene();
+
         // Incase using level selector.
         playStartScreenMusic(false);
 
@@ -1679,6 +1681,7 @@ const enterNewArea = (function () {
             // Reset called var.
             setTimeout(() => {
                 called = false;
+                fadeInScene();
             }, 1000);
         }
     }
@@ -2004,7 +2007,7 @@ function selectNewCharacter(character) {
             } );
         }
 
-        switch (character.dataset?.ability) {
+        switch (currentCharacter.dataset?.ability) {
             case 'speed' :
 
                 clearInterval(window.movementInt);
@@ -2013,7 +2016,7 @@ function selectNewCharacter(character) {
                 movementIntFunc();
 
                 // Change weapon.
-                changeWeapon(document.querySelector('.storage-item[title="' + character.dataset?.weapon + '"]'));
+                changeWeapon(document.querySelector('.storage-item[title="' + currentCharacter.dataset?.weapon + '"]'));
             break;
             case 'programming' :
                     const equipped = document.querySelector('.storage-item[data-type="weapons"].equipped')
@@ -2031,7 +2034,7 @@ function selectNewCharacter(character) {
                     movementIntFunc();
 
                     // Change weapon.
-                    changeWeapon(document.querySelector('.storage-item[title="' + character.dataset?.weapon + '"]'));
+                    changeWeapon(document.querySelector('.storage-item[title="' + currentCharacter.dataset?.weapon + '"]'));
                     window.attackMultiplier = 10;
                break;
             case 'hazard' :
@@ -2040,7 +2043,7 @@ function selectNewCharacter(character) {
                     movementIntFunc();
 
                     // Change weapon.
-                    changeWeapon(document.querySelector('.storage-item[title="' + character.dataset?.weapon + '"]'));
+                    changeWeapon(document.querySelector('.storage-item[title="' + currentCharacter.dataset?.weapon + '"]'));
                     window.attackMultiplier = 0;
                     changeWeapon(knives);
                 break;
@@ -2048,7 +2051,7 @@ function selectNewCharacter(character) {
                     clearInterval(window.movementInt);
                     window.moveSpeed = 20;
                     // Change weapon.
-                    changeWeapon(document.querySelector('.storage-item[title="' + character.dataset?.weapon + '"]'));
+                    changeWeapon(document.querySelector('.storage-item[title="' + currentCharacter.dataset?.weapon + '"]'));
                     movementIntFunc();
             break;
         }
@@ -2622,6 +2625,8 @@ export function engageExploreGame() {
     if ( mapChar ) {
       mapChar.scrollIntoView({ behavior: "instant", block: "center", inline: "center" });
     }
+
+    setTimeout( () => { fadeInScene(); }, 1000 );
 }
 
 /**
@@ -3567,14 +3572,17 @@ function engageCutscene( position, areaCutscene = false, isVideo = false ) {
 
     if ( cutscene && ( undefined === cutscene.dataset?.video || 'false' === cutscene.dataset?.video ) ) {
         const dialogues = cutscene.querySelectorAll( 'p, .wp-block-orbem-paragraph-mp3' );
-        const mc = document.querySelector('.cut-character.main');
-        const character = cleanClassName(cutscene.querySelector('.wp-block-orbem-paragraph-mp3:not(.explore-character-' + mc?.dataset?.character + ')')?.className);
+        const mc = document.getElementById('map-character');
+        const character = cleanClassName(cutscene.querySelector('.wp-block-orbem-paragraph-mp3:not(.explore-character-' + mc?.dataset?.mainid + ')')?.className);
         const npc = document.getElementById(character);
 
         if (false === cutscene.classList.contains('been-viewed')) {
             // Stop movement.
             window.allowMovement = false;
             window.allowHit = false;
+
+            // Before Cutscene.
+            beforeCutscene(cutscene);
 
             if ( npc ) {
                 setTimeout(() => {
@@ -3612,9 +3620,6 @@ function engageCutscene( position, areaCutscene = false, isVideo = false ) {
             // Set allow by default.
             window.allowCutscene = true;
 
-            // Before Cutscene.
-            beforeCutscene(cutscene);
-
             moveDialogueBox(text);
 
             // Add a keydown event listener to the document to detect spacebar press
@@ -3623,47 +3628,65 @@ function engageCutscene( position, areaCutscene = false, isVideo = false ) {
 
         function moveDialogueBox(firstText = '') {
             const currentDialogue = cutscene.querySelector( '.wp-block-orbem-paragraph-mp3.engage' );
-            const mainMapCharacter = document.getElementById('map-character');
             let providedAudio = currentDialogue.querySelector( 'audio' );
             providedAudio = providedAudio ?? false;
             const dialogueChar = cleanClassName(currentDialogue.className);
-            const currentDialogueChar = mainMapCharacter.dataset?.mainid !== dialogueChar ? document.getElementById( dialogueChar ) : mainMapCharacter;
+            const currentDialogueChar = mc.dataset?.mainid !== dialogueChar ? document.getElementById( dialogueChar ) : mc;
             let voice = currentDialogue.dataset.voice;
-            let theCharacterEl = false;
+            const pathTrigger = currentDialogue.dataset?.triggerpath;
+            let theCharacterEl = document.getElementById( dialogueChar );
+            const theCharacterImage = cutscene.querySelector( '.cut-character[data-character="' + dialogueChar + '"]' );
+            const theCharacterName = cutscene.querySelector( '.character-name[data-character="' + dialogueChar + '"]' );
 
             if ( mc ) {
-                theCharacterEl = mc.dataset.character === dialogueChar ? mc : cutscene.querySelector( '.cut-character[data-character="' + dialogueChar + '"]' );
+                theCharacterEl = mc.dataset.mainid === dialogueChar ? mc : theCharacterEl;
             }
 
             // Move dialogue box to talker.
             if ( true === areaCutscene ) {
                 if ( currentDialogueChar && cutscene ) {
-                    const currentDialogueCharLeft = mainMapCharacter.dataset?.mainid !== dialogueChar ? parseInt( currentDialogueChar.style.left.replace('px', '') ) + 20 : parseInt( currentDialogueChar.style.left.replace('px', '') ) + 470;
-                    const currentDialogueCharTop = mainMapCharacter.dataset?.mainid !== dialogueChar ? parseInt( currentDialogueChar.style.top.replace('px', '') ) + 20 : parseInt( currentDialogueChar.style.top.replace('px', '') ) + 470;
+                    let currentDialogueCharLeft = parseInt( currentDialogueChar.style.left.replace('px', '') ) - ( cutscene.offsetWidth / 2 );
+                    let currentDialogueCharTop = parseInt( currentDialogueChar.style.top.replace('px', '') ) + ( currentDialogueChar.offsetHeight / 2 );
 
-                    cutscene.style.position = 'absolute';
-                    cutscene.style.display = 'table';
-                    cutscene.style.width = '300px';
-                    cutscene.style.bottom = 'unset';
-                    cutscene.style.maxHeight = 'unset';
-                    cutscene.style.height = 'unset';
-                    cutscene.style.transform = 'unset';
-                    cutscene.style.left = ( currentDialogueCharLeft - 300 ) + 'px';
-                    cutscene.style.top = ( currentDialogueCharTop - cutscene.offsetHeight ) + 'px';
+                    if ( mc.dataset?.mainid === dialogueChar ) {
+                        currentDialogueCharLeft = currentDialogueCharLeft + ( mc.offsetWidth / 2 );
+                    }
+
+                    cutscene.style.left = currentDialogueCharLeft + 'px';
+                    cutscene.style.top = currentDialogueCharTop + 'px';
+
+                    const currentCharName = document.querySelector( '.engage.character-name' );
+                    if ( currentCharName ) {
+                        currentCharName.classList.remove('engage');
+                        theCharacterName.classList.add( 'engage' );
+                    }
                 }
             } else if ( mc ) {
-                const currentCharImage = document.querySelector( '.engage.cut-character' );
-                if ( currentCharImage && theCharacterEl ) {
+                const currentCharImage = cutscene.querySelector( '.engage.cut-character' );
+                const currentCharName = cutscene.querySelector( '.engage.character-name' );
+
+                if ( currentCharImage && currentCharName ) {
+                    currentCharName.classList.remove( 'engage' );
                     currentCharImage.classList.remove('engage');
-                    theCharacterEl.classList.add( 'engage' );
+                    theCharacterImage.classList.add( 'engage' );
+                    theCharacterName.classList.add( 'engage' );
                 }
+            }
+
+            // If triggerable, trigger the move path for character.
+            if ( pathTrigger && theCharacterEl ) {
+                moveNPC(theCharacterEl);
             }
 
             if ('' !== firstText) {
                 makeTalk(firstText, voice, providedAudio);
 
-                if ( mc && theCharacterEl ) {
-                    theCharacterEl.classList.add( 'engage' );
+                if ( mc && theCharacterImage ) {
+                    theCharacterImage.classList.add( 'engage' );
+                }
+
+                if ( mc && theCharacterName ) {
+                    theCharacterName.classList.add( 'engage' );
                 }
             }
         }
@@ -4157,6 +4180,22 @@ function playWalkSound() {
     return false;
 }
 
+function fadeInScene() {
+    const container = document.querySelector('.game-container');
+
+    if ( container ) {
+        container.dataset.fadeout = false;
+    }
+}
+
+function fadeOutScene() {
+    const container = document.querySelector('.game-container');
+
+    if ( container ) {
+        container.dataset.fadeout = true;
+    }
+}
+
 function stopWalkSound() {
     const walkingSound = document.getElementById('walking');
 
@@ -4417,7 +4456,7 @@ function movementIntFunc() {
 
            box.scrollIntoView({block: 'nearest'});
         }
-    }, 20 );
+    }, window.moveSpeed );
 }
 
 /**

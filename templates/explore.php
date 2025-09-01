@@ -83,7 +83,7 @@ include plugin_dir_path(__FILE__) . 'plugin-header.php';
     <?php if (true === $is_admin) : ?>
         <?php echo html_entity_decode(Dev_Mode::getDevModeHTML($item_list)); ?>
     <?php endif; ?>
-    <div class="game-container <?php echo esc_attr($location); ?>" data-main="<?php echo esc_attr($main_character); ?>" style="background: url(<?php echo esc_url($explore_area_map ?? ''); ?>) no-repeat left top; background-size: cover;">
+    <div class="game-container <?php echo esc_attr($location); ?>" data-main="<?php echo esc_attr($main_character); ?>" data-fadeout="true" style="background: url(<?php echo esc_url($explore_area_map ?? ''); ?>) no-repeat left top; background-size: cover;">
         <?php if ((false === empty($explore_area_map) && false !== stripos($explore_area_map, '.webm')) || (false === empty($explore_area_map) && false !== stripos($explore_area_map, '.mp4'))): ?>
             <video style="position:absolute;z-index: 1;width: 100%;height:100%;top:0; left:0;" src="<?php echo esc_attr($explore_area_map); ?>" autoplay loop muted></video>
         <?php endif; ?>

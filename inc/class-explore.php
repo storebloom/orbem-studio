@@ -1760,14 +1760,8 @@ class Explore
     public static function getMapCutsceneHTML($explore_cutscenes, $position, $userid) {
         $userid = $userid ?? get_current_user_id();
         $html = '';
-        $main_character = get_option( 'explore_main_character', false);
         $area = get_posts(['post_type' => 'explore-area', 'name' => $position, 'posts_per_page' => 1]);
         $is_area_cutscene = 'yes' === get_post_meta($area[0]->ID, 'explore-is-cutscene', true);
-        $mc = get_posts( ['post_type' => 'explore-character', 'name' => $main_character, 'posts_per_page' => 1]);
-
-        if (false === $is_area_cutscene) {
-            $html .= '<div data-character="' . $mc[0]->ID . '" class="cut-character main"><img src="' . get_the_post_thumbnail_url($mc[0]). '"/></div>';
-        }
 
         foreach( $explore_cutscenes as $explore_cutscene ) {
             $character = get_post_meta( $explore_cutscene->ID, 'explore-character', true );
@@ -1897,20 +1891,34 @@ class Explore
 
             $html .= '>';
 
-            if (false === $is_area_cutscene) {
-                foreach (parse_blocks($explore_cutscene->post_content) as $blocks) {
-                    $character_ids[] = $blocks['attrs']['selectedCharacter'] ?? '';
-                }
+            foreach (parse_blocks($explore_cutscene->post_content) as $blocks) {
+                $character_ids[] = $blocks['attrs']['selectedCharacter'] ?? '';
+            }
 
-                foreach( array_unique($character_ids) as $character_id) {
-                    if (false === empty($character_id) && $character_id !== $mc[0]->ID ) {
+            $unique_character_ids = array_unique($character_ids);
+
+            if (false === $is_area_cutscene) {
+                $html .= '<div class="character-image-wrapper">';
+                foreach($unique_character_ids as $character_id) {
+                    if ( false === empty($character_id) ) {
                         $html .= '<div data-character="' . $character_id . '" class="cut-character"><img src="' . get_the_post_thumbnail_url($character_id) . '"/></div>';
                     }
                 }
+                $html .= '</div>';
             }
 
+            $html .= '<div class="character-name-wrapper">';
+            foreach($unique_character_ids as $character_id) {
+                $character_name = get_post_meta($character_id, 'explore-character-name', true);
+                $character_name = false === empty($character_name) ? $character_name : get_post_field( 'post_title', $character_id );
+
+                if ( false === empty($character_id) ) {
+                    $html .= '<div data-character="' . $character_id . '" class="character-name">' . esc_html($character_name) . '</div>';
+                }
+            }
 
             $html .= 'explore-area' !== $explore_cutscene->post_type ? $explore_cutscene->post_content : '';
+            $html .= '</div>';
 
             if (true === $has_video) {
                 $html .= '<span id="skip-cutscene-video">SKIP</span>';
