@@ -145,6 +145,12 @@ html {
       }
     }
 
+    .map-item[data-showaftercutscene] {
+      &:not(.no-point) {
+        display: none;
+      }
+    }
+
     .explainer-trigger {
       position: absolute;
     }
@@ -858,9 +864,16 @@ html {
         z-index: 999999999;
       }
 
+      &[data-fadeout="false"] {
+        &::after {
+          display: none;
+        }
+      }
+
       &[data-fadeout="true"] {
         &::after {
           background: rgba(0, 0, 0, 1);
+          display: block;
         }
       }
 
@@ -1388,6 +1401,18 @@ html {
           position: absolute;
           z-index: 1;
 
+          .character-icon {
+            display: none;
+
+            &.engage {
+              display: block;
+            }
+          }
+
+          &[data-hazard="true"] {
+            z-index: 0;
+          }
+
           &[data-genre="explore-sign"] {
             position: absolute;
             z-index: 6;
@@ -1581,20 +1606,6 @@ html {
             }
           }
         }
-
-        .map-item,
-        .enemy-item {
-          position: absolute;
-          z-index: 2;
-
-          .character-icon {
-            display: none;
-
-            &.engage {
-              display: block;
-            }
-          }
-        }
       }
 
       #map-character {
@@ -1605,6 +1616,28 @@ html {
 
         @media only screen and (max-width: 480px) {
           width: 300px;
+        }
+
+        .misc-gauge-wrap {
+          position: absolute;
+          left: 50%;
+          height: 10px;
+          opacity: 0;
+          overflow: hidden;
+          top: 190px;
+          transform: translateX(-50%);
+          width: 200px;
+
+          .misc-gauge {
+            background-color: red;
+            display: block;
+            height: 100%;
+            width: 100%;
+          }
+
+          &.engage {
+            opacity: 1;
+          }
         }
 
         &:before {

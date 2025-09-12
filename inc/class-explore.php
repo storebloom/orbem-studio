@@ -1344,7 +1344,7 @@ class Explore
             $remove_after_cutscene = get_post_meta($explore_point->ID, 'explore-remove-after-cutscene', true);
             $repeat = get_post_meta($explore_point->ID, 'explore-repeat', true);
             $disappear = get_post_meta($explore_point->ID, 'explore-disappear', true);
-            $disappear = false === empty($disappear) && 'no' === $disappear;
+            $layer = get_post_meta($explore_point->ID, 'explore-layer', true);
             $passable = get_post_meta($explore_point->ID, 'explore-passable', true);
             $passable = false === empty($passable) && 'yes' === $passable;
             $foreground = get_post_meta($explore_point->ID, 'explore-foreground', true);
@@ -1361,6 +1361,7 @@ class Explore
             $path_trigger_width = false === empty($path_trigger['width']) ? $path_trigger['width'] : '';
             $path_trigger_cutscene = false === empty($path_trigger['cutscene']) ? $path_trigger['cutscene'] : '';
             $materialize_item_trigger = get_post_meta($explore_point->ID, 'explore-materialize-item-trigger', true);
+            $materialize_after_cutscene = get_post_meta($explore_point->ID, 'explore-materialize-after-cutscene', true);
             $wanderer = get_post_meta( $explore_point->ID, 'explore-wanderer', true);
             $materialize_item_trigger = $materialize_item_trigger ?? false;
             $is_materialized_item_triggered = self::isMaterializedItemTriggered($explore_point->post_name, $current_location, $userid);
@@ -1368,6 +1369,7 @@ class Explore
             $hazard_remove = false;
             $explore_attack = get_post_meta($explore_point->ID, 'explore-attack', true);
             $weapon_strength = false === empty($explore_attack) ? wp_json_encode($explore_attack['explore-attack']) : '""';
+            $rotation = get_post_meta($explore_point->ID, 'explore-rotation', true);
             $missions = get_posts(
                 [
                     'post_type' => 'explore-mission',
@@ -1412,6 +1414,9 @@ class Explore
              $path_onload = true === empty($path_trigger['left']) && true === empty($path_trigger['cutscene']) && ('explore-character' === $explore_point->post_type || 'explore-enemy' === $explore_point->post_type) ? ' path-onload' : '';
              $classes = $path_onload;
 
+             // Add no point for materialized item after cutscene.
+            $classes = $classes . ' no-point';
+
             // If it's an enemy and they have health show or if not an enemy show.
             if (('explore-enemy' === $explore_point->post_type && false === in_array($explore_point->post_name, $dead_ones,
                         true)) || 'explore-enemy' !== $explore_point->post_type ) {
@@ -1426,7 +1431,10 @@ class Explore
                     }
                 }
 
-                $html .= '<div style="left:' . intval($left) . 'px; top:' . intval($top) . 'px;" id="' . $explore_point->ID . '" data-genre="' . $explore_point->post_type . '" data-type="' . esc_attr($type) . '" data-value="' . intval($value) . '"';
+                // Add z index change if layer number is defined.
+                $layer = false === empty($layer) ? 'z-index: ' . $layer . ';' : '';
+
+                $html .= '<div style="' . $layer . 'transform: rotate(' . intval($rotation) . 'deg);left:' . intval($left) . 'px; top:' . intval($top) . 'px;" id="' . $explore_point->ID . '" data-genre="' . $explore_point->post_type . '" data-type="' . esc_attr($type) . '" data-value="' . intval($value) . '"';
                 $html .= 'data-image="' . get_the_post_thumbnail_url($explore_point->ID) . '" ';
                 if ('explore-area' === $explore_point->post_type) {
                     $map_url = get_post_meta($explore_point->ID, 'explore-map', true);
@@ -1454,9 +1462,7 @@ class Explore
                 }
 
                 // Will disappear?
-                if ( true === $disappear ) {
-                    $html .= ' data-disappear="false" ';
-                }
+                $html .= ' data-disappear="' . $disappear . '" ';
 
                 // Will be passable?
                 if ( true === $passable ) {
@@ -1542,6 +1548,11 @@ class Explore
 
                 if (true === $collectable || 'explore-weapon' === $explore_point->post_type) {
                     $html .= ' data-collectable="true" ';
+                }
+
+                // Materialize this item after this cutscene.
+                if (false === empty($materialize_after_cutscene)) {
+                    $html .= ' data-showaftercutscene="' . $materialize_after_cutscene . '"';
                 }
 
                 if (true === $draggable) {
@@ -1689,7 +1700,7 @@ class Explore
                         $remove = $drag_dest['remove-after'] ?? 'no';
 
                         $html .= '<div id="' . $explore_point->ID . '-d" class="drag-dest wp-block-group map-item ' . $explore_point->post_name . '-drag-dest-map-item is-layout-flow wp-block-group-is-layout-flow"';
-                        $html .= 'style="z-index:0;left:' . esc_html($drag_left) . 'px;top:' . $drag_top . 'px;height:' . $drag_height . 'px; width:' . $drag_width . 'px;"';
+                        $html .= 'style="z-index:1;left:' . esc_html($drag_left) . 'px;top:' . $drag_top . 'px;height:' . $drag_height . 'px; width:' . $drag_width . 'px;"';
 
                         if ('yes' === $remove) {
                             $html .= ' data-removable="true" ';
@@ -1791,7 +1802,7 @@ class Explore
             $boss_fight = get_post_meta($explore_cutscene->ID, 'explore-cutscene-boss', true);
             $cutscene_trigger_type = get_post_meta($explore_cutscene->ID, 'explore-trigger-type', true) ?? '';
             $next_area_datapoint = false === empty($next_area) ? ' data-nextarea="' . $next_area . '"' : '';
-            $cutscene_name = false === $is_area_cutscene || true === $has_video ? $explore_cutscene->post_name : $area[0]->post_name;
+            $cutscene_name = $explore_cutscene->post_name;
             $is_cutscene_triggered = self::isMaterializedItemTriggered($explore_cutscene->post_name, $area[0]->post_name, $userid);
             $communicate_engage = get_post_meta($explore_cutscene->ID, 'explore-engage-communicate', true);
             $character_ids = [];

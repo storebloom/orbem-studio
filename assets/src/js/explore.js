@@ -21,16 +21,19 @@ let shooterInterval;
 let inHazard = false;
 let hazardItem = false;
 let pulsewaveInterval;
+let getOutOfHazard;
 let timerCountDownInterval;
 let currentLocation = ''
 let timerCountDownHit = false;
 let weaponPosTop = 300;
 let weaponPosLeft = 400;
+let hazardCounter = 0;
 
 window.mainCharacter = '';
 window.godMode = false;
 window.noTouch = false;
 window.isDragging = '';
+window.hazardTime = 600;
 
 document.addEventListener("DOMContentLoaded", function(){
     currentLocation = document.querySelector( '.game-container' );
@@ -785,7 +788,7 @@ function getRandomDir(currentDir = []) {
  * @param collectable
  * @param missionName
  */
-function addUserPoints(amount, type, position, collectable, missionName = '') {
+function addUserPoints(amount, type, position, collectable = false, missionName = '') {
     // If collectable, remove from menu.
     if ( true === collectable ) {
         removeItemFromStorage(position, type);
@@ -1618,16 +1621,30 @@ const enterNewArea = (function () {
                             });
                         }
 
-                        // engage cutscene.
-                        if ( 'yes' === newMapItems['is-cutscene'] ) {
-                            engageCutscene( position, true );
-
-                            window.previousCutsceneArea = position;
-                        }
-
                         // If the previous area was a cutscene, remove items set to be removed after that cutscene area.
                         if ( '' !== window.previousCutsceneArea ) {
                             removeItems( document.querySelectorAll('[data-removeaftercutscene]' ), window.previousCutsceneArea );
+
+                            const showItems = document.querySelectorAll('[data-showaftercutscene="' + window.previousCutsceneArea + '"]');
+
+                            if ( showItems ) {
+                                showItems.forEach(showItem => {
+                                    materializedItemsArray.push(cleanClassName(showItem.className));
+                                    showItem.classList.add('no-point');
+                                });
+
+                                saveMaterializedItem(currentLocation, materializedItemsArray);
+                            }
+
+                            window.previousCutsceneArea = '';
+                        }
+
+                        // engage cutscene.
+                        if ( 'yes' === newMapItems['is-cutscene'] ) {
+                            const cutsceneName = cleanClassName(document.querySelector( '.map-cutscene' ).className);
+                            engageCutscene( cutsceneName, true );
+
+                            window.previousCutsceneArea = cutsceneName;
                         }
 
                         const crewMates = document.querySelectorAll( '[data-crewmate="yes"]' );
@@ -1647,6 +1664,9 @@ const enterNewArea = (function () {
                                 characterCount++
                             }, 1000);
                         }
+
+                        // Trigger fade in after new level loads.
+                        fadeInScene();
 
                         // Run no point class adder again
                         addNoPoints();
@@ -1681,7 +1701,6 @@ const enterNewArea = (function () {
             // Reset called var.
             setTimeout(() => {
                 called = false;
-                fadeInScene();
             }, 1000);
         }
     }
@@ -1983,6 +2002,10 @@ function playSong(path, name) {
     }
 }
 
+/**
+ * Function to change the current playable character from your crew list.
+ * @param character
+ */
 function selectNewCharacter(character) {
     const charImage = character.querySelector('img');
     charImage.removeAttribute('srcset');
@@ -2001,8 +2024,8 @@ function selectNewCharacter(character) {
                 newCharacter[index].src = mcImageUrl;
 
                 // set new character
-                currentCharacter.setAttribute( 'data-currentchar', character.dataset.charactername );
-                currentCharacter.setAttribute( 'data-ability', character.dataset.ability );
+                currentCharacter.dataset.currentchar = character.dataset.charactername;
+                currentCharacter.dataset.ability = character.dataset.ability;
                 character.dataset.ability = mcAbility;
             } );
         }
@@ -2028,7 +2051,7 @@ function selectNewCharacter(character) {
                     movementIntFunc();
                     break;
 
-            case 'strong' :
+            case 'strength' :
                     clearInterval(window.movementInt);
                     window.moveSpeed = 20;
                     movementIntFunc();
@@ -2045,7 +2068,6 @@ function selectNewCharacter(character) {
                     // Change weapon.
                     changeWeapon(document.querySelector('.storage-item[title="' + currentCharacter.dataset?.weapon + '"]'));
                     window.attackMultiplier = 0;
-                    changeWeapon(knives);
                 break;
             case 'default' :
                     clearInterval(window.movementInt);
@@ -2412,7 +2434,7 @@ function addNoPoints() {
                         dragDestMapItem.remove();
                     }
 
-                    if ( 'false' === mapItem.dataset?.disappear) {
+                    if ( 'no' === mapItem.dataset?.disappear) {
                         swapInteractedImage(mapItem);
                     }
 
@@ -2446,8 +2468,9 @@ function shouldRemoveItemOnload( mapItem ) {
         'explore-character' === mapItem.dataset.genre ||
         'true' === mapItem.dataset.hazard ||
         'true' === mapItem.dataset.collectable ||
-        ( 'true' === mapItem.dataset.breakable && 'false' !== mapItem.dataset?.disappear )  ||
-        ('true' === mapItem.dataset.removable && 'false' !== mapItem.dataset?.disappear ) ||
+        ( 'true' === mapItem.dataset.breakable && 'no' !== mapItem.dataset?.disappear )  ||
+        ('true' === mapItem.dataset.removable && 'no' !== mapItem.dataset?.disappear ) ||
+        ('true' === mapItem.dataset.draggable && 'yes' === mapItem.dataset?.disappear) ||
         (undefined !== mapItem.dataset?.removeaftercutscene)
     ) {
         return true;
@@ -2576,7 +2599,7 @@ export function engageExploreGame() {
     const isAreaCutscene = 'yes' === document.querySelector( '.default-map' ).dataset.iscutscene;
 
     if ( isAreaCutscene && currentLocation ) {
-        const cutSceneName = currentLocation;
+        const cutSceneName = cleanClassName(document.querySelector( '.map-cutscene' ).className);
         window.previousCutsceneArea = cutSceneName;
         engageCutscene(cutSceneName, true);
     }
@@ -2609,6 +2632,17 @@ export function engageExploreGame() {
 
     if ( '' !== window.previousCutsceneArea ) {
         removeItems( document.querySelectorAll('[data-removeaftercutscene]' ), window.previousCutsceneArea );
+
+        const showItems = document.querySelectorAll('[data-showaftercutscene="' + window.previousCutsceneArea + '"]');
+
+        if ( showItems ) {
+            showItems.forEach(showItem => {
+                materializedItemsArray.push(cleanClassName(showItem.className));
+                showItem.classList.add('no-point');
+            });
+
+            saveMaterializedItem(currentLocation, materializedItemsArray);
+        }
     }
 
     // Hazard hurt me check.
@@ -2769,6 +2803,7 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
     let weaponEl = document.querySelector( '.map-weapon' );
     const magicEl = document.querySelector( '.magic-weapon' );
     const area = document.querySelector('.game-container').className.replace('game-container ', '');
+    const hazardGauge = mapChar.querySelector( '.misc-gauge-wrap' );
 
     // Reset weapon element as magic element.
     if ( magicEl ) {
@@ -2846,13 +2881,38 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
 
                 // If in hazard set to true.
                 if ('true' === value.dataset.hazard && false === canCharacterInteract(value, mapChar, 'hazard')) {
-                    inHazard = true;
-                    window.theHazardValue = value.dataset.value;
-                    hazardItem = value.closest('.enemy-item') ?? value;
+                    if ( 100 <= hazardCounter || 0 === hazardCounter ) {
+                        const hurtAmount = value.dataset.value;
+                        const currentHealth = getCurrentPoints('health');
+                        const newAmount = currentHealth - parseInt(hurtAmount);
+
+                        addUserPoints(newAmount, 'health', 'hazard');
+
+                        // Push character away from hazard center.
+                        pushCharacter(25, value.closest('.enemy-item') ?? value, mapChar);
+
+                        hazardCounter = 0;
+                    }
+
+                    hazardCounter++
                 } else if ('true' === value.dataset.hazard && true === canCharacterInteract(value, mapChar, 'hazard')) {
-                    setTimeout(() => {
-                        inHazard = false;
-                    }, 100);
+                    if ( hazardGauge ) {
+                        hazardGauge.classList.add( 'engage' );
+                    }
+
+                    const hazardGaugeBar = hazardGauge.querySelector('.misc-gauge');
+
+                    if ( window.hazardTime <= hazardCounter ) {
+                        inHazard = true;
+                        window.theHazardValue = value.dataset.value;
+                        hazardItem = value.closest('.enemy-item') ?? value;
+                        hazardGaugeBar.style.width = '100%';
+                        hazardGauge.classList.remove( 'engage' );
+                    } else {
+                        hazardGaugeBar.style.width = ( ( ( window.hazardTime - hazardCounter ) / window.hazardTime ) * 100 ) + '%';
+                    }
+
+                    hazardCounter++
                 }
 
                 if (dragDest) {
@@ -3064,7 +3124,17 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
                 if ('true' === value.getAttribute('data-collectable')) {
                     value.remove();
                 }
-            } else if ('true' === value.dataset.hazard || true === value.classList.contains('engage') || true === value.classList.contains('dragme') ) {
+
+                // Clear this so it doesn't set hazard to false even when I'm in it.
+                clearTimeout(getOutOfHazard);
+
+                getOutOfHazard = setTimeout(() => {
+                    inHazard = false;
+                    hazardItem = false;
+                    hazardCounter = 0;
+                    hazardGauge.classList.remove( 'engage' );
+                }, 100);
+            } else if ( true === value.classList.contains('engage') || true === value.classList.contains('dragme') ) {
                 value.classList.remove('engage');
                 value.classList.remove('dragme');
 
@@ -3072,16 +3142,6 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
                     indicator.classList.remove('engage');
                     window.allowHit = true;
                 }
-
-                setTimeout(() => {
-                    inHazard = false;
-                    hazardItem = false;
-                }, 100);
-            } else {
-                setTimeout(() => {
-                    inHazard = false;
-                    hazardItem = false;
-                }, 100);
             }
 
             // For breakables and other interactions.
@@ -3153,7 +3213,7 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
                         canCharacterInteract(value, mapChar, 'strength') &&
                         (null === value.dataset.minigame || undefined === value.dataset.minigame) &&
                         (null === value.dataset.disappear || undefined === value.dataset.disappear) &&
-                        'false' !== value.dataset?.disappear
+                        'no' !== value.dataset?.disappear
                     ) {
                         value.remove();
                     } else if (value) {
@@ -3374,12 +3434,12 @@ function interactWithItem( item, mapChar ) {
     }
 
     // If item is breakable.
-    if ('false' !== item.dataset?.disappear && 'true' === item.dataset.breakable && 'explore-sign' !== item.dataset.genre ) {
+    if ('no' !== item.dataset?.disappear && 'true' === item.dataset.breakable && 'explore-sign' !== item.dataset.genre ) {
         item.style.display = 'none';
     }
 
     // If disappear set to false change image.
-    if ('false' === item.dataset?.disappear) {
+    if ('no' === item.dataset?.disappear) {
         swapInteractedImage(item);
     }
 }
@@ -4104,6 +4164,18 @@ function afterCutscene( cutscene, areaCutscene = false, character = false ) {
         removeItems( removeThings, cutsceneName );
     }
 
+    // Materialize item after cutscene.
+    let showItems = document.querySelectorAll('[data-showaftercutscene="' + cutsceneName + '"]');
+
+    if ( showItems ) {
+        showItems.forEach( showItem => {
+            showItem.classList.add('no-point');
+            materializedItemsArray.push(cleanClassName(showItem.className));
+        } );
+
+        saveMaterializedItem(currentLocation, materializedItemsArray);
+    }
+
     // Go to new area after cutscene if next area exists.
     const nextArea = cutscene.dataset.nextarea;
     const nextAreaPosition = cutscene.getAttribute( 'data-nextarea-position' );
@@ -4158,10 +4230,6 @@ function removeItems( removeThings, cutsceneName ) {
             persistItemRemoval(cleanClassName(removeThing.className));
         }
     } );
-
-    if ( removeThings && 0 < removeThings.length && '' !== window.previousCutsceneArea ) {
-        window.previousCutsceneArea = '';
-    }
 }
 
 function playWalkSound() {
@@ -4184,7 +4252,11 @@ function fadeInScene() {
     const container = document.querySelector('.game-container');
 
     if ( container ) {
-        container.dataset.fadeout = false;
+        container.dataset.fadeout = '';
+
+        setTimeout( () => {
+            container.dataset.fadeout = 'false';
+        }, 1000);
     }
 }
 
@@ -4192,7 +4264,7 @@ function fadeOutScene() {
     const container = document.querySelector('.game-container');
 
     if ( container ) {
-        container.dataset.fadeout = true;
+        container.dataset.fadeout = 'true';
     }
 }
 
@@ -4761,9 +4833,12 @@ function blockMovement(top, left, box = false) {
     let finalTop = top;
     let finalLeft = left;
     const mainChar = box !== false ? '.map-character-icon.engage, ' : '';
+    const mainCharEl = document.getElementById('map-character');
     box = false === box ? document.querySelector( '.map-character-icon.engage' ) : box;
+    const hazardClass = false !== box && 'hazard' === mainCharEl.dataset.ability ? ':not([data-hazard="true"])' : '';
+
     const collisionWalls = document.querySelectorAll(
-        mainChar + '.default-map svg rect, .map-item:not([data-wanderer="yes"]):not(.explainer-container):not(.materialize-item-trigger):not(.drag-dest):not([data-hazard="true"]):not([data-trigger="true"]):not(.currently-dragging):not([data-passable="true"].no-point):not(.passable):not([data-genre="explore-sign"]):not([data-foreground="true"]):not([data-background="true"]), .enemy-item'
+        mainChar + '.default-map svg rect, .map-item' + hazardClass + ':not([data-wanderer="yes"]):not(.explainer-container):not(.materialize-item-trigger):not(.drag-dest):not([data-trigger="true"]):not(.currently-dragging):not([data-passable="true"].no-point):not(.passable):not([data-genre="explore-sign"]):not([data-foreground="true"]):not([data-background="true"]), .enemy-item'
     );
 
     return getBlockDirection(collisionWalls, box, parseInt(finalTop), parseInt(finalLeft), false, ('' !== mainChar));
@@ -5057,10 +5132,10 @@ function engageDraggableFunction() {
                 const dragDest = document.querySelector( '.' + cleanClass + '-drag-dest-map-item' );
 
                 if ( dragDest ) {
-                    const dragDestLeft = parseInt( dragDest.style.left.replace( 'px', '' ) );
-                    const dragDestTop = parseInt( dragDest.style.top.replace( 'px', '' ) );
-                    const dragItemLeft = parseInt( dragmeitem.style.left.replace('px', '') );
-                    const dragItemTop = parseInt( dragmeitem.style.top.replace('px', '') );
+                    const dragDestLeft = parseInt( dragDest.style.left.replace( 'px', '' ) ) + ( dragDest.offsetWidth / 2 );
+                    const dragDestTop = parseInt( dragDest.style.top.replace( 'px', '' ) ) + ( dragDest.offsetHeight / 2 );
+                    const dragItemLeft = parseInt( dragmeitem.style.left.replace('px', '') ) + ( dragDest.offsetWidth / 2 );
+                    const dragItemTop = parseInt( dragmeitem.style.top.replace('px', '') ) + ( dragDest.offsetHeight / 2 );
                     const topOffset = dragItemTop < dragDestTop ? dragDestTop - dragItemTop : dragItemTop - dragDestTop;
                     const leftOffset = dragItemLeft < dragDestLeft ? dragDestLeft - dragItemLeft : dragItemLeft - dragDestLeft;
 
@@ -5073,6 +5148,11 @@ function engageDraggableFunction() {
 
                         if ('true' === dragDest.dataset.removable) {
                             dragDest.remove();
+                        }
+
+                        // Remove drag item if disappear is yes.
+                        if ('yes' === dragmeitem.dataset.disappear) {
+                            dragmeitem.remove();
                         }
                     }
                 }

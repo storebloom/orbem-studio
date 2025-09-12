@@ -168,6 +168,7 @@ include plugin_dir_path(__FILE__) . 'plugin-header.php';
             <img src="<?php echo $plugin_dir . '/assets/src/images/keys.png'; ?>" />
         </span>
         <div style="top: <?php echo false === empty($coordinates['top']) ? esc_attr($coordinates['top']) : $explore_area_start_top; ?>px; left: <?php echo false === empty($coordinates['left']) ? esc_attr($coordinates['left']) : $explore_area_start_left; ?>px" class="down-dir" data-mainid="<?php echo esc_attr($main_character_id); ?>" id="map-character" data-voice="<?php echo esc_attr($main_character_info['voice'] ?? '');?>" data-ability="<?php echo false === empty($main_character_info['ability']) ? esc_attr($main_character_info['ability']) : ''; ?>">
+            <span class="misc-gauge-wrap"><span class="misc-gauge"></span></span>
             <?php foreach($direction_images as $direction_label => $direction_image):
                 $fight_animation = false !== stripos($direction_label, 'punch') ? ' fight-image' : '';
                 ?>

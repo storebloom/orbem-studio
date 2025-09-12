@@ -588,6 +588,8 @@ class Meta_Box {
                 'width' => 'number',
                 'height' => 'number',
             ],
+            'explore-rotation' => 'number',
+            'explore-layer' => 'number'
         ];
 
         return false === empty($post_type_specific[$post_type]) ? array_merge($global_list, $post_type_specific[$post_type]) : $global_list;
