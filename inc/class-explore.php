@@ -1384,7 +1384,7 @@ class Explore
                         [
                             'key'     => 'explore-trigger-item',
                             'value'   => $explore_point->post_name,
-                            'compare' => '='
+                            'compare' => 'LIKE'
                         ],
                     ]
                 ]
@@ -1413,9 +1413,6 @@ class Explore
              // Create onload class:
              $path_onload = true === empty($path_trigger['left']) && true === empty($path_trigger['cutscene']) && ('explore-character' === $explore_point->post_type || 'explore-enemy' === $explore_point->post_type) ? ' path-onload' : '';
              $classes = $path_onload;
-
-             // Add no point for materialized item after cutscene.
-            $classes = $classes . ' no-point';
 
             // If it's an enemy and they have health show or if not an enemy show.
             if (('explore-enemy' === $explore_point->post_type && false === in_array($explore_point->post_name, $dead_ones,

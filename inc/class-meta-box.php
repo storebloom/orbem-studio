@@ -179,7 +179,7 @@ class Meta_Box {
                     'width' => 'number',
                 ],
                 'explore-trigger-item' => [
-                    'select' => [$explore_item_array]
+                    'multiselect' => [$explore_item_array]
                 ],
                 'explore-trigger-enemy' => [
                     'select' => [$explore_enemy_array]

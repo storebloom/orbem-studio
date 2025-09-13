@@ -560,9 +560,6 @@ html {
             width: 25%;
 
             img {
-              height: auto;
-              width: 100%;
-
               &.engage {
                 border: 5px dotted deepskyblue;
               }
@@ -965,7 +962,11 @@ html {
               gap: 1rem;
 
               .character-item {
+                align-items: flex-end;
+                border: 4px solid white;
                 cursor: pointer;
+                display: flex;
+                justify-content: center;
                 width: 150px;
 
                 &:hover {
@@ -981,10 +982,6 @@ html {
                       display: block;
                     }
                   }
-                }
-
-                img {
-                  width: 100%;
                 }
               }
             }
@@ -1416,6 +1413,7 @@ html {
           &[data-genre="explore-sign"] {
             position: absolute;
             z-index: 6;
+
             img.sign-image {
               width: 100%;
             }
@@ -1609,7 +1607,7 @@ html {
       }
 
       #map-character {
-        height: 600px;
+        height: 800px;
         position: absolute;
         width: 800px;
         z-index: 1;

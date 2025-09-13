@@ -25,7 +25,7 @@ let getOutOfHazard;
 let timerCountDownInterval;
 let currentLocation = ''
 let timerCountDownHit = false;
-let weaponPosTop = 300;
+let weaponPosTop = 400;
 let weaponPosLeft = 400;
 let hazardCounter = 0;
 
@@ -2107,7 +2107,7 @@ function engageEnemy( enemy, trigger ){
             let topValInt = parseInt( newEnemy.style.top, 10 );
             const mapCharacter = document.getElementById( 'map-character' );
             const mapCharacterLeft = parseInt(mapCharacter.style.left.replace('px', '')) + 400;
-            const mapCharacterTop = parseInt(mapCharacter.style.top.replace('px', '')) + 300;
+            const mapCharacterTop = parseInt(mapCharacter.style.top.replace('px', '')) + 400;
 
             // Move enemy left.
             if ( leftValInt < mapCharacterLeft ) {
@@ -2838,7 +2838,7 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
             const finalCharPos = {
                 offsetLeft: mapChar.offsetLeft + (400 - (box.offsetWidth / 2 )),
                 offsetWidth: box.offsetWidth,
-                offsetTop: mapChar.offsetTop + (300 - (box.offsetHeight / 2 )),
+                offsetTop: mapChar.offsetTop + (400 - (box.offsetHeight / 2 )),
                 offsetHeight: box.offsetHeight,
             };
 
@@ -3158,6 +3158,8 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
                     if ((triggee || undefined !== hasTrigger) && (startTimerItem && false === value.classList.contains('start-timer'))) {
                         const timerPosition = 'true' === startTimerItem.dataset.removable ? '' : [position, cleanClassName(startTimerItem.className)];
                         saveMission(value.dataset.mission, value, timerPosition);
+                        startTimerItem.style.display = 'none';
+                        value.style.display = 'none';
                     } else if (triggee || undefined !== hasTrigger) {
                         value.classList.add('start-timer');
 
@@ -3376,7 +3378,7 @@ function pushCharacter(distanceMult, pushElement, pushee) {
         const enemyTop = parseInt(pushElement.style.top.replace('px'));
 
         targetX = ( targetX + 400 ) < enemyLeft ? targetX - distanceMult : targetX + distanceMult;
-        targetY = ( targetY + 300 ) < enemyTop ? targetY - distanceMult : targetY + distanceMult;
+        targetY = ( targetY + 400 ) < enemyTop ? targetY - distanceMult : targetY + distanceMult;
 
         pushee.style.left = targetX + 'px';
         pushee.style.top = targetY + 'px';
@@ -4044,7 +4046,7 @@ function faceNPC(mapCharacter, npc, cutscene) {
         const mcTopCont = parseInt(mapCharacter.style.top.replace( 'px', ''));
         const mcLeft = mcLeftCont + ( 400 - (mcImage.offsetWidth / 2));
         const mcRight = mcLeft + mcImage.offsetWidth
-        const mcTop = mcTopCont + ( 300 - (mcImage.offsetHeight / 2));
+        const mcTop = mcTopCont + ( 400 - (mcImage.offsetHeight / 2));
         const mcBottom = mcTop + mcImage.offsetHeight;
 
         let direction;
@@ -4710,10 +4712,10 @@ function addCharacterHit() {
                                 // Reset weapon based on direction
                                 switch (direction) {
                                     case 'up':
-                                        weaponPosTop = 300;
+                                        weaponPosTop = 400;
                                         break;
                                     case 'down':
-                                        weaponPosTop = 300;
+                                        weaponPosTop = 400;
                                         break;
                                     case 'left':
                                         weaponPosLeft = 400;
@@ -4740,10 +4742,10 @@ function addCharacterHit() {
                             // Reset weapon based on direction
                             switch (direction) {
                                 case 'up':
-                                    weaponPosTop = 300;
+                                    weaponPosTop = 400;
                                     break;
                                 case 'down':
-                                    weaponPosTop = 300;
+                                    weaponPosTop = 400;
                                     break;
                                 case 'left':
                                     weaponPosLeft = 400;
@@ -4863,7 +4865,7 @@ function getBlockDirection(collisionWalls, box, finalTop, finalLeft, enemy, npc)
     const mainCharPos = {
         offsetLeft: mapChar.offsetLeft + (400 - (box.offsetWidth / 2 )),
         offsetWidth: box.offsetWidth,
-        offsetTop: mapChar.offsetTop + (300 - (box.offsetHeight / 2 )),
+        offsetTop: mapChar.offsetTop + (400 - (box.offsetHeight / 2 )),
         offsetHeight: box.offsetHeight,
     };
 
@@ -5250,7 +5252,7 @@ function clickTransport(clickE) {
     const container = document.querySelector('.game-container');
     const rect = container.getBoundingClientRect();
     const x = ( clickE.clientX - rect.left ) - 400;
-    const y = ( clickE.clientY - rect.top ) - 300;
+    const y = ( clickE.clientY - rect.top ) - 400;
     const mapCharacter = document.getElementById( 'map-character' );
     const bar = document.querySelector('.power-amount');
     const gauge = bar.querySelector('.gauge');
@@ -5312,11 +5314,11 @@ function moveCharacter(mapCharacter, newTop, newLeft, gradual, cutscene ) {
 
                 if ( topBigger ) {
                     mapCharacter.style.top = moveCount <= topDiff ? ( currentTop - moveCount ) + 'px' : newTop + 'px';
-                    weapon.style.top = ( parseInt( mapCharacter.style.top.replace('px', '') ) + 300 ) + 'px';
+                    weapon.style.top = ( parseInt( mapCharacter.style.top.replace('px', '') ) + 400 ) + 'px';
                     topDown = 'up';
                 } else {
                     mapCharacter.style.top = moveCount <= topDiff ? ( currentTop + moveCount ) + 'px' : newTop + 'px';
-                    weapon.style.top = ( parseInt( mapCharacter.style.top.replace('px', '') ) + 300 ) + 'px';
+                    weapon.style.top = ( parseInt( mapCharacter.style.top.replace('px', '') ) + 400 ) + 'px';
                     topDown = 'down';
                 }
 
@@ -5743,8 +5745,9 @@ function startTheTimer(timeAmount) {
         timer.className = 'timer-countdown';
         let countDown = parseInt(timeAmount / 1000);
         timer.style.position = 'fixed';
-        timer.style.right = '2rem';
-        timer.style.bottom = '2rem';
+        timer.style.left = '50%';
+        timer.style.transform = 'translateX(-50%)';
+        timer.style.top = '1rem';
         timer.style.fontSize = '2rem';
         timer.style.zIndex = '99999';
         timer.textContent = countDown;
