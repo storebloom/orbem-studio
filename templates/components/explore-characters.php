@@ -17,6 +17,7 @@ $characters = get_user_meta($userid, 'explore_characters', true);
         foreach( $characters as $character ) :
             $character_post = get_posts(['name' => $character, 'post_type' => 'explore-character', 'post_status' => 'publish', 'posts_per_page' => 1]);
             $character_images = Explore::getCharacterImages($character_post[0], '');
+            $character_name = get_post_meta($character_post[0]->ID, 'explore-character-name', true) ?? $character_post[0]->post_title;
         ?>
             <div class="character-item" data-ability="<?php echo esc_attr( $character_images['ability'] ); ?>" data-charactername="<?php echo esc_attr( $character_post[0]->post_name ); ?>" data-weapon="<?php echo false === empty($character_images['weapon']) ? esc_attr($character_images['weapon']) : ''; ?>">
                 <div class="character-images">
@@ -37,6 +38,9 @@ $characters = get_user_meta($userid, 'explore_characters', true);
                     endif;
                     ?>
                 </div>
+                <span class="character-name">
+                    <?php echo esc_html($character_name); ?>
+                </span>
             </div>
         <?php endforeach; endif; ?>
     </div>

@@ -146,6 +146,16 @@ class Meta_Box {
                         'no'
                     ]
                 ],
+                'explore-start-direction' => [
+                    'select' => [
+                        [
+                            'up',
+                            'down',
+                            'left',
+                            'right'
+                        ]
+                    ]
+                ],
                 'explore-start-top' => 'number',
                 'explore-start-left' => 'number',
                 'explore-communicate-type' => [
@@ -549,7 +559,10 @@ class Meta_Box {
                             'yes',
                             'no'
                         ]
-                    ]
+                    ],
+                    'materialize-after-cutscene' => [
+                        'select' => [$explore_cutscene_array]
+                    ],
                 ],
                 'explore-value-type' => [
                     'select' => [$explore_value_array]

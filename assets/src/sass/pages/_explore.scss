@@ -209,6 +209,7 @@ html {
         position: absolute;
         transition: opacity .2s;
         width: 15px;
+        z-index: 4;
 
         &.engage {
           display: block;
@@ -962,11 +963,13 @@ html {
               gap: 1rem;
 
               .character-item {
-                align-items: flex-end;
+                align-items: center;
                 border: 4px solid white;
                 cursor: pointer;
                 display: flex;
-                justify-content: center;
+                flex-direction: column;
+                font-weight: bold;
+                justify-content: flex-end;
                 width: 150px;
 
                 &:hover {
@@ -1410,6 +1413,10 @@ html {
             z-index: 0;
           }
 
+          &[data-draggable="true"] {
+            z-index: 1;
+          }
+
           &[data-genre="explore-sign"] {
             position: absolute;
             z-index: 6;
@@ -1429,6 +1436,10 @@ html {
               top: 50%;
               transform: translate(-50%, -50%);
               width: 95%;
+
+              img {
+                max-width: unset;
+              }
             }
 
             &:not(.open-up) {
@@ -1612,6 +1623,13 @@ html {
         width: 800px;
         z-index: 1;
 
+        &[data-hurt="true"] {
+          .map-character-icon.engage {
+            filter: sepia(1) hue-rotate(313deg) saturate(2) contrast(2.5);
+            animation: flash .05s infinite alternate;
+          }
+        }
+
         @media only screen and (max-width: 480px) {
           width: 300px;
         }
@@ -1695,6 +1713,7 @@ html {
 
           &.engage {
             display: block;
+            transition: filter .3s;
           }
 
           &.punched {
@@ -1917,6 +1936,15 @@ html {
       }
       100% {
         box-shadow: 0 0 15px #0ff, 0 0 20px #0ff, 0 0 30px #0ff;
+      }
+    }
+
+    @keyframes flash {
+      0% {
+        opacity: 0;
+      }
+      100% {
+        opacity: 1;
       }
     }
   }

@@ -46,14 +46,15 @@ class Plugin extends Plugin_Base {
             self::enqueueScript('orbem-order/app');
             self::enqueueStyle('orbem-order/app');
 
+            $current_user_id = get_current_user_id();
+
             // Register the WebSocket script
             //wp_enqueue_script('socket-io', 'https://cdn.socket.io/4.0.1/socket.io.min.js', array(), null, true);
             wp_add_inline_script('orbem-order/app',
                 'const gameURL = "' . get_option('explore_game_url', get_home_url()) . '";
-            const wpThemeURL = "' . str_replace(['https://', 'http://', 'www'], '', get_home_url()) . '";',
+            const wpThemeURL = "' . str_replace(['https://', 'http://', 'www'], '', get_home_url()) . '";
+                const previousCutsceneArea = "' . get_user_meta($current_user_id, 'explore_previous_cutscene_area', true) . '";',
             );
-
-            $current_user_id = get_current_user_id();
 
             $explore_points = get_user_meta($current_user_id, 'explore_points', true);
             $explore_points = $explore_points ?? [];
@@ -353,10 +354,18 @@ class Plugin extends Plugin_Base {
     public function blockGutenbergBlocks( $allowed_blocks, $editor_context ) {
         $explore = new Explore($this);
         // Target only your custom post type
-        if (!empty($editor_context->post) && true === in_array($editor_context->post->post_type, ['explore-magic', 'explore-weapon', 'explore-explainer', 'explore-sign', 'explore-minigame'])) {
+        if (!empty($editor_context->post) && true === in_array($editor_context->post->post_type, ['explore-magic', 'explore-weapon', 'explore-explainer', 'explore-sign'])) {
             return [
                 'core/paragraph',
                 'core/image',
+            ];
+        }
+
+        if (!empty($editor_context->post) && $editor_context->post->post_type === 'explore-minigame') {
+            return [
+                'core/paragraph',
+                'core/image',
+                'core/group'
             ];
         }
 

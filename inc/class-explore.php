@@ -345,6 +345,38 @@ class Explore
             'callback' => [$this, 'enableAbility'],
             'permission_callback' => '__return_true'
         ));
+
+        // Set previous cutscene area.
+        register_rest_route($namespace, '/set-previous-cutscene-area/', array(
+            'methods'  => 'POST',
+            'callback' => [$this, 'setPreviousCutsceneArea'],
+            'permission_callback' => '__return_true'
+        ));
+    }
+
+    /**
+     * Call back function for rest route that saves the previous cutscene area.
+     * @param object $return The arg values from rest route.
+     */
+    public function setPreviousCutsceneArea($request)
+    {
+        // Get the JSON string from the request body
+        $json_string = $request->get_body();
+
+        // Decode the JSON string into a PHP associative array
+        $return = json_decode($json_string, true);
+
+        // Handle errors in decoding JSON
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            return new \OrbemGameEngine\WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
+        }
+
+        $user = isset($return['userid']) ? intval($return['userid']) : '';
+        $cutscene = isset($return['cutscene']) ? sanitize_text_field(wp_unslash(($return['cutscene']))) : '';
+
+        if (false === in_array('', [$user], true)) {
+            update_user_meta($user, 'explore_previous_cutscene_area', $cutscene);
+        }
     }
 
     /**
@@ -954,6 +986,9 @@ class Explore
             $dev_mode = Dev_Mode::getDevModeHTML($item_list);
         }
 
+        $start_direction = get_post_meta($area[0]->ID, 'explore-start-direction', true);
+        $start_direction = false === empty($start_direction) ? $start_direction : 'down';
+
         wp_send_json_success(
             wp_json_encode(
                 [
@@ -969,6 +1004,7 @@ class Explore
                     'map-item-styles-scripts' => $area_item_styles_scripts,
                     'start-top' => get_post_meta($area[0]->ID, 'explore-start-top', true),
                     'start-left' => get_post_meta($area[0]->ID, 'explore-start-left', true),
+                    'start-direction' => $start_direction,
                     'map-svg' => self::getMapSVG($area[0]),
                     'is-cutscene' => $is_area_cutscene,
                     'dev-mode' => $dev_mode,
@@ -1088,6 +1124,7 @@ class Explore
         delete_user_meta($current_user, 'explore_materialized_items');
         delete_user_meta($current_user, 'explore_abilities');
         delete_user_meta($current_user, 'explore_received_communicates');
+        delete_user_meta($current_user, 'explore_previous_cutscene_area');
     }
 
     /**
@@ -1695,12 +1732,17 @@ class Explore
                         $drag_image = $drag_dest['image'] ?? '';
                         $drag_mission = $drag_dest['mission'] ?? '';
                         $remove = $drag_dest['remove-after'] ?? 'no';
+                        $materialize_after_cutscene = $drag_dest['materialize-after-cutscene'] ?? 'none';
 
                         $html .= '<div id="' . $explore_point->ID . '-d" class="drag-dest wp-block-group map-item ' . $explore_point->post_name . '-drag-dest-map-item is-layout-flow wp-block-group-is-layout-flow"';
-                        $html .= 'style="z-index:1;left:' . esc_html($drag_left) . 'px;top:' . $drag_top . 'px;height:' . $drag_height . 'px; width:' . $drag_width . 'px;"';
+                        $html .= 'style="z-index:0;left:' . esc_html($drag_left) . 'px;top:' . $drag_top . 'px;height:' . $drag_height . 'px; width:' . $drag_width . 'px;"';
 
                         if ('yes' === $remove) {
                             $html .= ' data-removable="true" ';
+                        }
+
+                        if ('none' !== $materialize_after_cutscene) {
+                            $html .= ' data-showaftercutscene="' . esc_attr($materialize_after_cutscene) . '" ';
                         }
 
                         $html .= 'data-meta="explore-drag-dest" ';
@@ -2144,6 +2186,7 @@ class Explore
                 $explainer_top = get_post_meta( $explainer->ID, 'explore-top', true);
                 $explainer_width = get_post_meta( $explainer->ID, 'explore-width', true);
                 $arrow_style = get_post_meta( $explainer->ID, 'explore-explainer-arrow', true);
+                $materialize_after_cutscene = get_post_meta($explainer->ID, 'explore-materialize-after-cutscene', true);
 
                 $path_trigger_top = false === empty($trigger['top']) && 0 !== $trigger['top'] ? $trigger['top'] : false;
                 $path_trigger_left = false === empty($trigger['left']) && 0 !== $trigger['left'] ? $trigger['left'] : '';
@@ -2159,6 +2202,12 @@ class Explore
                 if (false !== $path_trigger_top) {
                     $html .= '<div id="' . $explainer->ID . '-t" data-trigger="true" class="' . $explainer->post_name . '-explainer-trigger-map-item explainer-trigger map-item" data-triggee="' . $explainer->post_name . '" ';
                     $html .= ' data-meta="explore-explainer-trigger"';
+
+                    // Materialize this item after this cutscene.
+                    if (false === empty($materialize_after_cutscene)) {
+                        $html .= ' data-showaftercutscene="' . $materialize_after_cutscene . '"';
+                    }
+
                     $html .= 'style="left:' . $path_trigger_left . 'px;top:' . $path_trigger_top . 'px;height:' . $path_trigger_height . 'px; width:' . $path_trigger_width . 'px;"';
                     $html .= '></div>';
                 }
@@ -2436,6 +2485,8 @@ class Explore
             $main_character = false === empty($main_character) && is_array($main_character) ? $main_character[0] : $main_character;
             if (false === is_null($main_character) && false === empty($main_character)) {
                 $images = get_post_meta($main_character->ID, 'explore-character-images', true);
+                $name = get_post_meta($main_character->ID, 'explore-character-name', true);
+                $name = false === empty($name) ? $name : $main_character->post_title;
 
                 if (true === isset($images) && true === is_array($images)) {
                     return [
@@ -2465,6 +2516,7 @@ class Explore
                         'ability' => get_post_meta($main_character->ID, 'explore-ability', true),
                         'weapon' => get_post_meta($main_character->ID, 'explore-weapon-choice', true),
                         'id' => $main_character->ID,
+                        'name' => $name,
                         'voice' => get_post_meta($main_character->ID, 'explore-voice', true),
                     ];
                 }

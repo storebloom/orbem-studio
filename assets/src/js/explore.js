@@ -22,6 +22,7 @@ let inHazard = false;
 let hazardItem = false;
 let pulsewaveInterval;
 let getOutOfHazard;
+let hurtTimeout;
 let timerCountDownInterval;
 let currentLocation = ''
 let timerCountDownHit = false;
@@ -1419,6 +1420,8 @@ const enterNewArea = (function () {
     return function(position, weapon, mapUrl, nextAreaPosition) {
         fadeOutScene();
 
+        window.previousCutsceneArea = '' === window.previousCutsceneArea ? previousCutsceneArea ?? '' : window.previousCutsceneArea;
+
         // Incase using level selector.
         playStartScreenMusic(false);
 
@@ -1635,16 +1638,16 @@ const enterNewArea = (function () {
 
                                 saveMaterializedItem(currentLocation, materializedItemsArray);
                             }
-
-                            window.previousCutsceneArea = '';
                         }
 
                         // engage cutscene.
                         if ( 'yes' === newMapItems['is-cutscene'] ) {
                             const cutsceneName = cleanClassName(document.querySelector( '.map-cutscene' ).className);
                             engageCutscene( cutsceneName, true );
-
                             window.previousCutsceneArea = cutsceneName;
+                            setPreviousCutsceneArea( window.previousCutsceneArea );
+                        } else {
+                            fadeInScene();
                         }
 
                         const crewMates = document.querySelectorAll( '[data-crewmate="yes"]' );
@@ -1665,9 +1668,6 @@ const enterNewArea = (function () {
                             }, 1000);
                         }
 
-                        // Trigger fade in after new level loads.
-                        fadeInScene();
-
                         // Run no point class adder again
                         addNoPoints();
                     }, 700 );
@@ -1676,6 +1676,7 @@ const enterNewArea = (function () {
                 setTimeout(() => {
                     const container = document.querySelector( '.game-container' );
                     const characterItem = document.getElementById( 'map-character' );
+                    const theWeapon = document.querySelector('.map-weapon');
 
                     if ( nextAreaPosition ) {
                         newMapItems['start-top'] = JSON.parse( nextAreaPosition ).top;
@@ -1684,7 +1685,9 @@ const enterNewArea = (function () {
 
                     characterItem.style.top = newMapItems['start-top'] + 'px';
                     characterItem.style.left = newMapItems['start-left'] + 'px';
+                    characterItem.className = newMapItems['start-direction'] + '-dir';
                     characterItem.scrollIntoView({ behavior: "instant", block: "center", inline: "center" });
+                    setStaticMCImage(characterItem, newMapItems['start-direction']);
 
                     container.className = 'game-container ' + position;
                     container.style.backgroundImage = 'url(' + mapUrl + ')';
@@ -1692,7 +1695,7 @@ const enterNewArea = (function () {
 
                     playSong(newMusic, position);
                     window.allowMovement = true;
-                    weapon.style.display = "block";
+                    theWeapon.style.display = "block";
                 }, 100 );
             });
 
@@ -2020,21 +2023,22 @@ function selectNewCharacter(character) {
             mc.forEach( (mcImage, index) => {
                 const mcImageUrl = mcImage.src;
                 const mcAbility = currentCharacter.dataset.ability;
+                const mcName = currentCharacter.dataset.name;
                 mcImage.src = newCharacter[index].src;
                 newCharacter[index].src = mcImageUrl;
 
                 // set new character
                 currentCharacter.dataset.currentchar = character.dataset.charactername;
                 currentCharacter.dataset.ability = character.dataset.ability;
+                currentCharacter.dataset.name = character.querySelector('.character-name').textContent;
                 character.dataset.ability = mcAbility;
+                character.querySelector('.character-name').textContent = mcName;
             } );
         }
 
         switch (currentCharacter.dataset?.ability) {
             case 'speed' :
-
-                clearInterval(window.movementInt);
-                window.moveSpeed = 10;
+                window.moveSpeed = 1;
                 window.attackMultiplier = 5;
                 movementIntFunc();
 
@@ -2045,14 +2049,12 @@ function selectNewCharacter(character) {
                     const equipped = document.querySelector('.storage-item[data-type="weapons"].equipped')
                     changeWeapon(equipped);
 
-                    clearInterval(window.movementInt);
                     window.moveSpeed = 20;
                     window.attackMultiplier = 0;
                     movementIntFunc();
                     break;
 
             case 'strength' :
-                    clearInterval(window.movementInt);
                     window.moveSpeed = 20;
                     movementIntFunc();
 
@@ -2061,7 +2063,6 @@ function selectNewCharacter(character) {
                     window.attackMultiplier = 10;
                break;
             case 'hazard' :
-                    clearInterval(window.movementInt);
                     window.moveSpeed = 20;
                     movementIntFunc();
 
@@ -2070,7 +2071,6 @@ function selectNewCharacter(character) {
                     window.attackMultiplier = 0;
                 break;
             case 'default' :
-                    clearInterval(window.movementInt);
                     window.moveSpeed = 20;
                     // Change weapon.
                     changeWeapon(document.querySelector('.storage-item[title="' + currentCharacter.dataset?.weapon + '"]'));
@@ -2229,7 +2229,7 @@ function shootProjectile(projectile, mapCharacterLeft, mapCharacterTop, enemy, p
             collisionWalls.forEach( collisionWall => {
                 if ( elementsOverlap( projectile, collisionWall ) ) {
                     // If projectile collides with player than take health of player.
-                    if ( true === collisionWall.classList.includes('map-character-icon') && '.map-weapon' !== projectileClass ) {
+                    if ( true === collisionWall.classList.contains('map-character-icon') && '.map-weapon' !== projectileClass ) {
                         const enemyValue = parseInt(projectile.getAttribute('data-value'));
 
                         // Immediately remove the projectile when hits.
@@ -2239,6 +2239,8 @@ function shootProjectile(projectile, mapCharacterLeft, mapCharacterTop, enemy, p
                         if (currentHealth && 0 <= healthAmount) {
                             const currentHealthLevel = healthAmount;
                             const newAmount = currentHealthLevel >= enemyValue ? currentHealthLevel - enemyValue : 0;
+
+                            hurtAnimation();
 
                             addUserPoints(newAmount, 'health', 'projectile');
                         }
@@ -2396,6 +2398,7 @@ function addNoPoints() {
                 const valNum = parseInt( value ) > 0;
                 const mapItem = valNum ? null : document.querySelector('.' + value + '-map-item');
                 const cutSceneItem = valNum ? null : document.querySelector('.' + value + '-map-cutscene');
+                const explainerItem = valNum ? null : document.querySelector('.' + value + '-explainer-trigger-map-item');
                 const materializeMapItem = valNum ? null : document.querySelector( '.' + value + '-materialize-item-map-item' );
                 const dragDestMapItem = valNum ? null : document.querySelector( '.' + value + '-drag-dest-map-item' );
                 const communicateTrigger = document.getElementById( value + '-t' );
@@ -2415,8 +2418,14 @@ function addNoPoints() {
                     }
                 }
 
+                // Add special class for cutscenes.
                 if ( cutSceneItem ) {
                     cutSceneItem.classList.add( 'been-viewed' );
+                }
+
+                // Add for explainers.
+                if ( explainerItem ) {
+                    explainerItem.classList.add( 'already-hit' );
                 }
 
                 if (mapItem) {
@@ -2485,6 +2494,7 @@ function shouldRemoveItemOnload( mapItem ) {
 export function engageExploreGame() {
     const container = document.querySelector('.game-container');
     const touchButtons = document.querySelector( '.touch-buttons' );
+    window.previousCutsceneArea = previousCutsceneArea ?? '';
 
     // Set all first cutscene dialogues to engage.
     const allFirstDialogues = document.querySelectorAll( '.map-cutscene .wp-block-orbem-paragraph-mp3:first-of-type, .map-communicate .wp-block-orbem-paragraph-mp3' );
@@ -2601,6 +2611,7 @@ export function engageExploreGame() {
     if ( isAreaCutscene && currentLocation ) {
         const cutSceneName = cleanClassName(document.querySelector( '.map-cutscene' ).className);
         window.previousCutsceneArea = cutSceneName;
+        setPreviousCutsceneArea( window.previousCutsceneArea );
         engageCutscene(cutSceneName, true);
     }
 
@@ -2872,6 +2883,12 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
                     window.allowHit = false;
                 }
 
+                // Indicate if you touch minigame item trigger.
+                if (true === value.classList.contains( 'no-point') && undefined !== value.dataset?.minigame) {
+                    triggerIndicator(value, false, false, true);
+                    value.classList.add( 'engage' );
+                }
+
                 // Check if collided point is enterable.
                 if ('explore-area' === value.getAttribute('data-genre')) {
                     enterExplorePoint(value);
@@ -2885,6 +2902,8 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
                         const hurtAmount = value.dataset.value;
                         const currentHealth = getCurrentPoints('health');
                         const newAmount = currentHealth - parseInt(hurtAmount);
+
+                        hurtAnimation();
 
                         addUserPoints(newAmount, 'health', 'hazard');
 
@@ -3011,18 +3030,17 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
                         }
 
                         // Close explainer on click.
-                        triggee.addEventListener('click', () => {
-                            window.allowMovement = true;
-                            window.allowHit = true;
-                            triggee.remove();
-                        });
+                        document.addEventListener('click', closeExplainer);
 
                         // Close on action key
                         document.addEventListener('keydown', closeExplainer );
+
+                        // Persist to avoid showing again on refresh.
+                        persistItemRemoval(value.dataset.triggee);
                     }
 
                     function closeExplainer(event) {
-                        if ('Space' === event.code) {
+                        if (('keydown' === event.type && 'Space' === event.code) || 'click' === event.type) {
                             window.allowMovement = true;
                             window.allowHit = true;
                             triggee.remove('show-explainer');
@@ -3145,12 +3163,12 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
             }
 
             // For breakables and other interactions.
-            if (weaponEl) {
+            if (weaponEl && 'none' !== weaponEl.style.display) {
                 if (elementsOverlap(weaponEl, value)) {
                     // Timer trigger logic.
                     const triggeeName = cleanClassName(value.className);
                     const triggee = document.querySelector('[data-timertriggee="' + triggeeName + '"]');
-                    const hasTrigger = value.dataset.timertriggee;
+                    const hasTrigger = value.dataset?.timertriggee;
 
                     // Timer scenario.
                     const startTimerItem = document.querySelector('.start-timer');
@@ -3421,20 +3439,7 @@ function canCharacterInteract( item, character, type ) {
  * When user hits an item with weapon
  * @param item
  */
-function interactWithItem( item, mapChar ) {
-    // For minigames.
-    if ( ( ( 'true' === item.dataset.draggable &&
-                true === item.classList.contains( 'no-point') ) ||
-            ( null === item.dataset.draggable ||
-                'false' === item.dataset.draggable ) &&
-            false === item.classList.contains( 'hit' ) )
-        &&
-        canCharacterInteract( '', mapChar, 'programming' )
-    )
-    {
-        engageMinigameLogic(item);
-    }
-
+function interactWithItem( item ) {
     // If item is breakable.
     if ('no' !== item.dataset?.disappear && 'true' === item.dataset.breakable && 'explore-sign' !== item.dataset.genre ) {
         item.style.display = 'none';
@@ -3508,7 +3513,7 @@ function enableAbility(ability) {
 /**
  * Trigger indicator.
  */
-function triggerIndicator(indicateMe, isCutscene = true, trigger = false) {
+function triggerIndicator(indicateMe, isCutscene = true, trigger = false, isMinigame = false) {
     window.allowHit = false;
     const indicator = document.querySelector( '.indicator-icon' );
 
@@ -3525,12 +3530,20 @@ function triggerIndicator(indicateMe, isCutscene = true, trigger = false) {
 
             if ( true === isCutscene ) {
                 indicator.dataset.sign = '';
+                indicator.dataset.minigame = '';
                 indicator.dataset.cutscene =  trigger.dataset.triggee;
             }
 
             if ( false === isCutscene ) {
                 indicator.dataset.cutscene = '';
+                indicator.dataset.minigame = '';
                 indicator.dataset.sign = positionName;
+            }
+
+            if ( true === isMinigame ) {
+                indicator.dataset.cutscene = '';
+                indicator.dataset.sign = '';
+                indicator.dataset.minigame = indicateMe.dataset.minigame;
             }
         }
     }
@@ -3625,6 +3638,27 @@ function storeExploreItem( item ) {
     }
 }
 
+function setPreviousCutsceneArea( cutsceneName ) {
+    const jsonString = {
+        cutscene: cutsceneName,
+        userid: currentUserId
+    }
+    // Set the cutscene area previously viewed.
+    fetch(`https://${wpThemeURL}/wp-json/orbemorder/v1/set-previous-cutscene-area/`, {
+        method: 'POST', // Specify the HTTP method
+        headers: {
+            'Content-Type': 'application/json', // Set the content type to JSON
+        },
+        body: JSON.stringify(jsonString) // The JSON stringified payload
+    })
+        .then(response => {
+            // Check if the response status is in the range 200-299
+            if (!response.ok) {
+                throw new Error('Network response was not ok ' + response.statusText);
+            }
+        });
+}
+
 /**
  * cut scene logic
  */
@@ -3686,6 +3720,11 @@ function engageCutscene( position, areaCutscene = false, isVideo = false ) {
 
             // Add a keydown event listener to the document to detect spacebar press
             document.addEventListener('keydown', cutsceneKeys);
+
+            // Fade in if area cutscene.
+            if ( true === areaCutscene ) {
+                fadeInScene();
+            }
         }
 
         function moveDialogueBox(firstText = '') {
@@ -4312,6 +4351,8 @@ function movementIntFunc() {
     window.allowMovement = true;
     window.keyDown = false;
 
+    clearInterval(window.movementInt);
+
     // Add listeners for explore keyboard movement.
     document.addEventListener( 'keydown', function ( e ) {
 
@@ -4655,10 +4696,10 @@ function addCharacterHit() {
                         // Move weapon based on direction
                         switch (direction) {
                             case 'up':
-                                weaponPosTop = 210;
+                                weaponPosTop = 310;
                                 break;
                             case 'down':
-                                weaponPosTop = 390;
+                                weaponPosTop = 490;
                                 break;
                             case 'left':
                                 weaponPosLeft = 350;
@@ -4808,6 +4849,8 @@ function addCharacterHit() {
                 if (indicator && true === indicator.classList.contains('engage')) {
                     const cutscene = indicator.dataset?.cutscene;
                     const sign = indicator.dataset?.sign;
+                    const minigame = indicator.dataset?.minigame;
+                    const minigameEl = minigame ? document.querySelector('[data-minigame=' + minigame + ']') : false;
 
                     if (cutscene && '' !== cutscene) {
                         engageCutscene(cutscene, false, false);
@@ -4817,6 +4860,11 @@ function addCharacterHit() {
                     if ( sign && '' !== sign ) {
                         engageSign( sign );
                         indicator.dataset.sign = '';
+                    }
+
+                    if ( minigame && minigameEl && '' !== minigame ) {
+                        engageMinigameLogic( minigameEl );
+                        indicator.dataset.minigame = '';
                     }
                 }
             }
@@ -5118,11 +5166,13 @@ function engageDraggableFunction() {
                     window.allowHit = true;
                 }, 100 );
 
+                const dragmeitemTop = parseInt( dragmeitem.style.top.replace('px', '') );
+
                 dragmeitem.classList.remove( 'currently-dragging' );
                 dragmeitem.classList.remove( 'dragme' );
 
                 dragmeitem.style.left = window.dragLeft.left ? ( parseInt( dragmeitem.style.left.replace('px', '') ) - 2 ) + 'px' : ( parseInt( dragmeitem.style.left.replace('px', '') ) + 2 ) + 'px';
-                dragmeitem.style.top = window.dragTop.higher ? ( parseInt( dragmeitem.style.top.replace('px', '') ) - 2 ) + 'px' : ( parseInt( dragmeitem.style.top.replace('px', '') ) + 2 ) + 'px';
+                dragmeitem.style.top = window.dragTop.higher ? ( dragmeitemTop - 2 ) + 'px' : ( dragmeitemTop + 2 ) + 'px';
 
                 window.dragLeft = false;
                 window.dragTop = false;
@@ -5137,7 +5187,7 @@ function engageDraggableFunction() {
                     const dragDestLeft = parseInt( dragDest.style.left.replace( 'px', '' ) ) + ( dragDest.offsetWidth / 2 );
                     const dragDestTop = parseInt( dragDest.style.top.replace( 'px', '' ) ) + ( dragDest.offsetHeight / 2 );
                     const dragItemLeft = parseInt( dragmeitem.style.left.replace('px', '') ) + ( dragDest.offsetWidth / 2 );
-                    const dragItemTop = parseInt( dragmeitem.style.top.replace('px', '') ) + ( dragDest.offsetHeight / 2 );
+                    const dragItemTop = dragmeitemTop + ( dragmeitem.offsetHeight / 2 );
                     const topOffset = dragItemTop < dragDestTop ? dragDestTop - dragItemTop : dragItemTop - dragDestTop;
                     const leftOffset = dragItemLeft < dragDestLeft ? dragDestLeft - dragItemLeft : dragItemLeft - dragDestLeft;
 
@@ -5355,17 +5405,14 @@ function moveCharacter(mapCharacter, newTop, newLeft, gradual, cutscene ) {
                 }
 
                 // Once cutscene is over reinstate walking privileges. Also only clear this interval after cutscene is over so you know when to walk again.
-                if ( false === cutscene ) {
-                    clearInterval( moveInt );
-                    movementIntFunc();
-                } else if ( false === cutscene.classList.contains( 'engage' ) ) {
-                    clearInterval( moveInt );
+                if ( false === cutscene || false === cutscene.classList.contains( 'engage' ) ) {
+                    clearInterval(moveInt);
                     movementIntFunc();
                 }
             }
 
             moveCount++
-        }, 10 );
+        }, window.moveSpeed );
     } else {
         mapCharacter.style.left = newLeft + 'px';
         mapCharacter.style.top = newTop + 'px';
@@ -5441,149 +5488,146 @@ function engageMinigameLogic(minigameTrigger) {
     if ( theMinigame ) {
         const music = theMinigame.dataset.music;
         let missionElExists = false;
+        const minigameMission = theMinigame.dataset.mission;
+        let missionEl = false;
 
-        if (theMinigame) {
-            const minigameMission = theMinigame.dataset.mission;
-            let missionEl = false;
+        if (minigameMission && '' !== minigameMission) {
+            missionEl = document.querySelector('.' + minigameMission + '-mission-item');
 
-            if (minigameMission && '' !== minigameMission) {
-                missionEl = document.querySelector('.' + minigameMission + '-mission-item');
+            if (missionEl) {
+                missionElExists = missionEl.classList.contains('engage');
+            }
+        }
 
-                if (missionEl) {
-                    missionElExists = missionEl.classList.contains('engage');
+        if (missionElExists) {
+            window.allowMovement = false;
+            theMinigame.classList.add('engage');
+            minigameTrigger.classList.add('hit');
+
+            // start the music
+            if (music && '' !== music) {
+                playSong(music, minigameMission);
+            }
+
+            let draggedContainer = null;
+            let offsetX = 0;
+            let offsetY = 0;
+
+            // Handle the dragstart event
+            function handleDragStart(event) {
+                event.preventDefault();
+                draggedContainer = event.target.closest('.wp-block-image'); // Get the container element
+                if (draggedContainer) {
+                    // Calculate the offset of the mouse from the top-left corner of the container
+                    const rect = draggedContainer.getBoundingClientRect();
+                    offsetX = event.clientX - rect.left;
+                    offsetY = event.clientY - rect.top;
+
+                    event.dataTransfer.setData('text/plain', '');
+
+                    // Add mousemove event listener to update container position
+                    document.addEventListener('mousemove', handleMouseMove);
                 }
             }
 
-            if (missionElExists) {
-                window.allowMovement = false;
-                theMinigame.classList.add('engage');
-                minigameTrigger.classList.add('hit');
+            // Handle the mousemove event to update container position
+            function handleMouseMove(event) {
+                if (draggedContainer) {
+                    // Calculate the mouse position relative to the .default-map element
+                    const mapRect = theMinigame.getBoundingClientRect();
+                    const mouseX = event.clientX - mapRect.left;
+                    const mouseY = event.clientY - mapRect.top;
 
-                // start the music
-                if (music && '' !== music) {
-                    playSong(music, minigameMission);
+                    // Update container position based on mouse position relative to the container
+                    draggedContainer.style.position = 'fixed';
+                    draggedContainer.style.zIndex = '9';
+                    draggedContainer.style.left = `${mouseX - offsetX}px`;
+                    draggedContainer.style.top = `${mouseY - offsetY}px`;
                 }
+            }
 
-                let draggedContainer = null;
-                let offsetX = 0;
-                let offsetY = 0;
+            // Handle the dragend event
+            function handleDragEnd() {
+                if (draggedContainer) {
+                    // Clear the reference to the dragged container
+                    draggedContainer = null;
 
-                // Handle the dragstart event
-                function handleDragStart(event) {
-                    event.preventDefault();
-                    draggedContainer = event.target.closest('.wp-block-image'); // Get the container element
-                    if (draggedContainer) {
-                        // Calculate the offset of the mouse from the top-left corner of the container
-                        const rect = draggedContainer.getBoundingClientRect();
-                        offsetX = event.clientX - rect.left;
-                        offsetY = event.clientY - rect.top;
+                    // Remove mousemove event listener
+                    document.removeEventListener('mousemove', handleMouseMove);
 
-                        event.dataTransfer.setData('text/plain', '');
+                    // Did you cover all the solder points.
+                    const minigames = document.querySelectorAll('.minigame');
 
-                        // Add mousemove event listener to update container position
-                        document.addEventListener('mousemove', handleMouseMove);
-                    }
-                }
+                    if (minigames) {
+                        minigames.forEach(minigame => {
+                            const computerChip = minigame.querySelector('.computer-chip');
+                            const solderPoints = computerChip.querySelectorAll('ellipse');
+                            const wireWrap = minigame.querySelector('.wires');
+                            const wires = wireWrap.querySelectorAll('.wp-block-image');
+                            let overlapping = false;
+                            let solderingPointValue = [];
 
-                // Handle the mousemove event to update container position
-                function handleMouseMove(event) {
-                    if (draggedContainer) {
-                        // Calculate the mouse position relative to the .default-map element
-                        const mapRect = theMinigame.getBoundingClientRect();
-                        const mouseX = event.clientX - mapRect.left;
-                        const mouseY = event.clientY - mapRect.top;
-
-                        // Update container position based on mouse position relative to the container
-                        draggedContainer.style.position = 'fixed';
-                        draggedContainer.style.zIndex = '9';
-                        draggedContainer.style.left = `${mouseX - offsetX}px`;
-                        draggedContainer.style.top = `${mouseY - offsetY}px`;
-                    }
-                }
-
-                // Handle the dragend event
-                function handleDragEnd() {
-                    if (draggedContainer) {
-                        // Clear the reference to the dragged container
-                        draggedContainer = null;
-
-                        // Remove mousemove event listener
-                        document.removeEventListener('mousemove', handleMouseMove);
-
-                        // Did you cover all the solder points.
-                        const minigames = document.querySelectorAll('.minigame');
-
-                        if (minigames) {
-                            minigames.forEach(minigame => {
-                                const computerChip = minigame.querySelector('.computer-chip');
-                                const solderPoints = computerChip.querySelectorAll('ellipse');
-                                const wireWrap = minigame.querySelector('.wires');
-                                const wires = wireWrap.querySelectorAll('.wp-block-image');
-                                let overlapping = false;
-                                let solderingPointValue = [];
-
-                                if (solderPoints) {
-                                    solderPoints.forEach(solderPoint => {
-                                        if (wires) {
-                                            wires.forEach(wire => {
-                                                if (elementsOverlap(solderPoint, wire)) {
-                                                    overlapping = true;
-                                                }
-                                            });
-                                        }
-
-                                        solderingPointValue.push(overlapping)
-                                    });
-                                }
-
-                                function isOverlapping(wire, solderPoint) {
-                                    const wireRect = wire.getBoundingClientRect();
-                                    const solderPointBBox = solderPoint.getBoundingClientRect();
-
-                                    return !(
-                                        wireRect.right < solderPointBBox.left ||
-                                        wireRect.left > solderPointBBox.right ||
-                                        wireRect.bottom < solderPointBBox.top ||
-                                        wireRect.top > solderPointBBox.bottom
-                                    );
-                                }
-
-                                function areAllSVGsCovered(wires, solderPoints) {
-                                    for (let solderPoint of solderPoints) {
-                                        let covered = false;
-                                        for (let wire of wires) {
-                                            if (isOverlapping(wire, solderPoint)) {
-                                                covered = true;
-                                                break;
+                            if (solderPoints) {
+                                solderPoints.forEach(solderPoint => {
+                                    if (wires) {
+                                        wires.forEach(wire => {
+                                            if (elementsOverlap(solderPoint, wire)) {
+                                                overlapping = true;
                                             }
-                                        }
-                                        if (!covered) {
-                                            return false;
+                                        });
+                                    }
+
+                                    solderingPointValue.push(overlapping)
+                                });
+                            }
+
+                            function isOverlapping(wire, solderPoint) {
+                                const wireRect = wire.getBoundingClientRect();
+                                const solderPointBBox = solderPoint.getBoundingClientRect();
+
+                                return !(
+                                    wireRect.right < solderPointBBox.left ||
+                                    wireRect.left > solderPointBBox.right ||
+                                    wireRect.bottom < solderPointBBox.top ||
+                                    wireRect.top > solderPointBBox.bottom
+                                );
+                            }
+
+                            function areAllSVGsCovered(wires, solderPoints) {
+                                for (let solderPoint of solderPoints) {
+                                    let covered = false;
+                                    for (let wire of wires) {
+                                        if (isOverlapping(wire, solderPoint)) {
+                                            covered = true;
+                                            break;
                                         }
                                     }
-                                    return true;
+                                    if (!covered) {
+                                        return false;
+                                    }
                                 }
+                                return true;
+                            }
 
-                                if (areAllSVGsCovered(wires, solderPoints)) {
-                                    computerChip.style.display = 'none';
-                                    wireWrap.style.display = 'none';
+                            if (areAllSVGsCovered(wires, solderPoints)) {
+                                computerChip.style.display = 'none';
+                                wireWrap.style.display = 'none';
 
-                                    engageProgrammingStep(minigameMission, missionEl, minigame);
-                                }
-                            });
-                        }
+                                engageProgrammingStep(minigameMission, missionEl, minigame);
+                            }
+                        });
                     }
                 }
-
-                // Get all container elements within the .wp-block-group.wires container
-                const containers = document.querySelectorAll('.wp-block-group.wires .wp-block-image');
-
-                // Add the dragstart and dragend event listeners to each container
-                containers.forEach(container => {
-                    container.addEventListener('dragstart', handleDragStart);
-                    container.addEventListener('mouseup', handleDragEnd);
-                });
             }
+
+            // Get all container elements within the .wp-block-group.wires container
+            const containers = document.querySelectorAll('.wp-block-group.wires .wp-block-image');
+
+            // Add the dragstart and dragend event listeners to each container
+            containers.forEach(container => {
+                container.addEventListener('dragstart', handleDragStart);
+                container.addEventListener('mouseup', handleDragEnd);
+            });
         }
     }
 }
@@ -5818,6 +5862,7 @@ function checkIfHazardHurts() {
             const hurtAmount = window.theHazardValue;
             const currentHealth = getCurrentPoints('health');
             const newAmount = parseInt(currentHealth) - parseInt(hurtAmount);
+            hurtAnimation();
 
             addUserPoints(newAmount, 'health', 'hazard');
         }
@@ -5829,6 +5874,19 @@ function checkIfHazardHurts() {
             pushCharacter(25, hazardItem, mapChar);
         }
     }, 1000);
+}
+
+function hurtAnimation() {
+    clearTimeout(hurtTimeout);
+    const mapCharacter = document.getElementById('map-character');
+
+    if ( mapCharacter ) {
+        mapCharacter.dataset.hurt = true;
+
+        hurtTimeout = setTimeout( () => {
+            mapCharacter.dataset.hurt = false;
+        }, 1000)
+    }
 }
 
 /**
