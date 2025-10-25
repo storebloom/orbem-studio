@@ -3,7 +3,8 @@
  * Settings panel for game.
  */
 $storage = get_user_meta($userid, 'explore_storage', true);
-$storage = false === empty($storage) ? $storage : [];
+$default_weapon = get_option('explore_default_weapon', false);
+$storage = false === empty($storage) ? $storage : ['items' => [], 'weapons' => [$default_weapon], 'gear' => []];
 $characters = get_user_meta($userid, 'explore_characters', true);
 
 // Get character weapons.
@@ -11,9 +12,9 @@ $characters = get_posts(['post_type' => 'explore-character', 'posts_per_page' =>
 
 if ( false === is_wp_error($characters)) {
     foreach ($characters as $character) {
-        $weapon_choice = get_post_meta($character->ID, 'explore-weapon-choice');
+        $weapon_choice = get_post_meta($character->ID, 'explore-weapon-choice', true);
 
-        if (false === is_wp_error($weapon_choice) && false === empty($storage['weapons']) && false === in_array($storage['weapons'], [$weapon_choice])) {
+        if (false === empty($weapon_choice) && false === is_wp_error($weapon_choice) && false === empty($storage['weapons']) && false === in_array($weapon_choice, array_column($storage['weapons'], 'name'))) {
             $weapon_id = get_posts(['post_type' => 'explore-weapon', 'post_name' => $weapon_choice, 'posts_per_page' => 1]);
 
             if (false === empty($weapon_id[0])) {
@@ -37,14 +38,12 @@ $current_explore_weapon = get_user_meta($userid, 'explore_current_weapons', true
             <div class="weapons-tab">Weapons</div>
             <div class="gear-tab">Gear</div>
         </div>
-        <?php foreach($storage as $storage_type => $storage_items):?>
+        <?php foreach($storage as $storage_type => $storage_items): ?>
             <div data-menu="<?php echo esc_attr($storage_type); ?>" class="storage-menu <?php echo 'items' === $storage_type ? 'engage' : ''; ?>">
                 <?php for ( $x = 0; $x <= intval($storage_limit); $x++ ) :
                     $item_id = false === empty($storage_items[$x]["id"]) ? esc_attr($storage_items[$x]["id"]) : '';
                     $current_gear = false;
-                    $current_weapon = 'fist';
-                    $width = get_post_meta($item_id, 'explore-width', true);
-                    $height = get_post_meta($item_id, 'explore-height', true);
+                    $current_weapon = $default_weapon;
                     $attack = get_post_meta($item_id, 'explore-attack', true);
                     $is_projectile = get_post_meta($item_id, 'explore-projectile', true);
                     $character = false === empty($storage_items[$x]["character"]) ? $storage_items[$x]["character"] : '';
@@ -76,13 +75,13 @@ $current_explore_weapon = get_user_meta($userid, 'explore_current_weapons', true
                             data-character="<?php echo false === empty($character) ? $character : ''; ?>"
 
                             <?php if (true === $weapons_and_gear) : ?>
-                            data-strength=<?php echo false === empty($attack) ? wp_json_encode($attack['explore-attack']) : '""'; ?>
+                            data-strength=<?php echo false === empty($attack) ? wp_json_encode($attack) : '""'; ?>
                             data-projectile="<?php echo false === empty($is_projectile) ? esc_attr($is_projectile) : 'no'; ?>"
                             <?php endif; ?>
 
                             title="<?php echo false === empty($storage_items[$x]["name"]) ? esc_attr($storage_items[$x]["name"]) : ''; ?>"
                             <?php echo false === empty($storage_items[$x]["count"]) ? 'data-count="' . intval($storage_items[$x]["count"]) . '"' : ''; ?>
-                            class="storage-item<?php echo $current_gear || $current_weapon ? ' equipped' : ''; ?>">
+                            class="storage-item<?php echo $current_gear || true === $current_weapon ? ' equipped' : ''; ?>">
                         <?php if (true === $weapons_and_gear) : ?>
                             <img src="<?php echo esc_url(get_the_post_thumbnail_url($item_id)); ?>" width="30px" height="30px" />
                         <?php endif; ?>

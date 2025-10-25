@@ -58,7 +58,7 @@ $point_widths = Explore::getCurrentPointWidth();
 $current_level = Explore::getCurrentLevel();
 $max_points = Explore::getLevelMap();
 $explore_attack = false === empty($equipped_weapon) ? get_post_meta($equipped_weapon->ID, 'explore-attack', true) : false;
-$weapon_strength = false === empty($explore_attack) ? wp_json_encode($explore_attack['explore-attack']) : '""';
+$weapon_strength = false === empty($explore_attack) ? wp_json_encode($explore_attack) : '""';
 $intro_video = get_option('explore_intro_video', false);
 $signin_screen = get_option('explore_signin_screen', '');
 $start_music = get_option('explore_start_music', false);
@@ -190,12 +190,7 @@ include plugin_dir_path(__FILE__) . 'plugin-header.php';
                 />
             <?php endforeach; ?>
         </div>
-        <div style="top: <?php echo false === empty($coordinates['top']) ? esc_attr( intval($coordinates['top']) + 500) : 4018; ?>px; left: <?php echo false === empty($coordinates['left']) ? esc_attr(intval($coordinates['left'] + 500)) : 2442; ?>px" class="map-weapon" data-direction="<?php echo esc_attr($explore_start_direction); ?>" data-projectile="<?php echo esc_attr($is_it_projectile); ?>" data-weapon="<?php echo esc_attr( $equipped_weapon->post_name ); ?>" data-strength=<?php echo esc_attr($weapon_strength); ?>>
-            <img src="<?php echo get_the_post_thumbnail_url($equipped_weapon); ?>"
-                 width="<?php echo intval(get_post_meta($equipped_weapon->ID, 'explore-width', true)); ?>px"
-                 height="<?php echo intval(get_post_meta($equipped_weapon->ID, 'explore-height', true)); ?>px"
-            />
-        </div>
+        <div style="top: <?php echo false === empty($coordinates['top']) ? esc_attr( intval($coordinates['top']) + 500) : 4018; ?>px; left: <?php echo false === empty($coordinates['left']) ? esc_attr(intval($coordinates['left'] + 500)) : 2442; ?>px" class="map-weapon" data-direction="<?php echo esc_attr($explore_start_direction); ?>" data-projectile="<?php echo esc_attr($is_it_projectile); ?>" data-weapon="<?php echo esc_attr( $equipped_weapon->post_name ); ?>" data-strength=<?php echo esc_attr($weapon_strength); ?>></div>
         <div class="default-map" data-iscutscene="<?php echo esc_attr($is_area_cutscene); ?>" data-startleft="<?php echo false === empty($explore_area_start_left) ? esc_attr($explore_area_start_left) : ''; ?>" data-starttop="<?php echo false === empty($explore_area_start_top) ? esc_attr($explore_area_start_top) : ''; ?>">
             <?php if (false !== $explore_area): ?>
                 <?php echo Explore::getMapSVG($explore_area); ?>

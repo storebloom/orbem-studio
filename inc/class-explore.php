@@ -164,11 +164,13 @@ class Explore
         $pages = get_posts(['post_type' => 'page', 'post_status' => 'publish', 'posts_per_page' => 200]);
         $areas = get_posts(['post_type' => 'explore-area', 'post_status' => 'publish', 'posts_per_page' => 200]);
         $characters = get_posts(['post_type' => 'explore-character', 'post_status' => 'publish', 'posts_per_page' => 200]);
+        $weapons = get_posts(['post_type' => 'explore-weapon', 'post_status' => 'publish', 'posts_per_page' => 200]);
 
         $settings = [
             'explore_game_page' => ['select', 'Game Page Title', $pages],
             'explore_first_area' => ['select', 'Starting Area', $areas],
             'explore_main_character' => ['select', 'Main Character', $characters],
+            'explore_default_weapon' => ['select', 'Default Weapon', $weapons],
             'explore_require_login' => ['checkbox', 'Require Login'],
             'explore_money_image' => ['upload', 'Money Icon'],
             'explore_indicator_icon' => ['upload', 'Indicator Icon'],
@@ -1405,7 +1407,7 @@ class Explore
             $has_minigame = get_post_meta($explore_point->ID, 'explore-minigame', true);
             $hazard_remove = false;
             $explore_attack = get_post_meta($explore_point->ID, 'explore-attack', true);
-            $weapon_strength = false === empty($explore_attack) ? wp_json_encode($explore_attack['explore-attack']) : '""';
+            $weapon_strength = false === empty($explore_attack) ? wp_json_encode($explore_attack) : '""';
             $rotation = get_post_meta($explore_point->ID, 'explore-rotation', true);
             $missions = get_posts(
                 [
@@ -1452,8 +1454,13 @@ class Explore
              $classes = $path_onload;
 
             // If it's an enemy and they have health show or if not an enemy show.
-            if (('explore-enemy' === $explore_point->post_type && false === in_array($explore_point->post_name, $dead_ones,
-                        true)) || 'explore-enemy' !== $explore_point->post_type ) {
+            if (
+                'explore-enemy' !== $explore_point->post_type ||
+                (
+                    'explore-enemy' === $explore_point->post_type &&
+                    false === in_array($explore_point->post_name, $dead_ones, true)
+                )
+             ) {
 
                 // Highjack top/left if draggable and has save drag values.
                 if (true === $draggable) {
@@ -2540,6 +2547,8 @@ class Explore
         <div class="explore-image-field">
             <p>
                 <?php _e(\OrbemGameEngine\Meta_Box::getMetaboxLabel($name) . ':', 'orbem-game-engine'); ?><br>
+                <img src="<?php echo esc_url($values); ?>" width="80" />
+                <br>
                 <input type="text" id="<?php echo esc_attr($slug); ?>" name="<?php echo esc_attr($slug); ?>" value="<?php echo esc_attr($values); ?>" class="widefat explore-upload-field" readonly />
             </p>
             <p>

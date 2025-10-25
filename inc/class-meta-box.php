@@ -129,12 +129,44 @@ class Meta_Box {
         $explore_minigame_array = $this->util->getOrbemArray('explore-minigame');
         $explore_cutscene_array = $this->util->getOrbemArray('explore-cutscene');
         $explore_hazard_array = $this->util->getOrbemArray('explore-point', false, 'explore-interaction-type', 'hazard');
+        $default_weapon = get_option('explore_default_weapon', false);
         $explore_value_array = [
             'point',
             'mana',
             'health',
             'money'
         ];
+        $character_images = [
+            'static' => 'upload',
+            'static-up' => 'upload',
+            'static-left' => 'upload',
+            'static-right' => 'upload',
+            'static-down' => 'upload',
+            'static-up-drag' => 'upload',
+            'static-left-drag' => 'upload',
+            'static-right-drag' => 'upload',
+            'up' => 'upload',
+            'down' => 'upload',
+            'left' => 'upload',
+            'right' => 'upload',
+            'up-punch' => 'upload',
+            'down-punch' => 'upload',
+            'left-punch' => 'upload',
+            'right-punch' => 'upload',
+            'up-drag' => 'upload',
+            'left-drag' => 'upload',
+            'right-drag' => 'upload',
+        ];
+        $weapon_images = [];
+
+        foreach ($explore_weapon_array as $explore_weapon) {
+            if ($default_weapon !== $explore_weapon) {
+                foreach ($character_images as $character_image_key => $character_image) {
+                    $weapon_images[$character_image_key . '-' . $explore_weapon] = 'upload';
+                }
+            }
+        }
+
 
         $post_type_specific = [
             'explore-area' => [
@@ -169,10 +201,7 @@ class Meta_Box {
                     'select' => [
                         [
                             'none',
-                            'speed',
-                            'strength',
-                            'hazard',
-                            'programming',
+                            'transportation'
                         ]
                     ]
                 ],
@@ -287,7 +316,9 @@ class Meta_Box {
                     ]
                 ],
                 'explore-value-type' => [
-                    'select' => [$explore_value_array]
+                    'select' => [
+                        ['weapons']
+                    ]
                 ],
             ],
             'explore-character' => [
@@ -321,27 +352,8 @@ class Meta_Box {
                         'left' => 'number'
                     ]
                 ],
-                'explore-character-images' => [
-                    'static' => 'upload',
-                    'static-up' => 'upload',
-                    'static-left' => 'upload',
-                    'static-right' => 'upload',
-                    'static-down' => 'upload',
-                    'static-up-drag' => 'upload',
-                    'static-left-drag' => 'upload',
-                    'static-right-drag' => 'upload',
-                    'up' => 'upload',
-                    'down' => 'upload',
-                    'left' => 'upload',
-                    'right' => 'upload',
-                    'up-punch' => 'upload',
-                    'down-punch' => 'upload',
-                    'left-punch' => 'upload',
-                    'right-punch' => 'upload',
-                    'up-drag' => 'upload',
-                    'left-drag' => 'upload',
-                    'right-drag' => 'upload',
-                ],
+                'explore-character-images' => $character_images,
+                'explore-weapon-images' => $weapon_images,
                 'explore-ability' => [
                     'select' => [
                             [

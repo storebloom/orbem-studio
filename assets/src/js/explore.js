@@ -1028,7 +1028,7 @@ function saveMission( mission, value, position ) {
                 }
             }, 500);
 
-            if ( value ) {
+            if ( value && value > 0 ) {
                 // Trigger cutscene if mission is attached.
                 const theCutscene = document.querySelector( `.map-cutscene[data-mission="${mission}"]` );
 
@@ -1781,15 +1781,22 @@ const showItemDescription = (function () {
                 newItemDescription = JSON.parse( newItemDescription.data );
                 const description = document.querySelector( '.retrieval-points #item-description' );
                 const selectedItem = document.querySelector( '.storage-item.engage' );
+                const equipButton = document.createElement( 'button' );
+                equipButton.textContent = 'Equip';
+                const unequipButton  = document.createElement( 'button' );
+                unequipButton.textContent = 'Unequip';
+                const dropButton  = document.createElement( 'button' );
+                unequipButton.textContent = 'Drop';
 
                 // Replace current description content.
                 description.innerHTML = newItemDescription;
+                description.appendChild( dropButton );
+                description.appendChild( unequipButton );
+                description.appendChild( equipButton );
+
 
                 // Add use and drop features.
                 const useButton = description.querySelector( '.use-button' );
-                const dropButton = description.querySelector( '.drop-button' );
-                const equipButton = description.querySelector( '.equip-button' );
-                const unequipButton = description.querySelector( '.unequip-button' );
                 const itemId = selectedItem.getAttribute( 'data-id' );
                 const name = selectedItem.getAttribute( 'title' );
                 const amount = selectedItem.getAttribute( 'data-value' );
@@ -1824,14 +1831,10 @@ const showItemDescription = (function () {
                             const itemImage = selectedItem.querySelector( 'img' );
                             const currentWeapon = document.querySelector( '.map-weapon' );
                             const currentWeaponButton = document.querySelector( '.weapon-content img' );
-                            const currentWeaponImg = currentWeapon.querySelector('img');
 
                             if ( currentWeapon && currentWeaponButton ) {
-                                currentWeaponImg.src = itemImage.src;
                                 currentWeaponButton.src = itemImage.src;
                                 currentWeapon.dataset.weapon = selectedItem.title;
-                                currentWeaponImg.style.width = selectedItem.dataset.width + 'px';
-                                currentWeaponImg.style.height = selectedItem.dataset.height + 'px';
                                 currentWeapon.dataset.strength = selectedItem.dataset.strength;
                             }
 
@@ -3555,6 +3558,7 @@ function triggerIndicator(indicateMe, isCutscene = true, trigger = false, isMini
  * @param item
  */
 function storeExploreItem( item ) {
+
     const type = item.getAttribute('data-type');
     const value = item.getAttribute( 'data-value' );
     const id = item.id;

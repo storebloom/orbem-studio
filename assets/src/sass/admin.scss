@@ -3,10 +3,12 @@
   padding-left: 2rem;
 }
 
-.multiselect-wrapper {
+.multiselect-wrapper,
+.meta-box-array-wrap
+{
   border: 1px solid lightgray;
   border-radius: 5px;
-  max-height: 247px;
+  max-height: 400px;
   overflow: scroll;
   padding: 0 .5rem 1rem;
 }

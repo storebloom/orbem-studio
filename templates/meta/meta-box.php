@@ -23,14 +23,16 @@ use OrbemGameEngine\Explore;
             <?php echo Meta_Box::getMetaHtml($key, $value, $values); ?>
         <?php else : ?>
             <h2><?php echo esc_html(ucfirst(str_replace(['explore-', '-'],['', ' '],\OrbemGameEngine\Meta_Box::getMetaboxLabel($key)))); ?></h2>
-            <?php foreach($value as $sub_key => $sub_value):
-                if (false === is_array($sub_value) || true === in_array($sub_key, ['select', 'radio', 'repeater', 'multiselect'])) :
+            <div class="meta-box-array-wrap">
+            <?php foreach($value as $sub_key => $sub_value): ?>
+
+                <?php if (false === is_array($sub_value) || true === in_array($sub_key, ['select', 'radio', 'repeater', 'multiselect'])) :
                     if (false === in_array($sub_key, ['select', 'radio', 'repeater', 'multiselect'])) : ?>
-                        <?php echo Meta_Box::getMetaHtml($sub_key, $sub_value, $values, $key); ?>
+                            <?php echo Meta_Box::getMetaHtml($sub_key, $sub_value, $values, $key); ?>
                     <?php elseif ('repeater' !== $sub_key) :?>
-                        <?php foreach($sub_value as $sub_value_key => $sub_value_value): ?>
-                            <?php echo Meta_Box::getMetaHtml($key, $sub_key, $values, false, $sub_value_value); ?>
-                        <?php endforeach; ?>
+                            <?php foreach($sub_value as $sub_value_key => $sub_value_value): ?>
+                                <?php echo Meta_Box::getMetaHtml($key, $sub_key, $values, false, $sub_value_value); ?>
+                            <?php endforeach; ?>
                     <?php else :?>
                         <div class="repeater-container">
                             <?php echo Meta_Box::getMetaHtml($key, $sub_key, $values, false, $sub_value); ?>
@@ -55,6 +57,7 @@ use OrbemGameEngine\Explore;
                     endforeach;
                 endif; ?>
             <?php endforeach; ?>
+            </div>
     <?php endif; endforeach; ?>
     <?php if (true === $front_end) :?>
         <button type="submit" id="submit-new">Submit</button>

@@ -354,10 +354,16 @@ class Plugin extends Plugin_Base {
     public function blockGutenbergBlocks( $allowed_blocks, $editor_context ) {
         $explore = new Explore($this);
         // Target only your custom post type
-        if (!empty($editor_context->post) && true === in_array($editor_context->post->post_type, ['explore-magic', 'explore-weapon', 'explore-explainer', 'explore-sign'])) {
+        if (!empty($editor_context->post) && true === in_array($editor_context->post->post_type, ['explore-magic', 'explore-explainer', 'explore-sign'])) {
             return [
                 'core/paragraph',
                 'core/image',
+            ];
+        }
+
+        if (!empty($editor_context->post) && 'explore-weapons' === $editor_context->post->post_type) {
+            return [
+                'core/paragraph',
             ];
         }
 
@@ -371,7 +377,8 @@ class Plugin extends Plugin_Base {
 
         if (!empty($editor_context->post) && true === in_array($editor_context->post->post_type, ['explore-cutscene', 'explore-communicate'])) {
             return [
-                'orbem/paragraph-mp3'
+                'orbem/paragraph-mp3',
+                'core/video'
             ];
         }
 
