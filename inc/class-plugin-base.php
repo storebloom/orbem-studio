@@ -2,15 +2,15 @@
 /**
  * Class Plugin_Base
  *
- * @package OrbemGameEngine
+ * @package OrbemStudio
  */
 
-namespace OrbemGameEngine;
+namespace OrbemStudio;
 
 /**
  * Class Plugin_Base
  *
- * @package OrbemGameEngine
+ * @package OrbemStudio
  */
 abstract class Plugin_Base {
 

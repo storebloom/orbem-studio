@@ -1,5 +1,5 @@
 <?php
-use OrbemGameEngine\Explore;
+use OrbemStudio\Explore;
 if (true === $is_admin) {
     $areas = get_posts(['post_type' => 'explore-area', 'posts_per_page' => -1, 'fields' => ['ids', 'post_name']]);
 }

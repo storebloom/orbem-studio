@@ -6,8 +6,8 @@
  *
  * @package ShareThisShareButtons
  */
-use OrbemGameEngine\Meta_Box;
-use OrbemGameEngine\Explore;
+use OrbemStudio\Meta_Box;
+use OrbemStudio\Explore;
 ?>
 <div id="explore-meta-box">
     <?php if (true === $front_end) : ?>
@@ -22,7 +22,7 @@ use OrbemGameEngine\Explore;
         <?php if (false === is_array($value)) : ?>
             <?php echo Meta_Box::getMetaHtml($key, $value, $values); ?>
         <?php else : ?>
-            <h2><?php echo esc_html(ucfirst(str_replace(['explore-', '-'],['', ' '],\OrbemGameEngine\Meta_Box::getMetaboxLabel($key)))); ?></h2>
+            <h2><?php echo esc_html(ucfirst(str_replace(['explore-', '-'],['', ' '],\OrbemStudio\Meta_Box::getMetaboxLabel($key)))); ?></h2>
             <div class="meta-box-array-wrap">
             <?php foreach($value as $sub_key => $sub_value): ?>
 
@@ -40,7 +40,7 @@ use OrbemGameEngine\Explore;
                     <?php endif;
                 else :
                     foreach($sub_value as $sub_value_key_1 => $sub_value_value_1):?>
-                        <h2><?php echo esc_html(ucfirst(str_replace(['explore-', '-'],['', ' '],\OrbemGameEngine\Meta_Box::getMetaboxLabel($sub_key)))); ?></h2>
+                        <h2><?php echo esc_html(ucfirst(str_replace(['explore-', '-'],['', ' '],\OrbemStudio\Meta_Box::getMetaboxLabel($sub_key)))); ?></h2>
                         <?php if (false === in_array($sub_value_key_1, ['select', 'radio', 'repeater', 'multiselect'])) : ?>
                             <?php echo Meta_Box::getMetaHtml($sub_value_key_1, $sub_value_value_1, $values, $key); ?>
                         <?php elseif ('repeater' !== $sub_value_key_1) :?>

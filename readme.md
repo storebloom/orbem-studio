@@ -1,5 +1,5 @@
-=== Orbem Game Engine ===
-Plugin Name: Orbem Game Engine
+=== Orbem Studio ===
+Plugin Name: Orbem Studio
 Contributors: scottstorebloom
 Tags: rpg, game engine, video game, role play game, pixel art, pixel rpg
 Author URI: https://orbemorder.com/

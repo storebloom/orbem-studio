@@ -1,6 +1,6 @@
 <p>
 <label>
-    <?php echo esc_html(ucfirst(str_replace(['explore-', '-'],['', ' '],\OrbemGameEngine\Meta_Box::getMetaboxLabel($sub_value)))); ?>
+    <?php echo esc_html(ucfirst(str_replace(['explore-', '-'],['', ' '],\OrbemStudio\Meta_Box::getMetaboxLabel($sub_value)))); ?>
 </br>
     <input class="repeat"
            type="radio"

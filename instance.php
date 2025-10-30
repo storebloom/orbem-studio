@@ -1,11 +1,11 @@
 <?php
 /**
- * Instantiates the Orbem Game Engine plugin
+ * Instantiates the Orbem Studio plugin
  *
- * @package OrbemGameEngine
+ * @package OrbemStudio
  */
 
-namespace OrbemGameEngine;
+namespace OrbemStudio;
 
 /**
  * Bootstrap the plugin.
@@ -16,5 +16,6 @@ require_once __DIR__ . '/inc/class-explore.php';
 require_once __DIR__ . '/inc/class-meta-box.php';
 require_once __DIR__ . '/inc/class-dev-mode.php';
 require_once __DIR__ . '/inc/class-util.php';
+require_once __DIR__ . '/inc/class-menu.php';
 
-$orbem_game_engine = new Plugin();
+$orbem_studio = new Plugin();

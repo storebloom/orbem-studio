@@ -4,8 +4,8 @@
  * Register form template.
  */
 
-use OrbemGameEngine\Explore;
-use OrbemGameEngine\Dev_Mode;
+use OrbemStudio\Explore;
+use OrbemStudio\Dev_Mode;
 
 $first_area = get_option('explore_first_area', false);
 

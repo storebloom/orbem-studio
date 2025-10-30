@@ -2,15 +2,15 @@
 /**
  * Meta Box
  *
- * @package OrbemGameEngine
+ * @package OrbemStudio
  */
 
-namespace OrbemGameEngine;
+namespace OrbemStudio;
 
 /**
  * Meta Box class.
  *
- * @package OrbemGameEngine
+ * @package OrbemStudio
  */
 class Meta_Box {
 
@@ -511,6 +511,7 @@ class Meta_Box {
                 'explore-sound-byte' => 'upload'
             ],
             'explore-point' => [
+                'explore-video-override' => 'upload',
                 'explore-interacted' => 'upload',
                 'explore-disappear' => [
                     'radio' => [
@@ -1217,7 +1218,8 @@ class Meta_Box {
         $meta_labels = [
             'explore-mission-complete-cutscene' => 'Mission to complete after cutscene.',
             'explore-mission-cutscene' => 'Mission that triggers this cutscene.',
-            'explore-mission-trigger' => 'Triggers the completion of this mission.'
+            'explore-mission-trigger' => 'Triggers the completion of this mission.',
+            'explore-video-override' => 'Override the feature image witha video',
         ];
 
         if ($field_name) {

@@ -2,18 +2,18 @@
 /**
  * DevMode
  *
- * @package OrbemGameEngine
+ * @package OrbemStudio
  */
 
-namespace OrbemGameEngine;
+namespace OrbemStudio;
 
-use OrbemGameEngine\Meta_Box;
-use OrbemGameEngine\Explore;
+use OrbemStudio\Meta_Box;
+use OrbemStudio\Explore;
 
 /**
  * DevMode Class
  *
- * @package OrbemGameEngine
+ * @package OrbemStudio
  */
 class Dev_Mode
 {
@@ -80,7 +80,7 @@ class Dev_Mode
 
         // Handle errors in decoding JSON
         if (json_last_error() !== JSON_ERROR_NONE) {
-            return new \OrbemGameEngine\WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
+            return new \OrbemStudio\WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
         }
 
         $item = intval($data['id']);
@@ -130,7 +130,7 @@ class Dev_Mode
 
         // Handle errors in decoding JSON
         if (json_last_error() !== JSON_ERROR_NONE) {
-            return new \OrbemGameEngine\WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
+            return new \OrbemStudio\WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
         }
 
         // Process the data (e.g., register the user)
@@ -163,7 +163,7 @@ class Dev_Mode
 
         // Handle errors in decoding JSON
         if (json_last_error() !== JSON_ERROR_NONE) {
-            return new \OrbemGameEngine\WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
+            return new \OrbemStudio\WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
         }
 
         $post_type = sanitize_text_field(wp_unslash($data['type']));
@@ -186,7 +186,7 @@ class Dev_Mode
 
         // Handle errors in decoding JSON
         if (json_last_error() !== JSON_ERROR_NONE) {
-            return new \OrbemGameEngine\WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
+            return new \OrbemStudio\WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
         }
 
         $post_type = sanitize_text_field(wp_unslash($data['type']));

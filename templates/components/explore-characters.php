@@ -3,7 +3,7 @@
  * Characters panel for game.
  */
 
-use OrbemGameEngine\Explore;
+use OrbemStudio\Explore;
 
 $characters = get_user_meta($userid, 'explore_characters', true);
 ?>

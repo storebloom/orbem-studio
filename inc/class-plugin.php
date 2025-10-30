@@ -2,10 +2,10 @@
 /**
  * Bootstraps the Orbem Game Engine plugin.
  *
- * @package OrbemGameEngine
+ * @package OrbemStudio
  */
 
-namespace OrbemGameEngine;
+namespace OrbemStudio;
 
 /**
  * Main plugin bootstrap file.
@@ -24,6 +24,7 @@ class Plugin extends Plugin_Base {
 			new Explore( $this ),
             new Meta_Box( $this ),
             new Dev_Mode( $this ),
+            new Menu( $this )
 		);
 
 		// Add classes doc hooks.

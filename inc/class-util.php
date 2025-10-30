@@ -2,15 +2,15 @@
 /**
  * Util
  *
- * @package OrbemGameEngine
+ * @package OrbemStudio
  */
 
-namespace OrbemGameEngine;
+namespace OrbemStudio;
 
 /**
  * Util Class
  *
- * @package OrbemGameEngine
+ * @package OrbemStudio
  */
 class Util
 {
@@ -30,6 +30,29 @@ class Util
     public function __construct($plugin)
     {
         $this->plugin = $plugin;
+    }
+
+    /**
+     * util to get post types.
+     * @return string[]
+     */
+    public static function getCurrentPostTypes(): array
+    {
+        return [
+            'explore-area',
+            'explore-point',
+            'explore-character',
+            'explore-cutscene',
+            'explore-enemy',
+            'explore-weapon',
+            'explore-magic',
+            'explore-mission',
+            'explore-sign',
+            'explore-minigame',
+            'explore-explainer',
+            'explore-wall',
+            'explore-communicate'
+        ];
     }
 
     /**

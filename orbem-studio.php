@@ -1,12 +1,12 @@
 <?php
 /**
- * Plugin Name: Orbem Game Engine
+ * Plugin Name: Orbem Studio
  * Plugin URI: https://orbemorder.com/
  * Description: Build your own RPG video game using the power of WordPress
  * Version: 1.0.0
  * Author: OrbemOrder
  * Author URI: https://orbemorder.com/
- * Text Domain: orbem-game-engine
+ * Text Domain: orbem-studio
  * Domain Path: /languages
  * License:     GPL v2 or later
  *
@@ -22,7 +22,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * @package OrbemGameEngine
+ * @package OrbemStudio
  */
 
 /**

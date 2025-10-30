@@ -2,15 +2,15 @@
 /**
  * Explore
  *
- * @package OrbemGameEngine
+ * @package OrbemStudio
  */
 
-namespace OrbemGameEngine;
+namespace OrbemStudio;
 
 /**
  * Explore Class
  *
- * @package OrbemGameEngine
+ * @package OrbemStudio
  */
 class Explore
 {
@@ -31,208 +31,6 @@ class Explore
     {
 		$this->plugin = $plugin;
 	}
-
-    /**
-     * Add game options menu.
-     *
-     * @action admin_menu
-     * @return void
-     */
-    public function addGameOptionMenu() {
-        $parent_slug  = 'orbem-game-engine';
-        $parent_title = 'Game Engine';
-
-        $post_types = $this->getCurrentPostTypes();
-
-        add_menu_page(
-            $parent_title,
-            $parent_title,
-            'manage_options',
-            $parent_slug,
-            '',
-            'dashicons-games',
-            25
-        );
-
-        add_submenu_page(
-            $parent_slug,
-            'Game Options',
-            'Game Options',
-            'manage_options',
-            $parent_slug,
-            function () {
-                echo '<form method="post" action="options.php">';
-                settings_fields('options_group');
-                do_settings_sections('game_options');
-                submit_button();
-                echo '</form>';
-            }
-        );
-
-        foreach ($post_types as $cpt) {
-            $obj = get_post_type_object($cpt);
-            if (!$obj) continue;
-
-            // Add CPT
-            add_submenu_page(
-                $parent_slug,
-                $obj->labels->menu_name,
-                $obj->labels->menu_name,
-                $obj->cap->edit_posts,
-                "edit.php?post_type=$cpt"
-            );
-
-            // Add its taxonomies directly underneath
-            $taxonomies = get_object_taxonomies($cpt, 'objects');
-            foreach ($taxonomies as $tax) {
-                if (!$tax->show_ui || !$tax->show_in_menu) continue;
-
-                add_submenu_page(
-                    $parent_slug,
-                    '— ' . $tax->labels->name, // visually indented
-                    '— ' . $tax->labels->menu_name,
-                    $tax->cap->manage_terms,
-                    "edit-tags.php?taxonomy={$tax->name}&post_type={$cpt}"
-                );
-            }
-
-            // Remove original top-level CPT menu.
-            remove_menu_page("edit.php?post_type=$cpt");
-        }
-    }
-
-
-    /**
-     * @action admin_head
-     * @return void
-     */
-    public function organizeTaxoMenuItems ()
-    {
-        global $submenu;
-
-        $screen = get_current_screen();
-        if (!$screen || empty($screen->post_type)) {
-            return;
-        }
-
-        $post_types = [
-            'explore-area',
-            'explore-point',
-            'explore-character',
-            'explore-cutscene',
-            'explore-enemy',
-            'explore-weapon',
-            'explore-magic',
-            'explore-mission',
-            'explore-sign',
-            'explore-minigame',
-            'explore-explainer',
-            'explore-wall',
-            'explore-communicate'
-        ];
-
-        $current_post_type = $screen->post_type;
-
-        if (!in_array($current_post_type, $post_types, true)) {
-            return;
-        }
-
-        // Get allowed taxonomy slugs for the current CPT
-        $allowed_tax_slugs = [];
-        $taxonomies = get_object_taxonomies($current_post_type, 'names');
-        foreach ($taxonomies as $taxonomy) {
-            $allowed_tax_slugs[] = "edit-tags.php?taxonomy={$taxonomy}&post_type={$current_post_type}";
-        }
-
-        $menu_slug = 'orbem-game-engine';
-
-        if (!empty($submenu[$menu_slug])) {
-            foreach ($submenu[$menu_slug] as $index => $item) {
-                $slug = $item[2];
-                if (strpos($slug, 'edit-tags.php') === 0 && !in_array($slug, $allowed_tax_slugs, true)) {
-                    unset($submenu[$menu_slug][$index]);
-                }
-            }
-        }
-    }
-
-    /**
-     * @action admin_init
-     * @return void
-     */
-    public function registerGameOptions() {
-        $pages = get_posts(['post_type' => 'page', 'post_status' => 'publish', 'posts_per_page' => 200]);
-        $areas = get_posts(['post_type' => 'explore-area', 'post_status' => 'publish', 'posts_per_page' => 200]);
-        $characters = get_posts(['post_type' => 'explore-character', 'post_status' => 'publish', 'posts_per_page' => 200]);
-        $weapons = get_posts(['post_type' => 'explore-weapon', 'post_status' => 'publish', 'posts_per_page' => 200]);
-
-        $settings = [
-            'explore_game_page' => ['select', 'Game Page Title', $pages],
-            'explore_first_area' => ['select', 'Starting Area', $areas],
-            'explore_main_character' => ['select', 'Main Character', $characters],
-            'explore_default_weapon' => ['select', 'Default Weapon', $weapons],
-            'explore_require_login' => ['checkbox', 'Require Login'],
-            'explore_money_image' => ['upload', 'Money Icon'],
-            'explore_indicator_icon' => ['upload', 'Indicator Icon'],
-            'explore_arrow_icon' => ['upload', 'Arrow Icon'],
-            'explore_intro_video' => ['upload', 'Intro Video'],
-            'explore_start_music' => ['upload', 'Start Screen Music'],
-            'explore_signin_screen' => ['upload', 'Sign In Screen Background Image'],
-            'explore_walking_sound' => ['upload', 'Walking Sound Effect'],
-            'explore_points_sound' => ['upload', 'Sound When Points Are Given']
-        ];
-
-        add_settings_section('game_options_section', 'Global Game Options', function () {
-            settings_fields('game_options');
-        }, 'game_options');
-
-        foreach ( $settings as $key => $value ) {
-            register_setting('game_options', $key);
-
-            add_settings_field(
-                $key,
-                $value[1],
-                function($args) use ($key, $value) {
-                    $field_key = $args[0];
-                    $indicator = get_option($field_key, '');
-
-                    if (isset($value[0]) && $value[0] === 'upload') : ?>
-                    <div class="explore-image-field">
-                        <p>
-                            <input type="text" id="<?php echo esc_attr($field_key); ?>" name="<?php echo esc_attr($field_key); ?>" value="<?php echo esc_attr($indicator); ?>" class="widefat explore-upload-field" readonly />
-                        </p>
-                        <p>
-                            <button type="button" class="upload_image_button button"><?php _e('Select Image', 'orbem-game-engine'); ?></button>
-                            <button type="button" class="remove_image_button button"><?php _e('Remove Image', 'orbem-game-engine'); ?></button>
-                        </p>
-                    </div>
-                    <?php elseif (isset($value[0]) && $value[0] === 'text') : ?>
-                        <input type="text" id="<?php echo esc_attr($field_key); ?>" name="<?php echo esc_attr($field_key); ?>" value="<?php echo esc_attr($indicator); ?>" />
-                    <?php elseif (isset($value[0]) && $value[0] === 'select') : ?>
-                        <select name="<?php echo esc_attr($field_key); ?>">
-                            <option disabled selected value>Select...</option>
-                            <?php foreach($value[2] as $option) : ?>
-                            <option value="<?php echo esc_attr($option->post_name); ?>" <?php selected($option->post_name, $indicator, true); ?>><?php echo esc_attr($option->post_title); ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    <?php elseif (isset($value[0]) && $value[0] === 'checkbox') : ?>
-                        <input type="checkbox" id="<?php echo esc_attr($field_key); ?>" name="<?php echo esc_attr($field_key); ?>" <?php checked('on', $indicator, true); ?> />
-                    <?php endif;
-                },
-                'game_options',
-                'game_options_section',
-                [$key, $value]
-            );
-        }
-    }
-
-    /**
-     * The callback function for game options menu.
-     * @return void
-     */
-    public function gameOptionsPage() {
-        include $this->plugin->plugin_dir . '/templates/game-options-page.php';
-    }
 
     /**
      * Register API field.
@@ -370,7 +168,7 @@ class Explore
 
         // Handle errors in decoding JSON
         if (json_last_error() !== JSON_ERROR_NONE) {
-            return new \OrbemGameEngine\WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
+            return new \OrbemStudio\WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
         }
 
         $user = isset($return['userid']) ? intval($return['userid']) : '';
@@ -395,7 +193,7 @@ class Explore
 
         // Handle errors in decoding JSON
         if (json_last_error() !== JSON_ERROR_NONE) {
-            return new \OrbemGameEngine\WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
+            return new \OrbemStudio\WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
         }
 
         $user = isset($return['userid']) ? intval($return['userid']) : '';
@@ -428,7 +226,7 @@ class Explore
 
     /**
      * Call back function for rest route that adds points to user's explore game.
-     * @param $request \OrbemGameEngine\The arg values from rest route.
+     * @param $request \OrbemStudio\The arg values from rest route.
      */
     public function addCharacterPoints($request)
     {
@@ -440,7 +238,7 @@ class Explore
 
         // Handle errors in decoding JSON
         if (json_last_error() !== JSON_ERROR_NONE) {
-            return new \OrbemGameEngine\WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
+            return new \OrbemStudio\WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
         }
 
         // Process the data (e.g., register the user)
@@ -530,7 +328,7 @@ class Explore
 
         // Handle errors in decoding JSON
         if (json_last_error() !== JSON_ERROR_NONE) {
-            return new \OrbemGameEngine\WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
+            return new \OrbemStudio\WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
         }
 
         $user = isset($return['userid']) ? intval($return['userid']) : '';
@@ -571,7 +369,7 @@ class Explore
 
         // Handle errors in decoding JSON
         if (json_last_error() !== JSON_ERROR_NONE) {
-            return new \OrbemGameEngine\WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
+            return new \OrbemStudio\WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
         }
 
         // Process the data (e.g., register the user)
@@ -610,7 +408,7 @@ class Explore
 
         // Handle errors in decoding JSON
         if (json_last_error() !== JSON_ERROR_NONE) {
-            return new \OrbemGameEngine\WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
+            return new \OrbemStudio\WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
         }
 
         // Process the data (e.g., register the user)
@@ -643,7 +441,7 @@ class Explore
 
         // Handle errors in decoding JSON
         if (json_last_error() !== JSON_ERROR_NONE) {
-            return new \OrbemGameEngine\WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
+            return new \OrbemStudio\WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
         }
 
         $user = isset($return['userid']) ? intval($return['userid']) : '';
@@ -676,7 +474,7 @@ class Explore
 
         // Handle errors in decoding JSON
         if (json_last_error() !== JSON_ERROR_NONE) {
-            return new \OrbemGameEngine\WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
+            return new \OrbemStudio\WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
         }
 
         $user = isset($return['userid']) ? intval($return['userid']) : '';
@@ -710,7 +508,7 @@ class Explore
 
         // Handle errors in decoding JSON
         if (json_last_error() !== JSON_ERROR_NONE) {
-            return new \OrbemGameEngine\WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
+            return new \OrbemStudio\WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
         }
 
         $user = isset($return['userid']) ? intval($return['userid']) : '';
@@ -733,7 +531,7 @@ class Explore
 
     /**
      * Call back function for rest route that equips a new item on the player.
-     * @param $request \OrbemGameEngine\The arg values from rest route.
+     * @param $request \OrbemStudio\The arg values from rest route.
      */
     public function equipNewItem($request)
     {
@@ -745,7 +543,7 @@ class Explore
 
         // Handle errors in decoding JSON
         if (json_last_error() !== JSON_ERROR_NONE) {
-            return new \OrbemGameEngine\WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
+            return new \OrbemStudio\WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
         }
 
         // Process the data (e.g., register the user)
@@ -806,7 +604,7 @@ class Explore
 
         // Handle errors in decoding JSON
         if (json_last_error() !== JSON_ERROR_NONE) {
-            return new \OrbemGameEngine\WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
+            return new \OrbemStudio\WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
         }
 
         $user = isset($return['user']) ? intval($return['user']) : '';
@@ -895,7 +693,7 @@ class Explore
 
     /**
      * Call back function for rest route that saves game settings.
-     * @param $return \OrbemGameEngine\The arg values from rest route.
+     * @param $return \OrbemStudio\The arg values from rest route.
      */
     public function saveSettings($request)
     {
@@ -907,7 +705,7 @@ class Explore
 
         // Handle errors in decoding JSON
         if (json_last_error() !== JSON_ERROR_NONE) {
-            return new \OrbemGameEngine\WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
+            return new \OrbemStudio\WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
         }
 
         // Process the data (e.g., register the user)
@@ -936,7 +734,7 @@ class Explore
 
         // Handle errors in decoding JSON
         if (json_last_error() !== JSON_ERROR_NONE) {
-            return new \OrbemGameEngine\WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
+            return new \OrbemStudio\WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
         }
 
         $position = isset($return['position']) ? sanitize_text_field(wp_unslash($return['position'])) : '';
@@ -1029,7 +827,7 @@ class Explore
 
         // Handle errors in decoding JSON
         if (json_last_error() !== JSON_ERROR_NONE) {
-            return new \OrbemGameEngine\WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
+            return new \OrbemStudio\WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
         }
 
         $item = isset($return['id']) ? intval($return['id']) : false;
@@ -1082,7 +880,7 @@ class Explore
 
         // Handle errors in decoding JSON
         if (json_last_error() !== JSON_ERROR_NONE) {
-            return new \OrbemGameEngine\WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
+            return new \OrbemStudio\WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
         }
 
         $left = isset($return['left']) ? intval($return['left']) : '';
@@ -1106,7 +904,7 @@ class Explore
 
         // Handle errors in decoding JSON
         if (json_last_error() !== JSON_ERROR_NONE) {
-            return new \OrbemGameEngine\WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
+            return new \OrbemStudio\WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
         }
 
         $current_user = isset($return['userid']) ? intval($return['userid']) : '';
@@ -1409,6 +1207,7 @@ class Explore
             $explore_attack = get_post_meta($explore_point->ID, 'explore-attack', true);
             $weapon_strength = false === empty($explore_attack) ? wp_json_encode($explore_attack) : '""';
             $rotation = get_post_meta($explore_point->ID, 'explore-rotation', true);
+            $item_image = get_the_post_thumbnail_url($explore_point->ID);
             $missions = get_posts(
                 [
                     'post_type' => 'explore-mission',
@@ -1476,7 +1275,7 @@ class Explore
                 $layer = false === empty($layer) ? 'z-index: ' . $layer . ';' : '';
 
                 $html .= '<div style="' . $layer . 'transform: rotate(' . intval($rotation) . 'deg);left:' . intval($left) . 'px; top:' . intval($top) . 'px;" id="' . $explore_point->ID . '" data-genre="' . $explore_point->post_type . '" data-type="' . esc_attr($type) . '" data-value="' . intval($value) . '"';
-                $html .= 'data-image="' . get_the_post_thumbnail_url($explore_point->ID) . '" ';
+                $html .= 'data-image="' . $item_image . '" ';
                 if ('explore-area' === $explore_point->post_type) {
                     $map_url = get_post_meta($explore_point->ID, 'explore-map', true);
 
@@ -1658,6 +1457,11 @@ class Explore
                 }
 
                 $html .= '>';
+
+                // If item is video.
+                if ((false === empty($item_image) && false !== stripos($item_image, '.webm')) || (false === empty($item_image) && false !== stripos($item_image, '.mp4'))) {
+                    $html .= '<video style="position:absolute;z-index: 1;width: 100%;height:100%;top:0; left:0;" src="' . esc_attr($item_image) . '" autoplay loop muted></video>';
+                }
 
                 // Sign.
                 if ('explore-sign' === $explore_point->post_type) {
@@ -2546,7 +2350,7 @@ class Explore
         ?>
         <div class="explore-image-field">
             <p>
-                <?php _e(\OrbemGameEngine\Meta_Box::getMetaboxLabel($name) . ':', 'orbem-game-engine'); ?><br>
+                <?php _e(\OrbemStudio\Meta_Box::getMetaboxLabel($name) . ':', 'orbem-game-engine'); ?><br>
                 <img src="<?php echo esc_url($values); ?>" width="80" />
                 <br>
                 <input type="text" id="<?php echo esc_attr($slug); ?>" name="<?php echo esc_attr($slug); ?>" value="<?php echo esc_attr($values); ?>" class="widefat explore-upload-field" readonly />
@@ -2629,28 +2433,5 @@ class Explore
         </div>
         <?php
         return ob_get_clean();
-    }
-
-    /**
-     * util to get post types.
-     * @return string[]
-     */
-    public function getCurrentPostTypes()
-    {
-        return [
-            'explore-area',
-            'explore-point',
-            'explore-character',
-            'explore-cutscene',
-            'explore-enemy',
-            'explore-weapon',
-            'explore-magic',
-            'explore-mission',
-            'explore-sign',
-            'explore-minigame',
-            'explore-explainer',
-            'explore-wall',
-            'explore-communicate'
-        ];
     }
 }
