@@ -1208,6 +1208,7 @@ class Explore
             $weapon_strength = false === empty($explore_attack) ? wp_json_encode($explore_attack) : '""';
             $rotation = get_post_meta($explore_point->ID, 'explore-rotation', true);
             $item_image = get_the_post_thumbnail_url($explore_point->ID);
+            $video_override = get_post_meta($explore_point->ID, 'explore-video-override', true);
             $missions = get_posts(
                 [
                     'post_type' => 'explore-mission',
@@ -1459,13 +1460,13 @@ class Explore
                 $html .= '>';
 
                 // If item is video.
-                if ((false === empty($item_image) && false !== stripos($item_image, '.webm')) || (false === empty($item_image) && false !== stripos($item_image, '.mp4'))) {
-                    $html .= '<video style="position:absolute;z-index: 1;width: 100%;height:100%;top:0; left:0;" src="' . esc_attr($item_image) . '" autoplay loop muted></video>';
+                if (false === empty($video_override)) {
+                    $html .= '<video style="position:absolute;z-index: 1;width: 100%;height:100%;top:0; left:0;" src="' . esc_url($video_override) . '" autoplay loop muted></video>';
                 }
 
                 // Sign.
                 if ('explore-sign' === $explore_point->post_type) {
-                    $html .= '<img src="' . get_the_post_thumbnail_url($explore_point->ID, 'full') . '" class="sign-image" />';
+                    $html .= '<img src="' . $item_image . '" class="sign-image" />';
                 }
 
                 $html .= true === in_array($explore_point->post_type, ['explore-character', 'explore-sign'], true) ? $explore_point->post_content : '';

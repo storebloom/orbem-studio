@@ -1219,7 +1219,7 @@ class Meta_Box {
             'explore-mission-complete-cutscene' => 'Mission to complete after cutscene.',
             'explore-mission-cutscene' => 'Mission that triggers this cutscene.',
             'explore-mission-trigger' => 'Triggers the completion of this mission.',
-            'explore-video-override' => 'Override the feature image witha video',
+            'explore-video-override' => 'Override the feature image with a video.',
         ];
 
         if ($field_name) {
