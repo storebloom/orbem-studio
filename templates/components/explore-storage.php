@@ -4,30 +4,12 @@
  */
 $storage = get_user_meta($userid, 'explore_storage', true);
 $default_weapon = get_option('explore_default_weapon', false);
-$storage = false === empty($storage) ? $storage : ['items' => [], 'weapons' => [$default_weapon], 'gear' => []];
-$characters = get_user_meta($userid, 'explore_characters', true);
-
-// Get character weapons.
-$characters = get_posts(['post_type' => 'explore-character', 'posts_per_page' => 1000]);
-
-if ( false === is_wp_error($characters)) {
-    foreach ($characters as $character) {
-        $weapon_choice = get_post_meta($character->ID, 'explore-weapon-choice', true);
-
-        if (false === empty($weapon_choice) && false === is_wp_error($weapon_choice) && false === empty($storage['weapons']) && false === in_array($weapon_choice, array_column($storage['weapons'], 'name'))) {
-            $weapon_id = get_posts(['post_type' => 'explore-weapon', 'post_name' => $weapon_choice, 'posts_per_page' => 1]);
-
-            if (false === empty($weapon_id[0])) {
-                $storage['weapons'][] = ['name' => $weapon_choice, 'id' => $weapon_id[0]->ID, 'type' => 'weapons', 'character' => $character->post_name];
-            }
-        }
-    }
-}
-
+$default_weapon_obj = get_posts(['name' => $default_weapon, 'posts_per_page' => 1, 'post_type' => 'explore-weapon'])[0];
+$storage = false === empty($storage) ? $storage : ['items' => [], 'weapons' => [['name' => 'fist', 'id' => $default_weapon_obj->ID, 'type' => 'weapons']], 'gear' => []];
 $storage_limit = get_user_meta($userid, 'storage_limit', true);
 $storage_limit = false === empty($storage_limit ) ? $storage_limit : 11;
 $current_explore_gear = get_user_meta($userid, 'explore_current_gear', true) ?? [];
-$current_explore_weapon = get_user_meta($userid, 'explore_current_weapons', true) ?? [];
+$current_explore_weapon = get_user_meta($userid, 'explore_current_weapons', true) ?? [$default_weapon_obj->ID];
 ?>
 <div class="storage-form">
     <span class="close-settings">X</span>
@@ -41,7 +23,7 @@ $current_explore_weapon = get_user_meta($userid, 'explore_current_weapons', true
         <?php foreach($storage as $storage_type => $storage_items): ?>
             <div data-menu="<?php echo esc_attr($storage_type); ?>" class="storage-menu <?php echo 'items' === $storage_type ? 'engage' : ''; ?>">
                 <?php for ( $x = 0; $x <= intval($storage_limit); $x++ ) :
-                    $item_id = false === empty($storage_items[$x]["id"]) ? esc_attr($storage_items[$x]["id"]) : '';
+                    $item_id = false === empty($storage_items[$x]["id"]) ? intval($storage_items[$x]["id"]) : '';
                     $current_gear = false;
                     $current_weapon = $default_weapon;
                     $attack = get_post_meta($item_id, 'explore-attack', true);
@@ -72,6 +54,7 @@ $current_explore_weapon = get_user_meta($userid, 'explore_current_weapons', true
                             data-value="<?php echo false === empty($storage_items[$x]["value"]) ? esc_attr($storage_items[$x]["value"]) : ''; ?>"
                             data-width="<?php echo false === empty($width) ? $width: 50; ?>"
                             data-height="<?php echo false === empty($height) ? $height: 50; ?>"
+                            data-character="<?php echo false === empty($character) ? $character : ''; ?>"
                             data-character="<?php echo false === empty($character) ? $character : ''; ?>"
 
                             <?php if (true === $weapons_and_gear) : ?>

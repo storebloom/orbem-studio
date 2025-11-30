@@ -484,7 +484,8 @@ class Meta_Box {
                 'explore-explainer-type' => [
                     'radio' => [
                         'map',
-                        'menu'
+                        'menu',
+                        'fullscreen'
                     ]
                 ],
                 'explore-explainer-trigger' => [
@@ -573,6 +574,7 @@ class Meta_Box {
                             'no'
                         ]
                     ],
+                    'offset' => 'number',
                     'materialize-after-cutscene' => [
                         'select' => [$explore_cutscene_array]
                     ],

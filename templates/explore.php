@@ -41,6 +41,7 @@ $explore_area_start_left = get_post_meta($explore_area->ID, 'explore-start-left'
 $explore_start_direction = get_post_meta($explore_area->ID, 'explore-start-direction', true);
 $explore_start_direction = false === empty($explore_start_direction) ? $explore_start_direction : 'down';
 $explore_area_start_direction = $explore_start_direction . '-dir';
+$explore_weapon_start = true === isset($equipped_weapon) && 'fist' !== $equipped_weapon->post_name ? '-' . $equipped_weapon->post_name : '';
 
 $explore_points = Explore::getExplorePoints($location);
 $explore_cutscenes = Explore::getExplorePosts($location, 'explore-cutscene');
@@ -144,6 +145,7 @@ include plugin_dir_path(__FILE__) . 'plugin-header.php';
             </div>
         </div>
         <?php echo html_entity_decode(Explore::getExplainerHTML($explore_explainers, 'menu')); ?>
+        <?php echo html_entity_decode(Explore::getExplainerHTML($explore_explainers, 'fullscreen')); ?>
         <div class="touch-buttons">
             <span class="top-left">
             </span>
@@ -179,7 +181,7 @@ include plugin_dir_path(__FILE__) . 'plugin-header.php';
             <span class="misc-gauge-wrap"><span class="misc-gauge"></span></span>
             <?php foreach($direction_images as $direction_label => $direction_image):
                 $fight_animation = false !== stripos($direction_label, 'punch') ? ' fight-image' : '';
-                $dir_image = 'static-' . $explore_start_direction;
+                $dir_image = 'static-' . $explore_start_direction . $explore_weapon_start;
                 ?>
                 <img
                     height="<?php echo false === empty($main_character_info['height']) ? esc_attr($main_character_info['height']) : 185; ?>px"
@@ -190,7 +192,7 @@ include plugin_dir_path(__FILE__) . 'plugin-header.php';
                 />
             <?php endforeach; ?>
         </div>
-        <div style="top: <?php echo false === empty($coordinates['top']) ? esc_attr( intval($coordinates['top']) + 500) : 4018; ?>px; left: <?php echo false === empty($coordinates['left']) ? esc_attr(intval($coordinates['left'] + 500)) : 2442; ?>px" class="map-weapon" data-direction="<?php echo esc_attr($explore_start_direction); ?>" data-projectile="<?php echo esc_attr($is_it_projectile); ?>" data-weapon="<?php echo esc_attr( $equipped_weapon->post_name ); ?>" data-strength=<?php echo esc_attr($weapon_strength); ?>></div>
+        <div style="top: <?php echo false === empty($coordinates['top']) ? esc_attr( intval($coordinates['top']) + 500) : 4018; ?>px; left: <?php echo false === empty($coordinates['left']) ? esc_attr(intval($coordinates['left'] + 500)) : 2442; ?>px" class="map-weapon" data-direction="<?php echo esc_attr($explore_start_direction); ?>" data-projectile="<?php echo esc_attr($is_it_projectile); ?>" data-weapon="<?php echo esc_attr( $equipped_weapon->post_name ?? 'fist' ); ?>" data-strength=<?php echo esc_attr($weapon_strength); ?>></div>
         <div class="default-map" data-iscutscene="<?php echo esc_attr($is_area_cutscene); ?>" data-startleft="<?php echo false === empty($explore_area_start_left) ? esc_attr($explore_area_start_left) : ''; ?>" data-starttop="<?php echo false === empty($explore_area_start_top) ? esc_attr($explore_area_start_top) : ''; ?>">
             <?php if (false !== $explore_area): ?>
                 <?php echo Explore::getMapSVG($explore_area); ?>

@@ -148,6 +148,10 @@ document.addEventListener("DOMContentLoaded", function(){
     // Spell clicks.
     const spells = document.querySelectorAll('.spell');
     const weapon = document.getElementById( 'weapon' );
+    const theWeapon = document.querySelector( '.map-weapon' );
+
+    // Define current weapon for images.
+    window.currentWeapon = 'fist' !== theWeapon.dataset.weapon ? '-' + theWeapon.dataset.weapon : '';
 
     if ( spells && weapon ) {
         spells.forEach( spell => {
@@ -262,35 +266,7 @@ document.addEventListener("DOMContentLoaded", function(){
 
     engageSettingsMenus();
 
-    // Storage menu functionality.
-    // Tab logic.
-    const storageTabs = document.querySelectorAll( '.menu-tabs div' );
-
-    if ( storageTabs ) {
-        storageTabs.forEach( ( storageTab, storageIndex ) => {
-            storageTab.addEventListener( 'click', () => {
-                const currentTab = document.querySelector( '.menu-tabs .engage' );
-
-                if ( currentTab ) {
-                    currentTab.classList.remove( 'engage' );
-                }
-
-                // Select new tab.
-                storageTab.classList.add( 'engage' );
-
-                const tabContent = document.querySelectorAll( '.storage-menu' );
-                const currentTabContent = document.querySelector( '.storage-menu.engage' );
-
-                if ( currentTabContent ) {
-                    currentTabContent.classList.remove( 'engage' );
-                }
-
-                if ( tabContent ) {
-                    tabContent[storageIndex].classList.add( 'engage' );
-                }
-            } );
-        } );
-    }
+    engageStorageMenus();
 
     // New game reset.
     const newGame = document.getElementById( 'new-explore' );
@@ -506,6 +482,44 @@ function moveNPC( npc, cutscene = false ) {
     }
 }
 
+// Storage menu functionality.
+function engageStorageMenus()
+{
+    // Tab logic.
+    const storageTabs = document.querySelectorAll( '.menu-tabs > div' );
+
+    if ( storageTabs ) {
+        storageTabs.forEach( ( storageTab, storageIndex ) => {
+            storageTab.addEventListener( 'click', () => {
+                const currentTab = document.querySelector( '.menu-tabs .engage' );
+
+                const itemDescription = document.getElementById('item-description');
+                if (itemDescription) {
+                    itemDescription.innerHTML = '';
+                }
+
+                if ( currentTab ) {
+                    currentTab.classList.remove( 'engage' );
+                }
+
+                // Select new tab.
+                storageTab.classList.add( 'engage' );
+
+                const tabContent = document.querySelectorAll( '.storage-menu' );
+                const currentTabContent = document.querySelector( '.storage-menu.engage' );
+
+                if ( currentTabContent ) {
+                    currentTabContent.classList.remove( 'engage' );
+                }
+
+                if ( tabContent ) {
+                    tabContent[storageIndex].classList.add( 'engage' );
+                }
+            } );
+        } );
+    }
+}
+
 function engageSettingsMenus() {
     // Settings.
     const settingCogs = document.querySelectorAll('#settings, #storage, #characters');
@@ -519,7 +533,9 @@ function engageSettingsMenus() {
                 if ( menuItems ) {
                     menuItems.forEach( menuItem => {
                         menuItem.addEventListener( 'click', () => {
-                            showItemDescription(menuItem);
+                            if ('true' !== menuItem.dataset.empty) {
+                                showItemDescription(menuItem);
+                            }
                         });
                     } );
                 }
@@ -1028,7 +1044,7 @@ function saveMission( mission, value, position ) {
                 }
             }, 500);
 
-            if ( value && value > 0 ) {
+            if ( value && missionPoints > 0 ) {
                 // Trigger cutscene if mission is attached.
                 const theCutscene = document.querySelector( `.map-cutscene[data-mission="${mission}"]` );
 
@@ -1120,8 +1136,9 @@ function addCharacter( character ) {
  * @param id
  * @param amount
  * @param unequip
+ * @param name
  */
-function equipNewItem(type, id, amount, unequip) {
+function equipNewItem(type, id, amount, unequip, name) {
     const jsonString = {
         type: type,
         itemid: id,
@@ -1129,6 +1146,11 @@ function equipNewItem(type, id, amount, unequip) {
         userid: currentUserId,
         unequip: unequip
     }
+
+    if ('weapons' === type) {
+        window.currentWeapon = 'fist' !== name ? '-' + name : '';
+    }
+
     // Save position of item.
     fetch(`https://${wpThemeURL}/wp-json/orbemorder/v1/equip-explore-item/`, {
         method: 'POST', // Specify the HTTP method
@@ -1142,6 +1164,13 @@ function equipNewItem(type, id, amount, unequip) {
             if (!response.ok) {
                 throw new Error('Network response was not ok ' + response.statusText);
             }
+
+            const itemDescription = document.getElementById('item-description');
+            if (itemDescription) {
+                itemDescription.innerHTML = '';
+            }
+
+            setStaticMCImage(document.getElementById('map-character'), 'down', true);
         });
 }
 
@@ -1560,10 +1589,13 @@ const enterNewArea = (function () {
                             newDefaultMap.dataset.iscutscene = 'yes';
                         }
 
-                        container.innerHTML = newMapItems['menu-explainers'] + container.innerHTML + newDefaultMap.outerHTML;
+                        container.innerHTML = newMapItems['menu-explainers'] + newMapItems['fullscreen-explainers'] + container.innerHTML + newDefaultMap.outerHTML;
 
                         // Engage settings menus.
                         engageSettingsMenus();
+
+                        // Engage storage menus.
+                        engageStorageMenus();
 
                         // Add characters.
                         const characterList = document.querySelector( '.characters-content' );
@@ -1777,16 +1809,24 @@ const showItemDescription = (function () {
                 return response.json();
             } )
             .then( data => {
+                const itemDescription = document.getElementById('item-description');
+                if (itemDescription) {
+                    itemDescription.innerHTML = '';
+                }
+
                 let newItemDescription = data;
                 newItemDescription = JSON.parse( newItemDescription.data );
                 const description = document.querySelector( '.retrieval-points #item-description' );
                 const selectedItem = document.querySelector( '.storage-item.engage' );
                 const equipButton = document.createElement( 'button' );
+                equipButton.classList.add('storage-item-button');
                 equipButton.textContent = 'Equip';
                 const unequipButton  = document.createElement( 'button' );
                 unequipButton.textContent = 'Unequip';
+                unequipButton.classList.add( 'storage-item-button' );
                 const dropButton  = document.createElement( 'button' );
-                unequipButton.textContent = 'Drop';
+                dropButton.textContent = 'Drop';
+                dropButton.classList.add( 'storage-item-button' );
 
                 // Replace current description content.
                 description.innerHTML = newItemDescription;
@@ -1817,6 +1857,11 @@ const showItemDescription = (function () {
                     dropButton.addEventListener( 'click', () => {
                         removeItemFromStorage(name, selectedType);
                         description.innerHTML = '';
+
+                        const itemDescription = document.getElementById('item-description');
+                        if (itemDescription) {
+                            itemDescription.innerHTML = '';
+                        }
                     } );
                 }
 
@@ -1846,7 +1891,7 @@ const showItemDescription = (function () {
                         updatePointBars(false);
 
                         description.innerHTML = '';
-                        equipNewItem( selectedType, itemId, amount, false );
+                        equipNewItem( selectedType, itemId, amount, false, selectedItem.title );
                     } );
                 }
 
@@ -1865,7 +1910,7 @@ const showItemDescription = (function () {
                         updatePointBars(true);
 
                         description.innerHTML = '';
-                        equipNewItem( selectedType, itemId, amount, true );
+                        equipNewItem( selectedType, itemId, amount, true, selectedItem.title );
                     } );
                 }
             });
@@ -1899,13 +1944,14 @@ function changeWeapon( selectedItem ) {
             currentWeaponImg.style.height = selectedItem.dataset.height + 'px';
             currentWeapon.dataset.strength = selectedItem.dataset.strength;
             currentWeapon.dataset.projectile = selectedItem.dataset.projectile;
+
+            window.currentWeapon = 'fist' !== selectedItem.title ? '-' + selectedItem.title : '';
         }
     }
 }
 
 function updatePointBars(unequip) {
     const gear = document.querySelector( '.storage-item.being-equipped[data-type="gear"]' );
-    const allWeapons = document.querySelector( '.store-item.being-equipped[data-type="weapons"]' );
     const healthBar = document.querySelector( `#explore-points .health-amount` );
     const manaBar = document.querySelector( `#explore-points .mana-amount` );
     let manaAmount = parseInt( manaBar.dataset.amount );
@@ -2024,24 +2070,27 @@ function selectNewCharacter(character) {
 
         if ( mc ) {
             mc.forEach( (mcImage, index) => {
-                const mcImageUrl = mcImage.src;
-                const mcAbility = currentCharacter.dataset.ability;
-                const mcName = currentCharacter.dataset.name;
-                mcImage.src = newCharacter[index].src;
-                newCharacter[index].src = mcImageUrl;
-
-                // set new character
-                currentCharacter.dataset.currentchar = character.dataset.charactername;
-                currentCharacter.dataset.ability = character.dataset.ability;
-                currentCharacter.dataset.name = character.querySelector('.character-name').textContent;
-                character.dataset.ability = mcAbility;
-                character.querySelector('.character-name').textContent = mcName;
+                if ( newCharacter[index] ) {
+                    const mcImageUrl = mcImage.src;
+                    mcImage.src = newCharacter[index].src;
+                    newCharacter[index].src = mcImageUrl;
+                }
             } );
+
+            const mcAbility = currentCharacter.dataset.ability;
+            const mcName = currentCharacter.dataset.name;
+
+            // set new character
+            currentCharacter.dataset.currentchar = character.dataset.charactername;
+            currentCharacter.dataset.ability = character.dataset.ability;
+            currentCharacter.dataset.name = character.querySelector('.character-name').textContent;
+            character.dataset.ability = mcAbility;
+            character.querySelector('.character-name').textContent = mcName;
         }
 
         switch (currentCharacter.dataset?.ability) {
             case 'speed' :
-                window.moveSpeed = 1;
+                window.moveSpeed = 5;
                 window.attackMultiplier = 5;
                 movementIntFunc();
 
@@ -2052,13 +2101,13 @@ function selectNewCharacter(character) {
                     const equipped = document.querySelector('.storage-item[data-type="weapons"].equipped')
                     changeWeapon(equipped);
 
-                    window.moveSpeed = 20;
+                    window.moveSpeed = 3;
                     window.attackMultiplier = 0;
                     movementIntFunc();
                     break;
 
             case 'strength' :
-                    window.moveSpeed = 20;
+                    window.moveSpeed = 3;
                     movementIntFunc();
 
                     // Change weapon.
@@ -2066,7 +2115,7 @@ function selectNewCharacter(character) {
                     window.attackMultiplier = 10;
                break;
             case 'hazard' :
-                    window.moveSpeed = 20;
+                    window.moveSpeed = 3;
                     movementIntFunc();
 
                     // Change weapon.
@@ -2074,7 +2123,7 @@ function selectNewCharacter(character) {
                     window.attackMultiplier = 0;
                 break;
             case 'default' :
-                    window.moveSpeed = 20;
+                    window.moveSpeed = 3;
                     // Change weapon.
                     changeWeapon(document.querySelector('.storage-item[title="' + currentCharacter.dataset?.weapon + '"]'));
                     movementIntFunc();
@@ -2530,7 +2579,7 @@ export function engageExploreGame() {
     window.runningPointFunction = false;
 
     // Set walking speed by default.
-    window.moveSpeed = 20;
+    window.moveSpeed = 3;
 
     // Default for auto walk.
     window.currentCharacterAutoDirection = '';
@@ -2984,51 +3033,54 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
                         makeTalk(text, mcVoice, providedAudio );
 
                         const arrow = triggee.querySelector('img');
-                        const rotate = parseInt(arrow.dataset.rotate);
-                        let animate1 = false;
-                        let animate2 = false;
-                        let animate3 = false;
 
-                        if (arrow && rotate && 0 < rotate) {
-                            if (0 < rotate && 90 >= rotate) {
+                        if ( arrow) {
+                            const rotate = parseInt(arrow.dataset.rotate);
+                            let animate1 = false;
+                            let animate2 = false;
+                            let animate3 = false;
 
-                                animate1 = `rotate(${rotate}deg) translate( 10px, -10px )`;
-                                animate2 = `rotate(${rotate}deg) translate( 10px, 10px )`;
-                                animate3 = `rotate(${rotate}deg) translate( 10px, -10px )`;
-                            }
+                            if (arrow && rotate && 0 < rotate) {
+                                if (0 < rotate && 90 >= rotate) {
 
-                            if (91 < rotate && 180 >= rotate) {
-                                animate1 = `rotate(${rotate}deg) translate( 0, 10px )`;
-                                animate2 = `rotate(${rotate}deg) translate( -10px, -10px )`;
-                                animate3 = `rotate(${rotate}deg) translate( 0, 10px )`;
-                            }
+                                    animate1 = `rotate(${rotate}deg) translate( 10px, -10px )`;
+                                    animate2 = `rotate(${rotate}deg) translate( 10px, 10px )`;
+                                    animate3 = `rotate(${rotate}deg) translate( 10px, -10px )`;
+                                }
 
-                            if (181 < rotate && 270 >= rotate) {
-                                animate1 = `rotate(${rotate}deg) translate( -10px, 10px )`;
-                                animate2 = `rotate(${rotate}deg) translate( -10px, -10px )`;
-                                animate3 = `rotate(${rotate}deg) translate( -10px, 10px )`;
-                            }
+                                if (91 < rotate && 180 >= rotate) {
+                                    animate1 = `rotate(${rotate}deg) translate( 0, 10px )`;
+                                    animate2 = `rotate(${rotate}deg) translate( -10px, -10px )`;
+                                    animate3 = `rotate(${rotate}deg) translate( 0, 10px )`;
+                                }
 
-                            if (271 < rotate && 360 >= rotate) {
-                                animate1 = `rotate(${rotate}deg) translate( -10px, 0 )`;
-                                animate2 = `rotate(${rotate}deg) translate( -10px, -10px )`;
-                                animate3 = `rotate(${rotate}deg) translate( -10px, 0 )`;
-                            }
+                                if (181 < rotate && 270 >= rotate) {
+                                    animate1 = `rotate(${rotate}deg) translate( -10px, 10px )`;
+                                    animate2 = `rotate(${rotate}deg) translate( -10px, -10px )`;
+                                    animate3 = `rotate(${rotate}deg) translate( -10px, 10px )`;
+                                }
+
+                                if (271 < rotate && 360 >= rotate) {
+                                    animate1 = `rotate(${rotate}deg) translate( -10px, 0 )`;
+                                    animate2 = `rotate(${rotate}deg) translate( -10px, -10px )`;
+                                    animate3 = `rotate(${rotate}deg) translate( -10px, 0 )`;
+                                }
 
 
-                            if (false !== animate1) {
-                                const moveArrow = [
-                                    {transform: animate1},
-                                    {transform: animate2},
-                                    {transform: animate3},
-                                ];
+                                if (false !== animate1) {
+                                    const moveArrow = [
+                                        { transform: animate1 },
+                                        { transform: animate2 },
+                                        { transform: animate3 },
+                                    ];
 
-                                const arrowTiming = {
-                                    duration: 1000,
-                                    iterations: Infinity,
-                                };
+                                    const arrowTiming = {
+                                        duration: 1000,
+                                        iterations: Infinity,
+                                    };
 
-                                arrow.animate(moveArrow, arrowTiming);
+                                    arrow.animate(moveArrow, arrowTiming);
+                                }
                             }
                         }
 
@@ -3259,7 +3311,7 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
                 case 38 :
                     box.classList.remove('engage');
                     direction = '' !== isDragging ? window.draggingDirection : 'up'
-                    newCharacterImage = document.getElementById(window.mainCharacter + '-' + direction + isDragging);
+                    newCharacterImage = document.getElementById(window.mainCharacter + '-' + direction + isDragging + window.currentWeapon);
                     if (newCharacterImage) {
                         newCharacterImage.classList.add('engage');
                     }
@@ -3273,7 +3325,7 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
                 case 37 :
                     box.classList.remove('engage');
                     direction = '' !== isDragging ? window.draggingDirection : 'left'
-                    newCharacterImage = document.getElementById(window.mainCharacter + '-' + direction + isDragging);
+                    newCharacterImage = document.getElementById(window.mainCharacter + '-' + direction + isDragging + window.currentWeapon);
                     if (newCharacterImage) {
                         newCharacterImage.classList.add('engage');
                     }
@@ -3286,7 +3338,7 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
                 case 39 :
                     box.classList.remove('engage');
                     direction = '' !== isDragging ? window.draggingDirection : 'right'
-                    newCharacterImage = document.getElementById(window.mainCharacter + '-' + direction + isDragging);
+                    newCharacterImage = document.getElementById(window.mainCharacter + '-' + direction + isDragging + window.currentWeapon);
                     if (newCharacterImage) {
                         newCharacterImage.classList.add('engage');
                     }
@@ -3299,7 +3351,7 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
                 case 40 :
                     box.classList.remove('engage');
                     direction = '' !== isDragging ? window.draggingDirection : 'down'
-                    newCharacterImage = document.getElementById(window.mainCharacter + '-' + direction + isDragging);
+                    newCharacterImage = document.getElementById(window.mainCharacter + '-' + direction + isDragging + window.currentWeapon);
                     if (newCharacterImage) {
                         newCharacterImage.classList.add('engage');
                     }
@@ -3312,7 +3364,7 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
                 case 87 :
                     box.classList.remove('engage');
                     direction = '' !== isDragging ? window.draggingDirection : 'up'
-                    newCharacterImage = document.getElementById(window.mainCharacter + '-' + direction + isDragging);
+                    newCharacterImage = document.getElementById(window.mainCharacter + '-' + direction + isDragging + window.currentWeapon);
                     if (newCharacterImage) {
                         newCharacterImage.classList.add('engage');
                     }
@@ -3326,7 +3378,7 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
                 case 65 :
                     box.classList.remove('engage');
                     direction = '' !== isDragging ? window.draggingDirection : 'left'
-                    newCharacterImage = document.getElementById(window.mainCharacter + '-' + direction + isDragging);
+                    newCharacterImage = document.getElementById(window.mainCharacter + '-' + direction + isDragging + window.currentWeapon);
                     if (newCharacterImage) {
                         newCharacterImage.classList.add('engage');
                     }
@@ -3339,7 +3391,7 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
                 case 68 :
                     box.classList.remove('engage');
                     direction = '' !== isDragging ? window.draggingDirection : 'right'
-                    newCharacterImage = document.getElementById(window.mainCharacter + '-' + direction + isDragging);
+                    newCharacterImage = document.getElementById(window.mainCharacter + '-' + direction + isDragging + window.currentWeapon);
                     if (newCharacterImage) {
                         newCharacterImage.classList.add('engage');
                     }
@@ -3352,7 +3404,7 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
                 case 83 :
                     box.classList.remove('engage');
                     direction = '' !== isDragging ? window.draggingDirection : 'down'
-                    newCharacterImage = document.getElementById(window.mainCharacter + '-' + direction + isDragging);
+                    newCharacterImage = document.getElementById(window.mainCharacter + '-' + direction + isDragging + window.currentWeapon);
                     if (newCharacterImage) {
                         newCharacterImage.classList.add('engage');
                     }
@@ -3630,7 +3682,9 @@ function storeExploreItem( item ) {
             if ( true === isNewItem ) {
                 menu.prepend( menuItem );
                 menuItem.addEventListener( 'click', () => {
-                    showItemDescription(menuItem);
+                    if ('true' !== menuItem.dataset.empty) {
+                        showItemDescription(menuItem);
+                    }
                 });
             }
 
@@ -4538,6 +4592,7 @@ function movementIntFunc() {
         clearInterval( window.buttonShow );
     } );
 
+
     window.movementInt = setInterval( function () {
         const box = document.getElementById( 'map-character' );
         const weapon = document.querySelector( '.map-weapon' );
@@ -4553,8 +4608,8 @@ function movementIntFunc() {
                 window.keyDown = true;
             }
 
-            const myTop = miroExplorePosition( finalPos.top, d[87] ? 87 : 38, d[83] ? 83 : 40, d, x, $newest );
-            const myLeft = miroExplorePosition( finalPos.left, d[65] ? 65 : 37, d[68] ? 68 : 39, d, x, $newest );
+            const myTop = miroExplorePosition( finalPos.top, d[87] ? 87 : 38, d[83] ? 83 : 40, d, window.moveSpeed, $newest );
+            const myLeft = miroExplorePosition( finalPos.left, d[65] ? 65 : 37, d[68] ? 68 : 39, d, window.moveSpeed, $newest );
             box.style.top = myTop + 'px';
             box.style.left = myLeft + 'px';
 
@@ -4575,7 +4630,7 @@ function movementIntFunc() {
 
            box.scrollIntoView({block: 'nearest'});
         }
-    }, window.moveSpeed );
+    }, 16 );
 }
 
 /**
@@ -4614,7 +4669,7 @@ function cleanClassName(classes) {
     }
 }
 
-function setStaticMCImage(mapChar, direction = '') {
+function setStaticMCImage(mapChar, direction = '', weaponChange = false) {
     // Change to static image.
     const currentCharacterImage = document.querySelector('.map-character-icon.engage');
 
@@ -4627,7 +4682,8 @@ function setStaticMCImage(mapChar, direction = '') {
             staticId = window.mainCharacter + '-static-' + direction + window.isDragging;
         }
 
-        const staticVersion = document.getElementById(staticId);
+        const thisIsWeapon = weaponChange && 'fist' !== window.currentWeapon ? window.currentWeapon : '';
+        const staticVersion = document.getElementById(staticId + thisIsWeapon);
 
         if ( staticVersion ) {
             currentCharacterImage.classList.remove( 'engage' );
@@ -4670,11 +4726,11 @@ function addCharacterHit() {
 
     document.addEventListener('keyup', (event) => {
         const weapon = document.querySelector( '.map-weapon' );
-        const weaponType = 'fist' === weapon.dataset.weapon ? 'punch' : weapon.dataset.weapon;
+        const weaponType = 'fist' === weapon.dataset.weapon ? '' : '-' + weapon.dataset.weapon;
         const direction = 'top' === weapon.dataset.direction ? 'up' : weapon.dataset.direction;
         const mapChar =  document.querySelector( '#map-character' );
         let currentImageMapCharacter = mapChar.querySelector( '.map-character-icon.engage');
-        const weaponAnimation = mapChar.querySelector( `#${window.mainCharacter}-${direction}-${weaponType}`);
+        const weaponAnimation = mapChar.querySelector( `#${window.mainCharacter}-${direction}-punch${weaponType}`);
 
         if ( false !== window.allowHit ) {
             const manaPoints = document.querySelector(`#explore-points .mana-amount`);
@@ -4772,6 +4828,9 @@ function addCharacterHit() {
                             }
                         }, weaponTime);
                     } else if (true === shiftIsPressed) {
+                        const weaponAnimation = mapChar.querySelector( `#${window.mainCharacter}-${direction}-punch${weaponType}`);
+                        const weaponAnimationHeavy = mapChar.querySelector( `#${window.mainCharacter}-${direction}-punch${weaponType}-heavy`);
+
                         weapon.classList.add('heavy-engage');
                         heavyAttackInProgress = true;
 
@@ -4948,7 +5007,7 @@ function getBlockDirection(collisionWalls, box, finalTop, finalLeft, enemy, npc)
                 const bottomCollision = collisionWallTop < characterBottom && collisionWallBottom > characterBottom && collisionWallTop > ( characterBottom - 10 );
                 const leftCollision = collisionWallRight > characterLeft && collisionWallLeft < characterLeft;
                 const rightCollision = collisionWallLeft < characterRight && collisionWallRight > characterRight;
-                let adjust = true === enemy ? 5 : 3;
+                let adjust = true === enemy ? 5 : window.moveSpeed;
                 adjust = true === npc ? 1 : adjust;
 
                 if (leftCollision && !rightCollision && !topCollision && !bottomCollision) {
@@ -5195,7 +5254,7 @@ function engageDraggableFunction() {
                     const topOffset = dragItemTop < dragDestTop ? dragDestTop - dragItemTop : dragItemTop - dragDestTop;
                     const leftOffset = dragItemLeft < dragDestLeft ? dragDestLeft - dragItemLeft : dragItemLeft - dragDestLeft;
 
-                    if ( topOffset < 10 && leftOffset < 10 && false === dragDest.classList.contains( 'completed-mission' ) ) {
+                    if ( topOffset < parseInt(dragDest.dataset.offset) && leftOffset < parseInt(dragDest.dataset.offset) && false === dragDest.classList.contains( 'completed-mission' ) ) {
                         saveMission(dragDest.dataset.mission, document.querySelector( '.' + dragDest.dataset.mission + '-mission-item' ), cleanClass );
 
                         // Add completed mission so you can't keep getting points.
@@ -5398,7 +5457,7 @@ function moveCharacter(mapCharacter, newTop, newLeft, gradual, cutscene ) {
                 if ( currentMovementImage && false === currentMovementImage.id.includes('static') ) {
                     currentMovementImage.classList.remove( 'engage' );
 
-                    const newStaticImage = document.getElementById( currentMovementImage.id.replace( window.mainCharacter, window.mainCharacter + '-static' ) );
+                    const newStaticImage = document.getElementById( currentMovementImage.id.replace( window.mainCharacter, window.mainCharacter + '-static' + window.currentWeapon ) );
 
                     if ( newStaticImage ) {
                         newStaticImage.classList.add( 'engage' );
@@ -5428,7 +5487,7 @@ function directCharacter( topDown, leftRight, mapCharacter ) {
     const currentImage = mapCharacter.querySelector( '.map-character-icon.engage' );
 
     if ( direction !== window.currentCharacterAutoDirection ) {
-        const newImage = mapCharacter.querySelector( '#' + window.mainCharacter + '-' + direction );
+        const newImage = mapCharacter.querySelector( '#' + window.mainCharacter + '-' + direction + window.currentWeapon );
 
         window.currentCharacterAutoDirection = direction;
         mapCharacter.classList.add( direction + '-dir' );

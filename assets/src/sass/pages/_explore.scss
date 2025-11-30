@@ -190,6 +190,13 @@ html {
       &[data-type="menu"] {
         position: fixed;
       }
+
+      &[data-type="fullscreen"] {
+        left: 50%!important;
+        position: fixed;
+        transform: translate(-50%, -50%);
+        top: 50%!important;
+      }
     }
 
     #primary {

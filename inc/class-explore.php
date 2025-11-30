@@ -607,6 +607,8 @@ class Explore
             return new \OrbemStudio\WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
         }
 
+        $default_weapon = get_option('explore_default_weapon', false);
+        $default_weapon_obj = get_posts(['name' => $default_weapon, 'posts_per_page' => 1, 'post_type' => 'explore-weapon'])[0];
         $user = isset($return['user']) ? intval($return['user']) : '';
         $id = isset($return['id']) ? intval($return['id']) : '';
         $value = isset($return['value']) ? intval($return['value']) : '';
@@ -650,7 +652,7 @@ class Explore
                 $has_dupe = false;
 
                 if (true === empty($current_storage_items)) {
-                    $current_storage_items = ['items' => [], 'weapons' => [['name' => 'fist', 'type' => 'weapons', 'id' => '1641']], 'gear' => []];
+                    $current_storage_items = ['items' => [], 'weapons' => [['name' => $default_weapon, 'type' => 'weapons', 'id' => $default_weapon_obj->ID]], 'gear' => []];
                 } else {
                     foreach ($current_storage_items[$menu_map] as $index => $item) {
                         if ($name === $item['name']) {
@@ -753,6 +755,7 @@ class Explore
         $map_items = self::getMapItemHTML($explore_points, $userid, $position);
         $explainers_menu = self::getExplainerHTML($explore_explainers, 'menu');
         $explainers_map = self::getExplainerHTML($explore_explainers, 'map');
+        $explainers_fullscreen = self::getExplainerHTML($explore_explainers, 'fullscreen');
         $minigames = self::getMinigameHTML($explore_minigames);
         $map_communicate = self::getMapCommunicateHTML($position, $userid);
         $map_cutscenes = self::getMapCutsceneHTML($explore_cutscenes, $position, $userid);
@@ -800,6 +803,7 @@ class Explore
                     'map-communicate' => $map_communicate,
                     'map-explainers' => $explainers_map,
                     'menu-explainers' => $explainers_menu,
+                    'fullscreen-explainers' => $explainers_fullscreen,
                     'map-abilities' => $map_abilities,
                     'map-item-styles-scripts' => $area_item_styles_scripts,
                     'start-top' => get_post_meta($area[0]->ID, 'explore-start-top', true),
@@ -1544,6 +1548,7 @@ class Explore
                         $drag_image = $drag_dest['image'] ?? '';
                         $drag_mission = $drag_dest['mission'] ?? '';
                         $remove = $drag_dest['remove-after'] ?? 'no';
+                        $offset = $drag_dest['offset'] ?? '10';
                         $materialize_after_cutscene = $drag_dest['materialize-after-cutscene'] ?? 'none';
 
                         $html .= '<div id="' . $explore_point->ID . '-d" class="drag-dest wp-block-group map-item ' . $explore_point->post_name . '-drag-dest-map-item is-layout-flow wp-block-group-is-layout-flow"';
@@ -1553,10 +1558,11 @@ class Explore
                             $html .= ' data-removable="true" ';
                         }
 
-                        if ('none' !== $materialize_after_cutscene) {
+                        if (false === empty($materialize_after_cutscene) && 'none' !== $materialize_after_cutscene) {
                             $html .= ' data-showaftercutscene="' . esc_attr($materialize_after_cutscene) . '" ';
                         }
 
+                        $html .= 'data-offset="' . $offset . '"';
                         $html .= 'data-meta="explore-drag-dest" ';
                         $html .= 'data-mission="' . $drag_mission . '">';
                         $html .= '<img height="' . $drag_height . 'px" width="' . $drag_width . 'px" src="' . $drag_image . '" alt="' . $explore_point->post_title . '-drag-dest">';
@@ -1996,7 +2002,7 @@ class Explore
                 $trigger = get_post_meta( $explainer->ID, 'explore-explainer-trigger', true);
                 $explainer_left = get_post_meta( $explainer->ID, 'explore-left', true);
                 $explainer_top = get_post_meta( $explainer->ID, 'explore-top', true);
-                $explainer_width = get_post_meta( $explainer->ID, 'explore-width', true);
+                $explainer_width = 'fullscreen' === $type ? 'width: 100%; max-width:' . get_post_meta( $explainer->ID, 'explore-width', true) : 'width:' . get_post_meta( $explainer->ID, 'explore-width', true);
                 $arrow_style = get_post_meta( $explainer->ID, 'explore-explainer-arrow', true);
                 $materialize_after_cutscene = get_post_meta($explainer->ID, 'explore-materialize-after-cutscene', true);
 
@@ -2009,7 +2015,7 @@ class Explore
                 $side = $arrow_style['side'] ?? 'right';
                 $rotation = $arrow_style['rotate'] ?? '0';
                 $arrow_style_css = 'transform: rotate(' . $rotation . 'deg); ' . $orientation . ': -130px;' . ' ' . $side . ': 0;';
-
+                $fullscreen = 'fullscreen' === $type ? ' fullscreen' : '';
 
                 if (false !== $path_trigger_top) {
                     $html .= '<div id="' . $explainer->ID . '-t" data-trigger="true" class="' . $explainer->post_name . '-explainer-trigger-map-item explainer-trigger map-item" data-triggee="' . $explainer->post_name . '" ';
@@ -2025,11 +2031,11 @@ class Explore
                 }
 
                 if (false === empty($explainer_top)) {
-                    $html .= '<div id="' . $explainer->ID . '" class="' . $explainer->post_name . '-explainer-item explainer-container map-item" ';
-                    $html .= 'style="left:' . $explainer_left . 'px;top:' . $explainer_top . 'px;height:auto; width:' . $explainer_width . 'px;"';
+                    $html .= '<div id="' . $explainer->ID . '" class="' . $explainer->post_name . '-explainer-item explainer-container map-item' . $fullscreen . '" ';
+                    $html .= 'style="left:' . $explainer_left . 'px;top:' . $explainer_top . 'px;height:auto; ' . $explainer_width . 'px;"';
                     $html .= ' data-type="' . $explainer_type . '"';
                     $html .= '>';
-                    $html .= $arrow_img ? '<img data-rotate="' . $rotation . '" width="120" height="120" style="'. esc_attr($arrow_style_css) . '" src="' . $arrow_img . '" />' : '';
+                    $html .= $arrow_img && 'fullscreen' !== $type ? '<img data-rotate="' . $rotation . '" width="120" height="120" style="'. esc_attr($arrow_style_css) . '" src="' . $arrow_img . '" />' : '';
                     $html .= wp_kses_post($explainer->post_content);
 
                     if (false === empty($sound_byte)) {
@@ -2297,32 +2303,14 @@ class Explore
             $main_character = false === empty($main_character) && is_array($main_character) ? $main_character[0] : $main_character;
             if (false === is_null($main_character) && false === empty($main_character)) {
                 $images = get_post_meta($main_character->ID, 'explore-character-images', true);
+                $weapon_images = get_post_meta($main_character->ID, 'explore-weapon-images', true);
+                $images = true === is_array($weapon_images) ? array_merge($images, $weapon_images) : $images;
                 $name = get_post_meta($main_character->ID, 'explore-character-name', true);
                 $name = false === empty($name) ? $name : $main_character->post_title;
 
                 if (true === isset($images) && true === is_array($images)) {
                     return [
-                        'direction_images' => [
-                            'static' => $images['static'] ?? '',
-                            'up' => $images['up'] ?? '',
-                            'down' => $images['down'] ?? '',
-                            'left' => $images['left'] ?? '',
-                            'right' => $images['right'] ?? '',
-                            'static-up' => $images['static-up'] ?? '',
-                            'static-down' => $images['static-down'] ?? '',
-                            'static-left' => $images['static-left'] ?? '',
-                            'static-right' => $images['static-right'] ?? '',
-                            'static-up-drag' => $images['static-up-drag'] ?? '',
-                            'static-right-drag' => $images['static-right-drag'] ?? '',
-                            'static-left-drag' => $images['static-left-drag'] ?? '',
-                            'up-punch' => $images['up-punch'] ?? '',
-                            'right-punch' => $images['right-punch'] ?? '',
-                            'left-punch' => $images['left-punch'] ?? '',
-                            'down-punch' => $images['down-punch'] ?? '',
-                            'up-drag' => $images['up-drag'] ?? '',
-                            'right-drag' => $images['right-drag'] ?? '',
-                            'left-drag' => $images['left-drag'] ?? '',
-                        ],
+                        'direction_images' => $images,
                         'height' => get_post_meta($main_character->ID, 'explore-height', true),
                         'width' => get_post_meta($main_character->ID, 'explore-width', true),
                         'ability' => get_post_meta($main_character->ID, 'explore-ability', true),
