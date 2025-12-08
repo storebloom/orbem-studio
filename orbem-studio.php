@@ -55,7 +55,7 @@ function _orbem_game_engine_php_version_error() {
 function _orbem_game_engine_php_version_text() {
 	return __(
 		'Orbem Game Engine plugin error: Your version of PHP is too old to run this plugin. You must be running PHP 5.3 or higher.',
-		'orbem-game-engine'
+		'orbem-studio'
 	);
 }
 
@@ -70,7 +70,7 @@ add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), '_orbem_game_e
  */
 function _orbem_game_engine_add_action_links( $links ) {
 	$mylinks = array(
-		'<a href="' . admin_url( 'admin.php?page=orbem-game-engine' ) . '">Options</a>',
+		'<a href="' . admin_url( 'admin.php?page=orbem-studio' ) . '">Options</a>',
 	);
 
 	return array_merge( $links, $mylinks );

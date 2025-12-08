@@ -1478,7 +1478,7 @@ html {
           &[data-enemy-type="boss"] {
             margin: 0 1rem;
 
-            svg {
+            .pulse-wave-container {
               background: rgba(0, 0, 255, 0.17);
               border: 3px solid blue;
               border-radius: 10000px;
@@ -1489,8 +1489,8 @@ html {
               width: 30px;
             }
 
-            &.pulse-wave-engage:not(.pulse-in) {
-              svg {
+            &.pulse-wave-wave-engage:not(.pulse-in) {
+              .pulse-wave-container {
                 left: unset;
                 opacity: 1;
                 padding: 1000px;

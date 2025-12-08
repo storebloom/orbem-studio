@@ -16,7 +16,7 @@ function useExploreVoiceMeta(postId) {
 registerBlockType('orbem/paragraph-mp3', {
     title: __('Paragraph with MP3', 'custom'),
     description: __('A paragraph block with an MP3 upload option.', 'custom'),
-    category: 'orbem-order-game-engine',
+    category: 'orbem-order-studio',
     icon: 'media-audio',
     supports: {
         html: false,

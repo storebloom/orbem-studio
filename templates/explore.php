@@ -10,7 +10,7 @@ use OrbemStudio\Dev_Mode;
 $first_area = get_option('explore_first_area', false);
 
 if (false === $first_area) {
-    echo '<h1>A first area selection is required to play a game. Select one <strong><a href="/wp-admin/admin.php?page=orbem-game-engine">here</a></strong></h1>';
+    echo '<h1>A first area selection is required to play a game. Select one <strong><a href="/wp-admin/admin.php?page=orbem-studio">here</a></strong></h1>';
     return;
 }
 

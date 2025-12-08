@@ -1,10 +1,179 @@
+h1 {
+  align-items: center;
+  display: flex;
+  font-size: 40px;
+  gap: 2rem;
+  justify-content: center;
+}
+
+h3 {
+  font-size: 20px;
+  font-style: italic;
+  margin-bottom: 0;
+}
+
+.toplevel_page_orbem-studio {
+  .tutorial-wrap {
+    background: rgba(0, 0, 0, 0.56);
+    height: 100%;
+    left: 0;
+    position: fixed;
+    top: 0;
+    width: 100%;
+
+    &.hide-overlay {
+      background: white;
+      border: 5px solid #0ff;
+      border-radius: 10px;
+      box-shadow: 5px 5px 5px #cdcdcd;
+      height: unset;
+      left: 50%;
+      padding: 2rem;
+      position: fixed;
+      top: 70%;
+      transform: translate(-50%, -50%);
+      width: max-content;
+    }
+
+    .tutorial-container {
+      &:not(.hide-overlay) {
+        background: white;
+        border: 1px solid #cdcdcd;
+        border-radius: 10px;
+        left: 50%;
+        padding: 2rem;
+        position: absolute;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        width: max-content;
+      }
+
+      .tutorial-step {
+        display: none;
+        font-size: 32px;
+        text-align: center;
+
+        &.engage {
+          display: block;
+        }
+      }
+    }
+  }
+
+  form > h2 {
+    text-align: center;
+  }
+  .submit {
+    text-align: center;
+  }
+  .form-table {
+    margin: auto;
+    max-width: 1000px;
+
+    tr {
+      align-items: flex-start;
+      background: white;
+      display: flex;
+      flex-direction: column;
+      padding: 1rem;
+      border: 1px solid lightgray;
+      border-radius: 5px;
+      margin: 1rem auto;
+      max-height: 400px;
+      overflow: scroll;
+
+      &.engage {
+        border-radius: 8px;
+        animation: glowPulse .5s infinite alternate;
+        box-shadow: 0 0 5px #0ff, 0 0 10px #0ff, 0 0 15px #0ff;
+      }
+
+      &:first-of-type {
+        padding-top: 1rem;
+      }
+
+      th {
+        padding: 0;
+        width: 100%;
+      }
+
+      td {
+        margin-bottom: 0;
+        padding: 0;
+        width: 90%;
+
+        sub {
+          display: block;
+          margin-bottom: 1rem;
+        }
+      }
+    }
+  }
+
+  @keyframes glowPulse {
+    0% {
+      box-shadow: 0 0 5px #0ff, 0 0 5px #0ff, 0 0 10px #0ff;
+    }
+    100% {
+      box-shadow: 0 0 15px #0ff, 0 0 20px #0ff, 0 0 30px #0ff;
+    }
+  }
+}
+
 .wp-submenu li a[href*="taxonomy"] {
   background: #4a4a4a;
   padding-left: 2rem;
 }
 
-.multiselect-wrapper,
-.meta-box-array-wrap
+#explore-meta-box {
+  .repeater-container {
+    .field-container {
+      border: 1px solid lightgray;
+      border-radius: 4px;
+      margin-top: 1rem;
+      padding: .5rem 1rem;
+    }
+
+    .container-index {
+      border: 1px solid lightgray;
+      border-radius: 4px;
+      font-weight: bold;
+      padding: 0.25rem .5rem;
+    }
+
+    .remove-field {
+      color: red;
+      cursor: pointer;
+      font-size: 24px;
+    }
+
+    .add-field {
+      background: #2271b1;
+      border-radius: 4px;
+      color: white;
+      cursor: pointer;
+      margin-top: 1rem;
+      padding: .5rem;
+      text-align: center;
+      width: 20px;
+    }
+  }
+
+  h2 {
+    font-weight: bold;
+    font-size: 18px;
+    padding-left: 0;
+  }
+  h4 {
+    margin: 0;
+  }
+  hr {
+    margin-top: 1.5rem;
+  }
+}
+
+.character-images-wrapper,
+.multiselect-wrapper
 {
   border: 1px solid lightgray;
   border-radius: 5px;

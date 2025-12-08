@@ -28,7 +28,6 @@ class Meta_Box {
 	 */
 	public function __construct( $plugin ) {
 		$this->plugin = $plugin;
-        $this->util = new Util($plugin);
 	}
 
     /**
@@ -58,7 +57,7 @@ class Meta_Box {
 		$post_types = ['explore-explainer', 'explore-minigame', 'explore-point', 'explore-area', 'explore-character', 'explore-enemy', 'explore-weapon', 'explore-magic', 'explore-cutscene', 'explore-mission', 'explore-sign', 'explore-wall', 'explore-communicate'];
 
 		// Add the Explore Point meta box to editor pages.
-		add_meta_box( 'explore-point', esc_html__( 'Configuration', 'orbem-game-engine' ), [$this, 'explore_point_box'], $post_types, 'normal', 'high' );
+		add_meta_box( 'explore-point', esc_html__( 'Configuration', 'orbem-studio' ), [$this, 'explore_point_box'], $post_types, 'normal', 'high' );
 	}
 
 	/**
@@ -119,16 +118,16 @@ class Meta_Box {
 
     public function getMetaData($post_type = '')
     {
-        $explore_item_array = $this->util->getOrbemArray('explore-point');
-        $explore_area_array = $this->util->getOrbemArray('explore-area');
-        $explore_communicate_array = $this->util->getOrbemArray('explore-communication-type', true);
-        $explore_character_array = $this->util->getOrbemArray('explore-character');
-        $explore_enemy_array = $this->util->getOrbemArray('explore-enemy');
-        $explore_weapon_array = $this->util->getOrbemArray('explore-weapon');
-        $explore_mission_array = $this->util->getOrbemArray('explore-mission');
-        $explore_minigame_array = $this->util->getOrbemArray('explore-minigame');
-        $explore_cutscene_array = $this->util->getOrbemArray('explore-cutscene');
-        $explore_hazard_array = $this->util->getOrbemArray('explore-point', false, 'explore-interaction-type', 'hazard');
+        $explore_item_array = $this->plugin->util->getOrbemArray('explore-point');
+        $explore_area_array = $this->plugin->util->getOrbemArray('explore-area');
+        $explore_communicate_array = $this->plugin->util->getOrbemArray('explore-communication-type', true);
+        $explore_character_array = $this->plugin->util->getOrbemArray('explore-character');
+        $explore_enemy_array = $this->plugin->util->getOrbemArray('explore-enemy');
+        $explore_weapon_array = $this->plugin->util->getOrbemArray('explore-weapon');
+        $explore_mission_array = $this->plugin->util->getOrbemArray('explore-mission');
+        $explore_minigame_array = $this->plugin->util->getOrbemArray('explore-minigame');
+        $explore_cutscene_array = $this->plugin->util->getOrbemArray('explore-cutscene');
+        $explore_hazard_array = $this->plugin->util->getOrbemArray('explore-point', false, 'explore-interaction-type', 'hazard');
         $default_weapon = get_option('explore_default_weapon', false);
         $explore_value_array = [
             'point',
@@ -167,460 +166,1118 @@ class Meta_Box {
             }
         }
 
-
         $post_type_specific = [
             'explore-area' => [
-                'explore-music' => 'upload',
-                'explore-map' => 'upload',
-                'explore-is-cutscene' => [
-                    'radio' => [
-                        'yes',
-                        'no'
-                    ]
+                'explore-map'             => [
+                    'upload',
+                    'The area your characters will walk on. (Recommended minimum upload size 5000x4517).'
+                ],
+                'explore-music'           => [
+                    'upload',
+                    'The music that will play in the background of this area.'
+                ],
+                'explore-area' => [
+                    [
+                        'select' => [$explore_area_array]
+                    ],
+                    'The area this area trigger will appear in. (The trigger send the character to this area).'
+                ],
+                'explore-top'                   => [
+                    'number',
+                    'The top coordinate of the area trigger. (The trigger send the character to this area).'
+                ],
+                'explore-left'                  => [
+                    'number',
+                    'The left coordinate of the area trigger. (The trigger send the character to this area).'
+                ],
+                'explore-height'                => [
+                    'number',
+                    'The height of the area trigger. (The trigger send the character to this area).'
+                ],
+                'explore-width'                 => [
+                    'number',
+                    'The width of the area trigger. (The trigger send the character to this area).'
+                ],
+                'explore-start-top'       => [
+                    'number',
+                    'Top coordinate for your character\'s starting position in this area.'
+                ],
+                'explore-start-left'      => [
+                    'number',
+                    'Left coordinate for your character\'s starting position in this area.'
                 ],
                 'explore-start-direction' => [
-                    'select' => [
-                        [
-                            'up',
-                            'down',
-                            'left',
-                            'right'
-                        ]
-                    ]
-                ],
-                'explore-start-top' => 'number',
-                'explore-start-left' => 'number',
-                'explore-communicate-type' => [
-                    'select' => [
-                        $explore_communicate_array
-                    ],
-                ]
-            ],
-            'explore-mission' => [
-                'explore-ability' => [
-                    'select' => [
-                        [
-                            'none',
-                            'transportation'
-                        ]
-                    ]
-                ],
-                'explore-hazard-remove' => [
-                    'select' => [$explore_hazard_array]
-                ],
-                'explore-next-mission' => [
-                    'multiselect' => [$explore_mission_array]
-                ],
-                'explore-mission-trigger' => [
-                    'top' => 'number',
-                    'left' => 'number',
-                    'height' => 'number',
-                    'width' => 'number',
-                ],
-                'explore-trigger-item' => [
-                    'multiselect' => [$explore_item_array]
-                ],
-                'explore-trigger-enemy' => [
-                    'select' => [$explore_enemy_array]
-                ],
-                'explore-value-type' => [
-                    'select' => [$explore_value_array]
-                ],
-            ],
-            'explore-cutscene' => [
-                'explore-cutscene-boss' => [
-                    'select' => [$explore_enemy_array]
-                ],
-                'explore-cutscene-music' => 'upload',
-                'explore-cutscene-trigger' => [
-                    'top' => 'number',
-                    'left' => 'number',
-                    'height' => 'number',
-                    'width' => 'number',
-                ],
-                'explore-trigger-type' => [
-                    'radio' => [
-                        'auto',
-                        'engagement'
-                    ]
-                ],
-                'explore-cutscene-character-position' => [
-                    'top' => 'number',
-                    'left' => 'number',
-                    'trigger' => [
-                        'radio' => [
-                            'before',
-                            'after'
-                        ]
-                    ]
-                ],
-                'explore-mission-dependent' => [
-                    'radio' => [
-                        'yes',
-                        'no'
-                    ]
-                ],
-                'explore-npc-face-me' => [
-                    'radio' => [
-                        'yes',
-                        'no'
-                    ]
-                ],
-                'explore-mission-cutscene' => [
-                    'select' => [$explore_mission_array]
-                ],
-                'explore-mission-complete-cutscene' => [
-                    'select' => [$explore_mission_array]
-                ],
-                'explore-cutscene-next-area-position' => [
-                    'top' => 'number',
-                    'left' => 'number',
-                ],
-                'explore-character' => [
-                    'select' => [$explore_character_array]
-                ],
-                'explore-next-area' => [
-                    'select' => [$explore_area_array]
-                ],
-                'explore-mute-music' => [
-                    'radio' => [
-                        'yes',
-                        'no'
-                    ]
-                ],
-                'explore-value-type' => [
-                    'select' => [$explore_value_array]
-                ],
-                'explore-engage-communicate' => [
-                    'select' => [$explore_communicate_array]
-                ],
-                'explore-path-after-cutscene' => [
-                    'repeater' => [
-                        'top' => 'number',
-                        'left' => 'number'
-                    ]
-                ],
-                'explore-speed' => 'number',
-                'explore-time-between' => 'number',
-            ],
-            'explore-weapon' => [
-                'explore-attack' => [
-                    'normal' => 'number',
-                    'heavy' => 'number',
-                    'charged' => 'number',
-                ],
-                'explore-projectile' => [
-                    'radio' => [
-                        'yes',
-                        'no'
-                    ]
-                ],
-                'explore-value-type' => [
-                    'select' => [
-                        ['weapons']
-                    ]
-                ],
-            ],
-            'explore-character' => [
-                'explore-character-name' => 'text',
-                'explore-time-between' => 'number',
-                'explore-voice' => [
-                    'select' => [$this->getVoices()]
-                ],
-                'explore-crew-mate' => [
-                    'radio' => [
-                        'yes',
-                        'no'
-                    ]
-                ],
-                'explore-speed' => 'number',
-                'explore-wanderer' => [
-                    'radio' => [
-                        'yes',
-                        'no'
-                    ]
-                ],
-                'explore-repeat' => [
-                    'radio' => [
-                        'yes',
-                        'no'
-                    ]
-                ],
-                'explore-path' => [
-                    'repeater' => [
-                        'top' => 'number',
-                        'left' => 'number'
-                    ]
-                ],
-                'explore-character-images' => $character_images,
-                'explore-weapon-images' => $weapon_images,
-                'explore-ability' => [
-                    'select' => [
+                    [
+                        'select' => [
                             [
-                            'none',
-                            'speed',
-                            'strength',
-                            'hazard',
-                            'programming',
-                        ]
-                    ]
-                ],
-                'explore-path-trigger' => [
-                    'top' => 'number',
-                    'left' => 'number',
-                    'height' => 'number',
-                    'width' => 'number',
-                    'cutscene' => [
-                        'select' => [$explore_cutscene_array]
-                    ],
-                    'item' => [
-                        'select' => [$explore_item_array]
-                    ],
-                ],
-                'explore-value-type' => [
-                    'select' => [$explore_value_array]
-                ],
-                'explore-weapon-choice' => [
-                    'select' => [$explore_weapon_array]
-                ],
-            ],
-            'explore-enemy' => [
-                'explore-character-name' => 'text',
-                'explore-time-between' => 'number',
-                'explore-voice' => [
-                    'select' => [$this->getVoices()]
-                ],
-                'explore-health' => 'number',
-                'explore-enemy-speed' => 'number',
-                'explore-projectile' => [
-                    'image-url' => 'upload',
-                    'width' => 'text',
-                    'height' => 'text',
-
-                ],
-                'explore-projectile-trigger' => [
-                    'top' => 'number',
-                    'left' => 'number',
-                    'height' => 'number',
-                    'width' => 'number',
-                ],
-                'explore-speed' => 'number',
-                'explore-wanderer' => [
-                    'radio' => [
-                        'yes',
-                        'no'
-                    ]
-                ],
-                'explore-repeat' => [
-                    'radio' => [
-                        'yes',
-                        'no'
-                    ]
-                ],
-                'explore-path-trigger' => [
-                    'top' => 'number',
-                    'left' => 'number',
-                    'height' => 'number',
-                    'width' => 'number',
-                    'cutscene' => [
-                        'select' => [$explore_cutscene_array]
-                    ],
-                    'item' => [
-                        'select' => [$explore_item_array]
-                    ],
-                ],
-                'explore-path' => [
-                    'repeater' => [
-                        'top' => 'number',
-                        'left' => 'number'
-                    ]
-                ],
-                'explore-character-images' => [
-                    'static' => 'upload',
-                    'static-up' => 'upload',
-                    'up' => 'upload',
-                    'up-punch' => 'upload',
-                    'static-down' => 'upload',
-                    'down' => 'upload',
-                    'down-punch' => 'upload',
-                    'static-left' => 'upload',
-                    'left' => 'upload',
-                    'left-punch' => 'upload',
-                    'static-right' => 'upload',
-                    'right' => 'upload',
-                    'right-punch' => 'upload'
-                ],
-                'explore-enemy-type' => [
-                    'select' => [[
-                        'shooter',
-                        'runner',
-                        'blocker',
-                        'boss'
-                    ]]
-                ],
-                'explore-value-type' => [
-                    'select' => [$explore_value_array]
-                ],
-                'explore-boss-waves' => [
-                    'projectile' => 'checkbox',
-                    'pulse-wave' => 'checkbox',
-                ],
-                'explore-weapon-weakness' => [
-                    'select' => [$explore_weapon_array]
-                ],
-            ],
-            'explore-minigame' => [
-                'explore-minigame-music' => 'upload',
-            ],
-            'explore-communicate' => [
-                'explore-communicate-type' => [
-                    'radio' => [
-                        'text',
-                        'voicemail'
-                    ]
-                ]
-            ],
-            'explore-explainer' => [
-                'explore-explainer-type' => [
-                    'radio' => [
-                        'map',
-                        'menu',
-                        'fullscreen'
-                    ]
-                ],
-                'explore-explainer-trigger' => [
-                    'top' => 'number',
-                    'left' => 'number',
-                    'width' => 'number',
-                    'height' => 'number',
-                ],
-                'explore-explainer-arrow' => [
-                    'orientation' => [
-                        'radio' => [
-                            'top',
-                            'bottom'
+                                'up',
+                                'down',
+                                'left',
+                                'right'
+                            ]
                         ]
                     ],
-                    'side' => [
-                        'radio' => [
-                            'left',
-                            'right'
-                        ]
-                    ],
-                    'rotate' => 'number',
+                    'Which direction the character will face when entering this area.'
                 ],
-                'explore-sound-byte' => 'upload'
-            ],
-            'explore-point' => [
-                'explore-video-override' => 'upload',
-                'explore-interacted' => 'upload',
-                'explore-disappear' => [
-                    'radio' => [
-                        'yes',
-                        'no'
-                    ]
-                ],
-                'explore-timer' => [
-                    'time' => 'number',
-                    'trigger' => [
-                        'select' => [$explore_item_array]
-                    ],
-                ],
-                'explore-interaction-type' => [
-                    'select' => [[
-                        'none',
-                        'collectable',
-                        'breakable',
-                        'draggable',
-                        'hazard',
-                    ]]
-                ],
-                'explore-is-strong' => [
-                    'radio' => [
-                        'yes',
-                        'no'
-                    ]
-                ],
-                'explore-passable' => [
-                    'radio' => [
-                        'yes',
-                        'no'
-                    ]
-                ],
-                'explore-background' => [
-                    'radio' => [
-                        'yes',
-                        'no'
-                    ]
-                ],
-                'explore-foreground' => [
-                    'radio' => [
-                        'yes',
-                        'no'
-                    ]
-                ],
-                'explore-drag-dest' => [
-                    'top' => 'number',
-                    'left' => 'number',
-                    'width' => 'number',
-                    'height' => 'number',
-                    'image' => 'upload',
-                    'mission' => [
-                        'select' => [$explore_mission_array]
-                    ],
-                    'remove-after' => [
+                'explore-is-cutscene' => [
+                    [
                         'radio' => [
                             'yes',
                             'no'
                         ]
                     ],
-                    'offset' => 'number',
-                    'materialize-after-cutscene' => [
-                        'select' => [$explore_cutscene_array]
-                    ],
+                    'Choose "yes" to turn this area into a cutscene. (Area cutscenes are not walkable. They are cutscenes using an area as a scene).'
                 ],
-                'explore-value-type' => [
-                    'select' => [$explore_value_array]
+                'explore-communicate-type' => [
+                    [
+                        'select' => [
+                            $explore_communicate_array
+                        ],
+                    ],
+                    'Choose which communication device to assign to this area.'
                 ]
             ],
-        ];
-
-        $global_list = [
+            'explore-sign' => [
+                'explore-area' => [
+                    [
+                        'select' => [$explore_area_array]
+                    ],
+                    'The area this focus view trigger will appear in. (The trigger send the character to this area).'
+                ],
+                'explore-top'                   => [
+                    'number',
+                    'The top coordinate of the focus view trigger (The feature image). (The trigger will popup what ever is in the content field to view closer).'
+                ],
+                'explore-left'                  => [
+                    'number',
+                    'The left coordinate of the focus view trigger (The feature image). (The trigger will popup what ever is in the content field to view closer).'
+                ],
+                'explore-height'                => [
+                    'number',
+                    'The height of the focus view trigger (The feature image). (The trigger will popup what ever is in the content field to view closer).'
+                ],
+                'explore-width'                 => [
+                    'number',
+                    'The width of the focus view trigger (The feature image). (The trigger will popup what ever is in the content field to view closer).'
+                ],
+            ],
+            'explore-wall' => [
+                'explore-area' => [
+                    [
+                        'select' => [$explore_area_array]
+                    ],
+                    'The area this wall will appear in.'
+                ],
+                'explore-top'                   => [
+                    'number',
+                    'The top coordinate of this wall.'
+                ],
+                'explore-left'                  => [
+                    'number',
+                    'The left coordinate of this wall'
+                ],
+                'explore-height'                => [
+                    'number',
+                    'The height of this wall.'
+                ],
+                'explore-width'                 => [
+                    'number',
+                    'The width of this wall.'
+                ],
+            ],
+            'explore-magic' => [
+                'explore-unlock-level'          => [
+                    'number',
+                    'The level that will unlock this magic/ability'
+                ]
+            ],
             'explore-mission' => [
-                'select' => [$explore_mission_array]
+                'explore-area' => [
+                    [
+                        'select' => [$explore_area_array]
+                    ],
+                    'The area this mission will appear in.'
+                ],
+                'value'                => [
+                    'number',
+                    'How many points/monies this mission will award for completion'
+                ],
+                'explore-value-type'   => [
+                    [
+                        'select' => [$explore_value_array]
+                    ],
+                    'What type of reward will be given for completion'
+                ],
+                'explore-next-mission' => [
+                    [
+                        'multiselect' => [$explore_mission_array]
+                    ],
+                    'Choose mission(s) to start after this mission is completed'
+                ],
+                'explore-mission-trigger' => [
+                    [
+                        'top' => 'number',
+                        'left' => 'number',
+                        'height' => 'number',
+                        'width' => 'number',
+                    ],
+                    'Configuration for a trigger to complete this mission'
+                ],
+                'explore-trigger-item' => [
+                    [
+                        'multiselect' => [$explore_item_array]
+                    ],
+                    'Item(s) that will trigger the completion of this mission. (If you choose multiple, all items will need to be interacted with to complete this mission)'
+                ],
+                'explore-hazard-remove' => [
+                    [
+                        'select' => [$explore_hazard_array]
+                    ],
+                    'Which hazard to remove upon completion of this mission'
+                ],
+                'explore-top'                   => [
+                    'number',
+                    'The top coordinate of the blockade. (Blockades will disappear when mission is completed).'
+                ],
+                'explore-left'                  => [
+                    'number',
+                    'The left coordinate of the blockade. (Blockades will disappear when mission is completed).'
+                ],
+                'explore-height'                => [
+                    'number',
+                    'The height of the blockade. (Blockades will disappear when mission is completed).'
+                ],
+                'explore-width'                 => [
+                    'number',
+                    'The width of the blockade. (Blockades will disappear when mission is completed).'
+                ],
+                'explore-trigger-enemy' => [
+                    [
+                        'select' => [$explore_enemy_array]
+                    ],
+                    'Enemy that completes this mission when defeated'
+                ],
+                'explore-ability'      => [
+                    [
+                        'select' => [
+                            [
+                                'transportation'
+                            ]
+                        ]
+                    ],
+                    'Which ability will be rewarded for completion of this mission'
+                ],
+            ],
+            'explore-cutscene' => [
+                'explore-area' => [
+                    [
+                        'select' => [$explore_area_array]
+                    ],
+                    'The area this cutscene will appear in.'
+                ],
+                'explore-cutscene-trigger' => [
+                    [
+                        'top' => 'number',
+                        'left' => 'number',
+                        'height' => 'number',
+                        'width' => 'number',
+                    ],
+                    'Configuration for the trigger that starts this cutscene'
+                ],
+                'explore-trigger-type' => [
+                    [
+                        'radio' => [
+                            'auto',
+                            'engagement'
+                        ]
+                    ],
+                    'Choose how this cutscene should be triggered. "Auto": Starts when touching trigger. "Engagement": Starts when action key is hit while on trigger.'
+                ],
+                'explore-cutscene-music' => [
+                    'upload',
+                    'The music that will play during the cutscene.'
+                ],
+                'explore-materialize-item-trigger' => [
+                    [
+                        'top' => 'number',
+                        'left' => 'number',
+                        'width' => 'number',
+                        'height' => 'number',
+                    ],
+                    'The trigger that will make this cutscene trigger appear/be made available. (Will hide cutscene trigger until triggered if used.)'
+                ],
+                'explore-remove-after-cutscene' => [
+                    [
+                        'select' => [$explore_cutscene_array]
+                    ],
+                    'The cutscene that will trigger this cutscene trigger to be removed after it is completed.'
+                ],
+                'explore-materialize-after-cutscene' => [
+                    [
+                        'select' => [$explore_cutscene_array]
+                    ],
+                    'The cutscene that will trigger this cutscene trigger to be revealed/made available after it is completed.'
+                ],
+                'explore-materialize-after-mission' => [
+                    [
+                        'select' => [$explore_mission_array]
+                    ],
+                    'The mission that will trigger this cutscene trigger to be revealed/made available after it is completed.'
+                ],
+                'explore-cutscene-character-position' => [
+                    [
+                        'top' => 'number',
+                        'left' => 'number',
+                    ],
+                    'Configuration the position your character moves to before or after a cutscene'
+                ],
+                'explore-cutscene-move-npc' => [
+                    [
+                        'trigger' => [
+                            'radio' => [
+                                'before',
+                                'after'
+                            ]
+                        ]
+                    ],
+                    'When should the NPC start moving in regards to this cutscene?'
+                ],
+                'explore-npc-face-me' => [
+                    [
+                        'radio' => [
+                            'yes',
+                            'no'
+                        ]
+                    ],
+                    'Should the NPC face you during the cutscene?'
+                ],
+                'explore-mission-cutscene' => [
+                    [
+                        'select' => [$explore_mission_array]
+                    ],
+                    'The mission that triggers this cutscene upon completion.'
+                ],
+                'explore-mission-complete-cutscene' => [
+                    [
+                        'select' => [$explore_mission_array]
+                    ],
+                    'The mission that is completed by finishing this cutscene.'
+                ],
+                'explore-cutscene-next-area-position' => [
+                    [
+                        'top' => 'number',
+                        'left' => 'number',
+                    ],
+                    'The coordinates your character will start when sent to another area by this cutscene.'
+                ],
+                'explore-character' => [
+                    [
+                        'select' => [$explore_character_array]
+                    ],
+                    'The NPC your character will have the cutscene with'
+                ],
+                'explore-next-area' => [
+                    [
+                        'select' => [$explore_area_array]
+                    ],
+                    'The area your character will be sent to after this cutscene completes.'
+                ],
+                'explore-mute-music' => [
+                    [
+                        'radio' => [
+                            'yes',
+                            'no'
+                        ]
+                    ],
+                    'Should this cutscene mute the area\'s current music when playing? (Good for video cutscenes)'
+                ],
+                'value'                         => [
+                    'number',
+                    'The amound of reward you will receive when completing this cutscene. (Separate from mission rewards)'
+                ],
+                'explore-value-type' => [
+                    [
+                        'select' => [$explore_value_array]
+                    ],
+                    'The type of reward that will be given for completing this cutscene. (Separate from mission rewards)'
+                ],
+                'explore-engage-communicate' => [
+                    [
+                        'select' => [$explore_communicate_array]
+                    ],
+                    'Which communication item should be sent to your communicator after this cutscene.'
+                ],
+                'explore-path-after-cutscene' => [
+                    [
+                        'repeater' => [
+                            'top' => 'number',
+                            'left' => 'number'
+                        ]
+                    ],
+                    'Where the NPC will walk to after this cutscene ends.'
+                ],
+                'explore-speed' => [
+                    'number',
+                    'How fast the NPC will move in the path after this cutscene.'
+                ],
+                'explore-time-between' => [
+                    'number',
+                    'The length of pause between each new path.'
+                ],
+                'explore-cutscene-boss' => [
+                    [
+                        'select' => [$explore_enemy_array]
+                    ],
+                    'This is the boss that will be triggered to start fighting after this cutscene. (Required to start boss fight.)'
+                ],
+            ],
+            'explore-weapon' => [
+                'explore-area' => [
+                    [
+                        'select' => [$explore_area_array]
+                    ],
+                    'The area this weapon will appear in.'
+                ],
+                'explore-top'                   => [
+                    'number',
+                    'The top coordinate where to place this weapon on the map for collecting.'
+                ],
+                'explore-left'                  => [
+                    'number',
+                    'The left coordinate where to place this weapon on the map for collecting.'
+                ],
+                'explore-height'                => [
+                    'number',
+                    'The height of this weapon when placed in the map.'
+                ],
+                'explore-width'                 => [
+                    'number',
+                    'The width of this weapon when placed in the map.'
+                ],
+                'explore-rotation' => [
+                    'number',
+                    'The rotation of this weapon.'
+                ],
+                'explore-layer' => [
+                    'number',
+                    'The layer order of this weapon. (Higher number show in front of lower numbers).'
+                ],
+                'explore-attack' => [
+                    [
+                        'normal' => 'number',
+                        'heavy' => 'number',
+                        'charged' => 'number',
+                    ],
+                    'The attack power of this weapon.'
+                ],
+                'explore-projectile' => [
+                    [
+                        'radio' => [
+                            'yes',
+                            'no'
+                        ]
+                    ],
+                    'Is this a projectile? If yes, the weapon will shoot out instead of hit from the character.'
+                ],
+                'explore-value-type' => [
+                    [
+                        'select' => [
+                            ['weapons']
+                        ]
+                    ],
+                    'The type of item this is (only weapons currently).'
+                ],
+                'explore-materialize-item-trigger' => [
+                    [
+                        'top' => 'number',
+                        'left' => 'number',
+                        'width' => 'number',
+                        'height' => 'number',
+                    ],
+                    'The trigger that will make this weapon appear/be made available. (Will hide weapon until triggered if used.)'
+                ],
+                'explore-remove-after-cutscene' => [
+                    [
+                        'select' => [$explore_cutscene_array]
+                    ],
+                    'The cutscene that will trigger this weapon to be removed after it is completed.'
+                ],
+                'explore-materialize-after-cutscene' => [
+                    [
+                        'select' => [$explore_cutscene_array]
+                    ],
+                    'The cutscene that will trigger this weapon to be revealed/made available after it is completed.'
+                ],
+                'explore-materialize-after-mission' => [
+                    [
+                        'select' => [$explore_mission_array]
+                    ],
+                    'The mission that will trigger this weapon to be revealed/made available after it is completed.'
+                ],
+            ],
+            'explore-character' => [
+                'explore-area' => [
+                    [
+                        'select' => [$explore_area_array]
+                    ],
+                    'The area this character will appear in.'
+                ],
+                'explore-top'                   => [
+                    'number',
+                    'The top coordinate where to place this character on the map.'
+                ],
+                'explore-left'                  => [
+                    'number',
+                    'The left coordinate where to place this character on the map.'
+                ],
+                'explore-height'                => [
+                    'number',
+                    'The height of this character when placed in the map.'
+                ],
+                'explore-width'                 => [
+                    'number',
+                    'The width of this character when placed in the map.'
+                ],
+                'explore-rotation' => [
+                    'number',
+                    'The rotation of this character.'
+                ],
+                'explore-layer' => [
+                    'number',
+                    'The layer order of this character. (Higher number show in front of lower numbers).'
+                ],
+                'explore-character-name' => [
+                    'text',
+                    'This is the override name that will show on the front end.'
+                ],
+                'explore-character-images' => [
+                    $character_images,
+                    'The characters starting images without any gear/weapon equipped'
+                ],
+                'explore-ability' => [
+                    [
+                        'select' => [
+                            [
+                                'speed',
+                                'strength',
+                                'hazard',
+                                'programming',
+                            ]
+                        ]
+                    ],
+                    'Which ability your character posses (Only applies to playable characters).'
+                ],
+                'explore-voice' => [
+                    [
+                        'select' => [$this->getVoices()]
+                    ],
+                    'The voice of your character. Uses Google basic TTL (requires API Key to use).'
+                ],
+                'explore-crew-mate' => [
+                    [
+                        'radio' => [
+                            'yes',
+                            'no'
+                        ]
+                    ],
+                    'Is this character an additional playable character? Crew mates can be collected and played with.'
+                ],
+                'explore-weapon-images' => [
+                    $weapon_images,
+                    'These are all the weapon specific character images (Only applies to playable characters).'
+                ],
+                'explore-weapon-choice' => [
+                    [
+                        'select' => [$explore_weapon_array]
+                    ],
+                    'This is the default weapon for this character. (Only applies to playable characters)'
+                ],
+                'explore-speed' => [
+                    'number',
+                    'The speed of your NPC.'
+                ],
+                'explore-wanderer' => [
+                    [
+                        'radio' => [
+                            'yes',
+                            'no'
+                        ]
+                    ],
+                    'Will turn an NPC into a "wanderer". Wanderers will intelligently traverse available areas in the map. (Overrides path below).'
+                ],
+                'explore-path' => [
+                    [
+                        'repeater' => [
+                            'top' => 'number',
+                            'left' => 'number'
+                        ]
+                    ],
+                    'A predefined walking path for your NPC.'
+                ],
+                'explore-repeat' => [
+                    [
+                        'radio' => [
+                            'yes',
+                            'no'
+                        ]
+                    ],
+                    'Should your defined walking path repeat when it ends?'
+                ],
+                'explore-time-between' => [
+                    'number',
+                    'The length of pause between each new path.'
+                ],
+                'explore-path-trigger' => [
+                    [
+                        'top' => 'number',
+                        'left' => 'number',
+                        'height' => 'number',
+                        'width' => 'number',
+                        'cutscene' => [
+                            'select' => [$explore_cutscene_array]
+                        ],
+                        'item' => [
+                            'select' => [$explore_item_array]
+                        ],
+                    ],
+                    'The triggers that start a NPC\'s movement'
+                ],
+                'explore-materialize-item-trigger' => [
+                    [
+                        'top' => 'number',
+                        'left' => 'number',
+                        'width' => 'number',
+                        'height' => 'number',
+                    ],
+                    'The trigger that will make this character appear/be made available. (Will hide character until triggered if used.)'
+                ],
+                'explore-remove-after-cutscene' => [
+                    [
+                        'select' => [$explore_cutscene_array]
+                    ],
+                    'The cutscene that will trigger this character to be removed after it is completed.'
+                ],
+                'explore-materialize-after-cutscene' => [
+                    [
+                        'select' => [$explore_cutscene_array]
+                    ],
+                    'The cutscene that will trigger this character to be revealed/made available after it is completed.'
+                ],
+                'explore-materialize-after-mission' => [
+                    [
+                        'select' => [$explore_mission_array]
+                    ],
+                    'The mission that will trigger this character to be revealed/made available after it is completed.'
+                ],
+            ],
+            'explore-enemy' => [
+                'explore-area' => [
+                    [
+                        'select' => [$explore_area_array]
+                    ],
+                    'The area this enemy will appear in.'
+                ],
+                'explore-top'                   => [
+                    'number',
+                    'The top coordinate where to place this enemy on the map.'
+                ],
+                'explore-left'                  => [
+                    'number',
+                    'The left coordinate where to place this enemy on the map.'
+                ],
+                'explore-height'                => [
+                    'number',
+                    'The height of this enemy when placed in the map.'
+                ],
+                'explore-width'                 => [
+                    'number',
+                    'The width of this enemy when placed in the map.'
+                ],
+                'explore-character-name' => [
+                    'text',
+                    'This is the override name that will show on the front end.'
+                ],
+                'explore-character-images' => [
+                    $character_images,
+                    'The enemy\'s images.'
+                ],
+                'explore-rotation' => [
+                    'number',
+                    'The rotation of this enemy.'
+                ],
+                'explore-layer' => [
+                    'number',
+                    'The layer order of this enemy. (Higher number show in front of lower numbers).'
+                ],
+                'explore-enemy-type' => [
+                    [
+                        'select' => [
+                            [
+                                'blocker',
+                                'shooter',
+                                'runner',
+                                'boss'
+                            ]
+                        ]
+                    ],
+                    'Specifies the type of enemy this is. Blocker: is default with no ability, Shooter: shoots projectiles, Runner: runs into character to hurt, Boss: has boss fighting waves.'
+                ],
+                'value'                    => [
+                    'number',
+                    'The damage value this enemy will cause.'
+                ],
+                'explore-health' => [
+                    'number',
+                    'The health amount of this enemy.'
+                ],
+                'explore-voice' => [
+                    [
+                        'select' => [$this->getVoices()]
+                    ],
+                    'The voice of your character. Uses Google basic TTL (requires API Key to use).'
+                ],
+                'explore-speed' => [
+                    'number',
+                    'The speed of your NPC.'
+                ],
+                'explore-wanderer' => [
+                    [
+                        'radio' => [
+                            'yes',
+                            'no'
+                        ]
+                    ],
+                    'Will turn an NPC into a "wanderer". Wanderers will intelligently traverse available areas in the map. (Overrides path below).'
+                ],
+                'explore-path' => [
+                    [
+                        'repeater' => [
+                            'top' => 'number',
+                            'left' => 'number'
+                        ]
+                    ],
+                    'A predefined walking path for your NPC.'
+                ],
+                'explore-repeat' => [
+                    [
+                        'radio' => [
+                            'yes',
+                            'no'
+                        ]
+                    ],
+                    'Should your defined walking path repeat when it ends?'
+                ],
+                'explore-time-between' => [
+                    'number',
+                    'The length of pause between each new path.'
+                ],
+                'explore-path-trigger' => [
+                    [
+                        'top' => 'number',
+                        'left' => 'number',
+                        'height' => 'number',
+                        'width' => 'number',
+                        'cutscene' => [
+                            'select' => [$explore_cutscene_array]
+                        ],
+                        'item' => [
+                            'select' => [$explore_item_array]
+                        ],
+                    ],
+                    'The triggers that start a NPC\'s movement'
+                ],
+                'explore-materialize-item-trigger' => [
+                    [
+                        'top' => 'number',
+                        'left' => 'number',
+                        'width' => 'number',
+                        'height' => 'number',
+                    ],
+                    'The trigger that will make this enemy appear/be made available. (Will hide enemy until triggered if used.)'
+                ],
+                'explore-remove-after-cutscene' => [
+                    [
+                        'select' => [$explore_cutscene_array]
+                    ],
+                    'The cutscene that will trigger this enemy to be removed after it is completed.'
+                ],
+                'explore-materialize-after-cutscene' => [
+                    [
+                        'select' => [$explore_cutscene_array]
+                    ],
+                    'The cutscene that will trigger this enemy to be revealed/made available after it is completed.'
+                ],
+                'explore-materialize-after-mission' => [
+                    [
+                        'select' => [$explore_mission_array]
+                    ],
+                    'The mission that will trigger this enemy to be revealed/made available after it is completed.'
+                ],
+                'explore-projectile' => [
+                    [
+                        'image-url' => 'upload',
+                        'width' => 'number',
+                        'height' => 'number',
+                    ],
+                    'The projectiles\'s configuration. (Only applies to boss and shooter types).'
+                ],
+                'explore-enemy-speed' => [
+                    'number',
+                    'The speed of this enemy\'s projectile.'
+                ],
+                'explore-projectile-trigger' => [
+                    [
+                        'top' => 'number',
+                        'left' => 'number',
+                        'height' => 'number',
+                        'width' => 'number',
+                    ],
+                    'The trigger that starts this enemy\'s projectiles. (Only applies to shooter types).'
+                ],
+                'explore-weapon-weakness' => [
+                    [
+                        'select' => [$explore_weapon_array]
+                    ],
+                    'The weapon that can hurt this enemy. Only this weapon will cause damage.'
+                ],
+                'explore-boss-waves' => [
+                    [
+                        'multiselect' => [
+                            [
+                                'projectile',
+                                'pulse-wave'
+                            ]
+                        ]
+                    ],
+                    'The available attack patterns this boss can use during a boss fight.'
+                ],
             ],
             'explore-minigame' => [
-                'select' => [$explore_minigame_array]
+                'explore-area' => [
+                    [
+                        'select' => [$explore_area_array]
+                    ],
+                    'The area this minigame will appear in.'
+                ],
+                'explore-mission' => [
+                    [
+                        'select' => [$explore_mission_array]
+                    ],
+                    'The mission that this minigame will complete'
+                ],
+                'explore-minigame-music' => [
+                    'upload',
+                    'The music that will play when the minigame is open.'
+                ],
             ],
-            'explore-top'                   => 'number',
-            'explore-left'                  => 'number',
-            'explore-height'                => 'number',
-            'explore-width'                 => 'number',
-            'value'                         => 'number',
-            'explore-unlock-level'          => 'number',
-            'explore-remove-after-cutscene' => [
-                'select' => [$explore_cutscene_array]
+            'explore-communicate' => [
+                'explore-area' => [
+                    [
+                        'select' => [$explore_area_array]
+                    ],
+                    'The area this communication will appear in.'
+                ],
+                'explore-communicate-type' => [
+                    [
+                        'radio' => [
+                            'text',
+                            'voicemail'
+                        ]
+                    ],
+                    'Whether the communication is via text or voicemail.'
+                ],
+                'explore-top'                   => [
+                    'number',
+                    'The top coordinate where to place the trigger for this communication.'
+                ],
+                'explore-left'                  => [
+                    'number',
+                    'The left coordinate where to place the trigger for this communication.'
+                ],
+                'explore-height'                => [
+                    'number',
+                    'The height of this communication trigger.'
+                ],
+                'explore-width'                 => [
+                    'number',
+                    'The width of this communication trigger.'
+                ],
+                'explore-materialize-item-trigger' => [
+                    [
+                        'top' => 'number',
+                        'left' => 'number',
+                        'width' => 'number',
+                        'height' => 'number',
+                    ],
+                    'The trigger that will make this communication trigger appear/be made available. (Will hide communication trigger until triggered if used.)'
+                ],
+                'explore-remove-after-cutscene' => [
+                    [
+                        'select' => [$explore_cutscene_array]
+                    ],
+                    'The cutscene that will trigger this communication trigger to be removed after it is completed.'
+                ],
+                'explore-materialize-after-cutscene' => [
+                    [
+                        'select' => [$explore_cutscene_array]
+                    ],
+                    'The cutscene that will trigger this communication trigger to be revealed/made available after it is completed.'
+                ],
+                'explore-materialize-after-mission' => [
+                    [
+                        'select' => [$explore_mission_array]
+                    ],
+                    'The mission that will trigger this communication trigger to be revealed/made available after it is completed.'
+                ],
             ],
-            'explore-materialize-after-cutscene' => [
-                'select' => [$explore_cutscene_array]
+            'explore-explainer' => [
+                'explore-area' => [
+                    [
+                        'select' => [$explore_area_array]
+                    ],
+                    'The area this explainer will appear in.'
+                ],
+                'explore-explainer-type' => [
+                    [
+                        'radio' => [
+                            'map',
+                            'menu',
+                            'fullscreen'
+                        ]
+                    ],
+                    'The position of the explainer popup. Map: Set into the map and is static. Menu: puts it floating in the HUD. Fullscreen: Floats in the center of the viewport.'
+                ],
+                'explore-top'                   => [
+                    'number',
+                    'The top coordinate where to place the explainer popup (On map if map type, on viewport if menu type. Ignored for fullscreen type).'
+                ],
+                'explore-left'                  => [
+                    'number',
+                    'The left coordinate where to place the explainer popup (On map if map type, on viewport if menu type. Ignored for fullscreen type).'
+                ],
+                'explore-height'                => [
+                    'number',
+                    'The height of this explainer popup.'
+                ],
+                'explore-width'                 => [
+                    'number',
+                    'The width of this explainer popup ( will be max width if fullscreen type ).'
+                ],
+                'explore-explainer-trigger' => [
+                    [
+                        'top' => 'number',
+                        'left' => 'number',
+                        'width' => 'number',
+                        'height' => 'number',
+                    ],
+                    'Configuration for the trigger that pop the explainer up.'
+                ],
+                'explore-explainer-arrow' => [
+                    [
+                        'orientation' => [
+                            'radio' => [
+                                'top',
+                                'bottom'
+                            ]
+                        ],
+                        'side' => [
+                            'radio' => [
+                                'left',
+                                'right'
+                            ]
+                        ],
+                        'rotate' => 'number',
+                    ],
+                    'Configuration for the arrow that points to the thing you\'re explaining.'
+                ],
+                'explore-sound-byte' => [
+                    'upload',
+                    'The sound that will play when the explainer is triggered. (Usually voice over.)'
+                ],
+                'explore-materialize-item-trigger' => [
+                    [
+                        'top' => 'number',
+                        'left' => 'number',
+                        'width' => 'number',
+                        'height' => 'number',
+                    ],
+                    'The trigger that will make this explainer trigger appear/be made available. (Will hide explainer trigger until triggered if used.)'
+                ],
+                'explore-remove-after-cutscene' => [
+                    [
+                        'select' => [$explore_cutscene_array]
+                    ],
+                    'The cutscene that will trigger this explainer trigger to be removed after it is completed.'
+                ],
+                'explore-materialize-after-cutscene' => [
+                    [
+                        'select' => [$explore_cutscene_array]
+                    ],
+                    'The cutscene that will trigger this explainer trigger to be revealed/made available after it is completed.'
+                ],
+                'explore-materialize-after-mission' => [
+                    [
+                        'select' => [$explore_mission_array]
+                    ],
+                    'The mission that will trigger this explainer trigger to be revealed/made available after it is completed.'
+                ],
             ],
-            'explore-materialize-after-mission' => [
-                'select' => [$explore_mission_array]
+            'explore-point' => [
+                'explore-area' => [
+                    [
+                        'select' => [$explore_area_array]
+                    ],
+                    'The area this item will appear in.'
+                ],
+                'explore-top'                   => [
+                    'number',
+                    'The top coordinate where this item will be placed on the map.'
+                ],
+                'explore-left'                  => [
+                    'number',
+                    'The left coordinate where this item will be placed on the map.'
+                ],
+                'explore-height'                => [
+                    'number',
+                    'The height of this item.'
+                ],
+                'explore-width'                 => [
+                    'number',
+                    'The width of this item.'
+                ],
+                'explore-video-override' => [
+                    'upload',
+                    'Will override featured image with a video file as the item on the map.'
+                ],
+                'explore-rotation' => [
+                    'number',
+                    'The rotation of this item.'
+                ],
+                'explore-layer' => [
+                    'number',
+                    'The layer order of this item. (Higher number show in front of lower numbers).'
+                ],
+                'explore-interaction-type' => [
+                    [
+                        'select' => [[
+                            'collectable',
+                            'breakable',
+                            'draggable',
+                            'hazard',
+                        ]]
+                    ],
+                    'What type of item this is. Collectable: will be collected when touched. Breakable: will disappear or display interacted image when engaged with. Draggable: Will allow user to drag this item. Hazard: Will cause harm to the user when stepped on.'
+                ],
+                'value'                    => [
+                    'number',
+                    'The value of this item when interacted with.'
+                ],
+                'explore-value-type' => [
+                    [
+                        'select' => [$explore_value_array]
+                    ],
+                    'The type of reward that will be received when collecting or breaking this item.'
+                ],
+                'explore-interacted' => [
+                    'upload',
+                    'The image that will replace the starting image when interacted with. (Requires "no" from disappear option below).'
+                ],
+                'explore-passable' => [
+                    [
+                        'radio' => [
+                            'yes',
+                            'no'
+                        ]
+                    ],
+                    'Whether this item should allow the character to walk over it after interacted with.'
+                ],
+                'explore-disappear' => [
+                    [
+                        'radio' => [
+                            'yes',
+                            'no'
+                        ]
+                    ],
+                    'Whether this item should disappear or not when interacted with.'
+                ],
+                'explore-materialize-item-trigger' => [
+                    [
+                        'top' => 'number',
+                        'left' => 'number',
+                        'width' => 'number',
+                        'height' => 'number',
+                    ],
+                    'The trigger that will make this item appear/be made available. (Will hide item until triggered if used.)'
+                ],
+                'explore-remove-after-cutscene' => [
+                    [
+                        'select' => [$explore_cutscene_array]
+                    ],
+                    'The cutscene that will trigger this item to be removed after it is completed.'
+                ],
+                'explore-materialize-after-cutscene' => [
+                    [
+                        'select' => [$explore_cutscene_array]
+                    ],
+                    'The cutscene that will trigger this item to be revealed/made available after it is completed.'
+                ],
+                'explore-materialize-after-mission' => [
+                    [
+                        'select' => [$explore_mission_array]
+                    ],
+                    'The mission that will trigger this item to be revealed/made available after it is completed.'
+                ],
+                'explore-is-strong' => [
+                    [
+                        'radio' => [
+                            'yes',
+                            'no'
+                        ]
+                    ],
+                    'Does this item require the "Strength" ability to interact with.'
+                ],
+                'explore-drag-dest' => [
+                    [
+                        'top' => 'number',
+                        'left' => 'number',
+                        'width' => 'number',
+                        'height' => 'number',
+                        'image' => 'upload',
+                        'mission' => [
+                            'select' => [$explore_mission_array]
+                        ],
+                        'remove-after' => [
+                            'radio' => [
+                                'yes',
+                                'no'
+                            ]
+                        ],
+                        'offset' => 'number',
+                        'materialize-after-cutscene' => [
+                            'select' => [$explore_cutscene_array]
+                        ],
+                    ],
+                    'Configuration if this item is draggable and has a destination.'
+                ],
+                'explore-timer' => [
+                    [
+                        'time' => 'number',
+                        'trigger' => [
+                            'select' => [$explore_item_array]
+                        ],
+                    ],
+                    'If configured it will turn this item into a timer item. You will need multiple timer items selecting each other with the same time amount.'
+                ],
+                'explore-minigame' => [
+                    [
+                        'select' => [$explore_minigame_array]
+                    ],
+                    'The minigame that will be triggered by this item.'
+                ],
             ],
-            'explore-area' => [
-                'select' => [$explore_area_array]
-            ],
-            'explore-materialize-item-trigger' => [
-                'top' => 'number',
-                'left' => 'number',
-                'width' => 'number',
-                'height' => 'number',
-            ],
-            'explore-rotation' => 'number',
-            'explore-layer' => 'number'
         ];
 
-        return false === empty($post_type_specific[$post_type]) ? array_merge($global_list, $post_type_specific[$post_type]) : $global_list;
+        return $post_type_specific[$post_type] ?? [];
     }
 
     public function getVoices() {
@@ -1215,22 +1872,6 @@ class Meta_Box {
         ];
     }
 
-    public static function getMetaboxLabel($field_name)
-    {
-        $meta_labels = [
-            'explore-mission-complete-cutscene' => 'Mission to complete after cutscene.',
-            'explore-mission-cutscene' => 'Mission that triggers this cutscene.',
-            'explore-mission-trigger' => 'Triggers the completion of this mission.',
-            'explore-video-override' => 'Override the feature image with a video.',
-        ];
-
-        if ($field_name) {
-            return $meta_labels[$field_name] ?? $field_name;
-        }
-
-        return $field_name;
-    }
-
     /**
      * Get meta html.
      * @param $key
@@ -1251,18 +1892,47 @@ class Meta_Box {
     }
 
     /**
+     * Util to add image upload html for fields
+     * @param $name
+     * @param $slug
+     * @param $values
+     * @return bool|string
+     */
+    public static function imageUploadHTML($name, $slug, $values)
+    {
+        ob_start();
+        ?>
+        <div class="explore-image-field">
+            <p>
+                <?php echo esc_html($name); ?>
+                <?php if (false === empty($values) && false === str_contains($values, '.webm') && false === str_contains($values, '.mp4') && false === str_contains($values, '.mp3') && false === str_contains($values, '.wav')) : ?>
+                    <img src="<?php echo esc_url($values); ?>" width="80" />
+                    <br>
+                <?php endif; ?>
+                <input type="text" id="<?php echo esc_attr($slug); ?>" name="<?php echo esc_attr($slug); ?>" value="<?php echo esc_attr($values); ?>" class="widefat explore-upload-field" readonly />
+            </p>
+            <p>
+                <button type="button" class="upload_image_button button"><?php _e('Select', 'orbem-studio'); ?></button>
+                <button type="button" class="remove_image_button button"><?php _e('Remove', 'orbem-studio'); ?></button>
+            </p>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    /**
      * @action explore-communication-type_edit_form_fields
      * @param $term_id
      * @return void
      */
     public function addTaxonomyImageUpload($term)
     {
-        $meta_values['explore-background'] = get_term_meta($term->term_id, 'explore-background', true);
+        $meta_values = get_term_meta($term->term_id, 'explore-background', true);
         $key = 'explore-background';
-        $main_key = false;
 
-
-        include plugin_dir_path(__FILE__) . "../templates/meta/fields/upload.php";
+        echo '<h2>Communicator Background</h2>';
+        echo '<h4>Insert the background image that will show as the communicator device. Text and voice messages will show on top of it like a cell phone.</h4>';
+        echo self::imageUploadHTML('',  'explore-background', $meta_values);
     }
 
     /**

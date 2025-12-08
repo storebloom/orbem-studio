@@ -30,6 +30,7 @@ class Explore
 	public function __construct($plugin)
     {
 		$this->plugin = $plugin;
+        $this->plugin->explore = $this;
 	}
 
     /**
@@ -1163,7 +1164,7 @@ class Explore
                 }
             }
 
-            $boss_waves = get_post_meta( $explore_point, 'explore-boss-waves', true );
+            $boss_waves = get_post_meta($explore_point->ID, 'explore-boss-waves', true);
             $value = get_post_meta($explore_point->ID, 'value', true);
             $timer = get_post_meta($explore_point->ID, 'explore-timer', true);
             $timer = false === empty($timer['explore-timer']) ? $timer['explore-timer'] : $timer;
@@ -1188,10 +1189,6 @@ class Explore
             $layer = get_post_meta($explore_point->ID, 'explore-layer', true);
             $passable = get_post_meta($explore_point->ID, 'explore-passable', true);
             $passable = false === empty($passable) && 'yes' === $passable;
-            $foreground = get_post_meta($explore_point->ID, 'explore-foreground', true);
-            $foreground = false === empty($foreground) && 'yes' === $foreground;
-            $background = get_post_meta($explore_point->ID, 'explore-background', true);
-            $background = false === empty($background) && 'yes' === $background;
             $interacted_with = get_post_meta($explore_point->ID, 'explore-interacted', true);
             $crew_mate = get_post_meta($explore_point->ID, 'explore-crew-mate', true);
             $path_trigger = get_post_meta($explore_point->ID, 'explore-path-trigger', true);
@@ -1314,16 +1311,6 @@ class Explore
                     $html .= ' data-passable="true" ';
                 }
 
-                // Will be foreground?
-                if ( true === $foreground ) {
-                    $html .= ' data-foreground="true" ';
-                }
-
-                // Will be background?
-                if ( true === $background ) {
-                    $html .= ' data-background="true" ';
-                }
-
                 if ( false === empty($height) && false === empty($width) ) {
                     $html .= ' data-height="' . esc_attr($height) . '" ';
                     $html .= ' data-width="' . esc_attr($width) . '" ';
@@ -1413,10 +1400,11 @@ class Explore
                     $html .= ' data-removeaftercutscene="' . esc_attr($remove_after_cutscene) . '"';
                 }
 
-                // Eneemy specific data-points.
+                $pulse_wave = false;
+                $barrage_wave = false;
+
+                // Enemy specific data-points.
                 if ('explore-enemy' === $explore_point->post_type) {
-                    $pulse_wave = false;
-                    $barrage_wave = false;
                     $speed = get_post_meta($explore_point->ID, 'explore-speed', true);
                     $enemy_speed = get_post_meta($explore_point->ID, 'explore-enemy-speed', true);
                     $enemy_weapon_type = get_post_meta($explore_point->ID, 'explore-weapon-weakness', true);
@@ -1430,26 +1418,16 @@ class Explore
 
                     // Boss waves.
                     if (true === is_array($boss_waves)) {
-                        $boss_waves_count = 4 > count($boss_waves) ? 4 - count($boss_waves) : 4;
-
-                        // Add waves if less than four
-                        if (4 !== $boss_waves_count) {
-                            for ($i = 0; $i < $boss_waves_count; $i++) {
-                                $count = 3 !== $boss_waves_count ? $i : 0;
-                                $boss_waves[] = $boss_waves[$count];
-                            }
-                        }
-
-                        foreach ($boss_waves as $index => $boss_wave) {
-                            if (true === isset($boss_wave['pulse']) && 'on' === $boss_wave['pulse']) {
+                        foreach ($boss_waves as $boss_wave_name => $boss_wave) {
+                            if ('pulse-wave' === $boss_wave_name && 'on' === $boss_wave) {
                                 $pulse_wave = true;
                             }
 
-                            if (true === isset($boss_wave['projectile']) && 'on' === $boss_wave['projectile']) {
+                            if ('projectile' === $boss_wave_name && 'on' === $boss_wave) {
                                 $barrage_wave = true;
                             }
 
-                            $wave_html .= array_keys($boss_waves)[$index] . ',';
+                            $wave_html .= $boss_wave_name . ',';
                         }
                     }
 
@@ -1500,17 +1478,18 @@ class Explore
                 // Projectile html for enemy.
                 if ('explore-enemy' === $explore_point->post_type && ( 'shooter' === $explore_enemy_type || true === $barrage_wave)) {
                     $projectile = get_post_meta($explore_point->ID, 'explore-projectile', true);
-                    $projectile = $projectile['explore-projectile'] ?? false;
 
                     if (false !== $projectile) {
-                        $html .= '<div class="projectile" data-value="' . intval($value) . '"><img alt="projectile" style="width:' . $projectile['width'] . 'px; height: ' . $projectile['height'] . 'px;" src="' . $projectile['url'] . '" /></div>';
+                        $html .= '<div class="projectile" data-value="' . intval($value) . '"><img alt="projectile" style="width:' . $projectile['width'] . 'px; height: ' . $projectile['height'] . 'px;" src="' . $projectile['image-url'] . '" /></div>';
                     }
                 }
 
                 // Boss data / html.
                 if ('explore-enemy' === $explore_point->post_type && false === empty($boss_waves)) {
                     if (true === $pulse_wave) {
+                        $html .= '<div class="pulse-wave-container" data-value="' . intval($value) . '" data-hazard="true">';
                         $html .= self::getSVGCode( str_replace('inc/class-explore.php', 'assets', __FILE__ ) . '/src/images/pulse.svg');
+                        $html .= '</div>';
                     }
                 }
 
@@ -1519,9 +1498,9 @@ class Explore
                 // Trigger HTML.
                 $projectile_trigger = get_post_meta($explore_point->ID, 'explore-projectile-trigger', true);
 
-                if ('explore-enemy' === $explore_point->post_type && false === empty($projectile_trigger)) {
+                if ('explore-enemy' === $explore_point->post_type && false === empty($projectile_trigger['left'])) {
                     $html .= '<div id="' . $explore_point->ID . '-t" class="wp-block-group map-item ' . $explore_point->post_name . '-trigger-map-item is-layout-flow wp-block-group-is-layout-flow"';
-                    $html .= 'style="left:' . $projectile_trigger['left'] ?? 0 . 'px;top:' . $projectile_trigger['top'] ?? 0 . 'px;height:' . $projectile_trigger['height'] ?? 0 . 'px; width:' . $projectile_trigger['width'] ?? 0 . 'px;"';
+                    $html .= 'style="left:' . $projectile_trigger['left'] ?? '0' . 'px;top:' . $projectile_trigger['top'] ?? '0' . 'px;height:' . $projectile_trigger['height'] ?? '0' . 'px; width:' . $projectile_trigger['width'] ?? '0' . 'px;"';
                     $html .= 'data-trigger="true" data-triggee="' . $explore_point->post_name . '-map-item"';
                     $html .= ' data-meta="explore-projectile-trigger"';
                     $html .= '></div>';
@@ -1642,7 +1621,6 @@ class Explore
             $cutscene_trigger = get_post_meta($explore_cutscene->ID, 'explore-cutscene-trigger', true);
             $character_position = get_post_meta($explore_cutscene->ID, 'explore-cutscene-character-position', true);
             $next_area_position = get_post_meta($explore_cutscene->ID, 'explore-cutscene-next-area-position', true);
-            $mission_dependent = get_post_meta($explore_cutscene->ID, 'explore-mission-dependent', true);
             $npc_face_me = get_post_meta($explore_cutscene->ID, 'explore-npc-face-me', true);
             $character_position_left = $character_position['left'] ?? '';
             $character_position_top = $character_position['top'] ?? '';
@@ -1651,7 +1629,7 @@ class Explore
             $walking_path = get_post_meta($explore_cutscene->ID, 'explore-path-after-cutscene', true);
             $walking_speed = get_post_meta($explore_cutscene->ID, 'explore-speed', true);
             $time_between = get_post_meta($explore_cutscene->ID, 'explore-time-between', true);
-            $character_position_trigger = $character_position['trigger'] ?? '';
+            $character_position_trigger = get_post_meta($explore_cutscene->ID, 'explore-cutscene-move-npc', true) ?? '';
             $mission_cutscene = get_post_meta($explore_cutscene->ID, 'explore-mission-cutscene', true);
             $music = get_post_meta($explore_cutscene->ID, 'explore-cutscene-music', true);
             $materialize_cutscene = get_post_meta($explore_cutscene->ID, 'explore-materialize-after-cutscene', true); // The cutscene that materializes this cutscene.
@@ -1710,10 +1688,6 @@ class Explore
             // Add for type of value you receive once completing this cutscene.
             if (false === empty($value)) {
                 $html .= ' data-value="' . $value . '"';
-            }
-
-            if (false === empty($mission_dependent)) {
-                $html .= 'data-dependent="' . esc_attr($mission_dependent) . '" ';
             }
 
             if (false === empty($music)) {
@@ -1845,7 +1819,7 @@ class Explore
         $location_obj = get_posts(['name' => $location, 'post_type' => 'explore-area', 'numberposts' => 1]);
         $location_communicate_type = get_post_meta($location_obj[0]->ID, 'explore-communicate-type', true);
         $communication_type = get_term_by('name', $location_communicate_type, 'explore-communication-type');
-        $communication_background = get_term_meta($communication_type->term_id, 'explore-background', true);
+        $communication_background = false === empty($communication_type) ? get_term_meta($communication_type->term_id, 'explore-background', true) : '';
         $current_received = get_user_meta($userid, 'explore_received_communicates', true);
 
         if ( false === empty($communication_background)) {
@@ -2087,51 +2061,51 @@ class Explore
     public function registerPostType() {
         $post_types = [
             'explore-area' => [
-                'Areas',
-                'supports' => [ 'title', 'thumbnail' ]
+                'Area',
+                'supports' => [ 'title' ]
             ],
             'explore-point' => [
-                'Items',
+                'Item',
                 'supports' => [ 'title', 'thumbnail' ]
             ],
             'explore-character' => [
-                'Characters',
+                'Character',
                 'supports' => [ 'title', 'thumbnail' ]
             ],
             'explore-cutscene' => [
-                'Cutscenes',
-                'supports' => [ 'title', 'editor', 'thumbnail' ]
+                'Cutscene',
+                'supports' => [ 'title', 'editor' ]
             ],
             'explore-enemy' => [
-                'Enemies',
+                'Enemy',
                 'supports' => [ 'title', 'thumbnail' ]
             ],
             'explore-weapon' => [
-                'Weapons',
+                'Weapon',
                 'supports' => [ 'title', 'editor', 'thumbnail' ]
             ],
-            'explore-magic' => [
-                'Magic',
-                'supports' => [ 'title', 'editor', 'thumbnail' ]
-            ],
+//            'explore-magic' => [
+//                'Magic',
+//                'supports' => [ 'title', 'thumbnail' ]
+//            ], // TODO: Future feature that needs fleshing out.
             'explore-mission' => [
-                'Missions',
-                'supports' => [ 'title', 'thumbnail' ]
+                'Mission',
+                'supports' => [ 'title']
             ],
             'explore-sign' => [
                 'Focus View',
                 'supports' => [ 'title', 'editor', 'thumbnail' ]
             ],
             'explore-minigame' => [
-                'Minigames',
+                'Minigame',
                 'supports' => [ 'title', 'editor', 'thumbnail' ]
             ],
             'explore-explainer' => [
-                'Explainers',
-                'supports' => [ 'title', 'editor', 'thumbnail' ]
+                'Explainer',
+                'supports' => [ 'title', 'editor' ]
             ],
             'explore-wall' => [
-                'Walls',
+                'Wall',
                 'supports' => [ 'title' ]
             ],
             'explore-communicate' => [
@@ -2141,14 +2115,6 @@ class Explore
         ];
 
         $taxo_types = [
-            'magic-type' => [
-                'name' => 'Magic Type',
-                'post-types' => ['explore-magic']
-            ],
-            'explore-minigame-type' => [
-                'name' => 'Minigame Type',
-                'post-types' => ['explore-minigame']
-            ],
             'explore-communication-type' => [
                 'name' => 'Communication Type',
                 'post-types' => ['explore-communicate']
@@ -2156,9 +2122,38 @@ class Explore
         ];
 
         foreach($post_types as $slug => $info) {
+            $labels = [
+                'name'                  => _x( $info[0] . 's', $info[0], 'orbem-studio' ),
+                'singular_name'         => _x( $info[0], 'Post Type Singular Name', 'orbem-studio' ),
+                'menu_name'             => __( $info[0] . 's', 'orbem-studio' ),
+                'name_admin_bar'        => __( $info[0], 'orbem-studio' ),
+                'archives'              => __( $info[0] . ' Archives', 'orbem-studio' ),
+                'attributes'            => __( $info[0] . ' Attributes', 'orbem-studio' ),
+                'parent_item_colon'     => __( 'Parent ' . $info[0] . ':', 'orbem-studio' ),
+                'all_items'             => __( 'All ' . $info[0] . 's', 'orbem-studio' ),
+                'add_new_item'          => __( 'Add New ' . $info[0], 'orbem-studio' ),
+                'add_new'               => __( 'Add New', 'orbem-studio' ),
+                'new_item'              => __( 'New ' . $info[0], 'orbem-studio' ),
+                'edit_item'             => __( 'Edit ' . $info[0], 'orbem-studio' ),
+                'update_item'           => __( 'Update ' . $info[0], 'orbem-studio' ),
+                'view_item'             => __( 'View ' . $info[0], 'orbem-studio' ),
+                'view_items'            => __( 'View ' . $info[0] . 's', 'orbem-studio' ),
+                'search_items'          => __( 'Search ' . $info[0], 'orbem-studio' ),
+                'not_found'             => __( 'No ' . $info[0] . 's found', 'orbem-studio' ),
+                'not_found_in_trash'    => __( 'No ' . $info[0] . 's found in Trash', 'orbem-studio' ),
+                'featured_image'        => __( $info[0] . ' Image', 'orbem-studio' ),
+                'set_featured_image'    => __( 'Set ' . $info[0] . ' image', 'orbem-studio' ),
+                'remove_featured_image' => __( 'Remove ' . $info[0] . ' image', 'orbem-studio' ),
+                'use_featured_image'    => __( 'Use as ' . $info[0] . ' image', 'orbem-studio' ),
+                'uploaded_to_this_item' => __( 'Uploaded to this ' . $info[0], 'orbem-studio' ),
+                'items_list'            => __( $info[0] . 's list', 'orbem-studio' ),
+                'items_list_navigation' => __( $info[0] . 's list navigation', 'orbem-studio' ),
+                'filter_items_list'     => __( 'Filter ' . $info[0] . 's list', 'orbem-studio' ),
+            ];
+
             $args = array(
-                'label'     => $info[0],
-                'menu_icon' => 'dashicons-location-alt',
+                'labels'             => $labels,
+                'menu_icon'          => 'dashicons-location-alt',
                 'public'             => false,
                 'publicly_queryable' => false,
                 'show_ui'            => true,
@@ -2179,7 +2174,7 @@ class Explore
         foreach($taxo_types as $slug => $stuff) {
             // Add explore area sync with explore point taxo.
             $arg2s = [
-                'label'             => __($stuff['name'], 'orbem-game-engine'),
+                'label'             => __($stuff['name'], 'orbem-studio'),
                 'hierarchical'      => true,
                 'public'            => true,
                 'show_ui'           => true,
@@ -2277,13 +2272,13 @@ class Explore
      *
      * @filter block_categories_all
      */
-    public function st_block_category( $categories, $post ) {
+    public function block_category( $categories, $post ) {
         return array_merge(
             $categories,
             [
                 [
-                    'slug'  => 'orbem-order-game-engine',
-                    'title' => __( 'Orbem Game Engine', 'orbem-game-engine' ),
+                    'slug'  => 'orbem-order-studio',
+                    'title' => __( 'Orbem Studio', 'orbem-studio' ),
                 ],
             ]
         );
@@ -2324,33 +2319,6 @@ class Explore
         }
 
         return [];
-    }
-
-    /**
-     * Util to add image upload html for fields
-     * @param $name
-     * @param $slug
-     * @param $values
-     * @return bool|string
-     */
-    public static function imageUploadHTML($name, $slug, $values)
-    {
-        ob_start();
-        ?>
-        <div class="explore-image-field">
-            <p>
-                <?php _e(\OrbemStudio\Meta_Box::getMetaboxLabel($name) . ':', 'orbem-game-engine'); ?><br>
-                <img src="<?php echo esc_url($values); ?>" width="80" />
-                <br>
-                <input type="text" id="<?php echo esc_attr($slug); ?>" name="<?php echo esc_attr($slug); ?>" value="<?php echo esc_attr($values); ?>" class="widefat explore-upload-field" readonly />
-            </p>
-            <p>
-                <button type="button" class="upload_image_button button"><?php _e('Select', 'orbem-game-engine'); ?></button>
-                <button type="button" class="remove_image_button button"><?php _e('Remove', 'orbem-game-engine'); ?></button>
-            </p>
-        </div>
-        <?php
-        return ob_get_clean();
     }
 
     /**

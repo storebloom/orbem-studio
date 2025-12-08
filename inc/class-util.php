@@ -20,16 +20,17 @@ class Util
      *
      * @var object
      */
-    public $plugin;
+    public object $plugin;
 
     /**
      * Class constructor.
      *
      * @param object $plugin Plugin class.
      */
-    public function __construct($plugin)
+    public function __construct(object $plugin)
     {
         $this->plugin = $plugin;
+        $this->plugin->util = $this;
     }
 
     /**

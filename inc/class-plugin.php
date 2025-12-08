@@ -12,6 +12,20 @@ namespace OrbemStudio;
  */
 class Plugin extends Plugin_Base {
 
+    /**
+     * Util instance
+     *
+     * @var Util
+     */
+    public Util $util;
+
+    /**
+     * Explore instance
+     *
+     * @var Explore
+     */
+    public Explore $explore;
+
 	/**
 	 * Plugin constructor.
 	 */
@@ -31,7 +45,25 @@ class Plugin extends Plugin_Base {
 		foreach ( $classes as $instance ) {
 			$this->add_doc_hooks( $instance );
 		}
+
+        // Configure your game.
+        register_activation_hook(
+            $this->dir_path . 'orbem-studio.php',
+            [$this, 'activateOrbemStudio']
+        );
 	}
+
+    /**
+     * Trigger the setup flow for orbem studio.
+     */
+    public function activateOrbemStudio()
+    {
+        $setup_triggered = get_option('orbem_studio_setup_triggered', false);
+
+        if (false === $setup_triggered) {
+            update_option('orbem_studio_setup_triggered', true);
+        }
+    }
 
     /**
      * Enqueue Frontend Assets
@@ -384,5 +416,16 @@ class Plugin extends Plugin_Base {
         }
 
         return $allowed_blocks; // Default for all other post types
+    }
+
+    /**
+     * Detect when explore_game_page option is saved.
+     *
+     * @action update_option_explore_game_page
+     */
+    public function saveGamePageOption( $old, $new, $option ) {
+
+        // Mark tutorial complete
+        update_option( 'orbem_studio_setup_triggered', 'false' );
     }
 }

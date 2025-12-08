@@ -1,7 +1,9 @@
 <p>
 <label>
-    <?php echo esc_html(ucfirst(str_replace(['explore-', '-'],['', ' '], \OrbemStudio\Meta_Box::getMetaboxLabel($key)))); ?>
-</br>
+    <?php if (false !== $main_key): ?>
+        <?php echo esc_html(ucfirst(str_replace(['explore-', '-'],['', ' '],$key))); ?>
+        </br>
+    <?php endif; ?>
 <input class="top"
        type="number"
        step="0.01"

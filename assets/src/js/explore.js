@@ -29,6 +29,7 @@ let timerCountDownHit = false;
 let weaponPosTop = 400;
 let weaponPosLeft = 400;
 let hazardCounter = 0;
+let pulsewaveTrackInterval;
 
 window.mainCharacter = '';
 window.godMode = false;
@@ -1373,7 +1374,6 @@ const hurtTheEnemy = (function () {
                     const newHealth = 0 <= ( enemyHealth - attackStrength ) ? enemyHealth - attackStrength : 0;
                     const weaponType = value.dataset.weapon ?? '';
 
-
                     // If weapon type is defined and matches the current weapon or its not defined, then hurt the enemy.
                     if ( '' !== weaponType && theWeapon.dataset.weapon === weaponType || '' === weaponType ) {
                         value.setAttribute('data-health', newHealth);
@@ -2185,6 +2185,18 @@ function engageEnemy( enemy, trigger ){
 
     if ( 'boss' === enemyType ) {
         updateBossWave(enemy);
+
+        pulsewaveTrackInterval = setInterval( () => {
+            const pulseWave = document.querySelector('.pulse-wave-container');
+            const mainChar = document.querySelector( '.map-character-icon.engage' );
+
+            if (enemyOverlap(pulseWave, mainChar, document.querySelector('.game-container'))) {
+                inHazard = true;
+                window.theHazardValue = pulseWave.dataset.value;
+            } else {
+                inHazard = false;
+            }
+        }, 20);
     }
 }
 
@@ -2201,9 +2213,9 @@ function updateBossWave(enemy) {
             enemy.classList.remove( bossWave + '-wave-engage' );
         } );
 
-        enemy.classList.add(bossWaves[bossWaveCount] + '-wave-engage')
+        enemy.classList.add(bossWaves[bossWaveCount] + '-wave-engage');
 
-        if ( 'pulse' === bossWaves[bossWaveCount]) {
+        if ( 'pulse-wave' === bossWaves[bossWaveCount]) {
             pulsewaveInterval = setInterval( () => {
                 enemy.classList.toggle( 'pulse-in' );
             }, 13000 );
@@ -2212,7 +2224,7 @@ function updateBossWave(enemy) {
             enemy.classList.remove( 'pulse-in' );
         }
 
-        if ('barrage' === bossWaves[bossWaveCount]) {
+        if ('projectile' === bossWaves[bossWaveCount]) {
             engageShooter(enemy);
         } else {
             clearInterval( shooterInterval );
@@ -2278,32 +2290,7 @@ function shootProjectile(projectile, mapCharacterLeft, mapCharacterTop, enemy, p
         }
 
         if ( collisionWalls && projectile ) {
-            collisionWalls.forEach( collisionWall => {
-                if ( elementsOverlap( projectile, collisionWall ) ) {
-                    // If projectile collides with player than take health of player.
-                    if ( true === collisionWall.classList.contains('map-character-icon') && '.map-weapon' !== projectileClass ) {
-                        const enemyValue = parseInt(projectile.getAttribute('data-value'));
-
-                        // Immediately remove the projectile when hits.
-                        const currentHealth = document.querySelector('#explore-points .health-amount');
-                        const healthAmount = parseInt(currentHealth.getAttribute('data-amount'));
-
-                        if (currentHealth && 0 <= healthAmount) {
-                            const currentHealthLevel = healthAmount;
-                            const newAmount = currentHealthLevel >= enemyValue ? currentHealthLevel - enemyValue : 0;
-
-                            hurtAnimation();
-
-                            addUserPoints(newAmount, 'health', 'projectile');
-                        }
-                    }
-
-                    projectile.remove();
-
-                    // Link weapon back to player.
-                    window.weaponConnection = true;
-                }
-            } );
+            trackProjectile(projectile, collisionWalls)
         }
     }, 20 );
 
@@ -2320,6 +2307,73 @@ function shootProjectile(projectile, mapCharacterLeft, mapCharacterTop, enemy, p
 
         clearInterval( projMovement );
     }, 4500 );
+}
+
+function trackProjectile(projectile, collisionWalls, isProjectile = true) {
+    const container = document.querySelector( '.game-container' );
+
+    function tick() {
+        if (!document.body.contains(projectile)) return; // stop if removed
+
+        for (const wall of collisionWalls) {
+            if (enemyOverlap(projectile, wall, container)) {
+                // If projectile collides with player than take health of player.
+                if ( true === wall.classList.contains('map-character-icon') && false === projectile.classList.contains('map-weapon') ) {
+                    const enemyValue = parseInt(projectile.dataset.value);
+
+                    // Immediately remove the projectile when hits.
+                    const currentHealth = document.querySelector('#explore-points .health-amount');
+                    const healthAmount = parseInt(currentHealth.getAttribute('data-amount'));
+
+                    if (currentHealth && 0 <= healthAmount) {
+                        const currentHealthLevel = healthAmount;
+                        const newAmount = currentHealthLevel >= enemyValue ? currentHealthLevel - enemyValue : 0;
+
+                        hurtAnimation();
+
+                        addUserPoints(newAmount, 'health', 'projectile');
+                    }
+                }
+
+                if (true === isProjectile) {
+                    projectile.remove();
+                }
+
+                // Link weapon back to player.
+                window.weaponConnection = true;
+            }
+        }
+
+        requestAnimationFrame(tick);
+    }
+
+    requestAnimationFrame(tick);
+}
+
+function enemyOverlap(a, b, container) {
+    const ar = getRelativeRect(a, container);
+    const br = getRelativeRect(b, container);
+
+    return !(
+        ar.right < br.left ||
+        ar.left > br.right ||
+        ar.bottom < br.top ||
+        ar.top > br.bottom
+    );
+}
+
+function getRelativeRect(el, container) {
+    const elRect = el.getBoundingClientRect();
+    const parentRect = container.getBoundingClientRect();
+
+    return {
+        top: elRect.top - parentRect.top,
+        left: elRect.left - parentRect.left,
+        width: elRect.width,
+        height: elRect.height,
+        right: elRect.right - parentRect.left,
+        bottom: elRect.bottom - parentRect.top,
+    };
 }
 
 /**
@@ -2665,32 +2719,6 @@ export function engageExploreGame() {
         window.previousCutsceneArea = cutSceneName;
         setPreviousCutsceneArea( window.previousCutsceneArea );
         engageCutscene(cutSceneName, true);
-    }
-
-    // Trigger mission dependent cutscenes if mission are complete.
-    const dependentCutscenes = document.querySelectorAll( '.map-cutscene[data-dependent="yes"]' );
-
-    if ( dependentCutscenes && 0 < dependentCutscenes.length ) {
-        const dependentMinigame = dependentCutscenes[0].dataset.minigame;
-
-        // Get the mission name that triggers the start of this cutscene. TODO: add scalable logic this only works for first depedenent.
-        let dependentMission = dependentCutscenes[0].dataset.mission;
-
-        if ( dependentMinigame && '' !== dependentMinigame ) {
-            dependentMission = document.querySelector( '.' + dependentMinigame + '-minigame-item' );
-
-            if (dependentMission) {
-                dependentMission = dependentMission.dataset.mission;
-            }
-        }
-
-        if ( '' !== dependentMission ) {
-            const missionEl = document.querySelector('.' + dependentMission + '-mission-item');
-
-            if ( undefined === missionEl || null === missionEl ) {
-                engageCutscene(cleanClassName(dependentCutscenes[0].className));
-            }
-        }
     }
 
     if ( '' !== window.previousCutsceneArea ) {
@@ -3157,7 +3185,10 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
                         engageCutscene(position);
 
                         // Persist trigger so it isn't triggerable again.
-                        saveMaterializedItem(area, [cleanClassName(value.className)]);
+                        if ('' === position) {
+                            console.log(position);
+                            saveMaterializedItem(area, [cleanClassName(value.className)]);
+                        }
 
                         // Remove trigger.
                         value.remove();

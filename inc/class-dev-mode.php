@@ -33,7 +33,6 @@ class Dev_Mode
     public function __construct($plugin)
     {
         $this->plugin = $plugin;
-        $this->explore = new Explore($plugin);
     }
 
     /**
@@ -49,24 +48,28 @@ class Dev_Mode
         register_rest_route($namespace, '/set-item-position/', array(
             'methods' => 'POST',
             'callback' => [$this, 'setItemPosition'],
+            'permission_callback' => '__return_true',
         ));
 
         // Set item size.
         register_rest_route($namespace, '/set-item-size/', array(
             'methods' => 'POST',
             'callback' => [$this, 'setItemSize'],
+            'permission_callback' => '__return_true',
         ));
 
         // Get addition fields by posttype.
         register_rest_route($namespace, '/get-new-fields/', array(
             'methods' => 'POST',
             'callback' => [$this, 'getNewFields'],
+            'permission_callback' => '__return_true',
         ));
 
         // Create new whatever.
         register_rest_route($namespace, '/add-new/', array(
             'methods' => 'POST',
             'callback' => [$this, 'addNew'],
+            'permission_callback' => '__return_true',
         ));
     }
 
