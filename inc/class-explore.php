@@ -7,6 +7,9 @@
 
 namespace OrbemStudio;
 
+use WP_Error;
+use WP_Post;
+
 /**
  * Explore Class
  *
@@ -20,14 +23,14 @@ class Explore
 	 *
 	 * @var object
 	 */
-	public $plugin;
+	public object $plugin;
 
 	/**
 	 * Class constructor.
 	 *
 	 * @param object $plugin Plugin class.
 	 */
-	public function __construct($plugin)
+	public function __construct(object $plugin)
     {
 		$this->plugin = $plugin;
         $this->plugin->explore = $this;
@@ -38,7 +41,7 @@ class Explore
      *
      * @action rest_api_init
      */
-    public function create_api_posts_meta_field()
+    public function create_api_posts_meta_field(): void
     {
         $namespace = 'orbemorder/v1';
 
@@ -105,7 +108,7 @@ class Explore
             'permission_callback' => '__return_true'
         ));
 
-        // Register route for equiping new item.
+        // Register route for equipping new item.
         register_rest_route($namespace, '/equip-explore-item/', array(
             'methods'  => 'POST',
             'callback' => [$this, 'equipNewItem'],
@@ -157,9 +160,9 @@ class Explore
 
     /**
      * Call back function for rest route that saves the previous cutscene area.
-     * @param object $return The arg values from rest route.
+     * @param object $request The arg values from rest route.
      */
-    public function setPreviousCutsceneArea($request)
+    public function setPreviousCutsceneArea(object $request)
     {
         // Get the JSON string from the request body
         $json_string = $request->get_body();
@@ -169,22 +172,22 @@ class Explore
 
         // Handle errors in decoding JSON
         if (json_last_error() !== JSON_ERROR_NONE) {
-            return new \OrbemStudio\WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
+            return new WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
         }
 
         $user = isset($return['userid']) ? intval($return['userid']) : '';
         $cutscene = isset($return['cutscene']) ? sanitize_text_field(wp_unslash(($return['cutscene']))) : '';
 
-        if (false === in_array('', [$user], true)) {
+        if ('' !== $user) {
             update_user_meta($user, 'explore_previous_cutscene_area', $cutscene);
         }
     }
 
     /**
      * Call back function for rest route that adds spell to the explore_magic user meta
-     * @param object $return The arg values from rest route.
+     * @param object $request The arg values from rest route.
      */
-    public function addSpell($request)
+    public function addSpell(object $request)
     {
         // Get the JSON string from the request body
         $json_string = $request->get_body();
@@ -194,7 +197,7 @@ class Explore
 
         // Handle errors in decoding JSON
         if (json_last_error() !== JSON_ERROR_NONE) {
-            return new \OrbemStudio\WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
+            return new WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
         }
 
         $user = isset($return['userid']) ? intval($return['userid']) : '';
@@ -227,9 +230,10 @@ class Explore
 
     /**
      * Call back function for rest route that adds points to user's explore game.
-     * @param $request \OrbemStudio\The arg values from rest route.
+     * @param object $request
+     * @return WP_Error|void
      */
-    public function addCharacterPoints($request)
+    public function addCharacterPoints(object $request)
     {
         // Get the JSON string from the request body
         $json_string = $request->get_body();
@@ -239,7 +243,7 @@ class Explore
 
         // Handle errors in decoding JSON
         if (json_last_error() !== JSON_ERROR_NONE) {
-            return new \OrbemStudio\WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
+            return new WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
         }
 
         // Process the data (e.g., register the user)
@@ -262,9 +266,11 @@ class Explore
      * @param $type
      * @param $amount
      * @param $item
+     * @param bool $reset Is this being called by reset function.
      * @return void
      */
-    public function savePoint($userid, $type, $amount, $item, $reset = false) {
+    public function savePoint($userid, $type, $amount, $item, bool $reset = false): void
+    {
         if (false === in_array('', [$userid, $item], true)) {
             $current_explore_points = get_user_meta($userid, 'explore_points', true);
             $explore_points         = false === empty($current_explore_points) && is_array($current_explore_points) ? $current_explore_points : [
@@ -317,9 +323,9 @@ class Explore
 
     /**
      * Call back function for rest route that save draggable items positions when dropped.
-     * @param object $return The arg values from rest route.
+     * @param object $request The arg values from rest route.
      */
-    public function saveDrag($request)
+    public function saveDrag(object $request)
     {
         // Get the JSON string from the request body
         $json_string = $request->get_body();
@@ -329,7 +335,7 @@ class Explore
 
         // Handle errors in decoding JSON
         if (json_last_error() !== JSON_ERROR_NONE) {
-            return new \OrbemStudio\WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
+            return new WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
         }
 
         $user = isset($return['userid']) ? intval($return['userid']) : '';
@@ -358,9 +364,10 @@ class Explore
 
     /**
      * Call back function for rest route that save materialized items per location when triggered.
-     * @param $request
+     * @param object $request
+     * @return WP_Error|void
      */
-    public function saveMaterializedItem($request)
+    public function saveMaterializedItem(object $request)
     {
         // Get the JSON string from the request body
         $json_string = $request->get_body();
@@ -370,7 +377,7 @@ class Explore
 
         // Handle errors in decoding JSON
         if (json_last_error() !== JSON_ERROR_NONE) {
-            return new \OrbemStudio\WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
+            return new WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
         }
 
         // Process the data (e.g., register the user)
@@ -397,9 +404,10 @@ class Explore
 
     /**
      * Call back function for rest route that save materialized items per location when triggered.
-     * @param $request
+     * @param object $request
+     * @return WP_Error|void
      */
-    public function enableAbility($request)
+    public function enableAbility(object $request)
     {
         // Get the JSON string from the request body
         $json_string = $request->get_body();
@@ -409,7 +417,7 @@ class Explore
 
         // Handle errors in decoding JSON
         if (json_last_error() !== JSON_ERROR_NONE) {
-            return new \OrbemStudio\WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
+            return new WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
         }
 
         // Process the data (e.g., register the user)
@@ -430,9 +438,9 @@ class Explore
 
     /**
      * Call back function for rest route that save draggable items positions when dropped.
-     * @param object $return The arg values from rest route.
+     * @param object $request The arg values from rest route.
      */
-    public function addCharacter($request)
+    public function addCharacter(object $request)
     {
         // Get the JSON string from the request body
         $json_string = $request->get_body();
@@ -442,7 +450,7 @@ class Explore
 
         // Handle errors in decoding JSON
         if (json_last_error() !== JSON_ERROR_NONE) {
-            return new \OrbemStudio\WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
+            return new WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
         }
 
         $user = isset($return['userid']) ? intval($return['userid']) : '';
@@ -463,9 +471,9 @@ class Explore
 
     /**
      * Call back function for rest route that adds points to user's explore game.
-     * @param object $return The arg values from rest route.
+     * @param object $request The arg values from rest route.
      */
-    public function saveEnemy($request)
+    public function saveEnemy(object $request)
     {
         // Get the JSON string from the request body
         $json_string = $request->get_body();
@@ -475,7 +483,7 @@ class Explore
 
         // Handle errors in decoding JSON
         if (json_last_error() !== JSON_ERROR_NONE) {
-            return new \OrbemStudio\WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
+            return new WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
         }
 
         $user = isset($return['userid']) ? intval($return['userid']) : '';
@@ -497,9 +505,9 @@ class Explore
 
     /**
      * Call back function for rest route that saves completed missions.
-     * @param object $return The arg values from rest route.
+     * @param object $request The arg values from rest route.
      */
-    public function saveMission($request)
+    public function saveMission(object $request)
     {
         // Get the JSON string from the request body
         $json_string = $request->get_body();
@@ -509,7 +517,7 @@ class Explore
 
         // Handle errors in decoding JSON
         if (json_last_error() !== JSON_ERROR_NONE) {
-            return new \OrbemStudio\WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
+            return new WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
         }
 
         $user = isset($return['userid']) ? intval($return['userid']) : '';
@@ -532,9 +540,9 @@ class Explore
 
     /**
      * Call back function for rest route that equips a new item on the player.
-     * @param $request \OrbemStudio\The arg values from rest route.
+     * @param object $request The arg values from rest route.
      */
-    public function equipNewItem($request)
+    public function equipNewItem(object $request)
     {
         // Get the JSON string from the request body
         $json_string = $request->get_body();
@@ -544,7 +552,7 @@ class Explore
 
         // Handle errors in decoding JSON
         if (json_last_error() !== JSON_ERROR_NONE) {
-            return new \OrbemStudio\WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
+            return new WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
         }
 
         // Process the data (e.g., register the user)
@@ -593,9 +601,9 @@ class Explore
 
     /**
      * Call back function for rest route that storages items.
-     * @param object $return The arg values from rest route.
+     * @param object $request The arg values from rest route.
      */
-    public function saveStorageItem($request)
+    public function saveStorageItem(object $request)
     {
         // Get the JSON string from the request body
         $json_string = $request->get_body();
@@ -605,7 +613,7 @@ class Explore
 
         // Handle errors in decoding JSON
         if (json_last_error() !== JSON_ERROR_NONE) {
-            return new \OrbemStudio\WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
+            return new WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
         }
 
         $default_weapon = get_option('explore_default_weapon', false);
@@ -681,8 +689,9 @@ class Explore
      * Map for menu item versus item type.
      *
      * @param string $menu_type
+     * @return string
      */
-    public function getMenuType(string $menu_type )
+    public function getMenuType(string $menu_type ): string
     {
         $menu_map = [
             'health' => 'items',
@@ -696,9 +705,9 @@ class Explore
 
     /**
      * Call back function for rest route that saves game settings.
-     * @param $return \OrbemStudio\The arg values from rest route.
+     * @param object $request The arg values from rest route.
      */
-    public function saveSettings($request)
+    public function saveSettings(object $request)
     {
         // Get the JSON string from the request body
         $json_string = $request->get_body();
@@ -708,7 +717,7 @@ class Explore
 
         // Handle errors in decoding JSON
         if (json_last_error() !== JSON_ERROR_NONE) {
-            return new \OrbemStudio\WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
+            return new WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
         }
 
         // Process the data (e.g., register the user)
@@ -725,9 +734,9 @@ class Explore
 
     /**
      * Call back function for rest route that adds points to user's explore game.
-     * @param object $return The arg values from rest route.
+     * @param object $request The arg values from rest route.
      */
-    public function getOrbemArea($request)
+    public function getOrbemArea(object $request)
     {
         // Get the JSON string from the request body
         $json_string = $request->get_body();
@@ -737,7 +746,7 @@ class Explore
 
         // Handle errors in decoding JSON
         if (json_last_error() !== JSON_ERROR_NONE) {
-            return new \OrbemStudio\WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
+            return new WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
         }
 
         $position = isset($return['position']) ? sanitize_text_field(wp_unslash($return['position'])) : '';
@@ -820,9 +829,9 @@ class Explore
 
     /**
      * Call back function for rest route that returns item description.
-     * @param object $return The arg values from rest route.
+     * @param object $request The arg values from rest route.
      */
-    public function getItemDescription($request)
+    public function getItemDescription(object $request)
     {
         // Get the JSON string from the request body
         $json_string = $request->get_body();
@@ -832,7 +841,7 @@ class Explore
 
         // Handle errors in decoding JSON
         if (json_last_error() !== JSON_ERROR_NONE) {
-            return new \OrbemStudio\WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
+            return new WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
         }
 
         $item = isset($return['id']) ? intval($return['id']) : false;
@@ -844,7 +853,6 @@ class Explore
 
             // Check if equipped.
             $gear_equipped = get_user_meta( $userid, 'explore_current_gear', true);
-            $weapons_equipped = get_user_meta( $userid, 'explore_current_weapons', true);
             $content = $item_obj->post_content;
             $type = get_post_meta($item_obj->ID, 'explore-value-type', true);
             $item_type = '';
@@ -856,7 +864,7 @@ class Explore
             // Check equipped gear. IF so change button to unequip.
             if (false === empty($gear_equipped[$item_type]) && true === is_array($gear_equipped[$item_type])) {
                 foreach ($gear_equipped[$item_type] as $current_array) {
-                    if (true === in_array(intval($item), array_keys($current_array), true)) {
+                    if (true === in_array($item, array_keys($current_array), true)) {
                         $content = str_replace(['Equip', 'equip', 'Ununequip'],
                             ['Unequip', 'unequip', 'Unequip'],
                             $content);
@@ -873,9 +881,9 @@ class Explore
 
     /**
      * Call back function for rest route that adds coordinates user's explore game.
-     * @param object $return The arg values from rest route.
+     * @param object $request The arg values from rest route.
      */
-    public function saveCoordinates($request)
+    public function saveCoordinates(object $request)
     {
         // Get the JSON string from the request body
         $json_string = $request->get_body();
@@ -885,7 +893,7 @@ class Explore
 
         // Handle errors in decoding JSON
         if (json_last_error() !== JSON_ERROR_NONE) {
-            return new \OrbemStudio\WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
+            return new WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
         }
 
         $left = isset($return['left']) ? intval($return['left']) : '';
@@ -897,9 +905,9 @@ class Explore
 
     /**
      * Call back function to reset explore game.
-     * @param object $return The arg values from rest route.
+     * @param object $request The arg values from rest route.
      */
-    public function resetExplore($request)
+    public function resetExplore(object $request)
     {
         // Get the JSON string from the request body
         $json_string = $request->get_body();
@@ -909,7 +917,7 @@ class Explore
 
         // Handle errors in decoding JSON
         if (json_last_error() !== JSON_ERROR_NONE) {
-            return new \OrbemStudio\WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
+            return new WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
         }
 
         $current_user = isset($return['userid']) ? intval($return['userid']) : '';
@@ -935,7 +943,8 @@ class Explore
     /**
      * get Map svg content.
      */
-    public static function getMapSVG($explore_area) {
+    public static function getMapSVG($explore_area): false|string
+    {
         // Create a stream context with SSL options
         $context = stream_context_create([
             'ssl' => [
@@ -959,7 +968,8 @@ class Explore
     /**
      * get svg content.
      */
-    public static function getSVGCode($image_url) {
+    public static function getSVGCode($image_url): string
+    {
         // Create a stream context with SSL options
         $context = stream_context_create([
             'ssl' => [
@@ -977,9 +987,9 @@ class Explore
 
     /**
      * Grab all the points you can collide with.
-     * @return int[]|\WP_Post[]
+     * @return int[]|WP_Post[]
      */
-    public static function getExplorePoints($position)
+    public static function getExplorePoints($position): array
     {
         $first_area = get_option('explore_first_area', '');
 
@@ -1002,9 +1012,9 @@ class Explore
      * Return post object of currently equipped weapon.
      * @param string $weapon_name
      *
-     * @return int[]|\WP_Post
+     * @return WP_Post|null
      */
-    public static function getWeaponByName($weapon_name)
+    public static function getWeaponByName(string $weapon_name): ?WP_Post
     {
         $args = [
             'post_type' => ['explore-weapon'],
@@ -1023,9 +1033,9 @@ class Explore
 
     /**
      * Grab all the points you can collide with.
-     * @return int[]|\WP_Post[]
+     * @return int[]|WP_Post[]
      */
-    public static function getExplorePosts($position, $post_type)
+    public static function getExplorePosts($position, $post_type): array
     {
         $first_area = get_option('explore_first_area', '');
         $args = [
@@ -1045,9 +1055,9 @@ class Explore
 
     /**
      * Grab all the abilities you can unlock.
-     * @return int[]|\WP_Post[]
+     * @return int[]|WP_Post[]
      */
-    public static function getExploreAbilities()
+    public static function getExploreAbilities(): array
     {
         $args = [
             'post_type' => ['explore-magic'],
@@ -1062,7 +1072,7 @@ class Explore
      *
      * @action wp_head
      */
-    public function inlineExploreStyles()
+    public function inlineExploreStyles(): void
     {
         $game_page = get_option('explore_game_page', '');
 
@@ -1076,7 +1086,67 @@ class Explore
             $explore_points = self::getExplorePoints($position);
             $explore_areas = get_posts(['post_type' => 'explore-area', 'numberposts' => -1]);
             $music_names = '';
+            $setting_icon = get_option('explore_settings_icon', $this->plugin->dir_url . '/assets/src/images/settings-default.svg');
+            $setting_icon = false === empty($setting_icon) ? $setting_icon : $this->plugin->dir_url . '/assets/src/images/settings-default.svg';
+            $storage_icon = get_option('explore_storage_icon', $this->plugin->dir_url . '/assets/src/images/storage-default.svg');
+            $storage_icon = false === empty($storage_icon) ? $storage_icon : $this->plugin->dir_url . '/assets/src/images/storage-default.svg';
+            $characters_icon = get_option('explore_crew_icon', $this->plugin->dir_url . '/assets/src/images/crew-default.svg');
+            $characters_icon = false === empty($characters_icon) ? $characters_icon : $this->plugin->dir_url . '/assets/src/images/crew-default.svg';
+            $cutscene_border_color = get_option('explore_cutscene_border_color', '');
+            $cutscene_border_radius = get_option('explore_cutscene_border_radius', '');
+            $cutscene_border_style = get_option('explore_cutscene_border_style', '');
+            $cutscene_border_size = get_option('explore_cutscene_border_size', '');
+            $character_hover_border = get_option('explore_crewmate_hover_border_color', '');
+            $skip_button_color = get_option('explore_skip_button_color', '');
             ?>
+            <style id="menu-styles">
+                #settings:not(.engage):before {
+                    color: #000;
+                    content: url("<?php echo esc_html($setting_icon); ?>");
+                    cursor: pointer;
+                    position: absolute;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    width: 50px;
+                }
+
+                #storage:not(.engage):before {
+                    color: #000;
+                    content: url("<?php echo esc_html($storage_icon); ?>");
+                    cursor: pointer;
+                    position: absolute;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    width: 50px;
+                }
+
+                #characters:not(.engage):before {
+                    color: #000;
+                    content: url("<?php echo esc_html($characters_icon); ?>");
+                    cursor: pointer;
+                    position: absolute;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    width: 50px;
+                }
+
+                .map-cutscene .character-name {
+                    border: <?php echo esc_html($cutscene_border_color); ?> solid 2px;
+                }
+
+                .map-cutscene .wp-block-orbem-paragraph-mp3 {
+                    border: <?php echo esc_html($cutscene_border_size . 'px ' . $cutscene_border_style . ' ' . $cutscene_border_color); ?>;
+                    border-radius: <?php echo esc_html($cutscene_border_radius); ?>px;
+                }
+
+                #skip-intro-video, #skip-cutscene-video {
+                    background: <?php echo esc_html($skip_button_color); ?>;
+                }
+
+                html body .game-container #characters .characters-content .characters-form .character-list .character-item:hover {
+                    border: 4px solid <?php echo esc_html($character_hover_border); ?>;
+                }
+            </style>
             <style id="map-item-styles">
                 <?php foreach($explore_points as $explore_point) :
                     $top = get_post_meta($explore_point->ID, 'explore-top', true) . 'px';
@@ -1114,14 +1184,18 @@ class Explore
     /**
      * Build html for map items.
      * @param $explore_points
-     *
+     * @param $userid
+     * @param $current_location
      * @return string
      */
-    public static function getMapItemHTML($explore_points, $userid, $current_location) {
+    public static function getMapItemHTML($explore_points, $userid, $current_location): string
+    {
         $html = '';
         $userid = $userid ?? get_current_user_id();
         $dead_ones = get_user_meta($userid, 'explore_enemies', true);
         $dead_ones = false === empty($dead_ones) ? $dead_ones : [];
+        $health = '';
+        $explore_enemy_type = '';
 
         $missions_for_triggers = get_posts(
             [
@@ -1143,7 +1217,7 @@ class Explore
         // Grab mission trigger points.
         foreach( $missions_for_triggers as $mission ) {
             $mission_trigger = get_post_meta($mission->ID, 'explore-mission-trigger', true);
-            $mission_trigger = false === empty($mission_trigger) ? $mission_trigger : $mission_trigger;
+            $mission_trigger = false === empty($mission_trigger) ? $mission_trigger : '';
 
             if (false === empty($mission_trigger['top'])) {
                 $mission_trigger_html .= '<div id="' . $mission->ID . '-t" class="mission-trigger wp-block-group map-item ' . $mission->post_name . '-mission-trigger-map-item is-layout-flow wp-block-group-is-layout-flow"';
@@ -1254,13 +1328,10 @@ class Explore
              $path_onload = true === empty($path_trigger['left']) && true === empty($path_trigger['cutscene']) && ('explore-character' === $explore_point->post_type || 'explore-enemy' === $explore_point->post_type) ? ' path-onload' : '';
              $classes = $path_onload;
 
-            // If it's an enemy and they have health show or if not an enemy show.
+            // If it's an enemy, and they have health show or if not an enemy show.
             if (
                 'explore-enemy' !== $explore_point->post_type ||
-                (
-                    'explore-enemy' === $explore_point->post_type &&
-                    false === in_array($explore_point->post_name, $dead_ones, true)
-                )
+                false === in_array($explore_point->post_name, $dead_ones, true)
              ) {
 
                 // Highjack top/left if draggable and has save drag values.
@@ -1550,7 +1621,7 @@ class Explore
                 }
 
                 if (false === empty($materialize_item_trigger['top']) && false === $is_materialized_item_triggered) {
-                    $materialize_item_top = $materialize_item_trigger['top'] ?? '';
+                    $materialize_item_top = $materialize_item_trigger['top'];
                     $materialize_item_left = $materialize_item_trigger['left'] ?? '';
                     $materialize_item_height = $materialize_item_trigger['height'] ?? '';
                     $materialize_item_width = $materialize_item_trigger['width'] ?? '';
@@ -1564,11 +1635,11 @@ class Explore
             }
          }
 
-        $indicator = get_option('explore_indicator_icon');
+        $indicator = get_option('explore_indicator_icon', plugin_dir_url(__FILE__) . '../assets/src/images/indicator.svg');
+        $indicator = false === empty($indicator) ? $indicator : plugin_dir_url(__FILE__) . '../assets/src/images/indicator.svg';
 
-        if (false === empty($indicator)) :
-            $html .= '<div class="indicator-icon"><img src="' . esc_url($indicator) . '" width="15" height="15" /></div>';
-        endif;
+        $html .= '<div class="indicator-icon"><img src="' . esc_url($indicator) . '" width="15" height="15" /></div>';
+
 
         // Trigger Mission complete.
         if (false === empty($mission_trigger_html)) {
@@ -1584,7 +1655,8 @@ class Explore
      * @param $userid
      * @return bool
      */
-    public static function isMaterializedItemTriggered($item_name, $location, $userid) {
+    public static function isMaterializedItemTriggered($item_name, $location, $userid): bool
+    {
         $materialize_items = get_user_meta($userid, 'explore_materialized_items', true);
 
         if (false === empty($materialize_items[$location]) && is_array($materialize_items[$location])) {
@@ -1601,10 +1673,12 @@ class Explore
     /**
      * Build html for map items.
      * @param $explore_cutscenes
-     *
+     * @param $position
+     * @param $userid
      * @return string
      */
-    public static function getMapCutsceneHTML($explore_cutscenes, $position, $userid) {
+    public static function getMapCutsceneHTML($explore_cutscenes, $position, $userid): string
+    {
         $userid = $userid ?? get_current_user_id();
         $html = '';
         $area = get_posts(['post_type' => 'explore-area', 'name' => $position, 'posts_per_page' => 1]);
@@ -1812,7 +1886,8 @@ class Explore
      *
      * @return string
      */
-    public static function getMapCommunicateHTML($location, $userid) {
+    public static function getMapCommunicateHTML($location, $userid): string
+    {
         $html = '';
         $trhtml = '';
 
@@ -1919,32 +1994,41 @@ class Explore
     }
 
     /**
-     * Build html for map items.
-     * @param $explore_cutscenes
+     * Build html for minigame items.
+     * @param $explore_minigames
      *
      * @return string
      */
-    public static function getMinigameHTML($explore_minigames) {
+    public static function getMinigameHTML($explore_minigames): string
+    {
         $html = '';
 
         foreach($explore_minigames as $minigame) {
-            $minigame_content = $minigame->post_content;
             $minigame_mission = get_post_meta( $minigame->ID, 'explore-mission', true);
             $music = get_post_meta($minigame->ID, 'explore-minigame-music', true);
-            $minigame_type = get_the_terms($minigame->ID, 'explore-minigame-type');
+            $minigame_type = get_post_meta($minigame->ID, 'explore-minigame-type', true);
+            $binary_translate_word = get_post_meta($minigame->ID, 'explore-translate-binary-word', true);
+            $draggable_images = get_post_meta($minigame->ID, 'explore-draggable-items', true);
 
             $html .= '<div class="minigame ' . esc_attr($minigame->post_name) . '-minigame-item" data-music="' . esc_attr($music) . '" data-mission="' . esc_attr($minigame_mission) . '">';
             $html .= '<div class="computer-chip">' . self::getSVGCode(get_the_post_thumbnail_url($minigame->ID)) . '</div>';
-            $html .= $minigame_content;
+            $html .= '<div class="draggable-images">';
+            if (false === empty($draggable_images)) {
+                foreach ($draggable_images as $draggable_image) {
+                    $html .= '<img class="minigame-draggable-image" src="' . ($draggable_image['draggable-item'] ?? '') . '" draggable="true" />';
+                }
+            }
+            $html .= '</div>';
 
-            if (false === empty($minigame_type[0]) && 'programming' === $minigame_type[0]->slug) {
+            if (false === empty($minigame_type) && 'draggable' === $minigame_type && false === empty($binary_translate_word)) {
                 $html .= '<div class="minigame-programming" >';
                 $html .= '<div class="input-section">';
                 $html .= '<div class="programming-output">';
                 $html .= '<textarea style="max-width:100%;" cols="150" rows="20"></textarea>';
                 $html .= '</div>';
                 $html .= '</div>';
-                $html .= $minigame_type[0]->description;
+                $html .= '<p class="programming-subject">Translate the <strong>' . $binary_translate_word . '</strong> into binary:</p>';
+                $html .= '<img class="alignnone size-full wp-image-3674" src="' . plugin_dir_url(__FILE__) . '../assets/src/images/binary.svg" alt="" />';
                 $html .= '</div>';
             }
 
@@ -1961,12 +2045,18 @@ class Explore
      *
      * @return string
      */
-    public static function getExplainerHTML($explore_explainers, $type) {
+    public static function getExplainerHTML($explore_explainers, $type): string
+    {
         if (true === empty($explore_explainers)) {
             return '';
         }
 
         $html = '';
+
+        $border_color = get_option('explore_explainer_border_color', '');
+        $border_radius = get_option('explore_explainer_border_radius', '');
+        $border_size = get_option('explore_explainer_border_size', '');
+        $border_style = get_option('explore_explainer_border_style', '');
 
         foreach($explore_explainers as $explainer) {
             $explainer_type = get_post_meta($explainer->ID, 'explore-explainer-type', true);
@@ -1984,7 +2074,8 @@ class Explore
                 $path_trigger_left = false === empty($trigger['left']) && 0 !== $trigger['left'] ? $trigger['left'] : '';
                 $path_trigger_width = false === empty($trigger['width']) && 0 !== $trigger['width'] ? $trigger['width'] : '';
                 $path_trigger_height = false === empty($trigger['height']) && 0 !== $trigger['height'] ? $trigger['height'] : '';
-                $arrow_img = get_option( 'explore_arrow_icon', false);
+                $arrow_img = get_option( 'explore_arrow_icon', plugin_dir_url(__FILE__) . '../assets/src/images/arrow-icon.svg');
+                $arrow_img = false === empty($arrow_img) ? $arrow_img : plugin_dir_url(__FILE__) . '../assets/src/images/arrow-icon.svg';
                 $orientation = $arrow_style['orientation'] ?? 'top';
                 $side = $arrow_style['side'] ?? 'right';
                 $rotation = $arrow_style['rotate'] ?? '0';
@@ -2006,7 +2097,7 @@ class Explore
 
                 if (false === empty($explainer_top)) {
                     $html .= '<div id="' . $explainer->ID . '" class="' . $explainer->post_name . '-explainer-item explainer-container map-item' . $fullscreen . '" ';
-                    $html .= 'style="left:' . $explainer_left . 'px;top:' . $explainer_top . 'px;height:auto; ' . $explainer_width . 'px;"';
+                    $html .= 'style="left:' . $explainer_left . 'px;top:' . $explainer_top . 'px;height:auto; ' . $explainer_width . 'px; border: ' . $border_size . 'px ' . $border_style . ' ' . $border_color . '; border-radius: ' . $border_radius . 'px;"';
                     $html .= ' data-type="' . $explainer_type . '"';
                     $html .= '>';
                     $html .= $arrow_img && 'fullscreen' !== $type ? '<img data-rotate="' . $rotation . '" width="120" height="120" style="'. esc_attr($arrow_style_css) . '" src="' . $arrow_img . '" />' : '';
@@ -2026,11 +2117,12 @@ class Explore
 
     /**
      * Build html for map abilities.
-     * @param $explore_cutscenes
+     * @param $explore_abilities
      *
      * @return string
      */
-    public static function getMapAbilitiesHTML($explore_abilities) {
+    public static function getMapAbilitiesHTML($explore_abilities): string
+    {
         $html = '';
         $magics = get_user_meta(get_current_user_id(), 'explore_magic', true);
 
@@ -2058,7 +2150,8 @@ class Explore
      *
      * @action init
      */
-    public function registerPostType() {
+    public function registerPostType(): void
+    {
         $post_types = [
             'explore-area' => [
                 'Area',
@@ -2098,7 +2191,7 @@ class Explore
             ],
             'explore-minigame' => [
                 'Minigame',
-                'supports' => [ 'title', 'editor', 'thumbnail' ]
+                'supports' => [ 'title', 'thumbnail' ]
             ],
             'explore-explainer' => [
                 'Explainer',
@@ -2192,10 +2285,10 @@ class Explore
      * Get current point width based on equipped weapons and gear.
      * @return array
      */
-    public static function getCurrentPointWidth() {
+    public static function getCurrentPointWidth(): array
+    {
         $user = get_current_user_id();
         $gear = get_user_meta($user, 'explore_current_gear', true);
-        $weapons = get_user_meta($user, 'explore_current_weapons', true);
         $types = ['health', 'mana', 'power', 'money'];
         $final_amounts = [
             'mana' => 100,
@@ -2217,7 +2310,8 @@ class Explore
      * Map of levels.
      * @return int[]
      */
-    public static function getLevelMap() {
+    public static function getLevelMap(): array
+    {
         return [
             0,
             200,
@@ -2234,7 +2328,8 @@ class Explore
     /**
      * Get current level.
      */
-    public static function getCurrentLevel() {
+    public static function getCurrentLevel(): int|string
+    {
         $levels = self::getLevelMap();
         $points = get_user_meta(get_current_user_id(), 'explore_points', true);
         $points = true === isset($points['point']['points']) ? $points['point']['points'] : 0;
@@ -2260,19 +2355,21 @@ class Explore
      * @action enqueue_block_editor_assets
      * @return void
      */
-    public function customRegisterParagraphMp3Block() {
+    public function customRegisterParagraphMp3Block(): void
+    {
         Plugin::enqueueScript('orbem-order/paragraph-mp3-block');
     }
 
     /**
      * Register new block category for share buttons.
      *
-     * @param array    $categories The current block categories.
-     * @param \WP_Post $post       Post object.
+     * @param array $categories The current block categories.
+     * @param WP_Post $post       Post object.
      *
      * @filter block_categories_all
      */
-    public function block_category( $categories, $post ) {
+    public function block_category(array $categories): array
+    {
         return array_merge(
             $categories,
             [
@@ -2286,17 +2383,17 @@ class Explore
 
     /**
      * Get the main character's images.
-     * @param $character_slug
+     * @param $main_character
      * @param $location
      * @return array
      */
-    public static function getCharacterImages($main_character, $location): array
+    public static function getCharacterImages($main_character): array
     {
         $main_character = is_object($main_character) ? $main_character : get_posts(['post_type' => ['explore-character', 'explore-enemy'], 'name' => $main_character, 'post_status' => 'publish', 'posts_per_page' => 1]);
 
         if (false === is_wp_error($main_character)) {
             $main_character = false === empty($main_character) && is_array($main_character) ? $main_character[0] : $main_character;
-            if (false === is_null($main_character) && false === empty($main_character)) {
+            if (false === empty($main_character)) {
                 $images = get_post_meta($main_character->ID, 'explore-character-images', true);
                 $weapon_images = get_post_meta($main_character->ID, 'explore-weapon-images', true);
                 $images = true === is_array($weapon_images) ? array_merge($images, $weapon_images) : $images;
@@ -2325,10 +2422,11 @@ class Explore
      * @action init
      * @return void
      */
-    public function handle_google_oauth_callback() {
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && strpos($_SERVER['REQUEST_URI'], '/google-oauth-callback') !== false) {
+    public function handle_google_oauth_callback(): void
+    {
+        if ($_SERVER['REQUEST_METHOD'] === 'POST' && str_contains($_SERVER['REQUEST_URI'], '/google-oauth-callback')) {
             $credential = $_POST['credential'];
-            $client_id = '1004491888851-ac0lv5l2gteb0kgmor65ehnasv3phcda.apps.googleusercontent.com';
+            $client_id = get_option('explore_google_login_client_id', '');
 
             $payload = json_decode(base64_decode(str_replace('_', '/', str_replace('-', '+', explode('.', $credential)[1]))), true);
             if ($payload['aud'] !== $client_id) {
@@ -2365,15 +2463,14 @@ class Explore
 
     /**
      * Call back for google login.
-     * @param $data_text
      * @return false|string
      */
-    public static function googleLogin($data_text)
+    public static function googleLogin(): false|string
     {
         ob_start();
         ?>
         <div id="g_id_onload"
-             data-client_id="1004491888851-ac0lv5l2gteb0kgmor65ehnasv3phcda.apps.googleusercontent.com"
+             data-client_id="<?php echo get_option('explore_google_login_client_id', ''); ?>"
              data-context="signin"
              data-ux_mode="popup"
              data-callback="handleCredentialResponse"

@@ -1,7 +1,11 @@
 <?php
 /**
  * Settings panel for game.
+ *
+ * @var int $userid
+ * @var string $game_url
  */
+
 $settings = get_user_meta($userid, 'explore_settings', true);
 $music = true === isset($settings['music']) ? intval($settings['music']) : 5;
 $sfx = true === isset($settings['sfx']) ? intval($settings['sfx']) : 5;
@@ -12,15 +16,15 @@ $talking = true === isset($settings['talking']) ? intval($settings['talking']) :
     <h2>Game Settings</h2>
     <label for="music-volume">
         Music Volume
-        <input id="music-volume" type="range" min="0" max="10" value="<?php echo intval($music); ?>"/>
+        <input id="music-volume" type="range" min="0" max="10" value="<?php echo esc_attr($music); ?>"/>
     </label>
     <label for="sfx-volume">
         SFX Volume
-        <input id="sfx-volume" type="range" min="0" max="10" value="<?php echo intval($sfx); ?>"/>
+        <input id="sfx-volume" type="range" min="0" max="10" value="<?php echo esc_attr($sfx); ?>"/>
     </label>
     <label for="talking-volume">
         Talking Volume
-        <input id="talking-volume" type="range" min="-40" max="16" value="<?php echo intval($talking); ?>"/>
+        <input id="talking-volume" type="range" min="-40" max="16" value="<?php echo esc_attr($talking); ?>"/>
     </label>
     <button id="update-settings">Save</button>
 

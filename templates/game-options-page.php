@@ -9,7 +9,13 @@ if ('false' !== $setup_triggered) {
     include $this->plugin->dir_path . 'templates/setup.php';
 }
 ?>
-<h1><img src="<?php echo $this->plugin->dir_url; ?>/assets/src/images/logo.svg" alt="orbem studio logo" width="80px" /><span>Orbem Studio<h3>Where Stories Become Playable Worlds</h3></span></h1>
+<div class="title-section">
+    <img src="<?php echo $this->plugin->dir_url; ?>/assets/src/images/logo.svg" alt="orbem studio logo" width="80px" />
+    <span>
+        <h1>Orbem Studio</h1>
+        <span class="subtitle-h3">Where Stories Become Playable Worlds</span>
+    </span>
+</div>
 <hr style="margin-bottom: 2rem;">
 <form method="post" action="options.php">
     <?php

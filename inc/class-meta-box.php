@@ -19,14 +19,14 @@ class Meta_Box {
 	 *
 	 * @var object
 	 */
-	public $plugin;
+	public object $plugin;
 
 	/**
 	 * Class constructor.
 	 *
 	 * @param object $plugin Plugin class.
 	 */
-	public function __construct( $plugin ) {
+	public function __construct(object $plugin) {
 		$this->plugin = $plugin;
 	}
 
@@ -38,7 +38,8 @@ class Meta_Box {
      * @param $post
      * @return mixed
      */
-    public function addMetaToRest($response, $post) {
+    public function addMetaToRest($response, $post): mixed
+    {
         $meta_value = get_post_meta($post->ID, 'explore-voice', true);
         if (!isset($response->data['meta'])) {
             $response->data['meta'] = array();
@@ -52,18 +53,20 @@ class Meta_Box {
 	 *
 	 * @action add_meta_boxes
 	 */
-	public function explore_metabox() {
+	public function exploreMetabox(): void
+    {
 		// Get all post types available.
 		$post_types = ['explore-explainer', 'explore-minigame', 'explore-point', 'explore-area', 'explore-character', 'explore-enemy', 'explore-weapon', 'explore-magic', 'explore-cutscene', 'explore-mission', 'explore-sign', 'explore-wall', 'explore-communicate'];
 
 		// Add the Explore Point meta box to editor pages.
-		add_meta_box( 'explore-point', esc_html__( 'Configuration', 'orbem-studio' ), [$this, 'explore_point_box'], $post_types, 'normal', 'high' );
+		add_meta_box( 'explore-point', esc_html__( 'Configuration', 'orbem-studio' ), [$this, 'explorePointBox'], $post_types, 'normal', 'high' );
 	}
 
 	/**
 	 * Call back function for the metabox.
 	 */
-	public function explore_point_box($post) {
+	public function explorePointBox($post): void
+    {
         $front_end = is_string($post);
         $post_type = is_string($post) ? $post : $post->post_type;
         $meta_data = $this->getMetaData($post_type);
@@ -85,9 +88,10 @@ class Meta_Box {
      *
      * @action save_post, 1
      */
-    public function save_meta($post_id) {
+    public function save_meta($post_id): void
+    {
         // Check if the request came from the WordPress save post process
-        if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
+        if (wp_is_post_autosave($post_id)) {
             return;
         }
 
@@ -99,11 +103,11 @@ class Meta_Box {
             foreach ($meta_data as $key => $value) {
                 $type = false;
 
-                if (true === is_array($value)) {
-                    $type = array_keys($value);
+                if (true === is_array($value[0])) {
+                    $type = array_keys($value[0]);
                 }
 
-                if (true === is_array($value) && ['radio'] !== $type && ['select'] !== $type) {
+                if (true === is_array($value[0]) && ['radio'] !== $type && ['select'] !== $type) {
                     $array_value = filter_input_array(
                         INPUT_POST, [$key => ['filter' => FILTER_UNSAFE_RAW, 'flags' => FILTER_REQUIRE_ARRAY]]
                     );
@@ -178,7 +182,7 @@ class Meta_Box {
                 ],
                 'explore-area' => [
                     [
-                        'select' => [$explore_area_array]
+                        'select' => $explore_area_array
                     ],
                     'The area this area trigger will appear in. (The trigger send the character to this area).'
                 ],
@@ -209,13 +213,12 @@ class Meta_Box {
                 'explore-start-direction' => [
                     [
                         'select' => [
-                            [
                                 'up',
                                 'down',
                                 'left',
                                 'right'
                             ]
-                        ]
+
                     ],
                     'Which direction the character will face when entering this area.'
                 ],
@@ -230,9 +233,7 @@ class Meta_Box {
                 ],
                 'explore-communicate-type' => [
                     [
-                        'select' => [
-                            $explore_communicate_array
-                        ],
+                        'select' => $explore_communicate_array,
                     ],
                     'Choose which communication device to assign to this area.'
                 ]
@@ -240,7 +241,7 @@ class Meta_Box {
             'explore-sign' => [
                 'explore-area' => [
                     [
-                        'select' => [$explore_area_array]
+                        'select' => $explore_area_array
                     ],
                     'The area this focus view trigger will appear in. (The trigger send the character to this area).'
                 ],
@@ -264,7 +265,7 @@ class Meta_Box {
             'explore-wall' => [
                 'explore-area' => [
                     [
-                        'select' => [$explore_area_array]
+                        'select' => $explore_area_array
                     ],
                     'The area this wall will appear in.'
                 ],
@@ -294,7 +295,7 @@ class Meta_Box {
             'explore-mission' => [
                 'explore-area' => [
                     [
-                        'select' => [$explore_area_array]
+                        'select' => $explore_area_array
                     ],
                     'The area this mission will appear in.'
                 ],
@@ -304,13 +305,13 @@ class Meta_Box {
                 ],
                 'explore-value-type'   => [
                     [
-                        'select' => [$explore_value_array]
+                        'select' => $explore_value_array
                     ],
                     'What type of reward will be given for completion'
                 ],
                 'explore-next-mission' => [
                     [
-                        'multiselect' => [$explore_mission_array]
+                        'multiselect' => $explore_mission_array
                     ],
                     'Choose mission(s) to start after this mission is completed'
                 ],
@@ -325,13 +326,13 @@ class Meta_Box {
                 ],
                 'explore-trigger-item' => [
                     [
-                        'multiselect' => [$explore_item_array]
+                        'multiselect' => $explore_item_array
                     ],
                     'Item(s) that will trigger the completion of this mission. (If you choose multiple, all items will need to be interacted with to complete this mission)'
                 ],
                 'explore-hazard-remove' => [
                     [
-                        'select' => [$explore_hazard_array]
+                        'select' => $explore_hazard_array
                     ],
                     'Which hazard to remove upon completion of this mission'
                 ],
@@ -353,17 +354,16 @@ class Meta_Box {
                 ],
                 'explore-trigger-enemy' => [
                     [
-                        'select' => [$explore_enemy_array]
+                        'select' => $explore_enemy_array
                     ],
                     'Enemy that completes this mission when defeated'
                 ],
                 'explore-ability'      => [
                     [
                         'select' => [
-                            [
                                 'transportation'
                             ]
-                        ]
+
                     ],
                     'Which ability will be rewarded for completion of this mission'
                 ],
@@ -371,7 +371,7 @@ class Meta_Box {
             'explore-cutscene' => [
                 'explore-area' => [
                     [
-                        'select' => [$explore_area_array]
+                        'select' => $explore_area_array
                     ],
                     'The area this cutscene will appear in.'
                 ],
@@ -408,19 +408,19 @@ class Meta_Box {
                 ],
                 'explore-remove-after-cutscene' => [
                     [
-                        'select' => [$explore_cutscene_array]
+                        'select' => $explore_cutscene_array
                     ],
                     'The cutscene that will trigger this cutscene trigger to be removed after it is completed.'
                 ],
                 'explore-materialize-after-cutscene' => [
                     [
-                        'select' => [$explore_cutscene_array]
+                        'select' => $explore_cutscene_array
                     ],
                     'The cutscene that will trigger this cutscene trigger to be revealed/made available after it is completed.'
                 ],
                 'explore-materialize-after-mission' => [
                     [
-                        'select' => [$explore_mission_array]
+                        'select' => $explore_mission_array
                     ],
                     'The mission that will trigger this cutscene trigger to be revealed/made available after it is completed.'
                 ],
@@ -453,13 +453,13 @@ class Meta_Box {
                 ],
                 'explore-mission-cutscene' => [
                     [
-                        'select' => [$explore_mission_array]
+                        'select' => $explore_mission_array
                     ],
                     'The mission that triggers this cutscene upon completion.'
                 ],
                 'explore-mission-complete-cutscene' => [
                     [
-                        'select' => [$explore_mission_array]
+                        'select' => $explore_mission_array
                     ],
                     'The mission that is completed by finishing this cutscene.'
                 ],
@@ -472,13 +472,13 @@ class Meta_Box {
                 ],
                 'explore-character' => [
                     [
-                        'select' => [$explore_character_array]
+                        'select' => $explore_character_array
                     ],
                     'The NPC your character will have the cutscene with'
                 ],
                 'explore-next-area' => [
                     [
-                        'select' => [$explore_area_array]
+                        'select' => $explore_area_array
                     ],
                     'The area your character will be sent to after this cutscene completes.'
                 ],
@@ -497,13 +497,13 @@ class Meta_Box {
                 ],
                 'explore-value-type' => [
                     [
-                        'select' => [$explore_value_array]
+                        'select' => $explore_value_array
                     ],
                     'The type of reward that will be given for completing this cutscene. (Separate from mission rewards)'
                 ],
                 'explore-engage-communicate' => [
                     [
-                        'select' => [$explore_communicate_array]
+                        'select' => $explore_communicate_array
                     ],
                     'Which communication item should be sent to your communicator after this cutscene.'
                 ],
@@ -526,7 +526,7 @@ class Meta_Box {
                 ],
                 'explore-cutscene-boss' => [
                     [
-                        'select' => [$explore_enemy_array]
+                        'select' => $explore_enemy_array
                     ],
                     'This is the boss that will be triggered to start fighting after this cutscene. (Required to start boss fight.)'
                 ],
@@ -534,7 +534,7 @@ class Meta_Box {
             'explore-weapon' => [
                 'explore-area' => [
                     [
-                        'select' => [$explore_area_array]
+                        'select' => $explore_area_array
                     ],
                     'The area this weapon will appear in.'
                 ],
@@ -581,9 +581,7 @@ class Meta_Box {
                 ],
                 'explore-value-type' => [
                     [
-                        'select' => [
-                            ['weapons']
-                        ]
+                        'select' => ['weapons']
                     ],
                     'The type of item this is (only weapons currently).'
                 ],
@@ -598,19 +596,19 @@ class Meta_Box {
                 ],
                 'explore-remove-after-cutscene' => [
                     [
-                        'select' => [$explore_cutscene_array]
+                        'select' => $explore_cutscene_array
                     ],
                     'The cutscene that will trigger this weapon to be removed after it is completed.'
                 ],
                 'explore-materialize-after-cutscene' => [
                     [
-                        'select' => [$explore_cutscene_array]
+                        'select' => $explore_cutscene_array
                     ],
                     'The cutscene that will trigger this weapon to be revealed/made available after it is completed.'
                 ],
                 'explore-materialize-after-mission' => [
                     [
-                        'select' => [$explore_mission_array]
+                        'select' => $explore_mission_array
                     ],
                     'The mission that will trigger this weapon to be revealed/made available after it is completed.'
                 ],
@@ -618,7 +616,7 @@ class Meta_Box {
             'explore-character' => [
                 'explore-area' => [
                     [
-                        'select' => [$explore_area_array]
+                        'select' => $explore_area_array
                     ],
                     'The area this character will appear in.'
                 ],
@@ -657,19 +655,18 @@ class Meta_Box {
                 'explore-ability' => [
                     [
                         'select' => [
-                            [
                                 'speed',
                                 'strength',
                                 'hazard',
                                 'programming',
                             ]
-                        ]
+
                     ],
                     'Which ability your character posses (Only applies to playable characters).'
                 ],
                 'explore-voice' => [
                     [
-                        'select' => [$this->getVoices()]
+                        'select' => $this->getVoices()
                     ],
                     'The voice of your character. Uses Google basic TTL (requires API Key to use).'
                 ],
@@ -688,7 +685,7 @@ class Meta_Box {
                 ],
                 'explore-weapon-choice' => [
                     [
-                        'select' => [$explore_weapon_array]
+                        'select' => $explore_weapon_array
                     ],
                     'This is the default weapon for this character. (Only applies to playable characters)'
                 ],
@@ -734,10 +731,10 @@ class Meta_Box {
                         'height' => 'number',
                         'width' => 'number',
                         'cutscene' => [
-                            'select' => [$explore_cutscene_array]
+                            'select' => $explore_cutscene_array
                         ],
                         'item' => [
-                            'select' => [$explore_item_array]
+                            'select' => $explore_item_array
                         ],
                     ],
                     'The triggers that start a NPC\'s movement'
@@ -753,19 +750,19 @@ class Meta_Box {
                 ],
                 'explore-remove-after-cutscene' => [
                     [
-                        'select' => [$explore_cutscene_array]
+                        'select' => $explore_cutscene_array
                     ],
                     'The cutscene that will trigger this character to be removed after it is completed.'
                 ],
                 'explore-materialize-after-cutscene' => [
                     [
-                        'select' => [$explore_cutscene_array]
+                        'select' => $explore_cutscene_array
                     ],
                     'The cutscene that will trigger this character to be revealed/made available after it is completed.'
                 ],
                 'explore-materialize-after-mission' => [
                     [
-                        'select' => [$explore_mission_array]
+                        'select' => $explore_mission_array
                     ],
                     'The mission that will trigger this character to be revealed/made available after it is completed.'
                 ],
@@ -773,7 +770,7 @@ class Meta_Box {
             'explore-enemy' => [
                 'explore-area' => [
                     [
-                        'select' => [$explore_area_array]
+                        'select' => $explore_area_array
                     ],
                     'The area this enemy will appear in.'
                 ],
@@ -812,13 +809,12 @@ class Meta_Box {
                 'explore-enemy-type' => [
                     [
                         'select' => [
-                            [
                                 'blocker',
                                 'shooter',
                                 'runner',
                                 'boss'
                             ]
-                        ]
+
                     ],
                     'Specifies the type of enemy this is. Blocker: is default with no ability, Shooter: shoots projectiles, Runner: runs into character to hurt, Boss: has boss fighting waves.'
                 ],
@@ -832,7 +828,7 @@ class Meta_Box {
                 ],
                 'explore-voice' => [
                     [
-                        'select' => [$this->getVoices()]
+                        'select' => $this->getVoices()
                     ],
                     'The voice of your character. Uses Google basic TTL (requires API Key to use).'
                 ],
@@ -878,10 +874,10 @@ class Meta_Box {
                         'height' => 'number',
                         'width' => 'number',
                         'cutscene' => [
-                            'select' => [$explore_cutscene_array]
+                            'select' => $explore_cutscene_array
                         ],
                         'item' => [
-                            'select' => [$explore_item_array]
+                            'select' => $explore_item_array
                         ],
                     ],
                     'The triggers that start a NPC\'s movement'
@@ -897,19 +893,19 @@ class Meta_Box {
                 ],
                 'explore-remove-after-cutscene' => [
                     [
-                        'select' => [$explore_cutscene_array]
+                        'select' => $explore_cutscene_array
                     ],
                     'The cutscene that will trigger this enemy to be removed after it is completed.'
                 ],
                 'explore-materialize-after-cutscene' => [
                     [
-                        'select' => [$explore_cutscene_array]
+                        'select' => $explore_cutscene_array
                     ],
                     'The cutscene that will trigger this enemy to be revealed/made available after it is completed.'
                 ],
                 'explore-materialize-after-mission' => [
                     [
-                        'select' => [$explore_mission_array]
+                        'select' => $explore_mission_array
                     ],
                     'The mission that will trigger this enemy to be revealed/made available after it is completed.'
                 ],
@@ -936,18 +932,16 @@ class Meta_Box {
                 ],
                 'explore-weapon-weakness' => [
                     [
-                        'select' => [$explore_weapon_array]
+                        'select' => $explore_weapon_array
                     ],
                     'The weapon that can hurt this enemy. Only this weapon will cause damage.'
                 ],
                 'explore-boss-waves' => [
                     [
                         'multiselect' => [
-                            [
                                 'projectile',
                                 'pulse-wave'
                             ]
-                        ]
                     ],
                     'The available attack patterns this boss can use during a boss fight.'
                 ],
@@ -955,13 +949,13 @@ class Meta_Box {
             'explore-minigame' => [
                 'explore-area' => [
                     [
-                        'select' => [$explore_area_array]
+                        'select' => $explore_area_array
                     ],
                     'The area this minigame will appear in.'
                 ],
                 'explore-mission' => [
                     [
-                        'select' => [$explore_mission_array]
+                        'select' => $explore_mission_array
                     ],
                     'The mission that this minigame will complete'
                 ],
@@ -969,11 +963,29 @@ class Meta_Box {
                     'upload',
                     'The music that will play when the minigame is open.'
                 ],
+                'explore-minigame-type' => [
+                    [
+                        'select' => ['draggable']
+                    ],
+                    'What type of minigame is this?'
+                ],
+                'explore-draggable-items' => [
+                    [
+                        'repeater' => [
+                            'draggable-item' => 'upload'
+                        ]
+                    ],
+                    'The items that will be draggable to complete the "draggable" minigame. (Background to drag on is the featured image).'
+                ],
+                'explore-translate-binary-word' => [
+                    'text',
+                    'The word that will be required to translate to binary to complete the minigame. (If empty, this second portion of the minigame will be ignored)'
+                ],
             ],
             'explore-communicate' => [
                 'explore-area' => [
                     [
-                        'select' => [$explore_area_array]
+                        'select' => $explore_area_array
                     ],
                     'The area this communication will appear in.'
                 ],
@@ -1013,19 +1025,19 @@ class Meta_Box {
                 ],
                 'explore-remove-after-cutscene' => [
                     [
-                        'select' => [$explore_cutscene_array]
+                        'select' => $explore_cutscene_array
                     ],
                     'The cutscene that will trigger this communication trigger to be removed after it is completed.'
                 ],
                 'explore-materialize-after-cutscene' => [
                     [
-                        'select' => [$explore_cutscene_array]
+                        'select' => $explore_cutscene_array
                     ],
                     'The cutscene that will trigger this communication trigger to be revealed/made available after it is completed.'
                 ],
                 'explore-materialize-after-mission' => [
                     [
-                        'select' => [$explore_mission_array]
+                        'select' => $explore_mission_array
                     ],
                     'The mission that will trigger this communication trigger to be revealed/made available after it is completed.'
                 ],
@@ -1033,7 +1045,7 @@ class Meta_Box {
             'explore-explainer' => [
                 'explore-area' => [
                     [
-                        'select' => [$explore_area_array]
+                        'select' => $explore_area_array
                     ],
                     'The area this explainer will appear in.'
                 ],
@@ -1105,19 +1117,19 @@ class Meta_Box {
                 ],
                 'explore-remove-after-cutscene' => [
                     [
-                        'select' => [$explore_cutscene_array]
+                        'select' => $explore_cutscene_array
                     ],
                     'The cutscene that will trigger this explainer trigger to be removed after it is completed.'
                 ],
                 'explore-materialize-after-cutscene' => [
                     [
-                        'select' => [$explore_cutscene_array]
+                        'select' => $explore_cutscene_array
                     ],
                     'The cutscene that will trigger this explainer trigger to be revealed/made available after it is completed.'
                 ],
                 'explore-materialize-after-mission' => [
                     [
-                        'select' => [$explore_mission_array]
+                        'select' => $explore_mission_array
                     ],
                     'The mission that will trigger this explainer trigger to be revealed/made available after it is completed.'
                 ],
@@ -1125,7 +1137,7 @@ class Meta_Box {
             'explore-point' => [
                 'explore-area' => [
                     [
-                        'select' => [$explore_area_array]
+                        'select' => $explore_area_array
                     ],
                     'The area this item will appear in.'
                 ],
@@ -1159,12 +1171,12 @@ class Meta_Box {
                 ],
                 'explore-interaction-type' => [
                     [
-                        'select' => [[
+                        'select' => [
                             'collectable',
                             'breakable',
                             'draggable',
                             'hazard',
-                        ]]
+                        ]
                     ],
                     'What type of item this is. Collectable: will be collected when touched. Breakable: will disappear or display interacted image when engaged with. Draggable: Will allow user to drag this item. Hazard: Will cause harm to the user when stepped on.'
                 ],
@@ -1174,7 +1186,7 @@ class Meta_Box {
                 ],
                 'explore-value-type' => [
                     [
-                        'select' => [$explore_value_array]
+                        'select' => $explore_value_array
                     ],
                     'The type of reward that will be received when collecting or breaking this item.'
                 ],
@@ -1211,19 +1223,19 @@ class Meta_Box {
                 ],
                 'explore-remove-after-cutscene' => [
                     [
-                        'select' => [$explore_cutscene_array]
+                        'select' => $explore_cutscene_array
                     ],
                     'The cutscene that will trigger this item to be removed after it is completed.'
                 ],
                 'explore-materialize-after-cutscene' => [
                     [
-                        'select' => [$explore_cutscene_array]
+                        'select' => $explore_cutscene_array
                     ],
                     'The cutscene that will trigger this item to be revealed/made available after it is completed.'
                 ],
                 'explore-materialize-after-mission' => [
                     [
-                        'select' => [$explore_mission_array]
+                        'select' => $explore_mission_array
                     ],
                     'The mission that will trigger this item to be revealed/made available after it is completed.'
                 ],
@@ -1244,7 +1256,7 @@ class Meta_Box {
                         'height' => 'number',
                         'image' => 'upload',
                         'mission' => [
-                            'select' => [$explore_mission_array]
+                            'select' => $explore_mission_array
                         ],
                         'remove-after' => [
                             'radio' => [
@@ -1254,7 +1266,7 @@ class Meta_Box {
                         ],
                         'offset' => 'number',
                         'materialize-after-cutscene' => [
-                            'select' => [$explore_cutscene_array]
+                            'select' => $explore_cutscene_array
                         ],
                     ],
                     'Configuration if this item is draggable and has a destination.'
@@ -1263,14 +1275,14 @@ class Meta_Box {
                     [
                         'time' => 'number',
                         'trigger' => [
-                            'select' => [$explore_item_array]
+                            'select' => $explore_item_array
                         ],
                     ],
                     'If configured it will turn this item into a timer item. You will need multiple timer items selecting each other with the same time amount.'
                 ],
                 'explore-minigame' => [
                     [
-                        'select' => [$explore_minigame_array]
+                        'select' => $explore_minigame_array
                     ],
                     'The minigame that will be triggered by this item.'
                 ],
@@ -1280,7 +1292,8 @@ class Meta_Box {
         return $post_type_specific[$post_type] ?? [];
     }
 
-    public function getVoices() {
+    public function getVoices(): array
+    {
         return [
             ['name' => 'af-ZA-Standard-A', 'language' => 'af-ZA', 'gender' => 'FEMALE'],
             ['name' => 'am-ET-Standard-A', 'language' => 'am-ET', 'gender' => 'FEMALE'],
@@ -1877,15 +1890,16 @@ class Meta_Box {
      * @param $key
      * @param $value
      * @param $meta_values
-     * @param $main_key
-     * @param $sub_value
+     * @param bool $main_key
+     * @param bool $sub_value
+     * @param bool $repeat_index
      * @return false|string
      */
-    public static function getMetaHtml($key, $value, $meta_values, $main_key = false, $sub_value = false)
+    public static function getMetaHtml($key, $value, $meta_values, bool $main_key = false, bool $sub_value = false, bool $repeat_index = false): false|string
     {
         ob_start();
         if ( false === is_array($value)) {
-            include plugin_dir_path(__FILE__) . "../templates/meta/fields/{$value}.php";
+            include plugin_dir_path(__FILE__) . "../templates/meta/fields/$value.php";
         }
 
         return ob_get_clean();
@@ -1898,7 +1912,7 @@ class Meta_Box {
      * @param $values
      * @return bool|string
      */
-    public static function imageUploadHTML($name, $slug, $values)
+    public static function imageUploadHTML($name, $slug, $values): bool|string
     {
         ob_start();
         ?>
@@ -1922,13 +1936,12 @@ class Meta_Box {
 
     /**
      * @action explore-communication-type_edit_form_fields
-     * @param $term_id
+     * @param $term
      * @return void
      */
-    public function addTaxonomyImageUpload($term)
+    public function addTaxonomyImageUpload($term): void
     {
         $meta_values = get_term_meta($term->term_id, 'explore-background', true);
-        $key = 'explore-background';
 
         echo '<h2>Communicator Background</h2>';
         echo '<h4>Insert the background image that will show as the communicator device. Text and voice messages will show on top of it like a cell phone.</h4>';
@@ -1939,7 +1952,8 @@ class Meta_Box {
      * Save communication type term meta
      * @action edited_explore-communication-type
      */
-    public function saveCommunicationTypeMeta($term_id) {
+    public function saveCommunicationTypeMeta($term_id): void
+    {
         $background_url = filter_input(INPUT_POST, 'explore-background', FILTER_SANITIZE_URL);
 
         if (true === isset($background_url)) {

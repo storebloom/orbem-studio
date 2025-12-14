@@ -60,9 +60,12 @@ class Util
      * Get the list of posts by post type. Just the post names.
      *
      * @param $post_type
+     * @param bool $taxo
+     * @param string $meta_key
+     * @param string $meta_value
      * @return array
      */
-    public function getOrbemArray($post_type, $taxo = false, $meta_key = '', $meta_value = '')
+    public function getOrbemArray($post_type, bool $taxo = false, string $meta_key = '', string $meta_value = ''): array
     {
         $explore_array = [];
         if ($taxo) {

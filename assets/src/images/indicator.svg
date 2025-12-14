@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Layer_2" data-name="Layer 2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 62.36 62.36">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #fff;
+        stroke: #000;
+        stroke-miterlimit: 10;
+        stroke-width: 6px;
+      }
+
+      .cls-2 {
+        font-family: AcuminVF-Bold, 'Acumin VF';
+        font-size: 48px;
+        font-variation-settings: 'wght' 700, 'wdth' 100, 'slnt' 0;
+        font-weight: 700;
+      }
+    </style>
+  </defs>
+  <g id="Layer_1-2" data-name="Layer 1">
+    <circle class="cls-1" cx="31.18" cy="31.18" r="28.18"/>
+    <text class="cls-2" transform="translate(22.55 47.52)"><tspan x="0" y="0">!</tspan></text>
+  </g>
+</svg>

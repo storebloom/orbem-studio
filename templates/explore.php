@@ -14,10 +14,13 @@ if (false === $first_area) {
     return;
 }
 
+$hide_storage = get_option('explore_hide_storage', false);
+$hud_bars = get_option('explore_hud_bars', []);
 $require_login = get_option('explore_require_login', false);
 $money_img = get_option('explore_money_image', false);
 $plugin_dir = str_replace( '/templates/', '', plugin_dir_url( __FILE__ ));
 $plugin_dir_path = plugin_dir_path( __FILE__ );
+$default_weapon = get_option('explore_default_weapon', '');
 $userid = get_current_user_id();
 $game_url = get_option('explore_game_page', '');
 $game_url = false === empty($game_url) ? get_permalink(get_page_by_path($game_url)) : '/';
@@ -25,7 +28,7 @@ $walking_sound = get_option('explore_walking_sound', false);
 $points_sound = get_option('explore_points_sound', false);
 $points = get_user_meta($userid, 'explore_points', true);
 $weapon = get_user_meta($userid, 'explore_current_weapons', true);
-$equipped_weapon = false === empty($weapon) ? get_post($weapon[0]) : Explore::getWeaponByName('fist');
+$equipped_weapon = false === empty($weapon) ? get_post($weapon[0]) : Explore::getWeaponByName($default_weapon);
 $is_projectile = false === empty($equipped_weapon) ? get_post_meta($equipped_weapon->ID, 'explore-projectile', true) : false;
 $is_it_projectile = false === empty($is_projectile) ? $is_projectile : 'no';
 $location = get_user_meta($userid, 'current_location', true);
@@ -34,14 +37,14 @@ $coordinates = get_user_meta($userid, 'current_coordinates', true);
 $back = false === empty($coordinates) ? ' Back' : '';
 $explore_area = get_posts(['post_type' => 'explore-area', 'name' => $location]);
 $explore_area = $explore_area[0] ?? false;
-$is_area_cutscene = get_post_meta($explore_area->ID, 'explore-is-cutscene', true);
-$explore_area_map = get_post_meta($explore_area->ID, 'explore-map', true);
-$explore_area_start_top = get_post_meta($explore_area->ID, 'explore-start-top', true);
-$explore_area_start_left = get_post_meta($explore_area->ID, 'explore-start-left', true);
-$explore_start_direction = get_post_meta($explore_area->ID, 'explore-start-direction', true);
+$is_area_cutscene = $explore_area ? get_post_meta($explore_area->ID, 'explore-is-cutscene', true) : '';
+$explore_area_map = $explore_area ? get_post_meta($explore_area->ID, 'explore-map', true) : '';
+$explore_area_start_top = $explore_area ? get_post_meta($explore_area->ID, 'explore-start-top', true) : '';
+$explore_area_start_left = $explore_area ? get_post_meta($explore_area->ID, 'explore-start-left', true) : '';
+$explore_start_direction = $explore_area ? get_post_meta($explore_area->ID, 'explore-start-direction', true) : '';
 $explore_start_direction = false === empty($explore_start_direction) ? $explore_start_direction : 'down';
 $explore_area_start_direction = $explore_start_direction . '-dir';
-$explore_weapon_start = true === isset($equipped_weapon) && 'fist' !== $equipped_weapon->post_name ? '-' . $equipped_weapon->post_name : '';
+$explore_weapon_start = true === isset($equipped_weapon) && $default_weapon !== $equipped_weapon->post_name ? '-' . $equipped_weapon->post_name : '';
 
 $explore_points = Explore::getExplorePoints($location);
 $explore_cutscenes = Explore::getExplorePosts($location, 'explore-cutscene');
@@ -76,6 +79,15 @@ if ( $is_admin ) {
 
 $new_type = false === empty($coordinates) ? 'new-explore' : 'try-engage-explore';
 $new_type = is_user_logged_in() && false !== empty($coordinates) ? 'engage-explore' : $new_type;
+$health_bar = $hud_bars['health'] ?? '';
+$mana_bar = $hud_bars['mana'] ?? '';
+$power_bar = $hud_bars['power'] ?? '';
+$points_bar = $hud_bars['points'] ?? '';
+$money_bar = $hud_bars['money'] ?? '';
+
+extract([
+    'userid' => $userid,
+]);
 
 include plugin_dir_path(__FILE__) . 'plugin-header.php';
 ?>
@@ -89,27 +101,42 @@ include plugin_dir_path(__FILE__) . 'plugin-header.php';
             <video style="position:absolute;z-index: 1;width: 100%;height:100%;top:0; left:0;" src="<?php echo esc_attr($explore_area_map); ?>" autoplay loop muted></video>
         <?php endif; ?>
         <div id="explore-points">
-            <div class="health-amount point-bar" data-type="health" data-amount="<?php echo esc_attr($health + ($point_widths['health'] - 100)); ?>" style="width: <?php echo isset($point_widths['health']) ? esc_attr($point_widths['health']) : 100; ?>px;"><div class="gauge"></div></div>
-            <div class="mana-amount point-bar" data-type="mana" data-amount="<?php echo esc_attr($mana + ($point_widths['mana'] - 100)); ?>" style="width: <?php echo isset($point_widths['mana']) ? esc_attr($point_widths['mana']) : 100; ?>px;"><div class="gauge"></div></div>
-            <div class="power-amount point-bar" data-type="power" data-amount="100" style="width: <?php echo isset($point_widths['power']) ? esc_attr($point_widths['power']) : 100; ?>px;"><div class="gauge"></div></div>
-            <div class="money-amount point-bar" data-type="money" data-amount="<?php echo esc_attr($money); ?>">
-                <div class="count">
-                    <?php if (false === empty($money_img)): ?>
-                        <img class="money-image" src="<?php echo esc_url($money_img); ?>" />
-                    <?php else : ?>
-                        $
-                    <?php endif; ?>
-                    <span class="money-text"><?php echo esc_html($money); ?></span>
+            <?php if ('on' === $health_bar) : ?>
+                <div class="health-amount point-bar" data-type="health" data-amount="<?php echo esc_attr($health + ($point_widths['health'] - 100)); ?>" style="width: <?php echo isset($point_widths['health']) ? esc_attr($point_widths['health']) : 100; ?>px;"><div class="gauge"></div></div>
+            <?php endif; ?>
+            <?php if ('on' === $mana_bar) : ?>
+                <div class="mana-amount point-bar" data-type="mana" data-amount="<?php echo esc_attr($mana + ($point_widths['mana'] - 100)); ?>" style="width: <?php echo isset($point_widths['mana']) ? esc_attr($point_widths['mana']) : 100; ?>px;"><div class="gauge"></div></div>
+            <?php endif; ?>
+            <?php if ('on' === $power_bar) : ?>
+                <div class="power-amount point-bar" data-type="power" data-amount="100" style="width: <?php echo isset($point_widths['power']) ? esc_attr($point_widths['power']) : 100; ?>px;"><div class="gauge"></div></div>
+            <?php endif; ?>
+            <?php if ('on' === $money_bar) : ?>
+                <div class="money-amount point-bar" data-type="money" data-amount="<?php echo esc_attr($money); ?>">
+                    <div class="count">
+                        <?php if (false === empty($money_img)): ?>
+                            <img alt="money icon" class="money-image" src="<?php echo esc_url($money_img); ?>" />
+                        <?php else : ?>
+                            $
+                        <?php endif; ?>
+                        <span class="money-text"><?php echo esc_html($money); ?></span>
+                    </div>
                 </div>
-            </div>
-            <div class="point-amount point-bar" data-type="point" data-amount="<?php echo esc_attr($point); ?>" style="width: <?php echo isset($point_widths['point']) ? esc_attr($point_widths['point']) : 100; ?>px;">
-                <div class="gauge"></div>
-            </div>
-            <div class="point-info-wrap">
-                <span class="current-level">lvl. <?php echo esc_html($current_level); ?></span>
-                <span class="current-points">
-                    <span class="my-points"><?php echo esc_html($point);?></span>/<span class="next-level-points"><?php echo esc_html($max_points[$current_level]); ?></span>
-                </span>
+            <?php endif; ?>
+            <?php if ('on' === $points_bar) : ?>
+                <div class="point-amount point-bar" data-type="point" data-amount="<?php echo esc_attr($point); ?>" style="width: <?php echo isset($point_widths['point']) ? esc_attr($point_widths['point']) : 100; ?>px;">
+                    <div class="gauge"></div>
+                </div>
+                <div class="point-info-wrap">
+                    <span class="current-level">lvl. <?php echo esc_html($current_level); ?></span>
+                    <span class="current-points">
+                        <span class="my-points"><?php echo esc_html($point);?></span>/<span class="next-level-points"><?php echo esc_html($max_points[$current_level]); ?></span>
+                    </span>
+                </div>
+            <?php endif; ?>
+            <div id="missions">
+                <div class="missions-content">
+                    <?php include $plugin_dir_path . '/components/explore-missions.php'; ?>
+                </div>
             </div>
         </div>
         <div id="settings">
@@ -122,20 +149,17 @@ include plugin_dir_path(__FILE__) . 'plugin-header.php';
                 <?php include $plugin_dir_path . '/components/explore-characters.php'; ?>
             </div>
         </div>
-        <div id="missions">
-            <div class="missions-content">
-                <?php include $plugin_dir_path . '/components/explore-missions.php'; ?>
+        <?php if ('on' !== $hide_storage) : ?>
+            <div id="storage">
+                <div class="storage-content">
+                    <?php include $plugin_dir_path . '/components/explore-storage.php'; ?>
+                </div>
             </div>
-        </div>
-        <div id="storage">
-            <div class="storage-content">
-                <?php include $plugin_dir_path . '/components/explore-storage.php'; ?>
-            </div>
-        </div>
+        <?php endif; ?>
         <div id="weapon">
             <div class="weapon-content">
                 <?php if (false === empty($equipped_weapon)) : ?>
-                    <img src="<?php echo esc_url(get_the_post_thumbnail_url($equipped_weapon->ID)); ?>" width="60px" height="60px" />
+                    <img alt="equipped weapon" src="<?php echo esc_url(get_the_post_thumbnail_url($equipped_weapon->ID)); ?>" width="60px" height="60px" />
                 <?php endif; ?>
             </div>
         </div>
@@ -167,7 +191,7 @@ include plugin_dir_path(__FILE__) . 'plugin-header.php';
             </span>
         </div>
         <span id="key-guide" href="<?php echo esc_url($game_url); ?>">
-            <img src="<?php echo $plugin_dir . '/assets/src/images/keys.png'; ?>" />
+            <img alt="controls" src="<?php echo $plugin_dir . '/assets/src/images/keys.png'; ?>" />
         </span>
         <div
             style="top: <?php echo false === empty($coordinates['top']) ? esc_attr($coordinates['top']) : $explore_area_start_top; ?>px; left: <?php echo false === empty($coordinates['left']) ? esc_attr($coordinates['left']) : $explore_area_start_left; ?>px"
@@ -184,6 +208,7 @@ include plugin_dir_path(__FILE__) . 'plugin-header.php';
                 $dir_image = 'static-' . $explore_start_direction . $explore_weapon_start;
                 ?>
                 <img
+                    alt="<?php echo $main_character_info['name'] . ' ' . $direction_label; ?>"
                     height="<?php echo false === empty($main_character_info['height']) ? esc_attr($main_character_info['height']) : 185; ?>px"
                     width="<?php echo false === empty($main_character_info['width']) ? esc_attr($main_character_info['width']) : 115; ?>px"
                     class="map-character-icon<?php echo esc_attr($direction_label === $dir_image ? ' engage' : ''); echo esc_attr($fight_animation); ?>"
@@ -192,12 +217,12 @@ include plugin_dir_path(__FILE__) . 'plugin-header.php';
                 />
             <?php endforeach; ?>
         </div>
-        <div style="top: <?php echo false === empty($coordinates['top']) ? esc_attr( intval($coordinates['top']) + 500) : 4018; ?>px; left: <?php echo false === empty($coordinates['left']) ? esc_attr(intval($coordinates['left'] + 500)) : 2442; ?>px" class="map-weapon" data-direction="<?php echo esc_attr($explore_start_direction); ?>" data-projectile="<?php echo esc_attr($is_it_projectile); ?>" data-weapon="<?php echo esc_attr( $equipped_weapon->post_name ?? 'fist' ); ?>" data-strength=<?php echo esc_attr($weapon_strength); ?>></div>
+        <div style="top: <?php echo false === empty($coordinates['top']) ? esc_attr( intval($coordinates['top']) + 500) : 4018; ?>px; left: <?php echo false === empty($coordinates['left']) ? esc_attr(intval($coordinates['left'] + 500)) : 2442; ?>px" class="map-weapon" data-direction="<?php echo esc_attr($explore_start_direction); ?>" data-projectile="<?php echo esc_attr($is_it_projectile); ?>" data-weapon="<?php echo esc_attr( $equipped_weapon->post_name ?? $default_weapon ); ?>" data-strength=<?php echo esc_attr($weapon_strength); ?>></div>
         <div class="default-map" data-iscutscene="<?php echo esc_attr($is_area_cutscene); ?>" data-startleft="<?php echo false === empty($explore_area_start_left) ? esc_attr($explore_area_start_left) : ''; ?>" data-starttop="<?php echo false === empty($explore_area_start_top) ? esc_attr($explore_area_start_top) : ''; ?>">
             <?php if (false !== $explore_area): ?>
                 <?php echo Explore::getMapSVG($explore_area); ?>
-                <?php echo html_entity_decode(Explore::getMapItemHTML($explore_points, get_current_user_id(), $explore_area->post_name)); ?>
-                <?php echo html_entity_decode(Explore::getMapCutsceneHTML($explore_cutscenes, $explore_area->post_name, get_current_user_id())); ?>
+                <?php echo html_entity_decode(Explore::getMapItemHTML($explore_points, get_current_user_id(), ($explore_area ? $explore_area->post_name : ''))); ?>
+                <?php echo html_entity_decode(Explore::getMapCutsceneHTML($explore_cutscenes, ($explore ? $explore_area->post_name : ''), get_current_user_id())); ?>
             <?php endif;?>
             <?php echo html_entity_decode(Explore::getMinigameHTML($explore_minigames)); ?>
             <?php echo html_entity_decode(Explore::getMapAbilitiesHTML($explore_abilities)); ?>

@@ -1,18 +1,20 @@
-h1 {
-  align-items: center;
-  display: flex;
-  font-size: 40px;
-  gap: 2rem;
-  justify-content: center;
-}
-
-h3 {
-  font-size: 20px;
-  font-style: italic;
-  margin-bottom: 0;
-}
-
 .toplevel_page_orbem-studio {
+  .title-section {
+    align-items: center;
+    display: flex;
+    gap: 2rem;
+    justify-content: center;
+
+    h1 {
+      font-size: 40px;
+    }
+
+    .subtitle-h3 {
+      font-size: 20px;
+      font-style: italic;
+      margin-bottom: 0;
+    }
+  }
   .tutorial-wrap {
     background: rgba(0, 0, 0, 0.56);
     height: 100%;

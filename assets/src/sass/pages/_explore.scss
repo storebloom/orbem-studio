@@ -93,7 +93,6 @@ html {
     }
 
     #skip-intro-video, #skip-cutscene-video {
-      background: #0a7aff;
       bottom: 3rem;
       border-radius: 8px;
       color: white;
@@ -158,8 +157,6 @@ html {
 
     .explainer-container {
       background: white;
-      border: dashed 8px #00cee3;
-      border-radius: 20px;
       font-size: 20px;
       left: -5000px;
       opacity: 0;
@@ -418,8 +415,6 @@ html {
         background: white;
         flex-basis: 70%;
         padding: 20px 50px;
-        border-radius: 20px;
-        border: 20px #4ee7ff solid;
         display: none;
 
         &.engage {
@@ -455,7 +450,6 @@ html {
         background: white;
         padding: 0 5px;
         border-radius: 20px;
-        border: 2px #4ee7ff solid;
         display: none;
         font-size: 20px;
         font-weight: 600;
@@ -644,13 +638,18 @@ html {
 
       #new-addition {
         position: fixed;
-        right: 6.75rem;
-        top: 1rem;
+        left: 50%;
         max-width: 700px;
+        top: 50%;
+        transform: translate(-50%, -50%);
         width: max-content;
 
         &:not(.engage) {
-          width: 300px;
+          left: unset;
+          right: 1rem;
+          top: 6rem;
+          transform: unset;
+          width: 50px;
           z-index: 5;
 
           &:hover {
@@ -660,15 +659,10 @@ html {
           }
 
           &:before {
-            content: '🧰';
-            color: black;
+            content: url('../../src/images/toolbox.svg');
             cursor: pointer;
-            line-height: 30px;
-            text-shadow: 1px 1px 2px white;
-            font-size: 50px;
             position: absolute;
-            right: 0;
-            top: 0;
+            width: 50px;
           }
         }
 
@@ -813,6 +807,7 @@ html {
 
         #engage-wallbuilder {
           cursor: pointer;
+          display: block;
           font-size: 40px;
         }
 
@@ -907,30 +902,24 @@ html {
       }
 
       #characters {
+        left: 50%;
         position: fixed;
-        right: 6.75rem;
-        top: 1rem;
+        top: 50%;
+        transform: translate(-50%, -50%);
 
         &:not(.engage) {
-          width: 300px;
+          height: 50px;
+          left: unset;
           z-index: 5;
+          right: 10.5rem;
+          top: 1rem;
+          transform: unset;
+          width: 50px;
 
           &:hover {
             &:before {
               font-size: 50px;
             }
-          }
-
-          &:before {
-            content: '⛑';
-            color: black;
-            cursor: pointer;
-            line-height: 30px;
-            text-shadow: 1px 1px 2px white;
-            font-size: 50px;
-            position: absolute;
-            right: 0;
-            top: 0;
           }
         }
 
@@ -981,7 +970,6 @@ html {
                 width: 150px;
 
                 &:hover {
-                  border: 4px solid deepskyblue;
                   border-radius: 4px;
                 }
 
@@ -1010,29 +998,25 @@ html {
 
       #settings {
         position: fixed;
-        right: 1rem;
-        top: 1rem;
-        width: 300px;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        max-width: 500px;
+        width: 100%;
 
         &:not(.engage) {
+          height: 50px;
+          right: 1rem;
+          left: unset;
+          top: 1rem;
+          transform: unset;
+          width: 50px;
           z-index: 5;
 
           &:hover {
             &:before {
               font-size: 50px;
             }
-          }
-
-          &:before {
-            content: '⚙';
-            color: black;
-            cursor: pointer;
-            line-height: 30px;
-            text-shadow: 1px 1px 2px white;
-            font-size: 50px;
-            position: absolute;
-            right: 0;
-            top: 0;
           }
         }
 
@@ -1081,29 +1065,24 @@ html {
 
       #storage {
         position: fixed;
-        right: 3.5rem;
-        top: 1rem;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
         width: 100%;
 
         &:not(.engage) {
+          height: 50px;
+          left: unset;
+          right: 5.5rem;
+          top: 1rem;
+          transform: unset;
           z-index: 9;
+          width: 50px;
 
           &:hover {
             &:before {
               font-size: 50px;
             }
-          }
-
-          &:before {
-            content: '▦';
-            color: black;
-            cursor: pointer;
-            line-height: 30px;
-            text-shadow: 1px 1px 2px white;
-            font-size: 50px;
-            position: absolute;
-            right: 0;
-            top: 0;
           }
         }
 
@@ -1142,6 +1121,17 @@ html {
             }
 
             .retrieval-points {
+              .menu-tabs {
+                display: flex;
+                gap: 2rem;
+                border: 1px solid black;
+                padding: 1rem;
+
+                &>div {
+                  cursor: pointer;
+                }
+              }
+
               .storage-menu {
                 border-left: 1px solid black;
                 border-bottom: 1px solid black;
@@ -1257,14 +1247,14 @@ html {
       }
 
       #missions {
+        border-top: 2px solid gray;
         display: flex;
         flex-direction: column;
         gap: .5rem;
-        left: 1rem;
+        margin-top: .5rem;
         opacity: 0;
-        position: fixed;
+        padding-top: .75rem;
         text-shadow: 1px 1px 2px white;
-        top: 11rem;
         z-index: 9;
       }
 
@@ -1551,7 +1541,7 @@ html {
           &.engage {
             display: block;
 
-            .wires {
+            .draggable-images {
               display: flex;
               position: fixed;
             }
@@ -1616,8 +1606,6 @@ html {
                 height: 68vh;
                 float: right;
                 padding: 1rem;
-                border: 4px solid #00c1ff;
-                border-radius: 4px;
                 box-shadow: 5px 10px 9px -2px #00000075;
               }
             }

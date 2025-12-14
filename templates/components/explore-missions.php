@@ -1,7 +1,11 @@
 <?php
 /**
  * Settings panel for game.
+ *
+ * @var int $userid
+ * @var array $explore_missions
  */
+
 $completed_missions = get_user_meta($userid, 'explore_missions', true);
 $completed_missions = false === empty($completed_missions) && true === is_array($completed_missions) ? $completed_missions : [];
 $current_location = $position ?? get_user_meta($userid, 'current_location', true);
@@ -39,7 +43,7 @@ foreach ($explore_missions as $mission)  {
 
             $mission_points = get_post_meta($mission->ID, 'value', true);
             $ability = get_post_meta($mission->ID, 'explore-ability', true);
-            $is_cutscene_mission = false !== array_search($mission->post_name, $missions_from_cutscenes, true);
+            $is_cutscene_mission = true === in_array($mission->post_name, $missions_from_cutscenes, true);
             $mission_blockade = [];
             $mission_blockade['top'] = get_post_meta($mission->ID, 'explore-top', true);
             $mission_blockade['left'] = get_post_meta($mission->ID, 'explore-left', true);
@@ -48,7 +52,7 @@ foreach ($explore_missions as $mission)  {
             $mission_blockade = false === in_array('', $mission_blockade, true) ? $mission_blockade : '';
             $classes = true === in_array($parent_mission, $completed_missions, true) ? 'engage ' : '';
 
-            $classes .= (false !== $parent_mission && false === empty($parent_mission)) || true === $is_cutscene_mission ? 'next-mission mission-item ' : 'mission-item ';
+            $classes .= (false === empty($parent_mission)) || true === $is_cutscene_mission ? 'next-mission mission-item ' : 'mission-item ';
             $classes .= esc_attr($mission->post_name) . '-mission-item';
             $hazard_remove = get_post_meta($mission->ID, 'explore-hazard-remove', true);
             ?>

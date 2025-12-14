@@ -1,6 +1,9 @@
 <?php
 /**
  * multiselect field template.
+ *
+ * @var array  $sub_value
+ * @var string $key
  */
 ?>
 <div class="multiselect-wrapper">
@@ -10,7 +13,7 @@
         <label>
             <input
                 type="checkbox"
-                <?php checked($meta_values[$key][$option] ?? '', 'on', true); ?>
+                <?php checked($meta_values[$key][$option] ?? '', 'on'); ?>
                 name="<?php echo esc_attr($key . '[' . $option . ']'); ?>"
                 id="<?php echo esc_attr($key . '[' . $option . ']'); ?>"
             >

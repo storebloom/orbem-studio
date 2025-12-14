@@ -1,5 +1,14 @@
 <?php
 use OrbemStudio\Explore;
+
+/**
+ * @var boolean $is_admin
+ * @var string  $signin_screen
+ * @var string  $require_login
+ * @var string  $new_type
+ * @var string  $first_area
+ */
+
 if (true === $is_admin) {
     $areas = get_posts(['post_type' => 'explore-area', 'posts_per_page' => -1, 'fields' => ['ids', 'post_name']]);
 }

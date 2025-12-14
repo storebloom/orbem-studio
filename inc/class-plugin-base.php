@@ -7,6 +7,10 @@
 
 namespace OrbemStudio;
 
+use ReflectionObject;
+use function call_user_func;
+use function trailingslashit;
+
 /**
  * Class Plugin_Base
  *
@@ -19,42 +23,42 @@ abstract class Plugin_Base {
 	 *
 	 * @var array
 	 */
-	public $config = array();
+	public array $config = [];
 
 	/**
 	 * Plugin slug.
 	 *
 	 * @var string
 	 */
-	public $slug;
+	public string $slug;
 
 	/**
 	 * Plugin directory path.
 	 *
 	 * @var string
 	 */
-	public $dir_path;
+	public string $dir_path;
 
 	/**
 	 * Plugin directory URL.
 	 *
 	 * @var string
 	 */
-	public $dir_url;
+	public string $dir_url;
 
 	/**
 	 * Directory in plugin containing autoloaded classes.
 	 *
 	 * @var string
 	 */
-	protected $autoload_class_dir = '';
+	protected string $autoload_class_dir = '';
 
 	/**
 	 * Autoload matches cache.
 	 *
 	 * @var array
 	 */
-	protected $autoload_matches_cache = array();
+	protected array $autoload_matches_cache = [];
 
 	/**
 	 * Required instead of a static variable inside the add_doc_hooks method
@@ -62,7 +66,7 @@ abstract class Plugin_Base {
 	 *
 	 * @var array
 	 */
-	protected $called_doc_hooks = array();
+	protected array $called_doc_hooks = [];
 
 	/**
 	 * Plugin_Base constructor.
@@ -87,13 +91,14 @@ abstract class Plugin_Base {
 	/**
 	 * Get reflection object for this class.
 	 *
-	 * @return \ReflectionObject
+	 * @return ReflectionObject
 	 */
-	public function get_object_reflection() {
+	public function get_object_reflection(): ReflectionObject
+    {
 		static $reflection;
 
 		if ( empty( $reflection ) ) {
-			$reflection = new \ReflectionObject( $this );
+			$reflection = new ReflectionObject( $this );
 		}
 
 		return $reflection;
@@ -105,7 +110,8 @@ abstract class Plugin_Base {
 	 * @param string $class Class name.
 	 * @return void
 	 */
-	public function autoload( $class ) {
+	public function autoload(string $class ): void
+    {
 		if ( ! isset( $this->autoload_matches_cache[ $class ] ) ) {
 			if ( ! preg_match( '/^(?P<namespace>.+)\\\\(?P<class>[^\\\\]+)$/', $class, $matches ) ) {
 				$matches = false;
@@ -125,10 +131,10 @@ abstract class Plugin_Base {
 		}
 
 		$class_name = $matches['class'];
-		$class_path = \trailingslashit( $this->dir_path );
+		$class_path = trailingslashit( $this->dir_path );
 
 		if ( $this->autoload_class_dir ) {
-			$class_path .= \trailingslashit( $this->autoload_class_dir );
+			$class_path .= trailingslashit( $this->autoload_class_dir );
 		}
 
 		$class_path .= sprintf( 'class-%s.php', strtolower( str_replace( '_', '-', $class_name ) ) );
@@ -144,7 +150,8 @@ abstract class Plugin_Base {
 	 *
 	 * @return array
 	 */
-	public function locate_plugin() {
+	public function locate_plugin(): array
+    {
 		$dir_url      = trailingslashit( substr( plugins_url( '', __FILE__ ), 0, - 4 ) );
 		$dir_path     = trailingslashit( substr( __DIR__, 0, - 4 ) );
 		$dir_basename = basename( $dir_path );
@@ -156,12 +163,13 @@ abstract class Plugin_Base {
 	 * Hooks a function on to a specific filter.
 	 *
 	 * @param string $name     The hook name.
-	 * @param array  $callback The class object and method.
-	 * @param array  $args     An array with priority and arg_count.
+	 * @param array $callback The class object and method.
+	 * @param array $args     An array with priority and arg_count.
 	 *
 	 * @return mixed
 	 */
-	public function add_filter( $name, $callback, $args = array() ) {
+	public function add_filter(string $name, array $callback, array $args = []): mixed
+    {
 		// Merge defaults.
 		$args = array_merge(
 			array(
@@ -178,12 +186,13 @@ abstract class Plugin_Base {
 	 * Hooks a function on to a specific action.
 	 *
 	 * @param string $name     The hook name.
-	 * @param array  $callback The class object and method.
-	 * @param array  $args     An array with priority and arg_count.
+	 * @param array $callback The class object and method.
+	 * @param array $args     An array with priority and arg_count.
 	 *
 	 * @return mixed
 	 */
-	public function add_action( $name, $callback, $args = array() ) {
+	public function add_action(string $name, array $callback, array $args = []): mixed
+    {
 		// Merge defaults.
 		$args = array_merge(
 			array(
@@ -200,11 +209,12 @@ abstract class Plugin_Base {
 	 * Hooks a function on to a specific shortcode.
 	 *
 	 * @param string $name     The shortcode name.
-	 * @param array  $callback The class object and method.
+	 * @param array $callback The class object and method.
 	 *
 	 * @return mixed
 	 */
-	public function add_shortcode( $name, $callback ) {
+	public function add_shortcode(string $name, array $callback): mixed
+    {
 		return $this->add_hook( 'shortcode', $name, $callback );
 	}
 
@@ -213,25 +223,27 @@ abstract class Plugin_Base {
 	 *
 	 * @param string $type     The hook type. Options are action/filter.
 	 * @param string $name     The hook name.
-	 * @param array  $callback The class object and method.
-	 * @param array  $args     An array with priority and arg_count.
+	 * @param array $callback The class object and method.
+	 * @param array $args     An array with priority and arg_count.
 	 *
 	 * @return mixed
 	 */
-	protected function add_hook( $type, $name, $callback, $args = array() ) {
-		$priority  = isset( $args['priority'] ) ? $args['priority'] : 10;
-		$arg_count = isset( $args['arg_count'] ) ? $args['arg_count'] : PHP_INT_MAX;
+	protected function add_hook(string $type, string $name, array $callback, array $args = []): mixed
+    {
+		$priority  = $args['priority'] ?? 10;
+		$arg_count = $args['arg_count'] ?? PHP_INT_MAX;
 		$fn        = sprintf( '\add_%s', $type );
-		$retval    = \call_user_func( $fn, $name, $callback, $priority, $arg_count );
-		return $retval;
+
+		return call_user_func( $fn, $name, $callback, $priority, $arg_count );
 	}
 
 	/**
 	 * Add actions/filters/shortcodes from the methods of a class based on DocBlocks.
 	 *
-	 * @param object $object The class object.
+	 * @param object|null $object The class object.
 	 */
-	public function add_doc_hooks( $object = null ) {
+	public function add_doc_hooks(?object $object = null): void
+    {
 		if ( is_null( $object ) ) {
 			$object = $this;
 		}
@@ -239,12 +251,12 @@ abstract class Plugin_Base {
 		if ( isset( $this->called_doc_hooks[ $class_name ] ) ) {
 			$notice = sprintf( 'The add_doc_hooks method was already called on %s. Note that the Plugin_Base constructor automatically calls this method.', $class_name );
 			// @codingStandardsIgnoreStart
-			trigger_error( esc_html( $notice ), \E_USER_NOTICE );
+			trigger_error(esc_html($notice));
 			// @codingStandardsIgnoreEnd
 			return;
 		}
 		$this->called_doc_hooks[ $class_name ] = true;
-		$reflector                             = new \ReflectionObject( $object );
+		$reflector                             = new ReflectionObject( $object );
 		foreach ( $reflector->getMethods() as $method ) {
 			$doc       = $method->getDocComment();
 			$arg_count = $method->getNumberOfParameters();
@@ -254,7 +266,7 @@ abstract class Plugin_Base {
 					$name     = $match['name'];
 					$priority = empty( $match['priority'] ) ? 10 : intval( $match['priority'] );
 					$callback = array( $object, $method->getName() );
-					call_user_func( array( $this, "add_{$type}" ), $name, $callback, compact( 'priority', 'arg_count' ) );
+					call_user_func( array( $this, "add_$type" ), $name, $callback, compact( 'priority', 'arg_count' ) );
 				}
 			}
 		}
@@ -263,14 +275,15 @@ abstract class Plugin_Base {
 	/**
 	 * Removes the added DocBlock hooks.
 	 *
-	 * @param object $object The class object.
+	 * @param object|null $object The class object.
 	 */
-	public function remove_doc_hooks( $object = null ) {
+	public function remove_doc_hooks(?object $object = null): void
+    {
 		if ( is_null( $object ) ) {
 			$object = $this;
 		}
 		$class_name = get_class( $object );
-		$reflector  = new \ReflectionObject( $object );
+		$reflector  = new ReflectionObject( $object );
 		foreach ( $reflector->getMethods() as $method ) {
 			$doc = $method->getDocComment();
 			if ( preg_match_all( '#\* @(?P<type>filter|action|shortcode)\s+(?P<name>[a-z0-9\-\._]+)(?:,\s+(?P<priority>\d+))?#', $doc, $matches, PREG_SET_ORDER ) ) {
@@ -279,7 +292,7 @@ abstract class Plugin_Base {
 					$name     = $match['name'];
 					$priority = empty( $match['priority'] ) ? 10 : intval( $match['priority'] );
 					$callback = array( $object, $method->getName() );
-					call_user_func( "remove_{$type}", $name, $callback, $priority );
+					call_user_func( "remove_$type", $name, $callback, $priority );
 				}
 			}
 		}

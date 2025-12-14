@@ -1,7 +1,10 @@
 <?php
 /**
  * Magic panel for game.
+ *
+ * @var int $userid
  */
+
 $magics = get_user_meta($userid, 'explore_magic', true);
 $magics = false === empty($magics) ? $magics : false;
 
@@ -31,7 +34,7 @@ if (false === $magics) {
                     data-value="<?php echo false === empty($spell_value) ? esc_attr($spell_value) : ''; ?>"
                     title="<?php echo false === empty($spell_name) ? esc_attr($spell_name) : ''; ?>"
                     class="spell">
-                    <img src="<?php echo esc_url(get_the_post_thumbnail_url($spell)); ?>" width="60px" height="60px" />
+                    <img alt="<?php echo false === empty($spell_name) ? esc_attr($spell_name) : ''; ?>" src="<?php echo esc_url(get_the_post_thumbnail_url($spell)); ?>" width="60px" height="60px" />
                 </span>
             <?php endforeach; ?>
         </div>

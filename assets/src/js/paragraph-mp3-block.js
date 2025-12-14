@@ -5,12 +5,10 @@ import { useSelect } from '@wordpress/data';
 import { __ } from '@wordpress/i18n';
 
 function useExploreVoiceMeta(postId) {
-    const exploreVoiceMeta = useSelect((select) => {
+    return useSelect((select) => {
         const meta = select('core').getEntityRecord('postType', 'explore-character', postId)?.meta;
         return meta ? meta['explore-voice'] : null;
     }, [postId]);
-
-    return exploreVoiceMeta;
 }
 
 registerBlockType('orbem/paragraph-mp3', {

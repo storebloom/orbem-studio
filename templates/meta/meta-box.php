@@ -5,6 +5,9 @@
  * The template wrapper for post/page meta box.
  *
  * @package ShareThisShareButtons
+ * @var boolean $front_end
+ * @var array   $meta_data
+ * @var array   $values
  */
 use OrbemStudio\Meta_Box;
 ?>
@@ -33,9 +36,7 @@ use OrbemStudio\Meta_Box;
                     if (false === in_array($sub_key, ['select', 'radio', 'repeater', 'multiselect'])) : ?>
                             <?php echo Meta_Box::getMetaHtml($sub_key, $sub_value, $values, $key); ?>
                     <?php elseif ('repeater' !== $sub_key) :?>
-                            <?php foreach($sub_value as $sub_value_key => $sub_value_value): ?>
-                                <?php echo Meta_Box::getMetaHtml($key, $sub_key, $values, false, $sub_value_value); ?>
-                            <?php endforeach; ?>
+                        <?php echo Meta_Box::getMetaHtml($key, $sub_key, $values, false, $sub_value); ?>
                     <?php else :?>
                         <div class="repeater-container">
                             <?php echo Meta_Box::getMetaHtml($key, $sub_key, $values, false, $sub_value); ?>
@@ -45,12 +46,8 @@ use OrbemStudio\Meta_Box;
                     foreach($sub_value as $sub_value_key_1 => $sub_value_value_1):?>
                         <?php if (false === in_array($sub_value_key_1, ['select', 'radio', 'repeater', 'multiselect'])) : ?>
                             <?php echo Meta_Box::getMetaHtml($sub_value_key_1, $sub_value_value_1, $values, $key); ?>
-                        <?php elseif ('repeater' !== $sub_value_key_1) :?>
-
-                            <?php foreach($sub_value_value_1 as $sub_value_key_key => $sub_value_value_value): ?>
-                                <?php echo Meta_Box::getMetaHtml($sub_key, $sub_value_key_1, $values, $key, $sub_value_value_value); ?>
-                            <?php endforeach; ?>
-
+                        <?php elseif ('repeater' !== $sub_value_key_1) : ?>
+                            <?php echo Meta_Box::getMetaHtml($sub_key, $sub_value_key_1, $values, $key, $sub_value_value_1); ?>
                         <?php else :?>
                             <div class="repeater-container">
                                 <?php echo Meta_Box::getMetaHtml($sub_key, $sub_value_key_1, $values, $key, $sub_value_value_1); ?>

@@ -1,4 +1,9 @@
-<?php foreach($explore_points as $explore_point):
+<?php
+/**
+ * @var array $explore_points
+ */
+
+foreach($explore_points as $explore_point):
     if ('explore-character' == $explore_point->post_type) {
         continue;
     }

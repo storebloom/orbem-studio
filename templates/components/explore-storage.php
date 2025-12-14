@@ -1,15 +1,20 @@
 <?php
 /**
  * Settings panel for game.
+ *
+ * @var int $userid
  */
+
 $storage = get_user_meta($userid, 'explore_storage', true);
 $default_weapon = get_option('explore_default_weapon', false);
-$default_weapon_obj = get_posts(['name' => $default_weapon, 'posts_per_page' => 1, 'post_type' => 'explore-weapon'])[0];
-$storage = false === empty($storage) ? $storage : ['items' => [], 'weapons' => [['name' => 'fist', 'id' => $default_weapon_obj->ID, 'type' => 'weapons']], 'gear' => []];
+$default_weapon_obj = false === empty($default_weapon) ? get_posts(['name' => $default_weapon, 'posts_per_page' => 1, 'post_type' => 'explore-weapon'])[0] : false;
+$default_weapon_id = false === $default_weapon_obj ? '' : $default_weapon_obj->ID;
+$default_storage = '' !== $default_weapon_id ? ['items' => [], 'weapons' => [['name' => $default_weapon, 'id' => $default_weapon_id, 'type' => 'weapons']], 'gear' => []] : ['items' => [], 'weapons' => [], 'gear' => []];
+$storage = false === empty($storage) ? $storage : $default_storage;
 $storage_limit = get_user_meta($userid, 'storage_limit', true);
 $storage_limit = false === empty($storage_limit ) ? $storage_limit : 11;
 $current_explore_gear = get_user_meta($userid, 'explore_current_gear', true) ?? [];
-$current_explore_weapon = get_user_meta($userid, 'explore_current_weapons', true) ?? [$default_weapon_obj->ID];
+$current_explore_weapon = get_user_meta($userid, 'explore_current_weapons', true) ?? [$default_weapon_id];
 ?>
 <div class="storage-form">
     <span class="close-settings">X</span>
@@ -66,7 +71,7 @@ $current_explore_weapon = get_user_meta($userid, 'explore_current_weapons', true
                             <?php echo false === empty($storage_items[$x]["count"]) ? 'data-count="' . intval($storage_items[$x]["count"]) . '"' : ''; ?>
                             class="storage-item<?php echo $current_gear || true === $current_weapon ? ' equipped' : ''; ?>">
                         <?php if (true === $weapons_and_gear) : ?>
-                            <img src="<?php echo esc_url(get_the_post_thumbnail_url($item_id)); ?>" width="30px" height="30px" />
+                            <img alt="<?php echo esc_attr($storage_items[$x]["name"]); ?>" src="<?php echo esc_url(get_the_post_thumbnail_url($item_id)); ?>" width="30px" height="30px" />
                         <?php endif; ?>
                     </span>
                 <?php endfor; ?>

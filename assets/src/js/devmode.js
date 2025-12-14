@@ -1,7 +1,11 @@
+/** @global {string} wpThemeURL */
+
 import { initImageUpload } from './image-upload';
 import { enterExplorePoint, engageExploreGame } from './explore';
 
 export function engageDevMode() {
+    "use strict";
+
     window.devmode = false;
     let devZoom = 1;
 
@@ -10,31 +14,31 @@ export function engageDevMode() {
     const zoomOut = document.getElementById('zoom-out');
 
     if ( zoomIn && zoomOut ) {
-        zoomIn.addEventListener('click', e => {
+        zoomIn.addEventListener('click', () => {
             zoomGameContainer('in');
         });
 
-        zoomOut.addEventListener('click', e => {
+        zoomOut.addEventListener('click', () => {
             zoomGameContainer('out');
-        })
+        });
+    }
 
-        function zoomGameContainer(whichWay) {
-            const gameContainer = document.querySelector( '.game-container' );
-            const zoomDisplay = document.getElementById('zoom-amount');
+    function zoomGameContainer(whichWay) {
+        const gameContainer = document.querySelector( '.game-container' );
+        const zoomDisplay = document.getElementById('zoom-amount');
 
-            if ( gameContainer ) {
-                let currentZoom = undefined !== gameContainer.style?.transform && '' !== gameContainer.style.transform ? gameContainer.style.transform : '1';
-                currentZoom = parseFloat(currentZoom.replace('scale(', '').replace(')', ''));
-                currentZoom = 'in' === whichWay ? +(currentZoom + 0.1).toFixed(10) : +(currentZoom - 0.1).toFixed(10);
+        if ( gameContainer ) {
+            let currentZoom = undefined !== gameContainer.style.transform && '' !== gameContainer.style.transform ? gameContainer.style.transform : '1';
+            currentZoom = parseFloat(currentZoom.replace('scale(', '').replace(')', ''));
+            currentZoom = 'in' === whichWay ? +(currentZoom + 0.1).toFixed(10) : +(currentZoom - 0.1).toFixed(10);
 
-                if ( zoomDisplay ) {
-                    zoomDisplay.textContent = currentZoom * 100;
-                }
-
-                devZoom = currentZoom;
-
-                gameContainer.style.transform = 'scale(' + currentZoom + ')';
+            if ( zoomDisplay ) {
+                zoomDisplay.textContent = (currentZoom * 100).toString();
             }
+
+            devZoom = currentZoom;
+
+            gameContainer.style.transform = 'scale(' + currentZoom + ')';
         }
     }
 
@@ -64,23 +68,23 @@ export function engageDevMode() {
     const levelButton = document.getElementById('select-level');
 
     if (levels && levelButton) {
-        levelButton.addEventListener('click', function(e) {
+        levelButton.addEventListener('click', () => {
             levels.classList.add('engage');
 
             levels.querySelectorAll('img').forEach(level => {
-                level.addEventListener('click', event => {
+                level.addEventListener('click', () => {
                     const mapUrl = level.src;
                     const area = level.dataset.name;
                     engageExploreGame();
                     enterExplorePoint(area, mapUrl);
-                })
-            })
-        })
+                });
+            });
+        });
     }
     const devmodeMenuToggle = document.querySelector(".dev-mode-menu-toggle");
 
     if (devmodeMenuToggle) {
-        devmodeMenuToggle.addEventListener("click", function() {
+        devmodeMenuToggle.addEventListener("click", () => {
             const devModeMenu = document.querySelector(".dev-mode-menu");
 
             if (devModeMenu) {
@@ -92,7 +96,7 @@ export function engageDevMode() {
                     if (triggers) {
                         triggers.forEach(trigger => {
                             trigger.style.backgroundColor = 'rgb(0,146,255)';
-                            trigger.style.opacity = .3;
+                            trigger.style.opacity = 0.3;
                             trigger.style.zIndex = 1;
                         });
                     }
@@ -105,7 +109,7 @@ export function engageDevMode() {
                     }
                 }
             }
-        })
+        });
     }
 
     setTimeout(() => {
@@ -132,27 +136,27 @@ export function engageDevMode() {
                     document.addEventListener('mousemove', trackMouseCoordinates);
                 }, 0);
             });
+        }
 
-            function getMouseCoordinates(e) {
-                e.stopPropagation();
-                const topPinpoint = document.getElementById('top-pinpoint');
-                const leftPinpoint = document.getElementById('left-pinpoint');
+        function getMouseCoordinates(e) {
+            e.stopPropagation();
+            const topPinpoint = document.getElementById('top-pinpoint');
+            const leftPinpoint = document.getElementById('left-pinpoint');
 
-                topPinpoint.value = mouseY;
-                leftPinpoint.value = mouseX;
+            topPinpoint.value = window.mouseY;
+            leftPinpoint.value = window.mouseX;
 
-                pinPointContainer.classList.remove('engage');
+            pinPointContainer.classList.remove('engage');
 
-                document.removeEventListener('click', getMouseCoordinates);
-                document.removeEventListener('mousemove', trackMouseCoordinates);
-                document.body.style.cursor = 'default';
-            }
+            document.removeEventListener('click', getMouseCoordinates);
+            document.removeEventListener('mousemove', trackMouseCoordinates);
+            document.body.style.cursor = 'default';
+        }
 
-            function trackMouseCoordinates(event) {
-                const mapRect = document.querySelector('.game-container').getBoundingClientRect();
-                window.mouseX = parseInt(event.clientX - mapRect.left);
-                window.mouseY = parseInt(event.clientY - mapRect.top);
-            }
+        function trackMouseCoordinates(event) {
+            const mapRect = document.querySelector('.game-container').getBoundingClientRect();
+            window.mouseX = parseInt(event.clientX - mapRect.left);
+            window.mouseY = parseInt(event.clientY - mapRect.top);
         }
 
         window.godMode = false;
@@ -197,7 +201,7 @@ export function engageDevMode() {
                     const filehref = `https://${wpThemeURL}/wp-json/orbemorder/v1/get-new-fields/`;
                     const jsonString = {
                         type: postType,
-                    }
+                    };
                     // Save position of item.
                     fetch(filehref, {
                         method: 'POST', // Specify the HTTP method.
@@ -225,8 +229,8 @@ export function engageDevMode() {
                             }
                         }
                     });
-                })
-            })
+                });
+            });
         }
 
         if (findItems && findItems.length > 0) {
@@ -241,7 +245,7 @@ export function engageDevMode() {
                     const theID = findContainer.id.replace('-f', '');
                     const theNewSizeItem = document.getElementById(theID);
 
-                    showItem.addEventListener('click', e => {
+                    showItem.addEventListener('click', () => {
                         if (true === showItem.classList.contains('show')) {
                             theNewSizeItem.style.display = 'none';
                             showItem.textContent = '🫣';
@@ -254,7 +258,7 @@ export function engageDevMode() {
                     });
 
 
-                    editButton.addEventListener('click', e => {
+                    editButton.addEventListener('click', () => {
                         if (true !== editButton.classList.contains('created')) {
                             const sizeContainer = document.createElement('div');
                             const heightLabel = document.createElement('label');
@@ -306,7 +310,7 @@ export function engageDevMode() {
                             editButton.classList.add('created');
 
                             // Submit the new size for the find item.
-                            submitSize.addEventListener('click', e => {
+                            submitSize.addEventListener('click', () => {
 
                                 const filehref = `https://${wpThemeURL}/wp-json/orbemorder/v1/set-item-size/`;
                                 const jsonString = {
@@ -314,7 +318,7 @@ export function engageDevMode() {
                                     width: widthInput.value,
                                     id: theID,
                                     meta: item.dataset?.meta,
-                                }
+                                };
                                 // Save position of item.
                                 fetch(filehref, {
                                     method: 'POST', // Specify the HTTP method.
@@ -340,7 +344,7 @@ export function engageDevMode() {
                                     });
                             });
 
-                            closeButton.addEventListener('click', e => {
+                            closeButton.addEventListener('click', () => {
                                 sizeContainer.remove();
                                 editButton.classList.remove('created');
                                 closeButton.style.display = 'none';
@@ -370,8 +374,8 @@ export function engageDevMode() {
                         theItem.classList.add('selected');
                         item.classList.add('selected');
                     }
-                })
-            })
+                });
+            });
 
             // Remove empty posttype lists.
             const finderListContainers = document.querySelectorAll('.explore-list-group');
@@ -390,8 +394,7 @@ export function engageDevMode() {
                             finder.classList.toggle('engage');
                         });
                     }
-
-                })
+                });
             }
         }
 
@@ -453,7 +456,7 @@ export function engageDevMode() {
                             width: draggedContainer.style.width.replace('px', ''),
                             id: theID,
                             meta: draggedContainer.dataset?.meta,
-                        }
+                        };
 
                         if (theID === recordThePath) {
                             jsonString.walkingPath = 'true';
@@ -472,14 +475,6 @@ export function engageDevMode() {
                                 if (!response.ok) {
                                     throw new Error('Network response was not ok ' + response.statusText);
                                 }
-
-                                // draggedContainer.style.border = '4px solid lightblue';
-                                // draggedContainer.transition = 'border .3s';
-                                //
-                                // setTimeout( () => {
-                                //     draggedContainer.style.border = 'none';
-                                //     draggedContainer.style.transition = '';
-                                // }, 500);
                             });
 
                         // Clear the reference to the dragged container.
@@ -538,15 +533,17 @@ export function engageDevMode() {
                 wallElement.style.left = `${mouseX - offsetX}px`;
                 wallElement.style.top = `${mouseY - offsetY}px`;
                 wallElement.style.backgroundColor = 'rgb(0,146,255)';
-                wallElement.style.opacity = .3;
-                wallElement.style.zIndex = 1;
+                wallElement.style.opacity = '0.3';
+                wallElement.style.zIndex = '1';
                 wallElement.dataset.genre = 'explore-wall';
 
                 defaultMap.appendChild(wallElement);
 
                 // Handle the mousemove event to update container position
                 function handleWallMouseMove(event) {
-                    if (!isDragging) return;
+                    if (!isDragging) {
+                        return;
+                    }
 
                     if (wallElement) {
                         const mapRect = document.querySelector('.game-container').getBoundingClientRect();
@@ -584,7 +581,7 @@ export function engageDevMode() {
                                 'explore-top': topPos,
                                 'explore-left': leftPos,
                             },
-                        }
+                        };
                         // Save position of item.
                         fetch(filehref, {
                             method: 'POST', // Specify the HTTP method.
@@ -632,17 +629,20 @@ export function engageDevMode() {
         const openClose = document.querySelector('.open-close-item-list');
 
         if (openClose) {
-            openClose.addEventListener('click', event => {
+            openClose.addEventListener('click', () => {
                 exploreItemList.classList.toggle('engage');
             });
         }
     }
 }
 document.addEventListener("DOMContentLoaded", function() {
+    "use strict";
     engageDevMode();
 } );
 
-function makeNewFormSub(devZoom) {
+function makeNewFormSub() {
+    "use strict";
+
     const submitNewItem = document.getElementById('add-new-form');
 
     if ( submitNewItem ) {
@@ -667,7 +667,8 @@ function makeNewFormSub(devZoom) {
                 type: postType,
                 area: currentLocation ?? '',
                 values,
-            }
+            };
+
             // Save position of item.
             fetch(filehref, {
                 method: 'POST', // Specify the HTTP method.
@@ -689,6 +690,8 @@ function makeNewFormSub(devZoom) {
 }
 
 function parseFormDataToNestedObject(formData) {
+    "use strict";
+
     const entries = Object.fromEntries(formData.entries());
     const result = {};
 
@@ -700,7 +703,10 @@ function parseFormDataToNestedObject(formData) {
         let current = result;
         while (path.length > 1) {
             const segment = path.shift();
-            if (!(segment in current)) current[segment] = {};
+            if (!(segment in current)){
+                current[segment] = {};
+            }
+
             current = current[segment];
         }
         current[path[0]] = value;

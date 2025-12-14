@@ -1,6 +1,8 @@
 <?php
 /**
  * Characters panel for game.
+ *
+ * @var int $userid
  */
 
 use OrbemStudio\Explore;

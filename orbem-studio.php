@@ -28,23 +28,24 @@
 /**
  * Plugin version constant.
  */
-const ORBEM_GAME_ENGINE_VERSION = '1.0.0';
+const ORBEM_STUDIO_VERSION = '1.0.0';
 
-if ( version_compare( phpversion(), '7.0.0', '>=' ) ) {
+if ( version_compare( phpversion(), '8.1.0', '>=' ) ) {
 	require_once __DIR__ . '/instance.php';
 } else {
 	if ( defined( 'WP_CLI' ) ) {
-		WP_CLI::warning( _orbem_game_engine_php_version_text() );
+		WP_CLI::warning( _orbem_studio_php_version_text() );
 	} else {
-		add_action( 'admin_notices', '_orbem_game_engine_php_version_error' );
+		add_action( 'admin_notices', '_orbem_studio_php_version_error' );
 	}
 }
 
 /**
  * Admin notice for incompatible versions of PHP.
  */
-function _orbem_game_engine_php_version_error() {
-	printf( '<div class="error"><p>%s</p></div>', esc_html( _orbem_game_engine_php_version_text() ) );
+function _orbem_studio_php_version_error(): void
+{
+	printf( '<div class="error"><p>%s</p></div>', esc_html(_orbem_studio_php_version_text()));
 }
 
 /**
@@ -52,26 +53,28 @@ function _orbem_game_engine_php_version_error() {
  *
  * @return string
  */
-function _orbem_game_engine_php_version_text() {
+function _orbem_studio_php_version_text(): string
+{
 	return __(
 		'Orbem Game Engine plugin error: Your version of PHP is too old to run this plugin. You must be running PHP 5.3 or higher.',
 		'orbem-studio'
 	);
 }
 
-add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), '_orbem_game_engine_add_action_links' );
+add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), '_orbem_studio_add_action_links' );
 
 /**
  * Add a link to the settings page.
  *
- * @param string $links The links shown in the plugin page.
+ * @param array $links The links shown in the plugin page.
  *
  * @return array
  */
-function _orbem_game_engine_add_action_links( $links ) {
+function _orbem_studio_add_action_links(array $links): array
+{
 	$mylinks = array(
 		'<a href="' . admin_url( 'admin.php?page=orbem-studio' ) . '">Options</a>',
 	);
 
-	return array_merge( $links, $mylinks );
+	return array_merge($links, $mylinks);
 }

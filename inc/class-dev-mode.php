@@ -7,8 +7,8 @@
 
 namespace OrbemStudio;
 
-use OrbemStudio\Meta_Box;
-use OrbemStudio\Explore;
+use WP_Error;
+use WP_Post;
 
 /**
  * DevMode Class
@@ -23,14 +23,14 @@ class Dev_Mode
      *
      * @var object
      */
-    public $plugin;
+    public object $plugin;
 
     /**
      * Class constructor.
      *
      * @param object $plugin Plugin class.
      */
-    public function __construct($plugin)
+    public function __construct(object $plugin)
     {
         $this->plugin = $plugin;
     }
@@ -40,7 +40,7 @@ class Dev_Mode
      *
      * @action rest_api_init
      */
-    public function restRoutes()
+    public function restRoutes(): void
     {
         $namespace = 'orbemorder/v1';
 
@@ -58,7 +58,7 @@ class Dev_Mode
             'permission_callback' => '__return_true',
         ));
 
-        // Get addition fields by posttype.
+        // Get addition fields by post type.
         register_rest_route($namespace, '/get-new-fields/', array(
             'methods' => 'POST',
             'callback' => [$this, 'getNewFields'],
@@ -73,6 +73,11 @@ class Dev_Mode
         ));
     }
 
+    /**
+     * Change position of item.
+     * @param $request
+     * @return WP_Error|void
+     */
     public function setItemPosition($request)
     {
         // Get the JSON string from the request body
@@ -83,7 +88,7 @@ class Dev_Mode
 
         // Handle errors in decoding JSON
         if (json_last_error() !== JSON_ERROR_NONE) {
-            return new \OrbemStudio\WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
+            return new WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
         }
 
         $item = intval($data['id']);
@@ -123,6 +128,11 @@ class Dev_Mode
         wp_send_json_success('success');
     }
 
+    /**
+     * Set item size front end.
+     * @param $request
+     * @return WP_Error|void
+     */
     public function setItemSize($request)
     {
         // Get the JSON string from the request body
@@ -133,11 +143,9 @@ class Dev_Mode
 
         // Handle errors in decoding JSON
         if (json_last_error() !== JSON_ERROR_NONE) {
-            return new \OrbemStudio\WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
+            return new WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
         }
 
-        // Process the data (e.g., register the user)
-        // Assuming you expect 'username' and 'email' in the JSON data
         $item = intval($data['id']);
         $height = intval($data['height']);
         $width = intval($data['width']);
@@ -156,6 +164,11 @@ class Dev_Mode
         wp_send_json_success('success');
     }
 
+    /**
+     * Get fields.
+     * @param $request
+     * @return WP_Error|void
+     */
     public function getNewFields($request)
     {
         // Get the JSON string from the request body
@@ -166,7 +179,7 @@ class Dev_Mode
 
         // Handle errors in decoding JSON
         if (json_last_error() !== JSON_ERROR_NONE) {
-            return new \OrbemStudio\WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
+            return new WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
         }
 
         $post_type = sanitize_text_field(wp_unslash($data['type']));
@@ -179,6 +192,11 @@ class Dev_Mode
         wp_send_json_success(ob_get_clean());
     }
 
+    /**
+     * Add new item.
+     * @param $request
+     * @return WP_Error|void
+     */
     public function addNew($request)
     {
         // Get the JSON string from the request body
@@ -189,18 +207,17 @@ class Dev_Mode
 
         // Handle errors in decoding JSON
         if (json_last_error() !== JSON_ERROR_NONE) {
-            return new \OrbemStudio\WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
+            return new WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
         }
 
         $post_type = sanitize_text_field(wp_unslash($data['type']));
         $area = sanitize_text_field(wp_unslash($data['area']));
         $area = false === empty($area) ? $area : get_user_meta(get_current_user_id(), 'current_location');
         $post_values = $data['values'];
-
-        $post_id = wp_insert_post(['post_status' => 'publish', 'post_type' => $post_type, 'post_title' => $post_values['title']], true);
+        $post_id = wp_insert_post(['post_status' => 'publish', 'post_type' => $post_type, 'post_title' => sanitize_text_field(wp_unslash($post_values['title']))], true);
 
         if (false === is_wp_error($post_id) && false === empty($post_values) && true === is_array($post_values)) {
-            $attachment_id = attachment_url_to_postid($post_values['featured-image']);
+            $attachment_id = attachment_url_to_postid(esc_url($post_values['featured-image']));
 
             if (false === empty($attachment_id)) {
                 set_post_thumbnail($post_id, $attachment_id);
@@ -221,7 +238,15 @@ class Dev_Mode
         wp_send_json_success($post_id);
     }
 
-    public static function getTriggers($items, $cutscenes, $missions) {
+    /**
+     * Get dev mode triggers.
+     * @param $items
+     * @param $cutscenes
+     * @param $missions
+     * @return array
+     */
+    public static function getTriggers($items, $cutscenes, $missions): array
+    {
         $things_to_check = array_merge($items, $cutscenes, $missions);
         $key = '';
         $trigger = [];
@@ -237,10 +262,8 @@ class Dev_Mode
                 case 'explore-explainer':
                     $key = 'explore-explainer-trigger';
                     break;
-                case 'explore-character':
-                    $key = 'explore-path-trigger';
-                    break;
                 case 'explore-enemy':
+                case 'explore-character':
                     $key = 'explore-path-trigger';
                     break;
                 case 'explore-mission':
@@ -257,7 +280,7 @@ class Dev_Mode
                     'ID' => $thing->ID . '-t',
                 ];
 
-                $trigger[] = new \WP_Post((object)$trigger_array);
+                $trigger[] = new WP_Post((object)$trigger_array);
             }
         }
 
@@ -269,7 +292,7 @@ class Dev_Mode
      * @param $item_list
      * @return false|string
      */
-    public static function getDevModeHTML($item_list)
+    public static function getDevModeHTML($item_list): false|string
     {
         $post_types =  [
         'explore-area',
@@ -290,11 +313,6 @@ class Dev_Mode
         ob_start();
         ?>
         <div class="right-bottom-devmode">
-            <div class="zoom-in-out">
-                <span>ZOOM(<small id="zoom-amount">100</small>%)</span>
-                <span id="zoom-in">+</span>
-                <span id="zoom-out">-</span>
-            </div>
             <div class="dev-mode-menu-toggle">DEVMODE</div>
         </div>
         <div class="dev-mode-menu">
@@ -303,9 +321,8 @@ class Dev_Mode
                     <?php include plugin_dir_path(__FILE__) . '../templates/components/new-additions.php'; ?>
                 </div>
             </div>
-            <?php include  plugin_dir_path(__FILE__) . '../templates/components/finder-list.php'; ?>
-            <?php include  plugin_dir_path(__FILE__) . '../templates/components/wall-builder.php'; ?>
-            <?php include  plugin_dir_path(__FILE__) . '../templates/components/pinpoint.php'; ?>
+            <?php include plugin_dir_path(__FILE__) . '../templates/components/wall-builder.php'; ?>
+            <?php include plugin_dir_path(__FILE__) . '../templates/components/pinpoint.php'; ?>
         </div>
         <?php
         return ob_get_clean();

@@ -7,8 +7,6 @@
 
 namespace OrbemStudio;
 
-use OrbemStudio\Util;
-
 /**
  * Menu Class
  *
@@ -22,14 +20,14 @@ class Menu
      *
      * @var object
      */
-    public $plugin;
+    public object $plugin;
 
     /**
      * Class constructor.
      *
      * @param object $plugin Plugin class.
      */
-    public function __construct($plugin)
+    public function __construct(object $plugin)
     {
         $this->plugin = $plugin;
     }
@@ -40,7 +38,8 @@ class Menu
      * @action admin_menu
      * @return void
      */
-    public function addGameOptionMenu() {
+    public function addGameOptionMenu(): void
+    {
         $parent_slug  = 'orbem-studio';
         $parent_title = 'Orbem Studio';
 
@@ -69,7 +68,7 @@ class Menu
             $obj = get_post_type_object($cpt);
             if (!$obj) continue;
 
-            // Add CPT
+            // Add CPT.
             add_submenu_page(
                 $parent_slug,
                 $obj->labels->menu_name,
@@ -88,7 +87,7 @@ class Menu
                     '— ' . $tax->labels->name, // visually indented
                     '— ' . $tax->labels->menu_name,
                     $tax->cap->manage_terms,
-                    "edit-tags.php?taxonomy={$tax->name}&post_type={$cpt}"
+                    "edit-tags.php?taxonomy=$tax->name&post_type=$cpt"
                 );
             }
 
@@ -102,7 +101,7 @@ class Menu
      * @action admin_head
      * @return void
      */
-    public function organizeTaxoMenuItems ()
+    public function organizeTaxoMenuItems (): void
     {
         global $submenu;
 
@@ -118,7 +117,7 @@ class Menu
             'explore-cutscene',
             'explore-enemy',
             'explore-weapon',
-            'explore-magic',
+           // 'explore-magic', TODO add magic back.
             'explore-mission',
             'explore-sign',
             'explore-minigame',
@@ -135,9 +134,9 @@ class Menu
 
         // Get allowed taxonomy slugs for the current CPT
         $allowed_tax_slugs = [];
-        $taxonomies = get_object_taxonomies($current_post_type, 'names');
+        $taxonomies = get_object_taxonomies($current_post_type);
         foreach ($taxonomies as $taxonomy) {
-            $allowed_tax_slugs[] = "edit-tags.php?taxonomy={$taxonomy}&post_type={$current_post_type}";
+            $allowed_tax_slugs[] = "edit-tags.php?taxonomy=$taxonomy&post_type=$current_post_type";
         }
 
         $menu_slug = 'orbem-studio';
@@ -145,7 +144,7 @@ class Menu
         if (!empty($submenu[$menu_slug])) {
             foreach ($submenu[$menu_slug] as $index => $item) {
                 $slug = $item[2];
-                if (strpos($slug, 'edit-tags.php') === 0 && !in_array($slug, $allowed_tax_slugs, true)) {
+                if (str_starts_with($slug, 'edit-tags.php') && !in_array($slug, $allowed_tax_slugs, true)) {
                     unset($submenu[$menu_slug][$index]);
                 }
             }
@@ -156,11 +155,12 @@ class Menu
      * @action admin_init
      * @return void
      */
-    public function registerGameOptions() {
-        $pages = get_posts(['post_type' => 'page', 'post_status' => 'publish', 'posts_per_page' => 200]);
-        $areas = get_posts(['post_type' => 'explore-area', 'post_status' => 'publish', 'posts_per_page' => 200]);
-        $characters = get_posts(['post_type' => 'explore-character', 'post_status' => 'publish', 'posts_per_page' => 200]);
-        $weapons = get_posts(['post_type' => 'explore-weapon', 'post_status' => 'publish', 'posts_per_page' => 200]);
+    public function registerGameOptions(): void
+    {
+        $pages = get_posts(['post_type' => 'page', 'post_status' => 'publish', 'posts_per_page' => 500]);
+        $areas = get_posts(['post_type' => 'explore-area', 'post_status' => 'publish', 'posts_per_page' => 500]);
+        $characters = get_posts(['post_type' => 'explore-character', 'post_status' => 'publish', 'posts_per_page' => 500]);
+        $weapons = get_posts(['post_type' => 'explore-weapon', 'post_status' => 'publish', 'posts_per_page' => 500]);
 
         $settings = [
             'explore_game_page' => ['select', 'Page For Game', 'This is the page on your website that users will play your game on.', $pages],
@@ -168,9 +168,26 @@ class Menu
             'explore_main_character' => ['select', 'Main Character', 'Your main character that users will control first.', $characters],
             'explore_default_weapon' => ['select', 'Default Weapon', 'The starting weapon your main character will have. (Can be "fist" for no weapon)', $weapons],
             'explore_require_login' => ['checkbox', 'Require Login', 'Require users to login in order to play or give a "logged out" option.'],
+            'explore_google_login_client_id' => ['text', 'Google Login ClientID', 'Add your Google client id to allow SSO login. (Search google how if you this is confusing)'],
+            'explore_google_tts_api_key' => ['text', 'Google TTS API Key', 'Add your Google TTS API key to allow cutscenes and explainers to talk using text to speech.'],
+            'explore_hud_bars'     => ['multiselect', 'HUD bars', 'Choose which bars you wish to use for your game.', ['health', 'mana', 'power', 'money', 'points']],
+            'explore_settings_icon' => ['upload', 'Settings Icon', 'Override settings icon in HUD'],
+            'explore_hide_storage' => ['checkbox', 'Hide Storage Menu', 'If checked the storage menu will not appear in HUD.'],
+            'explore_storage_icon' => ['upload', 'Storage Menu Icon', 'Override storage menu icon in HUD'],
+            'explore_crew_icon'   => ['upload', 'Crewmate Menu Icon', 'Override crewmate menu icon in HUD'],
             'explore_money_image' => ['upload', 'Money Icon', 'Override money icon for in game currency.'],
-            'explore_indicator_icon' => ['upload', 'Indicator Icon', 'Your indicator icon that shows when "focus view" or "character" game assets are interactable.'],
-            'explore_arrow_icon' => ['upload', 'Arrow Icon', 'The arrow icon that is used to point for explainer popups.'],
+            'explore_indicator_icon' => ['upload', 'Indicator Icon', 'Override your indicator icon that shows when "focus view" or "character" game assets are interactable.'],
+            'explore_arrow_icon' => ['upload', 'Arrow Icon', 'Override the default arrow icon that is used to point for explainer popups.'],
+            'explore_cutscene_border_color' => ['color', 'Cutscene Border Color', 'The cutscene popup border color.'],
+            'explore_cutscene_border_size' => ['number', 'Cutscene Border Size', 'The border size of the Cutscene popups (in pixel).'],
+            'explore_cutscene_border_radius' => ['number', 'Cutscene Border Radius', 'The border radius of the Cutscene popups.'],
+            'explore_cutscene_border_style' => ['select', 'Cutscene Border Style', 'The border style of the Cutscene popups.', ['solid', 'dashed', 'dotted']],
+            'explore_skip_button_color' => ['color', 'Skip Button Color', 'The skip button background color (text is white).'],
+            'explore_explainer_border_color' => ['color', 'Explainer Border Color', 'The border color of the explainer popups.'],
+            'explore_explainer_border_size' => ['number', 'Explainer Border Size', 'The border size of the explainer popups (in pixel).'],
+            'explore_explainer_border_radius' => ['number', 'Explainer Border Radius', 'The border radius of the explainer popups.'],
+            'explore_explainer_border_style' => ['select', 'Explainer Border Style', 'The border style of the explainer popups.', ['solid', 'dashed', 'dotted']],
+            'explore_crewmate_hover_border_color' => ['color', 'Playable Character Border Color', 'The border color when you hover over a character in the crew mate selector.'],
             'explore_intro_video' => ['upload', 'Intro Video', 'The video that will play when users first visit the game page.'],
             'explore_start_music' => ['upload', 'Start Screen Music', 'The music that will play after the intro video and on the start screen.'],
             'explore_signin_screen' => ['upload', 'Sign In Screen Background Image', 'The image/video that will show on the start screen.'],
@@ -194,7 +211,7 @@ class Menu
                     if (isset($value[0]) && $value[0] === 'upload') : ?>
                         <div class="explore-image-field">
                             <?php if ('' !== $indicator && false === str_contains($indicator, 'webm') && false === str_contains($indicator, 'mp4') && false === str_contains($indicator, 'mp3') && false === str_contains($indicator, '.wav')) : ?>
-                                <img src="<?php echo $indicator; ?>" width="60"/>
+                                <img alt="indicator icon" src="<?php echo $indicator; ?>" width="60"/>
                                 <br>
                             <?php endif; ?>
                             <sub><?php echo esc_html($value[2] ?? ''); ?></sub>
@@ -209,17 +226,40 @@ class Menu
                     <?php elseif (isset($value[0]) && $value[0] === 'text') : ?>
                         <sub><?php echo esc_html($value[2] ?? ''); ?></sub>
                         <input type="text" id="<?php echo esc_attr($field_key); ?>" name="<?php echo esc_attr($field_key); ?>" value="<?php echo esc_attr($indicator); ?>" />
+                    <?php elseif (isset($value[0]) && $value[0] === 'color') : ?>
+                        <sub><?php echo esc_html($value[2] ?? ''); ?></sub>
+                        <input class="explore-color-field" type="text" id="<?php echo esc_attr($field_key); ?>" name="<?php echo esc_attr($field_key); ?>" value="<?php echo esc_attr($indicator); ?>" />
+                    <?php elseif (isset($value[0]) && $value[0] === 'number') : ?>
+                        <sub><?php echo esc_html($value[2] ?? ''); ?></sub>
+                        <input type="number" id="<?php echo esc_attr($field_key); ?>" name="<?php echo esc_attr($field_key); ?>" value="<?php echo esc_attr($indicator); ?>" />
                     <?php elseif (isset($value[0]) && $value[0] === 'select') : ?>
                         <sub><?php echo esc_html($value[2] ?? ''); ?></sub>
                         <select name="<?php echo esc_attr($field_key); ?>">
                             <option disabled selected value>Select...</option>
                             <?php foreach($value[3] as $option) : ?>
-                                <option value="<?php echo esc_attr($option->post_name); ?>" <?php selected($option->post_name, $indicator, true); ?>><?php echo esc_attr($option->post_title); ?></option>
+                                <option value="<?php echo esc_attr(is_object($option) ? $option->post_name : $option); ?>" <?php selected(is_object($option) ? $option->post_name : $option, $indicator); ?>><?php echo esc_attr(is_object($option) ? $option->post_title : $option); ?></option>
                             <?php endforeach; ?>
                         </select>
                     <?php elseif (isset($value[0]) && $value[0] === 'checkbox') : ?>
                         <sub><?php echo esc_html($value[2] ?? ''); ?></sub>
-                        <input type="checkbox" id="<?php echo esc_attr($field_key); ?>" name="<?php echo esc_attr($field_key); ?>" <?php checked('on', $indicator, true); ?> />
+                        <input type="checkbox" id="<?php echo esc_attr($field_key); ?>" name="<?php echo esc_attr($field_key); ?>" <?php checked('on', $indicator); ?> />
+                    <?php elseif (isset($value[0]) && $value[0] === 'multiselect') : ?>
+                        <sub><?php echo esc_html($value[2] ?? ''); ?></sub>
+                        <div class="multiselect-wrapper">
+                            <?php foreach($value[3] as $option): ?>
+                                <p>
+                                    <label>
+                                        <input
+                                            type="checkbox"
+                                            <?php checked($indicator[$option] ?? '', 'on'); ?>
+                                            name="<?php echo esc_attr($field_key . '[' . $option . ']'); ?>"
+                                            id="<?php echo esc_attr($field_key . '[' . $option . ']'); ?>"
+                                        >
+                                        <?php echo ucwords(str_replace('-',' ', $option)); ?>
+                                    </label>
+                                </p>
+                            <?php endforeach;?>
+                        </div>
                     <?php endif;
                 },
                 'game_options',
@@ -233,7 +273,8 @@ class Menu
      * The callback function for game options menu.
      * @return void
      */
-    public function gameOptionsPage() {
+    public function gameOptionsPage(): void
+    {
         $areas = get_posts(['post_type' => 'explore-area']);
         $finished_area = false === empty($areas) && 0 < count($areas);
 
@@ -243,7 +284,7 @@ class Menu
         $weapons = get_posts(['post_type' => 'explore-weapon']);
         $finished_weapon = false === empty($weapons) && count($weapons);
 
-        $things_made = true === $finished_area && true === $finished_character && true === $finished_weapon;
+        $things_made = true === $finished_area && true === $finished_character;
 
         include $this->plugin->dir_path . '/templates/game-options-page.php';
     }

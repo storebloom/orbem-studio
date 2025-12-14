@@ -1,15 +1,13 @@
 document.addEventListener("DOMContentLoaded", function(){
-    const tutorialStep = document.querySelector( '.tutorial-step[data-step="4"]' );
+    const tutorialStep = document.querySelector( '.tutorial-step[data-step="3"]' );
 
     if ( tutorialStep && true === tutorialStep.classList.contains( 'engage' ) ) {
         const pageSelectOption = document.querySelector( '.form-table tbody tr');
         const areaSelectOption = document.querySelector( '.form-table tbody tr:nth-of-type(2)' );
         const characterSelectOption = document.querySelector( '.form-table tbody tr:nth-of-type(3)' );
-        const weaponSelectOption = document.querySelector( '.form-table tbody tr:nth-of-type(4)' );
+        const tutorialStep4 = document.querySelector( '.tutorial-step[data-step="4"]' );
         const tutorialStep5 = document.querySelector( '.tutorial-step[data-step="5"]' );
         const tutorialStep6 = document.querySelector( '.tutorial-step[data-step="6"]' );
-        const tutorialStep7 = document.querySelector( '.tutorial-step[data-step="7"]' );
-        const tutorialStep8 = document.querySelector( '.tutorial-step[data-step="8"]' );
 
         if ( pageSelectOption ) {
             pageSelectOption.classList.add('engage');
@@ -17,52 +15,39 @@ document.addEventListener("DOMContentLoaded", function(){
             const pageSelectSelect = pageSelectOption.querySelector( 'select' );
 
             if ( pageSelectSelect ) {
-                pageSelectSelect.addEventListener('change', e => {
+                pageSelectSelect.addEventListener('change', () => {
                     pageSelectOption.classList.remove('engage');
                     areaSelectOption.classList.add( 'engage' );
                     areaSelectOption.scrollIntoView({ behavior: "instant", block: "center", inline: "center" });
 
-                    if ( tutorialStep5 ) {
+                    if ( tutorialStep4 ) {
                         tutorialStep.classList.remove('engage');
-                        tutorialStep5.classList.add( 'engage' );
+                        tutorialStep4.classList.add( 'engage' );
                     }
                 });
             }
 
             if ( areaSelectOption ) {
-                areaSelectOption.addEventListener('change', e => {
+                areaSelectOption.addEventListener('change', () => {
                     areaSelectOption.classList.remove('engage');
                     characterSelectOption.classList.add( 'engage' );
                     characterSelectOption.scrollIntoView({ behavior: "instant", block: "center", inline: "center" });
 
-                    if ( tutorialStep6 ) {
-                        tutorialStep5.classList.remove('engage');
-                        tutorialStep6.classList.add( 'engage' );
+                    if ( tutorialStep5 ) {
+                        tutorialStep4.classList.remove('engage');
+                        tutorialStep5.classList.add( 'engage' );
                     }
                 });
             }
 
             if ( characterSelectOption ) {
-                characterSelectOption.addEventListener('change', e => {
+                characterSelectOption.addEventListener('change', () => {
                     characterSelectOption.classList.remove('engage');
-                    weaponSelectOption.classList.add( 'engage' );
-                    weaponSelectOption.scrollIntoView({ behavior: "instant", block: "center", inline: "center" });
-
-                    if ( tutorialStep7 ) {
-                        tutorialStep6.classList.remove('engage');
-                        tutorialStep7.classList.add( 'engage' );
-                    }
-                });
-            }
-
-            if ( weaponSelectOption ) {
-                weaponSelectOption.addEventListener('change', e => {
-                    weaponSelectOption.classList.remove('engage');
                     scrollTo(0, 80000);
 
-                    if ( tutorialStep8 ) {
-                        tutorialStep7.classList.remove('engage');
-                        tutorialStep8.classList.add( 'engage' );
+                    if ( tutorialStep6 ) {
+                        tutorialStep5.classList.remove('engage');
+                        tutorialStep6.classList.add( 'engage' );
                     }
                 });
             }

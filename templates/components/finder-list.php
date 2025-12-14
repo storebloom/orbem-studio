@@ -1,5 +1,9 @@
-<?php /**
+<?php
+/**
 * Finder list for dev mode.
+ *
+ * @var array $post_types
+ * @var array $item_list
  */
 ?>
 <div class="open-close-item-list">open/close item list ></div>
@@ -11,18 +15,13 @@
                 if ( true === $item_available) : ?>
                     <h3 class="item-post-type"><?php echo esc_html(ucwords(str_replace('-', ' ', $post_type))); ?></h3>
                <?php $item_available = false; endif;
-        switch ($explore_item->post_type) {
-            case 'explore-explainer':
-                $class_end = '-explainer-item';
-                break;
-            case 'explore-cutscene':
-                $class_end = '-map-cutscene';
-                break;
-            default:
-                $class_end = '-map-item';
-        }
+                $class_end = match ($explore_item->post_type) {
+                    'explore-explainer' => '-explainer-item',
+                    'explore-cutscene' => '-map-cutscene',
+                    default => '-map-item',
+                };
         $class = $explore_item->post_name . $class_end;
-        $meta = false !== stripos($explore_item->ID, 't') ? 'data-meta=' . $explore_item->post_type . '' : '';
+        $meta = false !== stripos($explore_item->ID, 't') ? 'data-meta=' . $explore_item->post_type : '';
         ?>
         <p class="find-explore-item" <?php echo esc_attr($meta); ?> id="<?php echo esc_html($explore_item->ID); ?>-f" data-class="<?php echo esc_attr($class); ?>" data-posttype="<?php echo esc_attr($explore_item->post_type); ?>">
                             <span class="find-title">
@@ -31,7 +30,7 @@
                             </span>
             <span class="edit-item-button"> | size ✎</span> | <span class="show-hide-item show">👁</span>
             <br/>
-            <a href="<?php echo esc_url(admin_url() . 'post.php?post=' . $explore_item->ID . '&action=edit'); ?>" />edit item</a>
+            <a href="<?php echo esc_url(admin_url() . 'post.php?post=' . $explore_item->ID . '&action=edit'); ?>">edit item</a>
             <span class="close-item-button" style="display: none;">X</span>
         </p>
         <?php endif; endforeach;?></div>
