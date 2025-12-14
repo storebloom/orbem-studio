@@ -2361,7 +2361,7 @@ class Explore
     }
 
     /**
-     * Register new block category for share buttons.
+     * Register new block category for orbem studio.
      *
      * @param array $categories The current block categories.
      * @param WP_Post $post       Post object.

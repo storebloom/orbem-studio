@@ -49,7 +49,7 @@ class Meta_Box {
     }
 
 	/**
-	 * Register the new share buttons metabox.
+	 * Register the new orbem studio metabox.
 	 *
 	 * @action add_meta_boxes
 	 */

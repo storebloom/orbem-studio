@@ -4,7 +4,8 @@
  *
  * The template wrapper for post/page meta box.
  *
- * @package ShareThisShareButtons
+ * @package OrbemStudio
+ *
  * @var boolean $front_end
  * @var array   $meta_data
  * @var array   $values
