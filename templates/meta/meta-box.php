@@ -11,6 +11,8 @@
  * @var array   $values
  */
 use OrbemStudio\Meta_Box;
+
+$meta_data = is_array($meta_data) ? $meta_data : [];
 ?>
 <div id="explore-meta-box">
     <?php if (true === $front_end) : ?>

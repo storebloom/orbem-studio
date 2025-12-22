@@ -40,6 +40,10 @@ class Menu
      */
     public function addGameOptionMenu(): void
     {
+        if (!current_user_can('edit_posts')) {
+            return;
+        }
+
         $parent_slug  = 'orbem-studio';
         $parent_title = 'Orbem Studio';
 
@@ -48,7 +52,7 @@ class Menu
         add_menu_page(
             $parent_title,
             $parent_title,
-            'manage_options',
+            'edit_posts',
             $parent_slug,
             '',
             'dashicons-games',
@@ -59,7 +63,7 @@ class Menu
             $parent_slug,
             'Game Options',
             'Game Options',
-            'manage_options',
+            'edit_posts',
             $parent_slug,
             [$this, 'gameOptionsPage']
         );
@@ -157,10 +161,10 @@ class Menu
      */
     public function registerGameOptions(): void
     {
-        $pages = get_posts(['post_type' => 'page', 'post_status' => 'publish', 'posts_per_page' => 500]);
-        $areas = get_posts(['post_type' => 'explore-area', 'post_status' => 'publish', 'posts_per_page' => 500]);
-        $characters = get_posts(['post_type' => 'explore-character', 'post_status' => 'publish', 'posts_per_page' => 500]);
-        $weapons = get_posts(['post_type' => 'explore-weapon', 'post_status' => 'publish', 'posts_per_page' => 500]);
+        $pages = get_posts(['post_type' => 'page', 'post_status' => 'publish', 'posts_per_page' => -1, 'no_found_rows' => true]);
+        $areas = get_posts(['post_type' => 'explore-area', 'post_status' => 'publish', 'posts_per_page' => -1, 'no_found_rows' => true]);
+        $characters = get_posts(['post_type' => 'explore-character', 'post_status' => 'publish', 'posts_per_page' => -1, 'no_found_rows' => true]);
+        $weapons = get_posts(['post_type' => 'explore-weapon', 'post_status' => 'publish', 'posts_per_page' => -1, 'no_found_rows' => true]);
 
         $settings = [
             'explore_game_page' => ['select', 'Page For Game', 'This is the page on your website that users will play your game on.', $pages],
@@ -200,7 +204,14 @@ class Menu
         }, 'game_options');
 
         foreach ( $settings as $key => $value ) {
-            register_setting('game_options', $key);
+            register_setting('game_options', $key, [
+                'sanitize_callback' => function ($input) {
+                    if (is_array($input)) {
+                        return array_map('sanitize_text_field', $input);
+                    }
+                    return sanitize_text_field($input);
+                },
+            ]);
 
             add_settings_field(
                 $key,
@@ -211,7 +222,7 @@ class Menu
                     if (isset($value[0]) && $value[0] === 'upload') : ?>
                         <div class="explore-image-field">
                             <?php if ('' !== $indicator && false === str_contains($indicator, 'webm') && false === str_contains($indicator, 'mp4') && false === str_contains($indicator, 'mp3') && false === str_contains($indicator, '.wav')) : ?>
-                                <img alt="indicator icon" src="<?php echo $indicator; ?>" width="60"/>
+                                <img alt="indicator icon" src="<?php echo esc_url($indicator); ?>" width="60"/>
                                 <br>
                             <?php endif; ?>
                             <sub><?php echo esc_html($value[2] ?? ''); ?></sub>
@@ -219,8 +230,8 @@ class Menu
                                 <input type="text" id="<?php echo esc_attr($field_key); ?>" name="<?php echo esc_attr($field_key); ?>" value="<?php echo esc_attr($indicator); ?>" class="widefat explore-upload-field" readonly />
                             </p>
                             <p>
-                                <button type="button" class="upload_image_button button"><?php _e('Select Image', 'orbem-studio'); ?></button>
-                                <button type="button" class="remove_image_button button"><?php _e('Remove Image', 'orbem-studio'); ?></button>
+                                <button type="button" class="upload_image_button button"><?php esc_html_e('Select Image', 'orbem-studio'); ?></button>
+                                <button type="button" class="remove_image_button button"><?php esc_html_e('Remove Image', 'orbem-studio'); ?></button>
                             </p>
                         </div>
                     <?php elseif (isset($value[0]) && $value[0] === 'text') : ?>
@@ -275,15 +286,31 @@ class Menu
      */
     public function gameOptionsPage(): void
     {
-        $areas = get_posts(['post_type' => 'explore-area']);
+        $areas = get_posts(
+            [
+                'post_type' => 'explore-area',
+                'posts_per_page' => -1,
+                'no_found_rows'  => true,
+            ]
+        );
         $finished_area = false === empty($areas) && 0 < count($areas);
 
-        $characters = get_posts(['post_type' => 'explore-character']);
+        $characters = get_posts(
+            [
+                'post_type' => 'explore-character',
+                'posts_per_page' => -1,
+                'no_found_rows'  => true,
+            ]
+        );
         $finished_character = false === empty($characters) && 0 < count($characters);
-
-        $weapons = get_posts(['post_type' => 'explore-weapon']);
-        $finished_weapon = false === empty($weapons) && count($weapons);
-
+        $weapons = get_posts(
+            [
+                'post_type' => 'explore-weapon',
+                'posts_per_page' => -1,
+                'no_found_rows'  => true,
+            ]
+        );
+        $finished_weapon = false === empty($weapons) && 0 < count($weapons);
         $things_made = true === $finished_area && true === $finished_character;
 
         include $this->plugin->dir_path . '/templates/game-options-page.php';

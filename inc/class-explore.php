@@ -21,18 +21,18 @@ class Explore
 	/**
 	 * Theme instance.
 	 *
-	 * @var object
+	 * @var Plugin
 	 */
-	public object $plugin;
+	public Plugin $plugin;
 
-	/**
-	 * Class constructor.
-	 *
-	 * @param object $plugin Plugin class.
-	 */
-	public function __construct(object $plugin)
+    /**
+     * Class constructor.
+     *
+     * @param Plugin $plugin Plugin class.
+     */
+	public function __construct(Plugin $plugin)
     {
-		$this->plugin = $plugin;
+		$this->plugin          = $plugin;
         $this->plugin->explore = $this;
 	}
 
@@ -41,177 +41,214 @@ class Explore
      *
      * @action rest_api_init
      */
-    public function create_api_posts_meta_field(): void
+    public function createApiPostsMetaField(): void
     {
-        $namespace = 'orbemorder/v1';
+        $permission_callback = function() { return is_user_logged_in() && get_current_user_id() > 0; };
+        $namespace           = 'orbemorder/v1';
+
+        // Google oauth handle for logging in.
+        register_rest_route($namespace, '/google-oauth-callback/', [
+            'methods'             => 'POST',
+            'callback'            => [$this, 'handleGoogleOauthCallback'],
+            'permission_callback' => '__return_true',
+        ]);
 
         // Register route for getting event by location.
-        register_rest_route($namespace, '/add-explore-points/', array(
-            'methods'  => 'POST',
-            'callback' => [$this, 'addCharacterPoints'],
-            'permission_callback' => '__return_true'
-        ));
+        register_rest_route($namespace, '/add-explore-points/', [
+            'methods'             => 'POST',
+            'callback'            => [$this, 'addCharacterPoints'],
+            'permission_callback' => $permission_callback
+        ]);
 
         // Register route for saving storage item.
-        register_rest_route($namespace, '/save-storage-item/', array(
-            'methods'  => 'POST',
-            'callback' => [$this, 'saveStorageItem'],
-            'permission_callback' => '__return_true'
-        ));
+        register_rest_route($namespace, '/save-storage-item/', [
+            'methods'             => 'POST',
+            'callback'            => [$this, 'saveStorageItem'],
+            'permission_callback' => $permission_callback
+        ]);
 
         // Register route for getting event by location.
-        register_rest_route($namespace, '/area/', array(
-            'methods'  => 'POST',
-            'callback' => [$this, 'getOrbemArea'],
-            'permission_callback' => '__return_true'
-        ));
+        register_rest_route($namespace, '/area/', [
+            'methods'             => 'POST',
+            'callback'            => [$this, 'getOrbemArea'],
+            'permission_callback' => $permission_callback
+        ]);
 
         // Register route for getting item description.
-        register_rest_route($namespace, '/get-item-description/', array(
-            'methods'  => 'POST',
-            'callback' => [$this, 'getItemDescription'],
-            'permission_callback' => '__return_true'
-        ));
+        register_rest_route($namespace, '/get-item-description/', [
+            'methods'             => 'POST',
+            'callback'            => [$this, 'getItemDescription'],
+            'permission_callback' => $permission_callback
+        ]);
 
         // Register route for getting event by location.
-        register_rest_route($namespace, '/coordinates/', array(
-            'methods'  => 'POST',
-            'callback' => [$this, 'saveCoordinates'],
-            'permission_callback' => '__return_true'
-        ));
+        register_rest_route($namespace, '/coordinates/', [
+            'methods'             => 'POST',
+            'callback'            => [$this, 'saveCoordinates'],
+            'permission_callback' => $permission_callback
+        ]);
 
         // Register route for getting event by location.
-        register_rest_route($namespace, '/resetexplore/', array(
-            'methods'  => 'POST',
-            'callback' => [$this, 'resetExplore'],
-            'permission_callback' => '__return_true'
-        ));
+        register_rest_route($namespace, '/resetexplore/', [
+            'methods'             => 'POST',
+            'callback'            => [$this, 'resetExplore'],
+            'permission_callback' => $permission_callback
+        ]);
 
         // Register route for getting event by location.
-        register_rest_route($namespace, '/addspell/', array(
-            'methods'  => 'POST',
-            'callback' => [$this, 'addSpell'],
-            'permission_callback' => '__return_true'
-        ));
+        register_rest_route($namespace, '/addspell/', [
+            'methods'             => 'POST',
+            'callback'            => [$this, 'addSpell'],
+            'permission_callback' => $permission_callback
+        ]);
 
         // Register route for saving settings.
-        register_rest_route($namespace, '/save-settings/', array(
-            'methods'  => 'POST',
-            'callback' => [$this, 'saveSettings'],
-            'permission_callback' => '__return_true'
-        ));
+        register_rest_route($namespace, '/save-settings/', [
+            'methods'             => 'POST',
+            'callback'            => [$this, 'saveSettings'],
+            'permission_callback' => $permission_callback
+        ]);
 
         // Register route for saving enemy info.
-        register_rest_route($namespace, '/enemy/', array(
-            'methods'  => 'POST',
-            'callback' => [$this, 'saveEnemy'],
-            'permission_callback' => '__return_true'
-        ));
+        register_rest_route($namespace, '/enemy/', [
+            'methods'             => 'POST',
+            'callback'            => [$this, 'saveEnemy'],
+            'permission_callback' => $permission_callback
+        ]);
 
         // Register route for equipping new item.
-        register_rest_route($namespace, '/equip-explore-item/', array(
-            'methods'  => 'POST',
-            'callback' => [$this, 'equipNewItem'],
-            'permission_callback' => '__return_true'
-        ));
+        register_rest_route($namespace, '/equip-explore-item/', [
+            'methods'             => 'POST',
+            'callback'            => [$this, 'equipNewItem'],
+            'permission_callback' => $permission_callback
+        ]);
 
         // Register route for saving completed missions.
-        register_rest_route($namespace, '/mission/', array(
-            'methods'  => 'POST',
-            'callback' => [$this, 'saveMission'],
-            'permission_callback' => '__return_true'
-        ));
+        register_rest_route($namespace, '/mission/', [
+            'methods'             => 'POST',
+            'callback'            => [$this, 'saveMission'],
+            'permission_callback' => $permission_callback
+        ]);
 
         // Save draggable drop position.
-        register_rest_route($namespace, '/save-drag/', array(
-            'methods'  => 'POST',
-            'callback' => [$this, 'saveDrag'],
-            'permission_callback' => '__return_true'
-        ));
+        register_rest_route($namespace, '/save-drag/', [
+            'methods'             => 'POST',
+            'callback'            => [$this, 'saveDrag'],
+            'permission_callback' => $permission_callback
+        ]);
 
         // Save draggable drop position.
-        register_rest_route($namespace, '/save-materialized-item/', array(
-            'methods'  => 'POST',
-            'callback' => [$this, 'saveMaterializedItem'],
-            'permission_callback' => '__return_true'
-        ));
+        register_rest_route($namespace, '/save-materialized-item/', [
+            'methods'             => 'POST',
+            'callback'            => [$this, 'saveMaterializedItem'],
+            'permission_callback' => $permission_callback
+        ]);
 
         // Add character to crew list.
-        register_rest_route($namespace, '/add-character/', array(
-            'methods'  => 'POST',
-            'callback' => [$this, 'addCharacter'],
-            'permission_callback' => '__return_true'
-        ));
+        register_rest_route($namespace, '/add-character/', [
+            'methods'             => 'POST',
+            'callback'            => [$this, 'addCharacter'],
+            'permission_callback' => $permission_callback
+        ]);
 
         // Add character to crew list.
-        register_rest_route($namespace, '/enable-ability/', array(
-            'methods'  => 'POST',
-            'callback' => [$this, 'enableAbility'],
-            'permission_callback' => '__return_true'
-        ));
+        register_rest_route($namespace, '/enable-ability/', [
+            'methods'             => 'POST',
+            'callback'            => [$this, 'enableAbility'],
+            'permission_callback' => $permission_callback
+        ]);
 
         // Set previous cutscene area.
-        register_rest_route($namespace, '/set-previous-cutscene-area/', array(
-            'methods'  => 'POST',
-            'callback' => [$this, 'setPreviousCutsceneArea'],
-            'permission_callback' => '__return_true'
-        ));
+        register_rest_route($namespace, '/set-previous-cutscene-area/', [
+            'methods'             => 'POST',
+            'callback'            => [$this, 'setPreviousCutsceneArea'],
+            'permission_callback' => $permission_callback
+        ]);
     }
 
     /**
      * Call back function for rest route that saves the previous cutscene area.
-     * @param object $request The arg values from rest route.
+     * @param WP_REST_Request $request The arg values from rest route.
+     * @return WP_REST_Response
      */
-    public function setPreviousCutsceneArea(object $request)
+    public function setPreviousCutsceneArea(WP_REST_Request $request): WP_REST_Response
     {
-        // Get the JSON string from the request body
-        $json_string = $request->get_body();
+        $user     = wp_get_current_user();
+        $userid = (int) $user->ID;
 
-        // Decode the JSON string into a PHP associative array
-        $return = json_decode($json_string, true);
-
-        // Handle errors in decoding JSON
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            return new WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
+        // Endpoint intentionally accessible to all authenticated users.
+        if (0 === $userid) {
+            return rest_ensure_response([
+                'success' => false,
+                'data'    => esc_html__('User not authenticated', 'orbem-studio'),
+            ]);
         }
 
-        $user = isset($return['userid']) ? intval($return['userid']) : '';
-        $cutscene = isset($return['cutscene']) ? sanitize_text_field(wp_unslash(($return['cutscene']))) : '';
+        // Get request data.
+        $data     = $request->get_json_params();
+        $cutscene = isset($data['cutscene']) ? sanitize_text_field(wp_unslash($data['cutscene'])) : '';
+        $nonce    = isset($data['nonce']) ? sanitize_text_field($data['nonce']) : '';
 
-        if ('' !== $user) {
-            update_user_meta($user, 'explore_previous_cutscene_area', $cutscene);
+        if (
+            empty($nonce)
+            || !wp_verify_nonce($nonce, 'orbem_wp_rest')
+        ) {
+            return rest_ensure_response([
+                'success' => false,
+                'data'    => esc_html__('Invalid nonce', 'orbem-studio'),
+            ]);
         }
+
+        update_user_meta($userid, 'explore_previous_cutscene_area', $cutscene);
+
+        return rest_ensure_response( [
+            'success' => true,
+            'data'    => esc_html__('success', 'orbem-studio'),
+        ] );
     }
 
     /**
      * Call back function for rest route that adds spell to the explore_magic user meta
-     * @param object $request The arg values from rest route.
+     * @param WP_REST_Request $request The arg values from rest route.
+     * @return WP_REST_Response
      */
-    public function addSpell(object $request)
+    public function addSpell(WP_REST_Request $request): WP_REST_Response
     {
-        // Get the JSON string from the request body
-        $json_string = $request->get_body();
+        $user     = wp_get_current_user();
+        $userid = (int) $user->ID;
 
-        // Decode the JSON string into a PHP associative array
-        $return = json_decode($json_string, true);
-
-        // Handle errors in decoding JSON
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            return new WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
+        // Endpoint intentionally accessible to all authenticated users.
+        if (0 === $userid) {
+            return rest_ensure_response([
+                'success' => false,
+                'data'    => esc_html__('User not authenticated', 'orbem-studio'),
+            ]);
         }
 
-        $user = isset($return['userid']) ? intval($return['userid']) : '';
-        $spell_id = isset($return['spellid']) ? intval($return['spellid']) : '';
+        // Get request data.
+        $data     = $request->get_json_params();
+        $spell_id = isset($data['spellid']) ? intval($data['spellid']) : 0;
+        $nonce    = isset($data['nonce']) ? sanitize_text_field($data['nonce']) : '';
 
-        if (!in_array('', [$user, $spell_id], true)) {
-            $explore_magic = get_user_meta($user, 'explore_magic', true);
-            $explore_magic = false === empty($explore_magic) ? $explore_magic : ['defense' => [], 'offense' => []];
-            $spell_type = get_the_terms($spell_id, 'magic-type');
+        if (
+            empty($nonce)
+            || !wp_verify_nonce($nonce, 'orbem_wp_rest')
+        ) {
+            return rest_ensure_response([
+                'success' => false,
+                'data'    => esc_html__('Invalid nonce', 'orbem-studio'),
+            ]);
+        }
+
+        if (0 < $spell_id) {
+            $explore_magic  = get_user_meta($userid, 'explore_magic', true);
+            $explore_magic  = false === empty($explore_magic) ? $explore_magic : ['defense' => [], 'offense' => []];
+            $spell_type     = get_the_terms($spell_id, 'magic-type');
             $the_spell_type = '';
 
-            if (true === is_array($spell_type)) {
-                foreach( $spell_type as $type) {
-                    if ( true === in_array($type->slug, ['defense', 'offense'], true)) {
+            if (false === is_wp_error($spell_type) && true === is_array($spell_type)) {
+                foreach($spell_type as $type) {
+                    if (true === in_array($type->slug, ['defense', 'offense'], true)) {
                         $the_spell_type = $type->slug;
                     }
                 }
@@ -220,43 +257,76 @@ class Explore
             if ( '' !== $the_spell_type ) {
                 $explore_magic[$the_spell_type][] = $spell_id;
 
-                update_user_meta($user, 'explore_magic', $explore_magic);
-                wp_send_json_success('SPELL ADDED');
+                update_user_meta($userid, 'explore_magic', $explore_magic);
+
+                return rest_ensure_response( [
+                    'success' => true,
+                    'data'    => esc_html__('Spell added', 'orbem-studio'),
+                ] );
             } else {
-                wp_send_json_error('no type selected');
+                return rest_ensure_response( [
+                    'success' => false,
+                    'data'    => esc_html__('No type selected', 'orbem-studio'),
+                ] );
             }
         }
+
+        return rest_ensure_response( [
+            'success' => false,
+            'data'    => esc_html__('User id or spell id invalid', 'orbem-studio'),
+        ] );
     }
 
     /**
      * Call back function for rest route that adds points to user's explore game.
-     * @param object $request
-     * @return WP_Error|void
+     * @param WP_REST_Request $request
+     * @return WP_REST_Response
      */
-    public function addCharacterPoints(object $request)
+    public function addCharacterPoints(WP_REST_Request $request): WP_REST_Response
     {
-        // Get the JSON string from the request body
-        $json_string = $request->get_body();
+        $user     = wp_get_current_user();
+        $userid = (int) $user->ID;
 
-        // Decode the JSON string into a PHP associative array
-        $data = json_decode($json_string, true);
-
-        // Handle errors in decoding JSON
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            return new WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
+        // Endpoint intentionally accessible to all authenticated users.
+        if (0 === $userid) {
+            return rest_ensure_response([
+                'success' => false,
+                'data'    => esc_html__('User not authenticated', 'orbem-studio'),
+            ]);
         }
 
-        // Process the data (e.g., register the user)
-        // Assuming you expect 'username' and 'email' in the JSON data
-        $type = sanitize_text_field($data['type']);
-        $item = $data['item'];
-        $userid = intval($data['userid']);
-        $amount = intval($data['amount']);
-        $reset = 'true' === $data['reset'];
+        // Get request data.
+        $data   = $request->get_json_params();
+        $type   = isset($data['type']) ? sanitize_text_field($data['type']) : '';
+        $item   = $data['item'] ?? '';
+        $item   = is_array($item) ? array_map('sanitize_text_field', $item) : sanitize_text_field($item);
+        $amount = isset($data['amount']) ? intval($data['amount']) : 0;
+        $reset  = isset($data['reset']) && 'true' === $data['reset'];
+        $nonce  = isset($data['nonce']) ? sanitize_text_field($data['nonce']) : '';
+
+        if (
+            empty($nonce)
+            || !wp_verify_nonce($nonce, 'orbem_wp_rest')
+        ) {
+            return rest_ensure_response([
+                'success' => false,
+                'data'    => esc_html__('Invalid nonce', 'orbem-studio'),
+            ]);
+        }
+
+        if ('' === $type || 0 === $amount ) {
+            return rest_ensure_response([
+                'success' => false,
+                'data'    => esc_html__('Invalid request data', 'orbem-studio'),
+            ]);
+        }
 
         $this->savePoint($userid, $type, $amount, $item, $reset);
 
-        wp_send_json_success('success');
+        return rest_ensure_response( [
+            'success' => true,
+            'data'    => esc_html__('success', 'orbem-studio'),
+        ] );
     }
 
     /**
@@ -271,23 +341,24 @@ class Explore
      */
     public function savePoint($userid, $type, $amount, $item, bool $reset = false): void
     {
-        if (false === in_array('', [$userid, $item], true)) {
+        if (0 < $userid && false === empty($item)) {
             $current_explore_points = get_user_meta($userid, 'explore_points', true);
             $explore_points         = false === empty($current_explore_points) && is_array($current_explore_points) ? $current_explore_points : [
-                'health' => ['points' => 100, 'positions' => []],
-                'mana' => ['points' => 100, 'positions' => []],
-                'point' => ['points' => 0, 'positions' => []],
-                'money' => ['points' => 0, 'positions' => []],
-                'gear' => ['positions' => []],
+                'health'  => ['points' => 100, 'positions' => []],
+                'mana'    => ['points' => 100, 'positions' => []],
+                'point'   => ['points' => 0, 'positions' => []],
+                'money'   => ['points' => 0, 'positions' => []],
+                'gear'    => ['positions' => []],
                 'weapons' => ['positions' => []]
             ];
 
             if ('communicate' === $type) {
                 $current_communicates = get_user_meta($userid, 'explore_received_communicates', true);
-                $current_communicates = false === empty($current_communicates) ? $current_communicates : [];
+                $current_communicates = is_array($current_communicates) ? $current_communicates : [];
+                $value_to_add         = is_array($item) && isset($item[0]) ? intval($item[0]) : intval($item);
 
-                if ( false === isset($current_communicates[$amount]) || true === is_array($current_communicates[$amount]) && false === in_array($item, $current_communicates[$amount], true) ) {
-                    $current_communicates[$amount][] = intval($item[0]);
+                if (false === isset($current_communicates[$amount]) || false === in_array($value_to_add, $current_communicates[$amount], true)) {
+                    $current_communicates[$amount][] = $value_to_add;
                 }
 
                 update_user_meta($userid, 'explore_received_communicates', $current_communicates);
@@ -295,7 +366,7 @@ class Explore
 
             if (true === $reset) {
                 $explore_points['health']['points'] = 100;
-                $explore_points['mana']['points'] = 100;
+                $explore_points['mana']['points']   = 100;
             }
 
             if ('communicate' !== $type) {
@@ -304,8 +375,14 @@ class Explore
                 $type = 'point';
             }
 
+            $type = sanitize_key($type);
+
             // Add position to list of positions received points on.
             if (true === is_array($item)) {
+                if (!isset($explore_points[$type]['positions']) || !is_array($explore_points[$type]['positions'])) {
+                    $explore_points[$type]['positions'] = [];
+                }
+
                 $existing_values = array_intersect($item, $explore_points[$type]['positions']);
                 foreach( $existing_values as $existing_value ) {
                     $item_index = array_search($existing_value, $item, true);
@@ -314,7 +391,7 @@ class Explore
 
                 $explore_points[$type]['positions'] = array_merge($explore_points[$type]['positions'], $item);
             } elseif (false === in_array($item, $explore_points[$type]['positions']) ) {
-                $explore_points[$type]['positions'][] = $item;
+                $explore_points[$type]['positions'][] = sanitize_text_field($item);
             }
 
             update_user_meta($userid, 'explore_points', $explore_points);
@@ -323,107 +400,159 @@ class Explore
 
     /**
      * Call back function for rest route that save draggable items positions when dropped.
-     * @param object $request The arg values from rest route.
+     * @param WP_REST_Request $request The arg values from rest route.
+     * @return WP_REST_Response
      */
-    public function saveDrag(object $request)
+    public function saveDrag(WP_REST_Request $request): WP_REST_Response
     {
-        // Get the JSON string from the request body
-        $json_string = $request->get_body();
+        $user     = wp_get_current_user();
+        $userid = (int) $user->ID;
 
-        // Decode the JSON string into a PHP associative array
-        $return = json_decode($json_string, true);
-
-        // Handle errors in decoding JSON
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            return new WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
+        // Endpoint intentionally accessible to all authenticated users.
+        if (0 === $userid) {
+            return rest_ensure_response([
+                'success' => false,
+                'data'    => esc_html__('User not authenticated', 'orbem-studio'),
+            ]);
         }
 
-        $user = isset($return['userid']) ? intval($return['userid']) : '';
-        $top = isset($return['top']) ? intval($return['top']) : '';
-        $left = isset($return['left']) ? intval($return['left']) : '';
-        $slug = isset($return['slug']) ? sanitize_text_field(wp_unslash($return['slug'])) : '';
+        // Get request data.
+        $data  = $request->get_json_params();
+        $top   = isset($data['top']) ? intval($data['top']) : '';
+        $left  = isset($data['left']) ? intval($data['left']) : '';
+        $slug  = isset($data['slug']) ? sanitize_text_field(wp_unslash($data['slug'])) : '';
+        $nonce = isset($data['nonce']) ? sanitize_text_field($data['nonce']) : '';
 
-        if (false === in_array('', [$top, $left, $user], true)) {
-            $current_explore_drag = get_user_meta($user, 'explore_drag_items', true);
-
-            if (false === empty($current_explore_drag)) {
-                $current_explore_drag[$slug] = [
-                    'top' => $top,
-                    'left' => $left,
-                ];
-            } else {
-                $current_explore_drag = [$slug => [
-                    'top' => $top,
-                    'left' => $left,
-                ]];
-            }
-
-            update_user_meta($user, 'explore_drag_items', $current_explore_drag);
+        if (
+            empty($nonce)
+            || !wp_verify_nonce($nonce, 'orbem_wp_rest')
+        ) {
+            return rest_ensure_response([
+                'success' => false,
+                'data'    => esc_html__('Invalid nonce', 'orbem-studio'),
+            ]);
         }
+
+        if ('' === $top || '' === $left || '' === $slug) {
+            return rest_ensure_response([
+                'success' => false,
+                'data'    => esc_html__('Missing data point', 'orbem-studio'),
+            ]);
+        }
+
+        $current_explore_drag = get_user_meta($userid, 'explore_drag_items', true);
+
+        if (false === empty($current_explore_drag)) {
+            $current_explore_drag[$slug] = [
+                'top' => $top,
+                'left' => $left,
+            ];
+        } else {
+            $current_explore_drag = [$slug => [
+                'top' => $top,
+                'left' => $left,
+            ]];
+        }
+
+        update_user_meta($userid, 'explore_drag_items', $current_explore_drag);
+
+        return rest_ensure_response( [
+            'success' => true,
+            'data'    => esc_html__('success', 'orbem-studio'),
+        ] );
     }
 
     /**
      * Call back function for rest route that save materialized items per location when triggered.
-     * @param object $request
-     * @return WP_Error|void
+     * @param WP_REST_Request $request
+     * @return WP_REST_Response
      */
-    public function saveMaterializedItem(object $request)
+    public function saveMaterializedItem(WP_REST_Request $request): WP_REST_Response
     {
-        // Get the JSON string from the request body
-        $json_string = $request->get_body();
+        $user   = wp_get_current_user();
+        $userid = (int) $user->ID;
 
-        // Decode the JSON string into a PHP associative array
-        $data = json_decode($json_string, true);
-
-        // Handle errors in decoding JSON
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            return new WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
+        // Endpoint intentionally accessible to all authenticated users.
+        if (0 === $userid) {
+            return rest_ensure_response([
+                'success' => false,
+                'data'    => esc_html__('User not authenticated', 'orbem-studio'),
+            ]);
         }
 
-        // Process the data (e.g., register the user)
-        // Assuming you expect 'username' and 'email' in the JSON data
-        $area = sanitize_text_field($data['area']);
-        $item = $data['item'];
-        $userid = intval($data['userid']);
+        // Get request data.
+        $data  = $request->get_json_params();
+        $area  = isset($data['area']) ? sanitize_text_field($data['area']) : '';
+        $item  = $data['item'] ?? '';
+        $nonce = isset($data['nonce']) ? sanitize_text_field($data['nonce']) : '';
+
+        if (
+            empty($nonce)
+            || !wp_verify_nonce($nonce, 'orbem_wp_rest')
+        ) {
+            return rest_ensure_response([
+                'success' => false,
+                'data'    => esc_html__('Invalid nonce', 'orbem-studio'),
+            ]);
+        }
+
         $current_materialized_items = get_user_meta($userid, 'explore_materialized_items', true);
         $current_materialized_items = false === empty($current_materialized_items) ? $current_materialized_items : [];
-        $final_items = [];
+        $final_items                = [];
 
         if (true === is_array($item)) {
             foreach( $item as $value ) {
                 if ( true === empty($final_items[$area][$value])) {
-                    $final_items[$area][] = sanitize_text_field(wp_unslash($value));
+                    $final_items[$area][] = is_numeric($value) ? intval($value) : sanitize_text_field(wp_unslash($value));
                 }
+            }
+        } elseif ('' !== $item) {
+            if ( true === empty($final_items[$area][$item])) {
+                $final_items[$area][] = is_numeric($item) ? intval($item) : sanitize_text_field(wp_unslash($item));
             }
         }
 
         update_user_meta($userid, 'explore_materialized_items', array_merge($current_materialized_items, $final_items));
 
-        wp_send_json_success('success');
+        return rest_ensure_response( [
+            'success' => true,
+            'data'    => esc_html__('success', 'orbem-studio'),
+        ] );
     }
 
     /**
      * Call back function for rest route that save materialized items per location when triggered.
-     * @param object $request
-     * @return WP_Error|void
+     * @param WP_REST_Request $request
+     * @return WP_REST_Response
      */
-    public function enableAbility(object $request)
+    public function enableAbility(WP_REST_Request $request): WP_REST_Response
     {
-        // Get the JSON string from the request body
-        $json_string = $request->get_body();
+        $user     = wp_get_current_user();
+        $userid = (int) $user->ID;
 
-        // Decode the JSON string into a PHP associative array
-        $data = json_decode($json_string, true);
-
-        // Handle errors in decoding JSON
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            return new WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
+        // Endpoint intentionally accessible to all authenticated users.
+        if (0 === $userid) {
+            return rest_ensure_response([
+                'success' => false,
+                'data'    => esc_html__('User not authenticated', 'orbem-studio'),
+            ]);
         }
 
-        // Process the data (e.g., register the user)
-        // Assuming you expect 'username' and 'email' in the JSON data
-        $slug = $data['slug'];
-        $userid = intval($data['userid']);
+        // Get request data.
+        $data  = $request->get_json_params();
+        $slug  = isset($data['slug']) ? sanitize_text_field($data['slug']) : '';
+        $nonce = isset($data['nonce']) ? sanitize_text_field($data['nonce']) : '';
+
+        if (
+            empty($nonce)
+            || !wp_verify_nonce($nonce, 'orbem_wp_rest')
+        ) {
+            return rest_ensure_response([
+                'success' => false,
+                'data'    => esc_html__('Invalid nonce', 'orbem-studio'),
+            ]);
+        }
+
         $current_abilities = get_user_meta($userid, 'explore_abilities', true);
         $current_abilities = false === empty($current_abilities) ? $current_abilities : [];
 
@@ -433,140 +562,232 @@ class Explore
 
         update_user_meta($userid, 'explore_abilities', $current_abilities);
 
-        wp_send_json_success('success');
+        return rest_ensure_response( [
+            'success' => true,
+            'data'    => esc_html__('success', 'orbem-studio'),
+        ] );
     }
 
     /**
      * Call back function for rest route that save draggable items positions when dropped.
-     * @param object $request The arg values from rest route.
+     * @param WP_REST_Request $request The arg values from rest route.
+     * @return WP_REST_Response
      */
-    public function addCharacter(object $request)
+    public function addCharacter(WP_REST_Request $request): WP_REST_Response
     {
-        // Get the JSON string from the request body
-        $json_string = $request->get_body();
+        $user   = wp_get_current_user();
+        $userid = (int) $user->ID;
 
-        // Decode the JSON string into a PHP associative array
-        $return = json_decode($json_string, true);
-
-        // Handle errors in decoding JSON
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            return new WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
+        // Endpoint intentionally accessible to all authenticated users.
+        if (0 === $userid) {
+            return rest_ensure_response([
+                'success' => false,
+                'data'    => esc_html__('User not authenticated', 'orbem-studio'),
+            ]);
         }
 
-        $user = isset($return['userid']) ? intval($return['userid']) : '';
-        $slug = isset($return['slug']) ? sanitize_text_field(wp_unslash($return['slug'])) : '';
+        // Get request data.
+        $data  = $request->get_json_params();
+        $slug  = isset($data['slug']) ? sanitize_text_field(wp_unslash($data['slug'])) : '';
+        $nonce = isset($data['nonce']) ? sanitize_text_field($data['nonce']) : '';
 
-        if (false === in_array('', [$user, $slug], true)) {
-            $current_characters = get_user_meta($user, 'explore_characters', true);
-
-            if (false === empty($current_characters) && false === in_array($slug, $current_characters, true)) {
-                $current_characters[] = $slug;
-            } elseif (true === empty($current_characters)) {
-                $current_characters = [$slug];
-            }
-
-            update_user_meta($user, 'explore_characters', $current_characters);
+        if (
+            empty($nonce)
+            || !wp_verify_nonce($nonce, 'orbem_wp_rest')
+        ) {
+            return rest_ensure_response([
+                'success' => false,
+                'data'    => esc_html__('Invalid nonce', 'orbem-studio'),
+            ]);
         }
+
+        if ('' === $slug || 0 >= $userid) {
+            return rest_ensure_response([
+                'success' => false,
+                'data' => esc_html__('Missing slug or user id', 'orbem-studio'),
+            ]);
+        }
+
+        $current_characters = get_user_meta($userid, 'explore_characters', true);
+
+        if (false === empty($current_characters) && false === in_array($slug, $current_characters, true)) {
+            $current_characters[] = $slug;
+        } elseif (true === empty($current_characters)) {
+            $current_characters = [$slug];
+        }
+
+        update_user_meta($userid, 'explore_characters', $current_characters);
+
+        return rest_ensure_response( [
+            'success' => true,
+            'data'    => esc_html__('success', 'orbem-studio'),
+        ] );
     }
 
     /**
-     * Call back function for rest route that adds points to user's explore game.
-     * @param object $request The arg values from rest route.
+     * Call back function for rest route that saves fallen enemies in game.
+     * @param WP_REST_Request $request The arg values from rest route.
+     * @return WP_REST_Response
      */
-    public function saveEnemy(object $request)
+    public function saveEnemy(WP_REST_Request $request): WP_REST_Response
     {
-        // Get the JSON string from the request body
-        $json_string = $request->get_body();
+        $user   = wp_get_current_user();
+        $userid = (int) $user->ID;
 
-        // Decode the JSON string into a PHP associative array
-        $return = json_decode($json_string, true);
-
-        // Handle errors in decoding JSON
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            return new WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
+        // Endpoint intentionally accessible to all authenticated users.
+        if (0 === $userid) {
+            return rest_ensure_response([
+                'success' => false,
+                'data'    => esc_html__('User not authenticated', 'orbem-studio'),
+            ]);
         }
 
-        $user = isset($return['userid']) ? intval($return['userid']) : '';
-        $health = isset($return['health']) ? intval($return['health']) : '';
-        $position = isset($return['position']) ? sanitize_text_field(wp_unslash($return['position'])) : '';
+        // Get request data.
+        $data     = $request->get_json_params();
+        $health   = isset($data['health']) ? intval($data['health']) : '';
+        $position = isset($data['position']) ? sanitize_text_field(wp_unslash($data['position'])) : '';
+        $nonce    = isset($data['nonce']) ? sanitize_text_field($data['nonce']) : '';
 
-        if (false === in_array('', [$health, $user, $position], true) && 0 === $health) {
-            $explore_enemies = get_user_meta($user, 'explore_enemies', true);
-
-            if (false === empty($explore_enemies)) {
-                $explore_enemies[] = $position;
-            } else {
-                $explore_enemies = [$position];
-            }
-
-            update_user_meta($user, 'explore_enemies', $explore_enemies);
+        if (
+            empty($nonce)
+            || !wp_verify_nonce($nonce, 'orbem_wp_rest')
+        ) {
+            return rest_ensure_response([
+                'success' => false,
+                'data'    => esc_html__('Invalid nonce', 'orbem-studio'),
+            ]);
         }
+
+        if (0 !== $health || '' === $position || 0 >= $userid) {
+            return rest_ensure_response([
+                'success' => false,
+                'data'    => esc_html__('Missing required data point', 'orbem-studio'),
+            ]);
+        }
+
+        $explore_enemies = get_user_meta($userid, 'explore_enemies', true);
+
+        if (false === empty($explore_enemies)) {
+            $explore_enemies[] = $position;
+        } else {
+            $explore_enemies = [$position];
+        }
+
+        update_user_meta($userid, 'explore_enemies', $explore_enemies);
+
+        return rest_ensure_response( [
+            'success' => true,
+            'data'    => esc_html__('success', 'orbem-studio'),
+        ] );
     }
 
     /**
      * Call back function for rest route that saves completed missions.
-     * @param object $request The arg values from rest route.
+     * @param WP_REST_Request $request The arg values from rest route.
+     * @return WP_REST_Response
      */
-    public function saveMission(object $request)
+    public function saveMission(WP_REST_Request $request): WP_REST_Response
     {
-        // Get the JSON string from the request body
-        $json_string = $request->get_body();
+        $user   = wp_get_current_user();
+        $userid = (int) $user->ID;
 
-        // Decode the JSON string into a PHP associative array
-        $return = json_decode($json_string, true);
-
-        // Handle errors in decoding JSON
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            return new WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
+        // Endpoint intentionally accessible to all authenticated users.
+        if (0 === $userid) {
+            return rest_ensure_response([
+                'success' => false,
+                'data'    => esc_html__('User not authenticated', 'orbem-studio'),
+            ]);
         }
 
-        $user = isset($return['userid']) ? intval($return['userid']) : '';
-        $mission = isset($return['mission']) ? sanitize_text_field(wp_unslash($return['mission'])) : '';
+        // Get request data.
+        $data    = $request->get_json_params();
+        $mission = isset($data['mission']) ? sanitize_text_field(wp_unslash($data['mission'])) : '';
+        $nonce   = isset($data['nonce']) ? sanitize_text_field($data['nonce']) : '';
 
-        if (false === in_array('', [$user, $mission], true)) {
-            $explore_missions = get_user_meta($user, 'explore_missions', true);
+        if (
+            empty($nonce)
+            || !wp_verify_nonce($nonce, 'orbem_wp_rest')
+        ) {
+            return rest_ensure_response([
+                'success' => false,
+                'data'    => esc_html__('Invalid nonce', 'orbem-studio'),
+            ]);
+        }
 
-            if (false === empty($explore_missions)) {
-                if (false === in_array($mission, $explore_missions, true)) {
-                    $explore_missions[] = $mission;
-                }
-            } else {
-                $explore_missions = [$mission];
+        if ('' === $mission || 0 >= $userid) {
+            return rest_ensure_response([
+                'success' => false,
+                'data'    => esc_html__('Missing mission or invalid user', 'orbem-studio'),
+            ]);
+        }
+
+        $explore_missions = get_user_meta($userid, 'explore_missions', true);
+        $explore_missions = is_array($explore_missions) ? $explore_missions : [];
+
+        if (false === empty($explore_missions)) {
+            if (false === in_array($mission, $explore_missions, true)) {
+                $explore_missions[] = $mission;
             }
-
-            update_user_meta($user, 'explore_missions', $explore_missions);
+        } else {
+            $explore_missions = [$mission];
         }
+
+        update_user_meta($userid, 'explore_missions', $explore_missions);
+
+        return rest_ensure_response( [
+            'success' => true,
+            'data'    => esc_html__('success', 'orbem-studio'),
+        ] );
     }
 
     /**
      * Call back function for rest route that equips a new item on the player.
-     * @param object $request The arg values from rest route.
+     * @param WP_REST_Request $request The arg values from rest route.
+     * @return WP_REST_Response
      */
-    public function equipNewItem(object $request)
+    public function equipNewItem(WP_REST_Request $request): WP_REST_Response
     {
-        // Get the JSON string from the request body
-        $json_string = $request->get_body();
+        $user     = wp_get_current_user();
+        $userid = (int) $user->ID;
 
-        // Decode the JSON string into a PHP associative array
-        $data = json_decode($json_string, true);
-
-        // Handle errors in decoding JSON
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            return new WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
+        // Endpoint intentionally accessible to all authenticated users.
+        if (0 === $userid) {
+            return rest_ensure_response([
+                'success' => false,
+                'data'    => esc_html__('User not authenticated', 'orbem-studio'),
+            ]);
         }
 
-        // Process the data (e.g., register the user)
-        // Assuming you expect 'username' and 'email' in the JSON data
-        $type = sanitize_text_field($data['type']);
-        $item_id = $data['itemid'];
-        $user = intval($data['userid']);
-        $amount = intval($data['amount']);
+        // Get request data.
+        $data    = $request->get_json_params();
+        $type    = isset($data['type']) ? sanitize_key($data['type']) : '';
+        $item_id = isset($data['itemid']) ? intval($data['itemid']) : '';
+        $amount  = isset($data['amount']) ? intval($data['amount']) : '';
         $unequip = false === empty($data['unequip']) ? 'true' === sanitize_text_field(wp_unslash($data['unequip'])) : '';
+        $nonce   = isset($data['nonce']) ? sanitize_text_field($data['nonce']) : '';
 
-        $current_equipped = get_user_meta($user, 'explore_current_' . $type, true);
+        if (
+            empty($nonce)
+            || !wp_verify_nonce($nonce, 'orbem_wp_rest')
+        ) {
+            return rest_ensure_response([
+                'success' => false,
+                'data'    => esc_html__('Invalid nonce', 'orbem-studio'),
+            ]);
+        }
+
+        $current_equipped = get_user_meta($userid, 'explore_current_' . $type, true);
         $current_equipped = false === empty($current_equipped) ? $current_equipped : [];
-        $effect_type = get_post_meta($item_id, 'explore-value-type', true);
-        $the_effect_type = '';
+        $the_effect_type  = '';
+
+        if (!$item_id || !get_post($item_id)) {
+            return rest_ensure_response([
+                'success' => false,
+                'data'    => esc_html__('Invalid item', 'orbem-studio'),
+            ]);
+        }
+
+        $effect_type = '' !== $item_id ? get_post_meta($item_id, 'explore-value-type', true) : '';
 
         if ( true === in_array($effect_type, ['mana', 'health', 'power'], true)) {
             $the_effect_type = $effect_type;
@@ -575,7 +796,7 @@ class Explore
         if (false === $unequip && false === empty($current_equipped[$the_effect_type])) {
             if (true === is_array($current_equipped[$the_effect_type])) {
                 foreach ($current_equipped[$the_effect_type] as $current_array) {
-                    if (false === in_array(intval($item_id), array_keys($current_array), true)) {
+                    if (false === in_array($item_id, array_keys($current_array), true)) {
                         $current_equipped[$the_effect_type][] = [$item_id => $amount];
                     }
                 }
@@ -590,422 +811,618 @@ class Explore
             $current_equipped = [$item_id];
         }
 
+        if (0 >= $userid) {
+            return rest_ensure_response([
+                'success' => false,
+                'data'    => esc_html__('Invalid user', 'orbem-studio'),
+            ]);
+        }
+
         update_user_meta(
-            $user,
+            $userid,
             'explore_current_' . $type,
             $current_equipped
         );
 
-        wp_send_json_success('equipped ' . $item_id);
+        return rest_ensure_response( [
+            'success' => true,
+            'data'    => esc_html__('equipped' . $item_id, 'orbem-studio'),
+        ] );
     }
 
     /**
      * Call back function for rest route that storages items.
-     * @param object $request The arg values from rest route.
+     * @param WP_REST_Request $request The arg values from rest route.
+     * @return WP_REST_Response
      */
-    public function saveStorageItem(object $request)
+    public function saveStorageItem(WP_REST_Request $request): WP_REST_Response
     {
-        // Get the JSON string from the request body
-        $json_string = $request->get_body();
+        $user     = wp_get_current_user();
+        $userid = (int) $user->ID;
 
-        // Decode the JSON string into a PHP associative array
-        $return = json_decode($json_string, true);
-
-        // Handle errors in decoding JSON
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            return new WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
+        // Endpoint intentionally accessible to all authenticated users.
+        if (0 === $userid) {
+            return rest_ensure_response([
+                'success' => false,
+                'data'    => esc_html__('User not authenticated', 'orbem-studio'),
+            ]);
         }
 
-        $default_weapon = get_option('explore_default_weapon', false);
-        $default_weapon_obj = get_posts(['name' => $default_weapon, 'posts_per_page' => 1, 'post_type' => 'explore-weapon'])[0];
-        $user = isset($return['user']) ? intval($return['user']) : '';
-        $id = isset($return['id']) ? intval($return['id']) : '';
-        $value = isset($return['value']) ? intval($return['value']) : '';
-        $type = isset($return['type']) ? sanitize_text_field(wp_unslash($return['type'])) : '';
-        $name = isset($return['name']) ? sanitize_text_field(wp_unslash($return['name'])) : '';
-        $remove = isset($return['remove']) && 'true' === sanitize_text_field(wp_unslash($return['remove']));
-        $menu_map = $this->getMenuType($type);
+        // Get request data.
+        $data  = $request->get_json_params();
+        $nonce = isset($data['nonce']) ? sanitize_text_field($data['nonce']) : '';
 
-        if (false === in_array('', [$id, $type, $user, $name, $value], true)) {
-            $current_storage_items = get_user_meta($user, 'explore_storage', true);
-            $item_subtype = get_post_meta($id, 'explore-value-type', true);
-            $subtype = '';
-
-            if ($type !== $item_subtype) {
-                $subtype = $item_subtype;
-            }
-
-            // If remove is true then remove the provided item.
-            if (true === $remove) {
-                foreach($current_storage_items[$menu_map] as $index => $storage_item) {
-                    if ($name === $storage_item['name']) {
-                        if (false === empty($storage_item['count']) && 1 < $storage_item['count']) {
-                            $current_storage_items[$menu_map][$index]['count'] = $storage_item['count'] - 1;
-                        } else {
-                            unset($current_storage_items[$menu_map][$index]);
-                        }
-                    }
-                }
-            } else {
-                $new_item = [
-                    'id'    => $id,
-                    'name'  => $name,
-                    'type'  => $type,
-                    'value' => $value,
-                ];
-
-                if (false === empty($subtype)) {
-                    $new_item['subtype'] = $subtype;
-                }
-
-                $has_dupe = false;
-
-                if (true === empty($current_storage_items)) {
-                    $current_storage_items = ['items' => [], 'weapons' => [['name' => $default_weapon, 'type' => 'weapons', 'id' => $default_weapon_obj->ID]], 'gear' => []];
-                } else {
-                    foreach ($current_storage_items[$menu_map] as $index => $item) {
-                        if ($name === $item['name']) {
-                            $count                                             = $item['count'] ?? 1;
-                            $current_storage_items[$menu_map][$index]['count'] = 'weapons' === $menu_map ? 1 : $count + 1;
-                            $has_dupe                                          = true;
-                        }
-                    }
-                }
-
-                if (false === $has_dupe) {
-                    $current_storage_items[$menu_map][] = $new_item;
-                }
-            }
-
-            update_user_meta($user, 'explore_storage', $current_storage_items);
-
-            if (true === in_array($menu_map, ['gear', 'weapons'])) {
-                $this->savePoint($user, $menu_map, 0 , $name);
-            }
+        if (
+            empty($nonce)
+            || !wp_verify_nonce($nonce, 'orbem_wp_rest')
+        ) {
+            return rest_ensure_response([
+                'success' => false,
+                'data'    => esc_html__('Invalid nonce', 'orbem-studio'),
+            ]);
         }
-    }
 
-    /**
-     * Map for menu item versus item type.
-     *
-     * @param string $menu_type
-     * @return string
-     */
-    public function getMenuType(string $menu_type ): string
-    {
-        $menu_map = [
-            'health' => 'items',
-            'mana' => 'items',
+        $default_weapon     = get_option('explore_default_weapon', false);
+        $default_weapon_obj = false !== $default_weapon ?
+            get_posts(
+                [
+                    'name'             => sanitize_text_string($default_weapon),
+                    'posts_per_page'   => 1,
+                    'post_type'        => 'explore-weapon',
+                    'suppress_filters' => false,
+                    'post_status'      => 'publish',
+                    'no_found_rows'    => true,
+                ]
+            ) :
+            '';
+        $default_weapon_obj_id = true === isset($default_weapon_obj[0]) ? $default_weapon_obj[0]->ID : false;
+        $id                    = isset($data['id']) ? intval($data['id']) : '';
+        $value                 = isset($data['value']) ? intval($data['value']) : '';
+        $type                  = isset($data['type']) ? sanitize_text_field(wp_unslash($data['type'])) : '';
+        $name                  = isset($data['name']) ? sanitize_text_field(wp_unslash($data['name'])) : '';
+        $remove                = isset($data['remove']) && 'true' === sanitize_text_field(wp_unslash($data['remove']));
+
+        if ('' === $type || '' === $name || '' === $value || 0 >= $userid) {
+            return rest_ensure_response([
+                'success' => false,
+                'data'    => esc_html__('Missing data point', 'orbem-studio'),
+            ]);
+        }
+
+        if ('' === $id || !get_post($id)) {
+            return rest_ensure_response([
+                'success' => false,
+                'data'    => esc_html__('Invalid post id', 'orbem-studio'),
+            ]);
+        }
+
+        $menu_map = match($type) {
             'gear' => 'gear',
-            'weapons' => 'weapons'
-        ];
+            'weapons' => 'weapons',
+            default => 'items'
+        };
 
-        return $menu_map[$menu_type];
+        $current_storage_items = get_user_meta($userid, 'explore_storage', true);
+        $item_subtype          = get_post_meta($id, 'explore-value-type', true);
+        $subtype               = '';
+        $menu_map_array        = $current_storage_items[$menu_map] ?? [];
+
+        if ($type !== $item_subtype) {
+            $subtype = $item_subtype;
+        }
+
+        // If remove is true then remove the provided item.
+        if (true === $remove) {
+            foreach($menu_map_array as $index => $storage_item) {
+                $storage_item_name = $storage_item['name'] ?? '';
+
+                if ($name === $storage_item_name) {
+                    if (false === empty($storage_item['count']) && 1 < $storage_item['count']) {
+                        $menu_map_array[$index]['count'] = $storage_item['count'] - 1;
+                    } else {
+                        unset($menu_map_array[$index]);
+                    }
+                }
+            }
+        } else {
+            $new_item = [
+                'id'    => $id,
+                'name'  => $name,
+                'type'  => $type,
+                'value' => $value,
+            ];
+
+            if (false === empty($subtype)) {
+                $new_item['subtype'] = $subtype;
+            }
+
+            $has_dupe             = false;
+            $default_weapon_array = false !== $default_weapon_obj_id ? ['name' => $default_weapon, 'type' => 'weapons', 'id' => $default_weapon_obj_id] : [];
+
+            if (true === empty($current_storage_items)) {
+                $menu_map_array = ['items' => [], 'weapons' => [$default_weapon_array], 'gear' => []];
+            } else {
+                foreach ($menu_map_array as $index => $item) {
+                    if ($name === $item['name']) {
+                        $count                           = $item['count'] ?? 1;
+                        $menu_map_array[$index]['count'] = 'weapons'=== $menu_map ? 1 : $count + 1;
+                        $has_dupe                        = true;
+                    }
+                }
+            }
+
+            if (false === $has_dupe) {
+                $menu_map_array[] = $new_item;
+            }
+        }
+
+        $current_storage_items[$menu_map] = $menu_map_array;
+
+        update_user_meta($userid, 'explore_storage', $current_storage_items);
+
+        if (true === in_array($menu_map, ['gear', 'weapons'])) {
+            $this->savePoint($userid, $menu_map, 0 , $name);
+        }
+
+        return rest_ensure_response( [
+            'success' => true,
+            'data'    => esc_html__('success', 'orbem-studio'),
+        ] );
     }
 
     /**
      * Call back function for rest route that saves game settings.
-     * @param object $request The arg values from rest route.
+     * @param WP_REST_Request $request The arg values from rest route.
+     * @return WP_REST_Response
      */
-    public function saveSettings(object $request)
+    public function saveSettings(WP_REST_Request $request): WP_REST_Response
     {
-        // Get the JSON string from the request body
-        $json_string = $request->get_body();
+        $user   = wp_get_current_user();
+        $userid = (int) $user->ID;
 
-        // Decode the JSON string into a PHP associative array
-        $data = json_decode($json_string, true);
-
-        // Handle errors in decoding JSON
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            return new WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
+        // Endpoint intentionally accessible to all authenticated users.
+        if (0 === $userid) {
+            return rest_ensure_response([
+                'success' => false,
+                'data'    => esc_html__('User not authenticated', 'orbem-studio'),
+            ]);
         }
 
-        // Process the data (e.g., register the user)
-        // Assuming you expect 'username' and 'email' in the JSON data
-        $music = intval($data['music']);
-        $sfx = intval($data['sfx']);
-        $talking = intval($data['talking']);
-        $userid = intval($data['userid']);
+        // Get request data.
+        $data    = $request->get_json_params();
+        $music   = isset($data['music']) ? intval($data['music']) : '';
+        $sfx     = isset($data['sfx']) ? intval($data['sfx']) : '';
+        $talking = isset($data['talking']) ? intval($data['talking']) : '';
+        $nonce   = isset($data['nonce']) ? sanitize_text_field($data['nonce']) : '';
 
-        if (false === in_array('', [$music, $userid, $sfx, $talking], true)) {
-            update_user_meta($userid, 'explore_settings', ['music' => $music, 'sfx' => $sfx, 'talking' => $talking,]);
+        if (
+            empty($nonce)
+            || !wp_verify_nonce($nonce, 'orbem_wp_rest')
+        ) {
+            return rest_ensure_response([
+                'success' => false,
+                'data'    => esc_html__('Invalid nonce', 'orbem-studio'),
+            ]);
         }
+
+        if (!is_numeric($music)|| !is_numeric($sfx) || !is_numeric($talking)) {
+            return rest_ensure_response( [
+                'success' => false,
+                'data'    => esc_html__('Missing data point', 'orbem-studio'),
+            ] );
+        }
+
+        update_user_meta($userid, 'explore_settings', ['music' => $music, 'sfx' => $sfx, 'talking' => $talking,]);
+
+        return rest_ensure_response( [
+            'success' => true,
+            'data'    => esc_html__('success', 'orbem-studio'),
+        ] );
     }
 
     /**
      * Call back function for rest route that adds points to user's explore game.
-     * @param object $request The arg values from rest route.
+     * @param WP_REST_Request $request The arg values from rest route.
+     * @return WP_REST_Response
      */
-    public function getOrbemArea(object $request)
+    public function getOrbemArea(WP_REST_Request $request): WP_REST_Response
     {
-        // Get the JSON string from the request body
-        $json_string = $request->get_body();
+        $user   = wp_get_current_user();
+        $userid = (int) $user->ID;
 
-        // Decode the JSON string into a PHP associative array
-        $return = json_decode($json_string, true);
-
-        // Handle errors in decoding JSON
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            return new WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
+        // Endpoint intentionally accessible to all authenticated users.
+        if (0 === $userid) {
+            return rest_ensure_response([
+                'success' => false,
+                'data'    => esc_html__('User not authenticated', 'orbem-studio'),
+            ]);
         }
 
-        $position = isset($return['position']) ? sanitize_text_field(wp_unslash($return['position'])) : '';
-        $area = get_posts(['post_type' => 'explore-area', 'name' => $position]);
-        $is_area_cutscene = get_post_meta($area[0]->ID, 'explore-is-cutscene', true);
+        // Get request data.
+        $data  = $request->get_json_params();
+        $nonce = isset($data['nonce']) ? sanitize_text_field($data['nonce']) : '';
 
-        // Get content from the new explore-area post type.
-        $userid = $return['userid'] ?? get_current_user_id();
-        $explore_points = self::getExplorePoints($position);
-        $explore_cutscenes = self::getExplorePosts($position, 'explore-cutscene');
-        $explore_minigames = self::getExplorePosts($position, 'explore-minigame');
-        $explore_missions = self::getExplorePosts($position, 'explore-mission');
-        $explore_walls = self::getExplorePosts($position, 'explore-wall');
+        if (
+            empty($nonce)
+            || !wp_verify_nonce($nonce, 'orbem_wp_rest')
+        ) {
+            return rest_ensure_response([
+                'success' => false,
+                'data'    => esc_html__('Invalid nonce', 'orbem-studio'),
+            ]);
+        }
+
+        $position = isset($data['position']) ? sanitize_title(wp_unslash($data['position'])) : '';
+        $area     = '' !== $position ? get_posts([
+            'post_type'        => 'explore-area',
+            'name'             => $position,
+            'posts_per_page'   => 1,
+            'suppress_filters' => false,
+            'post_status'      => 'publish',
+            'no_found_rows'    => true,
+        ]) : '';
+
+        if (true === empty($area[0])) {
+            return rest_ensure_response( [
+                'success' => false,
+                'data'    => esc_html__('Area not provided', 'orbem-studio'),
+            ] );
+        }
+
+        $area_id            = $area[0]->ID ?? false;
+        $is_area_cutscene   = false !== $area_id ? get_post_meta($area_id, 'explore-is-cutscene', true) : false;
+        $explore_points     = self::getExplorePoints($position);
+        $explore_cutscenes  = self::getExplorePosts($position, 'explore-cutscene');
+        $explore_minigames  = self::getExplorePosts($position, 'explore-minigame');
+        $explore_missions   = self::getExplorePosts($position, 'explore-mission');
+        $explore_walls      = self::getExplorePosts($position, 'explore-wall');
         $explore_explainers = self::getExplorePosts($position, 'explore-explainer');
-        $explore_abilities = Explore::getExploreAbilities();
-        $map_items = self::getMapItemHTML($explore_points, $userid, $position);
-        $explainers_menu = self::getExplainerHTML($explore_explainers, 'menu');
-        $explainers_map = self::getExplainerHTML($explore_explainers, 'map');
+        $explore_abilities  = Explore::getExploreAbilities();
+
+        // HTML generated internally from trusted templates.
+        $map_items             = self::getMapItemHTML($explore_points, $position);
+        $explainers_menu       = self::getExplainerHTML($explore_explainers, 'menu');
+        $explainers_map        = self::getExplainerHTML($explore_explainers, 'map');
         $explainers_fullscreen = self::getExplainerHTML($explore_explainers, 'fullscreen');
-        $minigames = self::getMinigameHTML($explore_minigames);
-        $map_communicate = self::getMapCommunicateHTML($position, $userid);
-        $map_cutscenes = self::getMapCutsceneHTML($explore_cutscenes, $position, $userid);
-        $map_abilities = self::getMapAbilitiesHTML($explore_abilities);
+        $minigames             = self::getMinigameHTML($explore_minigames);
+        $map_communicate       = self::getMapCommunicateHTML($position, $userid);
+        $map_cutscenes         = self::getMapCutsceneHTML($explore_cutscenes, $position, $userid);
+        $map_abilities         = self::getMapAbilitiesHTML($explore_abilities);
+
         $is_admin = user_can($userid, 'manage_options');
         $dev_mode = '';
 
         ob_start();
-        include_once $this->plugin->dir_path . 'templates/style-scripts.php';
+        include_once $this->plugin->dir_path . '/templates/style-scripts.php';
         $area_item_styles_scripts = ob_get_clean();
 
         ob_start();
-        include_once $this->plugin->dir_path . 'templates/components/explore-missions.php';
+        include_once $this->plugin->dir_path . '/templates/components/explore-missions.php';
         $map_missions = ob_get_clean();
 
         ob_start();
-        include_once $this->plugin->dir_path . 'templates/components/explore-characters.php';
+        include_once $this->plugin->dir_path . '/templates/components/explore-characters.php';
         $map_characters = ob_get_clean();
 
         update_user_meta($userid, 'current_location', $position);
 
-        if (is_wp_error($area) || !isset($area[0])) {
-            return;
-        }
-
-        if ( $is_admin ) {
+        // Only administrators can view dev mode.
+        if ($is_admin) {
             $item_list = array_merge($explore_points, $explore_minigames, $explore_explainers, $explore_walls);
-            $triggers = Dev_Mode::getTriggers($item_list, $explore_cutscenes, Explore::getExplorePosts($position, 'explore-mission'));
+            $triggers  = Dev_Mode::getTriggers($item_list, $explore_cutscenes, Explore::getExplorePosts($position, 'explore-mission'));
             $item_list = array_merge($item_list, $triggers);
-
-            $dev_mode = Dev_Mode::getDevModeHTML($item_list);
+            $dev_mode  = Dev_Mode::getDevModeHTML();
         }
 
-        $start_direction = get_post_meta($area[0]->ID, 'explore-start-direction', true);
+        $start_direction = false !== $area_id ? get_post_meta($area_id, 'explore-start-direction', true) : '';
         $start_direction = false === empty($start_direction) ? $start_direction : 'down';
 
-        wp_send_json_success(
-            wp_json_encode(
-                [
-                    'map-items' => $map_items,
-                    'minigames' => $minigames,
-                    'map-cutscenes' => $map_cutscenes,
-                    'map-missions' => $map_missions,
-                    'map-characters' => $map_characters,
-                    'map-communicate' => $map_communicate,
-                    'map-explainers' => $explainers_map,
-                    'menu-explainers' => $explainers_menu,
-                    'fullscreen-explainers' => $explainers_fullscreen,
-                    'map-abilities' => $map_abilities,
-                    'map-item-styles-scripts' => $area_item_styles_scripts,
-                    'start-top' => get_post_meta($area[0]->ID, 'explore-start-top', true),
-                    'start-left' => get_post_meta($area[0]->ID, 'explore-start-left', true),
-                    'start-direction' => $start_direction,
-                    'map-svg' => self::getMapSVG($area[0]),
-                    'is-cutscene' => $is_area_cutscene,
-                    'dev-mode' => $dev_mode,
-                ]
-            )
-        );
+        return rest_ensure_response([
+            'success' => true,
+            'data'    => [
+                'map-items'               => $map_items,
+                'minigames'               => $minigames,
+                'map-cutscenes'           => $map_cutscenes,
+                'map-missions'            => $map_missions,
+                'map-characters'          => $map_characters,
+                'map-communicate'         => $map_communicate,
+                'map-explainers'          => $explainers_map,
+                'menu-explainers'         => $explainers_menu,
+                'fullscreen-explainers'   => $explainers_fullscreen,
+                'map-abilities'           => $map_abilities,
+                'map-item-styles-scripts' => $area_item_styles_scripts,
+                'start-top'               => false !== $area_id ? get_post_meta($area_id, 'explore-start-top', true) : '',
+                'start-left'              => false !== $area_id ? get_post_meta($area_id, 'explore-start-left', true) : '',
+                'start-direction'         => $start_direction,
+                'map-svg'                 => self::getMapSVG($area[0]),
+                'is-cutscene'             => $is_area_cutscene,
+                'dev-mode'                => $dev_mode,
+            ],
+        ] );
     }
 
     /**
      * Call back function for rest route that returns item description.
-     * @param object $request The arg values from rest route.
+     * @param WP_REST_Request $request The arg values from rest route.
+     * @return WP_REST_Response
      */
-    public function getItemDescription(object $request)
+    public function getItemDescription(WP_REST_Request $request): WP_REST_Response
     {
-        // Get the JSON string from the request body
-        $json_string = $request->get_body();
+        $user     = wp_get_current_user();
+        $userid   = (int) $user->ID;
 
-        // Decode the JSON string into a PHP associative array
-        $return = json_decode($json_string, true);
-
-        // Handle errors in decoding JSON
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            return new WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
+        // Endpoint intentionally accessible to all authenticated users.
+        if (0 === $userid) {
+            return rest_ensure_response([
+                'success' => false,
+                'data'    => esc_html__('User not authenticated', 'orbem-studio'),
+            ]);
         }
 
-        $item = isset($return['id']) ? intval($return['id']) : false;
-        $userid = isset($return['userid']) ? intval($return['userid']) : false;
+        // Get request data.
+        $data  = $request->get_json_params();
+        $item  = isset($data['id']) ? intval($data['id']) : false;
+        $nonce = isset($data['nonce']) ? sanitize_text_field($data['nonce']) : '';
 
-        if ( false !== $item ) {
-            // Get content from the new explore-area post type.
-            $item_obj = get_post($item);
+        if (
+            empty($nonce)
+            || !wp_verify_nonce($nonce, 'orbem_wp_rest')
+        ) {
+            return rest_ensure_response([
+                'success' => false,
+                'data'    => esc_html__('Invalid nonce', 'orbem-studio'),
+            ]);
+        }
 
-            // Check if equipped.
-            $gear_equipped = get_user_meta( $userid, 'explore_current_gear', true);
-            $content = $item_obj->post_content;
-            $type = get_post_meta($item_obj->ID, 'explore-value-type', true);
-            $item_type = '';
+        if (false === $item) {
+            return rest_ensure_response([
+                'success' => false,
+                'data'    => esc_html__('Item id not provided', 'orbem-studio'),
+            ]);
+        }
 
-            if (true === in_array($type, ['mana', 'health', 'power'], true)) {
-                $item_type = $type;
-            }
+        // Get content from the new explore-area post type.
+        $item_obj = get_post($item);
 
-            // Check equipped gear. IF so change button to unequip.
-            if (false === empty($gear_equipped[$item_type]) && true === is_array($gear_equipped[$item_type])) {
-                foreach ($gear_equipped[$item_type] as $current_array) {
-                    if (true === in_array($item, array_keys($current_array), true)) {
-                        $content = str_replace(['Equip', 'equip', 'Ununequip'],
-                            ['Unequip', 'unequip', 'Unequip'],
-                            $content);
-                    }
+        if (!$item_obj || false === in_array($item_obj->post_type, ['explore-point', 'explore-weapon', 'explore-gear'])) {
+            return rest_ensure_response([
+                'success' => false,
+                'data'    => esc_html__('Item provided is in correct or non existent', 'orbem-studio'),
+            ]);
+        }
+
+        // Check if equipped.
+        $gear_equipped = get_user_meta($userid, 'explore_current_gear', true);
+        $content       = apply_filters('the_content', $item_obj->post_content);
+        $type          = get_post_meta($item_obj->ID, 'explore-value-type', true);
+        $item_type     = '';
+
+        if (true === in_array($type, ['mana', 'health', 'power'], true)) {
+            $item_type = $type;
+        }
+
+        // Check equipped gear. IF so change button to unequip.
+        if (false === empty($gear_equipped[$item_type]) && true === is_array($gear_equipped[$item_type])) {
+            foreach ($gear_equipped[$item_type] as $current_array) {
+                if (true === in_array($item, array_keys($current_array), true)) {
+                    // Modify button label for equipped items (content is controlled).
+                    $content = str_replace(['Equip', 'equip', 'Ununequip'],
+                        ['Unequip', 'unequip', 'Unequip'],
+                        $content);
                 }
             }
-
-            // Return the post content for the supplied item.
-            wp_send_json_success(wp_json_encode($content));
-        } else {
-            wp_send_json_error('Item id not provided');
         }
+
+        // Return the post content for the supplied item.
+        return rest_ensure_response( [
+            'success' => true,
+            'data'    => $content,
+        ] );
     }
 
     /**
      * Call back function for rest route that adds coordinates user's explore game.
-     * @param object $request The arg values from rest route.
+     * @param WP_REST_Request $request The arg values from rest route.
+     * @return WP_REST_Response
      */
-    public function saveCoordinates(object $request)
+    public function saveCoordinates(WP_REST_Request $request): WP_REST_Response
     {
-        // Get the JSON string from the request body
-        $json_string = $request->get_body();
+        $user     = wp_get_current_user();
+        $userid   = (int) $user->ID;
 
-        // Decode the JSON string into a PHP associative array
-        $return = json_decode($json_string, true);
-
-        // Handle errors in decoding JSON
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            return new WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
+        // Endpoint intentionally accessible to all authenticated users.
+        if (0 === $userid) {
+            return rest_ensure_response([
+                'success' => false,
+                'data'    => esc_html__('User not authenticated', 'orbem-studio'),
+            ]);
         }
 
-        $left = isset($return['left']) ? intval($return['left']) : '';
-        $top = isset($return['top']) ? intval($return['top']) : '';
-        $current_user = isset($return['userid']) ? intval($return['userid']) : '';
+        // Get request data.
+        $data  = $request->get_json_params();
+        $nonce = isset($data['nonce']) ? sanitize_text_field($data['nonce']) : '';
 
-        update_user_meta($current_user, 'current_coordinates', ['left'=>$left,'top'=>$top]);
+        if (
+            empty($nonce)
+            || !wp_verify_nonce($nonce, 'orbem_wp_rest')
+        ) {
+            return rest_ensure_response([
+                'success' => false,
+                'data'    => esc_html__('Invalid nonce', 'orbem-studio'),
+            ]);
+        }
+
+        if (
+            ! isset($data['left'], $data['top']) ||
+            ! is_numeric($data['left']) ||
+            ! is_numeric($data['top'])
+        ) {
+            return rest_ensure_response( [
+                'success' => false,
+                'data'    => esc_html__('Incorrect coordinate provided', 'orbem-studio'),
+            ] );
+        }
+
+        $left = intval($data['left']);
+        $top  = intval($data['top']);
+
+        update_user_meta($userid, 'current_coordinates', ['left'=>$left,'top'=>$top]);
+
+        return rest_ensure_response( [
+            'success' => true,
+            'data'    => esc_html__('success', 'orbem-studio'),
+        ] );
     }
 
     /**
      * Call back function to reset explore game.
-     * @param object $request The arg values from rest route.
+     * @param WP_REST_Request $request
+     * @return WP_REST_Response
      */
-    public function resetExplore(object $request)
+    public function resetExplore(WP_REST_Request $request): WP_REST_Response
     {
-        // Get the JSON string from the request body
-        $json_string = $request->get_body();
+        $user   = wp_get_current_user();
+        $userid = (int) $user->ID;
 
-        // Decode the JSON string into a PHP associative array
-        $return = json_decode($json_string, true);
-
-        // Handle errors in decoding JSON
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            return new WP_Error('json_decode_error', 'Invalid JSON data', array('status' => 400));
+        if (0 === $userid) {
+            return rest_ensure_response( [
+                'success' => false,
+                'data'    => esc_html__('Invalid user provided', 'orbem-studio'),
+            ] );
         }
 
-        $current_user = isset($return['userid']) ? intval($return['userid']) : '';
+        $data  = $request->get_json_params();
+        $nonce = isset($data['nonce']) ? sanitize_text_field($data['nonce']) : '';
 
-        delete_user_meta($current_user, 'current_coordinates');
-        delete_user_meta($current_user, 'current_location');
-        delete_user_meta($current_user, 'explore_points');
-        delete_user_meta($current_user, 'explore_enemies');
-        delete_user_meta($current_user, 'explore_missions');
-        delete_user_meta($current_user, 'explore_storage');
-        delete_user_meta($current_user, 'explore_magic');
-        delete_user_meta($current_user, 'explore_current_gear');
-        delete_user_meta($current_user, 'explore_current_weapons');
-        delete_user_meta($current_user, 'explore_missions');
-        delete_user_meta($current_user, 'explore_drag_items');
-        delete_user_meta($current_user, 'explore_characters');
-        delete_user_meta($current_user, 'explore_materialized_items');
-        delete_user_meta($current_user, 'explore_abilities');
-        delete_user_meta($current_user, 'explore_received_communicates');
-        delete_user_meta($current_user, 'explore_previous_cutscene_area');
+        if (
+            empty($nonce)
+            || !wp_verify_nonce($nonce, 'orbem_wp_rest')
+        ) {
+            return rest_ensure_response([
+                'success' => false,
+                'data'    => esc_html__('Invalid nonce', 'orbem-studio'),
+            ]);
+        }
+
+        delete_user_meta($userid, 'current_coordinates');
+        delete_user_meta($userid, 'current_location');
+        delete_user_meta($userid, 'explore_points');
+        delete_user_meta($userid, 'explore_enemies');
+        delete_user_meta($userid, 'explore_missions');
+        delete_user_meta($userid, 'explore_storage');
+        delete_user_meta($userid, 'explore_magic');
+        delete_user_meta($userid, 'explore_current_gear');
+        delete_user_meta($userid, 'explore_current_weapons');
+        delete_user_meta($userid, 'explore_drag_items');
+        delete_user_meta($userid, 'explore_characters');
+        delete_user_meta($userid, 'explore_materialized_items');
+        delete_user_meta($userid, 'explore_abilities');
+        delete_user_meta($userid, 'explore_received_communicates');
+        delete_user_meta($userid, 'explore_previous_cutscene_area');
+
+        return rest_ensure_response( [
+            'success' => true,
+            'data'    => esc_html__('success', 'orbem-studio'),
+        ] );
     }
 
     /**
-     * get Map svg content.
+     * Get map SVG content.
+     *
+     * @param WP_Post $explore_area
+     * @return string|false
      */
-    public static function getMapSVG($explore_area): false|string
+    public static function getMapSVG(WP_Post $explore_area): false|string
     {
-        // Create a stream context with SSL options
-        $context = stream_context_create([
-            'ssl' => [
-                'verify_peer' => false,
-                'verify_peer_name' => false,
-            ],
-        ]);
         $map_url = get_the_post_thumbnail_url($explore_area->ID, 'full');
 
-        if ( false === empty($map_url) ) {
-            // Fetch the image data using the created context
-            $imageData = file_get_contents($map_url, false, $context);
-            $find_string = '<svg';
-            $position = strpos($imageData, $find_string);
-            return substr($imageData, $position);
+        if (empty($map_url)) {
+            return false;
         }
 
-        return false;
+        $response = wp_remote_get($map_url, ['timeout'   => 10]);
+
+        if (is_wp_error($response)) {
+            return false;
+        }
+
+        $image_data = wp_remote_retrieve_body($response);
+
+        if (empty($image_data)) {
+            return false;
+        }
+
+        $position = strpos($image_data, '<svg');
+
+        if (false === $position) {
+            return false;
+        }
+
+        return substr($image_data, $position);
     }
 
     /**
-     * get svg content.
+     * Get SVG content from image URL.
+     *
+     * @param string $image_url
+     * @return string
      */
-    public static function getSVGCode($image_url): string
+    public static function getSVGCode(string $image_url): string
     {
-        // Create a stream context with SSL options
-        $context = stream_context_create([
-            'ssl' => [
-                'verify_peer' => false,
-                'verify_peer_name' => false,
-            ],
-        ]);
+        if (empty( $image_url)) {
+            return '';
+        }
 
-        // Fetch the image data using the created context
-        $imageData = file_get_contents($image_url, false, $context);
-        $find_string   = '<svg';
-        $position = strpos($imageData, $find_string);
-        return substr($imageData, $position);
+        $response = wp_remote_get($image_url, ['timeout'   => 10]);
+
+        if (is_wp_error($response)) {
+            return '';
+        }
+
+        $image_data = wp_remote_retrieve_body($response);
+
+        if (empty($image_data)) {
+            return '';
+        }
+
+        $position = strpos($image_data, '<svg');
+
+        if (false === $position) {
+            return '';
+        }
+
+        return substr($image_data, $position);
     }
-
+///////////////
     /**
      * Grab all the points you can collide with.
+     * @param string $position The area to get game posts from.
      * @return int[]|WP_Post[]
      */
     public static function getExplorePoints($position): array
     {
-        $first_area = get_option('explore_first_area', '');
+        $position   = sanitize_key($position);
+        $first_area = sanitize_key(get_option('explore_first_area', ''));
 
-        $args = [
-            'numberposts' => -1,
-            'post_type' => ['explore-weapon', 'explore-area', 'explore-point', 'explore-character', 'explore-enemy', 'explore-sign', 'explore-wall'],
-            'meta_query' => [
-                [
-                    'key'     => 'explore-area',
-                    'value'   => false === empty($position) ? $position : $first_area,
-                    'compare' => '='
-                ]
-            ]
-        ];
+        if ($position || $first_area) {
+            $args = [
+                'posts_per_page' => -1,
+                'post_type'      => ['explore-weapon', 'explore-area', 'explore-point', 'explore-character', 'explore-enemy', 'explore-sign', 'explore-wall'],
+                'meta_query'     => [
+                    [
+                        'key'     => 'explore-area',
+                        'value'   => $position ?: $first_area,
+                        'compare' => '='
+                    ]
+                ],
+                'no_found_rows'  => true,
+                'post_status'    => 'publish',
+            ];
 
-        return get_posts($args);
+            return get_posts($args);
+        }
+
+        return [];
     }
 
     /**
@@ -1016,10 +1433,16 @@ class Explore
      */
     public static function getWeaponByName(string $weapon_name): ?WP_Post
     {
+        if ('' === $weapon_name) {
+            return null;
+        }
+
         $args = [
-            'post_type' => ['explore-weapon'],
-            'name' => $weapon_name,
-            'numberposts' => 1
+            'post_type'      => 'explore-weapon',
+            'name'           => sanitize_key($weapon_name),
+            'posts_per_page' => 1,
+            'post_status'    => 'publish',
+            'no_found_rows'  => true,
         ];
 
         $posts = get_posts($args);
@@ -1033,21 +1456,41 @@ class Explore
 
     /**
      * Grab all the points you can collide with.
+     * @param string $position
+     * @param string $post_type
      * @return int[]|WP_Post[]
      */
-    public static function getExplorePosts($position, $post_type): array
+    public static function getExplorePosts(string $position, string $post_type): array
     {
+        $allowed_post_types = [
+            'explore-point',
+            'explore-character',
+            'explore-enemy',
+            'explore-sign',
+            'explore-wall',
+            'explore-minigame',
+            'explore-mission',
+            'explore-cutscene',
+            'explore-explainer',
+        ];
+
+        if (false === in_array($post_type, $allowed_post_types, true)) {
+            return [];
+        }
+
         $first_area = get_option('explore_first_area', '');
-        $args = [
-            'post_type' => [$post_type],
-            'meta_query' => [
+        $args       = [
+            'post_type'      => $post_type,
+            'meta_query'     => [
                 [
                     'key'     => 'explore-area',
-                    'value'   => false === empty($position) ? $position : $first_area,
+                    'value'   => false === empty($position) ? sanitize_text_field($position) : $first_area,
                     'compare' => '='
                 ]
             ],
-            'numberposts' => -1,
+            'posts_per_page' => -1,
+            'post_status'    => 'publish',
+            'no_found_rows'  => true,
         ];
 
         return get_posts($args);
@@ -1060,8 +1503,10 @@ class Explore
     public static function getExploreAbilities(): array
     {
         $args = [
-            'post_type' => ['explore-magic'],
+            'post_type'      => 'explore-magic',
             'posts_per_page' => -1,
+            'post_status'    => 'publish',
+            'no_found_rows'  => true,
         ];
 
         return get_posts($args);
@@ -1071,141 +1516,47 @@ class Explore
      * Add map item styles.
      *
      * @action wp_head
+     * @return void
      */
     public function inlineExploreStyles(): void
     {
         $game_page = get_option('explore_game_page', '');
 
         if (false === empty($game_page) && is_page($game_page)) {
-            echo '<script src="https://accounts.google.com/gsi/client" async defer></script>';
-            echo '<meta name="viewport" content="width=device-width, initial-scale=1">';
-
-            $first_area = get_option('explore_first_area', false);
-            $current_location = get_user_meta(get_current_user_id(), 'current_location', true);
-            $position = false === empty($current_location) ? $current_location : get_post_field('post_name', $first_area);
-            $explore_points = self::getExplorePoints($position);
-            $explore_areas = get_posts(['post_type' => 'explore-area', 'numberposts' => -1]);
-            $music_names = '';
-            $setting_icon = get_option('explore_settings_icon', $this->plugin->dir_url . '/assets/src/images/settings-default.svg');
-            $setting_icon = false === empty($setting_icon) ? $setting_icon : $this->plugin->dir_url . '/assets/src/images/settings-default.svg';
-            $storage_icon = get_option('explore_storage_icon', $this->plugin->dir_url . '/assets/src/images/storage-default.svg');
-            $storage_icon = false === empty($storage_icon) ? $storage_icon : $this->plugin->dir_url . '/assets/src/images/storage-default.svg';
-            $characters_icon = get_option('explore_crew_icon', $this->plugin->dir_url . '/assets/src/images/crew-default.svg');
-            $characters_icon = false === empty($characters_icon) ? $characters_icon : $this->plugin->dir_url . '/assets/src/images/crew-default.svg';
-            $cutscene_border_color = get_option('explore_cutscene_border_color', '');
-            $cutscene_border_radius = get_option('explore_cutscene_border_radius', '');
-            $cutscene_border_style = get_option('explore_cutscene_border_style', '');
-            $cutscene_border_size = get_option('explore_cutscene_border_size', '');
-            $character_hover_border = get_option('explore_crewmate_hover_border_color', '');
-            $skip_button_color = get_option('explore_skip_button_color', '');
-            ?>
-            <style id="menu-styles">
-                #settings:not(.engage):before {
-                    color: #000;
-                    content: url("<?php echo esc_html($setting_icon); ?>");
-                    cursor: pointer;
-                    position: absolute;
-                    top: 50%;
-                    transform: translateY(-50%);
-                    width: 50px;
-                }
-
-                #storage:not(.engage):before {
-                    color: #000;
-                    content: url("<?php echo esc_html($storage_icon); ?>");
-                    cursor: pointer;
-                    position: absolute;
-                    top: 50%;
-                    transform: translateY(-50%);
-                    width: 50px;
-                }
-
-                #characters:not(.engage):before {
-                    color: #000;
-                    content: url("<?php echo esc_html($characters_icon); ?>");
-                    cursor: pointer;
-                    position: absolute;
-                    top: 50%;
-                    transform: translateY(-50%);
-                    width: 50px;
-                }
-
-                .map-cutscene .character-name {
-                    border: <?php echo esc_html($cutscene_border_color); ?> solid 2px;
-                }
-
-                .map-cutscene .wp-block-orbem-paragraph-mp3 {
-                    border: <?php echo esc_html($cutscene_border_size . 'px ' . $cutscene_border_style . ' ' . $cutscene_border_color); ?>;
-                    border-radius: <?php echo esc_html($cutscene_border_radius); ?>px;
-                }
-
-                #skip-intro-video, #skip-cutscene-video {
-                    background: <?php echo esc_html($skip_button_color); ?>;
-                }
-
-                html body .game-container #characters .characters-content .characters-form .character-list .character-item:hover {
-                    border: 4px solid <?php echo esc_html($character_hover_border); ?>;
-                }
-            </style>
-            <style id="map-item-styles">
-                <?php foreach($explore_points as $explore_point) :
-                    $top = get_post_meta($explore_point->ID, 'explore-top', true) . 'px';
-                    $left = get_post_meta($explore_point->ID, 'explore-left', true) . 'px';
-                    $height = get_post_meta($explore_point->ID, 'explore-height', true) . 'px';
-                    $width = get_post_meta($explore_point->ID, 'explore-width', true) . 'px';
-                    $map_url = get_the_post_thumbnail_url($explore_point->ID);
-                    $background_url = true === in_array($explore_point->post_type, ['explore-weapon', 'explore-point'], true) ? "background: url(" . $map_url . ") no-repeat;" : '';
-                    $point_type = 'explore-enemy' === $explore_point->post_type ? '.enemy-item' : '.map-item';
-                    ?>
-
-                    body .game-container .default-map <?php echo esc_html($point_type); ?>.<?php echo esc_html($explore_point->post_name); ?>-map-item[data-genre="<?php echo esc_attr($explore_point->post_type); ?>"] {
-                    <?php echo esc_html($background_url); ?>
-                        background-size: cover;
-                        top: <?php echo esc_html($top); ?>;
-                        left: <?php echo esc_html($left); ?>;
-                        <?php echo '0px' !== $height ? 'height: ' . esc_html($height) . ';' : ''; ?>
-                        <?php echo '0px' !== $width ? 'width: ' . esc_html($width) . ';' : ''; ?>
-                    }
-                <?php endforeach; ?>
-            </style>
-            <?php
-
-            foreach($explore_areas as $explore_area):
-                $music = get_post_meta($explore_area->ID, 'explore-music', true);
-                $music_names .= '"' . $explore_area->post_name . '":"' . $music . '",';
-            endforeach;?>
-            <script id="enterable-maps">
-				const musicNames = {<?php echo $music_names; ?>}
-            </script>
-            <?php
+            include_once $this->plugin->dir_path . '/templates/head-code.php';
         }
     }
 
     /**
      * Build html for map items.
-     * @param $explore_points
-     * @param $userid
-     * @param $current_location
+     * @param array $explore_points
+     * @param string $current_location
      * @return string
      */
-    public static function getMapItemHTML($explore_points, $userid, $current_location): string
+    public static function getMapItemHTML(array $explore_points, string $current_location): string
     {
-        $html = '';
-        $userid = $userid ?? get_current_user_id();
-        $dead_ones = get_user_meta($userid, 'explore_enemies', true);
-        $dead_ones = false === empty($dead_ones) ? $dead_ones : [];
-        $health = '';
-        $explore_enemy_type = '';
+        $user   = wp_get_current_user();
+        $userid = (int) $user->ID;
+        $dead_ones = '';
 
-        $missions_for_triggers = get_posts(
+        if (0 !== $userid) {
+            $dead_ones = get_user_meta($userid, 'explore_enemies', true);
+        }
+
+        $html                  = '';
+        $dead_ones             = false === empty($dead_ones) ? $dead_ones : [];
+        $health                = '';
+        $explore_enemy_type    = '';
+        $all_missions = get_posts(
             [
                 'post_type' => 'explore-mission',
-                'numberposts' => 100,
+                'posts_per_page' => -1,
+                'no_found_rows' => true,
                 'post_status' => 'publish',
                 'meta_query' => [
                     [
                         'key'     => 'explore-area',
-                        'value'   => $current_location,
+                        'value'   => sanitize_key($current_location),
                         'compare' => '='
                     ]
                 ]
@@ -1215,425 +1566,426 @@ class Explore
         $mission_trigger_html = '';
 
         // Grab mission trigger points.
-        foreach( $missions_for_triggers as $mission ) {
-            $mission_trigger = get_post_meta($mission->ID, 'explore-mission-trigger', true);
-            $mission_trigger = false === empty($mission_trigger) ? $mission_trigger : '';
+        if (true === is_array($all_missions)) {
+            foreach ($all_missions as $mission) {
+                $mission_trigger = get_post_meta($mission->ID, 'explore-mission-trigger', true);
+                $mission_trigger = false === empty($mission_trigger) ? $mission_trigger : '';
+                $trigger_left = $mission_trigger['left'] ?? '0';
+                $trigger_top = $mission_trigger['top'] ?? '0';
+                $trigger_height = $mission_trigger['height'] ?? '0';
+                $trigger_width = $mission_trigger['width'] ?? '0';
 
-            if (false === empty($mission_trigger['top'])) {
-                $mission_trigger_html .= '<div id="' . $mission->ID . '-t" class="mission-trigger wp-block-group map-item ' . $mission->post_name . '-mission-trigger-map-item is-layout-flow wp-block-group-is-layout-flow"';
-                $mission_trigger_html .= 'style="left:' . $mission_trigger['left'] . 'px;top:' . $mission_trigger['top'] . 'px;height:' . $mission_trigger['height'] . 'px; width:' . $mission_trigger['width'] . 'px;"';
-                $mission_trigger_html .= 'data-trigger="true" data-triggee="' . $mission->post_name . '"';
-                $mission_trigger_html .= ' data-meta="explore-mission-trigger"';
-                $mission_trigger_html .= '></div>';
+                if (false === empty($mission_trigger['top'])) {
+                    $mission_trigger_html .= '<div id="' . esc_attr($mission->ID) . '-t" class="mission-trigger wp-block-group map-item ' . esc_attr($mission->post_name) . '-mission-trigger-map-item is-layout-flow wp-block-group-is-layout-flow"';
+                    $mission_trigger_html .= 'style="left:' . esc_attr($trigger_left) . 'px;top:' . esc_attr($trigger_top) . 'px;height:' . esc_attr($trigger_height) . 'px; width:' . esc_attr($trigger_width) . 'px;"';
+                    $mission_trigger_html .= 'data-trigger="true" data-triggee="' . esc_attr($mission->post_name) . '"';
+                    $mission_trigger_html .= ' data-meta="explore-mission-trigger"';
+                    $mission_trigger_html .= '></div>';
+                }
             }
         }
 
-        foreach( $explore_points as $explore_point ) {
-            if ('explore-enemy' === $explore_point->post_type) {
-                $health = get_post_meta($explore_point->ID, 'explore-health', true);
-                $explore_enemy_type = get_post_meta($explore_point->ID, 'explore-enemy-type', true);
+        if (false === empty($explore_points)) {
+            foreach ($explore_points as $explore_point) {
+                $missions = [];
+                $enemy_missions = [];
+                $explore_point_meta = get_post_meta($explore_point->ID);
 
-                if (true === isset($dead_ones[$explore_point->post_name])) {
-                    continue;
-                }
-            }
-
-            $boss_waves = get_post_meta($explore_point->ID, 'explore-boss-waves', true);
-            $value = get_post_meta($explore_point->ID, 'value', true);
-            $timer = get_post_meta($explore_point->ID, 'explore-timer', true);
-            $timer = false === empty($timer['explore-timer']) ? $timer['explore-timer'] : $timer;
-            $type = get_post_meta($explore_point->ID, 'explore-value-type', true) ?? '';
-            $interaction_type = get_post_meta($explore_point->ID, 'explore-interaction-type', true);
-            $breakable = false === empty($interaction_type) && 'breakable' === $interaction_type;
-            $collectable = false === empty($interaction_type) && 'collectable' === $interaction_type;
-            $draggable = false === empty($interaction_type) && 'draggable' === $interaction_type;
-            $is_hazard = false === empty($interaction_type) && 'hazard' === $interaction_type;
-            $is_strong = get_post_meta(  $explore_point->ID, 'explore-is-strong', true);
-            $is_strong = false === empty($is_strong) ? $is_strong : false;
-            $top = get_post_meta($explore_point->ID, 'explore-top', true) . 'px';
-            $left = get_post_meta($explore_point->ID, 'explore-left', true) . 'px';
-            $height = get_post_meta($explore_point->ID, 'explore-height', true);
-            $width = get_post_meta($explore_point->ID, 'explore-width', true);
-            $walking_path = get_post_meta($explore_point->ID, 'explore-path', true);
-            $walking_speed = get_post_meta($explore_point->ID, 'explore-speed', true);
-            $time_between = get_post_meta($explore_point->ID, 'explore-time-between', true);
-            $remove_after_cutscene = get_post_meta($explore_point->ID, 'explore-remove-after-cutscene', true);
-            $repeat = get_post_meta($explore_point->ID, 'explore-repeat', true);
-            $disappear = get_post_meta($explore_point->ID, 'explore-disappear', true);
-            $layer = get_post_meta($explore_point->ID, 'explore-layer', true);
-            $passable = get_post_meta($explore_point->ID, 'explore-passable', true);
-            $passable = false === empty($passable) && 'yes' === $passable;
-            $interacted_with = get_post_meta($explore_point->ID, 'explore-interacted', true);
-            $crew_mate = get_post_meta($explore_point->ID, 'explore-crew-mate', true);
-            $path_trigger = get_post_meta($explore_point->ID, 'explore-path-trigger', true);
-            $path_trigger = false === empty($path_trigger) ? $path_trigger : '';
-            $path_trigger_left = false === empty($path_trigger['left']) ? $path_trigger['left'] : '';
-            $path_trigger_top = false === empty($path_trigger['top']) ? $path_trigger['top'] : '';
-            $path_trigger_height = false === empty($path_trigger['height']) ? $path_trigger['height'] : '';
-            $path_trigger_width = false === empty($path_trigger['width']) ? $path_trigger['width'] : '';
-            $path_trigger_cutscene = false === empty($path_trigger['cutscene']) ? $path_trigger['cutscene'] : '';
-            $materialize_item_trigger = get_post_meta($explore_point->ID, 'explore-materialize-item-trigger', true);
-            $materialize_after_cutscene = get_post_meta($explore_point->ID, 'explore-materialize-after-cutscene', true);
-            $wanderer = get_post_meta( $explore_point->ID, 'explore-wanderer', true);
-            $materialize_item_trigger = $materialize_item_trigger ?? false;
-            $is_materialized_item_triggered = self::isMaterializedItemTriggered($explore_point->post_name, $current_location, $userid);
-            $has_minigame = get_post_meta($explore_point->ID, 'explore-minigame', true);
-            $hazard_remove = false;
-            $explore_attack = get_post_meta($explore_point->ID, 'explore-attack', true);
-            $weapon_strength = false === empty($explore_attack) ? wp_json_encode($explore_attack) : '""';
-            $rotation = get_post_meta($explore_point->ID, 'explore-rotation', true);
-            $item_image = get_the_post_thumbnail_url($explore_point->ID);
-            $video_override = get_post_meta($explore_point->ID, 'explore-video-override', true);
-            $missions = get_posts(
-                [
-                    'post_type' => 'explore-mission',
-                    'numberposts' => 1,
-                    'post_status' => 'publish',
-                    'meta_query' => [
-                        [
-                            'key'     => 'explore-area',
-                            'value'   => $current_location,
-                            'compare' => '='
-                        ],
-                        [
-                            'key'     => 'explore-trigger-item',
-                            'value'   => $explore_point->post_name,
-                            'compare' => 'LIKE'
-                        ],
-                    ]
-                ]
-            );
-
-            $enemy_missions = get_posts(
-                [
-                    'post_type' => 'explore-mission',
-                    'numberposts' => 1,
-                    'post_status' => 'publish',
-                    'meta_query' => [
-                        [
-                            'key'     => 'explore-area',
-                            'value'   => $current_location,
-                            'compare' => '='
-                        ],
-                        [
-                            'key'     => 'explore-trigger-enemy',
-                            'value'   => $explore_point->post_name,
-                            'compare' => '='
-                        ]
-                    ]
-                ]
-            );
-
-             // Create onload class:
-             $path_onload = true === empty($path_trigger['left']) && true === empty($path_trigger['cutscene']) && ('explore-character' === $explore_point->post_type || 'explore-enemy' === $explore_point->post_type) ? ' path-onload' : '';
-             $classes = $path_onload;
-
-            // If it's an enemy, and they have health show or if not an enemy show.
-            if (
-                'explore-enemy' !== $explore_point->post_type ||
-                false === in_array($explore_point->post_name, $dead_ones, true)
-             ) {
-
-                // Highjack top/left if draggable and has save drag values.
-                if (true === $draggable) {
-                    $current_drag = get_user_meta($userid, 'explore_drag_items', true);
-
-                    if (false === empty($current_drag) && true === isset($current_drag[$explore_point->post_name])) {
-                        $top = $current_drag[$explore_point->post_name]['top'];
-                        $left = $current_drag[$explore_point->post_name]['left'];
-                    }
-                }
-
-                // Add z index change if layer number is defined.
-                $layer = false === empty($layer) ? 'z-index: ' . $layer . ';' : '';
-
-                $html .= '<div style="' . $layer . 'transform: rotate(' . intval($rotation) . 'deg);left:' . intval($left) . 'px; top:' . intval($top) . 'px;" id="' . $explore_point->ID . '" data-genre="' . $explore_point->post_type . '" data-type="' . esc_attr($type) . '" data-value="' . intval($value) . '"';
-                $html .= 'data-image="' . $item_image . '" ';
-                if ('explore-area' === $explore_point->post_type) {
-                    $map_url = get_post_meta($explore_point->ID, 'explore-map', true);
-
-                    $html .= ' data-map-url="' . $map_url . '" ';
-                }
-
-                if (false === empty($wanderer)) {
-                    $html .= 'data-wanderer="' . esc_attr($wanderer) . '" ';
-                }
-
-                // Explore character crew mate.
-                if ('explore-character' === $explore_point->post_type && 'yes' === $crew_mate) {
-                    $html .= ' data-crewmate="' . $crew_mate . '"';
-                }
-
-                // If hazard, add hazard class.
-                if ($is_hazard) {
-                    $html .= ' data-hazard="true"';
-                }
-
-                // Is item breakable.
-                if (true === $breakable) {
-                    $html .= ' data-breakable="true" ';
-                }
-
-                // Will disappear?
-                $html .= ' data-disappear="' . $disappear . '" ';
-
-                // Will be passable?
-                if ( true === $passable ) {
-                    $html .= ' data-passable="true" ';
-                }
-
-                if ( false === empty($height) && false === empty($width) ) {
-                    $html .= ' data-height="' . esc_attr($height) . '" ';
-                    $html .= ' data-width="' . esc_attr($width) . '" ';
-                }
-
-                // Interacted with image.
-                if ( false === empty($interacted_with)) {
-                    $html .= ' data-interacted="' . esc_url($interacted_with) . '"';
-                }
-
-                if ('explore-point' === $explore_point->post_type && false === empty($timer['time']) && 0 < intval($timer['time'])) {
-                    $html .= ' data-timer="' . esc_attr($timer['time']) . '"';
-                    $html .= ' data-timertriggee="' . esc_attr($timer['trigger']) . '"';
-                }
-
-                // Has Minigame.
-                if (false === empty($has_minigame)) {
-                    $html .= ' data-minigame="' . esc_attr($has_minigame) . '"';
-                }
-
-                // Is strong.
-                if ('yes' === $is_strong ) {
-                    $html .= ' data-isstrong="yes"';
-                }
-
-                // Is item attached to a mission.
-                if (false === empty($missions)) {
-                    $html .= ' data-mission="' . $missions[0]->post_name . '"';
-
-                    $hazard_remove = get_post_meta($missions[0]->ID, 'explore-hazard-remove', true);
-                    $hazard_remove = false === empty($hazard_remove) && true === in_array($explore_point->post_name, explode(',', $hazard_remove));
-                }
-
-                if (false === empty($enemy_missions)) {
-                    $html .= ' data-mission="' . $enemy_missions[0]->post_name . '"';
-
-                    $hazard_remove = get_post_meta($enemy_missions[0]->ID, 'explore-hazard-remove', true);
-                    $hazard_remove = false === empty($hazard_remove) && true === in_array($explore_point->post_name, explode(',', $hazard_remove));
-                }
-
-
-                $explore_path = false === empty($walking_path) ? wp_json_encode($walking_path) : '[{"top":"0","left":"0"}]';
-
-                if ( $walking_speed ) {
-                    $html .= ' data-speed="' . $walking_speed . '" ';
-                }
-
-                if ( $time_between ) {
-                    $html .= ' data-timebetween="' . $time_between . '" ';
-                }
-
-                if ('[{"top":"0","left":"0"}]' !== $explore_path && true === in_array($explore_point->post_type, ['explore-character', 'explore-enemy'])) {
-                    $html .= ' data-path=\'' . $explore_path . '\' ';
-
-                    if ('yes' === $repeat) {
-                        $html .= ' data-repeat="true" ';
-                    }
-
-                    if (false === empty($path_trigger_cutscene)) {
-                        $html .= ' data-trigger-cutscene="' . $path_trigger_cutscene . '"';
-                    }
-                }
-
-                if ('explore-weapon' === $explore_point->post_type ) {
-                    $html .= ' data-strength=' . $weapon_strength . ' ';
-                }
-
-                if (true === $collectable || 'explore-weapon' === $explore_point->post_type) {
-                    $html .= ' data-collectable="true" ';
-                }
-
-                // Materialize this item after this cutscene.
-                if (false === empty($materialize_after_cutscene)) {
-                    $html .= ' data-showaftercutscene="' . $materialize_after_cutscene . '"';
-                }
-
-                if (true === $draggable) {
-                    $html .= ' data-draggable="true" ';
-                }
-
-                if (true === $hazard_remove) {
-                    $html .= ' data-removable="true" ';
-                }
-
-                // Remove this after cutscene specified in data att.
-                if (false === empty($remove_after_cutscene)) {
-                    $html .= ' data-removeaftercutscene="' . esc_attr($remove_after_cutscene) . '"';
-                }
-
-                $pulse_wave = false;
-                $barrage_wave = false;
-
-                // Enemy specific data-points.
                 if ('explore-enemy' === $explore_point->post_type) {
-                    $speed = get_post_meta($explore_point->ID, 'explore-speed', true);
-                    $enemy_speed = get_post_meta($explore_point->ID, 'explore-enemy-speed', true);
-                    $enemy_weapon_type = get_post_meta($explore_point->ID, 'explore-weapon-weakness', true);
+                    $health = $explore_point_meta['explore-health'][0] ?? '';
+                    $explore_enemy_type = $explore_point_meta['explore-enemy-type'][0] ?? '';
 
-                    if ( false === empty($enemy_weapon_type)) {
-                        $html .= 'data-weapon="' . $enemy_weapon_type . '" ';
+                    if (true === isset($dead_ones[$explore_point->post_name])) {
+                        continue;
+                    }
+                }
+
+                $boss_waves = $explore_point_meta['explore-boss-waves'][0] ?? '';
+                $value = $explore_point_meta['value'][0] ?? '';
+                $timer = $explore_point_meta['explore-timer'][0] ?? '';
+                $type = $explore_point_meta['explore-value-type'][0] ?? '';
+                $interaction_type = $explore_point_meta['explore-interaction-type'][0] ?? '';
+                $breakable = 'breakable' === $interaction_type;
+                $collectable = 'collectable' === $interaction_type;
+                $draggable = 'draggable' === $interaction_type;
+                $is_hazard = 'hazard' === $interaction_type;
+                $is_strong = $explore_point_meta['explore-is-strong'][0] ?? '';
+                $is_strong = false === empty($is_strong) ? $is_strong : false;
+                $top = ($explore_point_meta['explore-top'][0] ?? '') . 'px';
+                $left = ($explore_point_meta['explore-left'][0] ?? '') . 'px';
+                $height = $explore_point_meta['explore-height'][0] ?? '';
+                $width = $explore_point_meta['explore-width'][0] ?? '';
+                $walking_path = $explore_point_meta['explore-path'][0] ?? '';
+                $walking_speed = $explore_point_meta['explore-speed'][0] ?? '';
+                $time_between = $explore_point_meta['explore-time-between'][0] ?? '';
+                $remove_after_cutscene = $explore_point_meta['explore-remove-after-cutscene'][0] ?? '';
+                $repeat = $explore_point_meta['explore-repeat'][0] ?? '';
+                $disappear = $explore_point_meta['explore-disappear'][0] ?? '';
+                $layer = $explore_point_meta['explore-layer'][0] ?? '';
+                $passable = (($explore_point_meta['explore-passable'][0] ?? '') === 'yes');
+                $interacted_with = $explore_point_meta['explore-interacted'][0] ?? '';
+                $crew_mate = $explore_point_meta['explore-crew-mate'][0] ?? '';
+                $path_trigger = $explore_point_meta['explore-path-trigger'][0] ?? '';
+                $path_trigger = false === empty($path_trigger) ? $path_trigger : '';
+                $path_trigger_left = false === empty($path_trigger['left']) ? $path_trigger['left'] : '';
+                $path_trigger_top = false === empty($path_trigger['top']) ? $path_trigger['top'] : '';
+                $path_trigger_height = false === empty($path_trigger['height']) ? $path_trigger['height'] : '';
+                $path_trigger_width = false === empty($path_trigger['width']) ? $path_trigger['width'] : '';
+                $path_trigger_cutscene = false === empty($path_trigger['cutscene']) ? $path_trigger['cutscene'] : '';
+                $materialize_item_trigger = $explore_point_meta['explore-materialize-item-trigger'][0] ?? '';
+                $materialize_after_cutscene = $explore_point_meta['explore-materialize-after-cutscene'][0] ?? '';
+                $wanderer = $explore_point_meta['explore-wanderer'][0] ?? '';
+                $materialize_item_trigger = $materialize_item_trigger ?? false;
+                $is_materialized_item_triggered = self::isMaterializedItemTriggered($explore_point->post_name, $current_location, $userid);
+                $has_minigame = $explore_point_meta['explore-minigame'][0] ?? '';
+                $hazard_remove = false;
+                $explore_attack = $explore_point_meta['explore-attack'][0] ?? '';
+                $weapon_strength = false === empty($explore_attack) ? wp_json_encode($explore_attack) : '""';
+                $rotation = $explore_point_meta['explore-rotation'][0] ?? '';
+                $item_image = get_the_post_thumbnail_url($explore_point->ID);
+                $video_override = $explore_point_meta['explore-video-override'][0] ?? '';
+
+                // Create onload class:
+                $path_onload = true === empty($path_trigger_left) && true === empty($path_trigger_cutscene) && ('explore-character' === $explore_point->post_type || 'explore-enemy' === $explore_point->post_type) ? ' path-onload' : '';
+                $classes = $path_onload;
+
+                // If it's an enemy, and they have health show or if not an enemy show.
+                if (
+                    'explore-enemy' !== $explore_point->post_type ||
+                    false === in_array($explore_point->post_name, array_keys($dead_ones), true)
+                ) {
+                    // Highjack top/left if draggable and has save drag values.
+                    // Read-only user meta used for client-side rendering only.
+                    if (true === $draggable && 0 < $userid) {
+                        $current_drag = get_user_meta($userid, 'explore_drag_items', true);
+
+                        if (false === empty($current_drag) && true === isset($current_drag[$explore_point->post_name])) {
+                            $top = $current_drag[$explore_point->post_name]['top'] ?? '0';
+                            $left = $current_drag[$explore_point->post_name]['left'] ?? '0';
+                        }
                     }
 
-                    $html .= 'data-health="' . intval($health) . '" data-healthamount="' . intval($health) . '" data-enemyspeed="' . intval($enemy_speed) . '" data-speed="' . intval($speed) . '" data-enemy-type="' . esc_attr($explore_enemy_type) . '"';
-                    $wave_html = 'data-waves="';
+                    // Add z index change if layer number is defined.
+                    $layer = false === empty($layer) ? 'z-index: ' . esc_attr($layer) . ';' : '';
 
-                    // Boss waves.
-                    if (true === is_array($boss_waves)) {
-                        foreach ($boss_waves as $boss_wave_name => $boss_wave) {
-                            if ('pulse-wave' === $boss_wave_name && 'on' === $boss_wave) {
-                                $pulse_wave = true;
+                    $html .= '<div style="' . esc_attr($layer) . 'transform: rotate(' . esc_attr($rotation) . 'deg);left:' . esc_attr($left) . 'px; top:' . esc_attr($top) . 'px;" id="' . esc_attr($explore_point->ID) . '" data-genre="' . esc_attr($explore_point->post_type) . '" data-type="' . esc_attr($type) . '" data-value="' . esc_attr($value) . '"';
+                    $html .= 'data-image="' . esc_attr($item_image) . '" ';
+
+                    if ('explore-area' === $explore_point->post_type) {
+                        $map_url = $explore_point_meta['explore-map'][0] ?? '';
+
+                        $html .= ' data-map-url="' . esc_attr($map_url) . '" ';
+                    }
+
+                    if (false === empty($wanderer)) {
+                        $html .= 'data-wanderer="' . esc_attr($wanderer) . '" ';
+                    }
+
+                    // Explore character crew mate.
+                    if ('explore-character' === $explore_point->post_type && 'yes' === $crew_mate) {
+                        $html .= ' data-crewmate="' . esc_attr($crew_mate) . '"';
+                    }
+
+                    // If hazard, add hazard class.
+                    if ($is_hazard) {
+                        $html .= ' data-hazard="true"';
+                    }
+
+                    // Is item breakable.
+                    if (true === $breakable) {
+                        $html .= ' data-breakable="true" ';
+                    }
+
+                    // Will disappear?
+                    $html .= ' data-disappear="' . esc_attr($disappear) . '" ';
+
+                    // Will be passable?
+                    if (true === $passable) {
+                        $html .= ' data-passable="true" ';
+                    }
+
+                    if (false === empty($height) && false === empty($width)) {
+                        $html .= ' data-height="' . esc_attr($height) . '" ';
+                        $html .= ' data-width="' . esc_attr($width) . '" ';
+                    }
+
+                    // Interacted with image.
+                    if (false === empty($interacted_with)) {
+                        $html .= ' data-interacted="' . esc_url($interacted_with) . '"';
+                    }
+
+                    if ('explore-point' === $explore_point->post_type && false === empty($timer['time']) && 0 < intval($timer['time'])) {
+                        $html .= ' data-timer="' . esc_attr($timer['time']) . '"';
+                        $html .= ' data-timertriggee="' . esc_attr($timer['trigger']) . '"';
+                    }
+
+                    // Has Minigame.
+                    if (false === empty($has_minigame)) {
+                        $html .= ' data-minigame="' . esc_attr($has_minigame) . '"';
+                    }
+
+                    // Is strong.
+                    if ('yes' === $is_strong) {
+                        $html .= ' data-isstrong="yes"';
+                    }
+
+                    // Get item and enemy triggered missions.
+                    if (0 < count($all_missions)) {
+                        foreach ($all_missions as $mission) {
+                            $trigger_item = get_post_meta($mission->ID, 'explore-trigger-item', true);
+                            $trigger_item = is_array($trigger_item) ? array_keys($trigger_item)[0] : $trigger_item;
+                            $enemy_trigger_item = get_post_meta($mission->ID, 'explore-trigger-enemy', true);
+
+                            if (str_contains($explore_point->post_name, $trigger_item)) {
+                                $missions[] = $mission;
                             }
 
-                            if ('projectile' === $boss_wave_name && 'on' === $boss_wave) {
-                                $barrage_wave = true;
+                            if ($explore_point->post_name === $enemy_trigger_item) {
+                                $enemy_missions[] = $mission;
                             }
-
-                            $wave_html .= $boss_wave_name . ',';
                         }
                     }
 
-                    // Add boss waves.
-                    $html .= $wave_html . '"';
+                    // Is item attached to a mission.
+                    if (false === empty($missions[0])) {
+                        $html .= ' data-mission="' . esc_attr($missions[0]->post_name) . '"';
 
-                    $html .= 'class="wp-block-group enemy-item ' . $explore_point->post_name . '-map-item is-layout-flow wp-block-group-is-layout-flow' . $classes. '"';
-                } else {
-                    $html .= 'class="wp-block-group map-item ' . $explore_point->post_name . '-map-item is-layout-flow wp-block-group-is-layout-flow' . $classes. '"';
-                }
-
-                $html .= '>';
-
-                // If item is video.
-                if (false === empty($video_override)) {
-                    $html .= '<video style="position:absolute;z-index: 1;width: 100%;height:100%;top:0; left:0;" src="' . esc_url($video_override) . '" autoplay loop muted></video>';
-                }
-
-                // Sign.
-                if ('explore-sign' === $explore_point->post_type) {
-                    $html .= '<img src="' . $item_image . '" class="sign-image" />';
-                }
-
-                $html .= true === in_array($explore_point->post_type, ['explore-character', 'explore-sign'], true) ? $explore_point->post_content : '';
-
-                if ( true === in_array($explore_point->post_type, ['explore-character','explore-enemy'], true)){
-                    $character_info = self::getCharacterImages($explore_point, '');
-                    $direction_images = $character_info['direction_images'] ?? false;
-
-                    if ( $direction_images ) {
-                        foreach ($direction_images as $direction_label => $direction_image) {
-                            $fight_animation = false !== stripos($direction_label, 'punch') ? ' fight-image' : '';
-
-                            $html .= '<img height = "';
-                            $html .= false === empty($character_info['height']) ? esc_attr($character_info['height']) : '185';
-                            $html .= 'px" width = "';
-                            $html .= false === empty($character_info['width']) ? esc_attr($character_info['width']) : '115';
-                            $html .= 'px" class="character-icon' . $fight_animation;
-                            $html .= 'static' === $direction_label ? ' engage' : '';
-                            $html .= '" id = "' . $explore_point->post_name;
-                            $html .= esc_attr($direction_label);
-                            $html .= '" src = "';
-                            $html .= esc_url($direction_image) . '" />';
-                        }
+                        $hazard_remove = get_post_meta($missions[0]->ID, 'explore-hazard-remove', true);
+                        $hazard_remove = false === empty($hazard_remove) && true === in_array($explore_point->post_name, explode(',', $hazard_remove));
                     }
-                }
 
-                // Projectile html for enemy.
-                if ('explore-enemy' === $explore_point->post_type && ( 'shooter' === $explore_enemy_type || true === $barrage_wave)) {
-                    $projectile = get_post_meta($explore_point->ID, 'explore-projectile', true);
+                    if (false === empty($enemy_missions[0])) {
+                        $html .= ' data-mission="' . esc_attr($enemy_missions[0]->post_name) . '"';
 
-                    if (false !== $projectile) {
-                        $html .= '<div class="projectile" data-value="' . intval($value) . '"><img alt="projectile" style="width:' . $projectile['width'] . 'px; height: ' . $projectile['height'] . 'px;" src="' . $projectile['image-url'] . '" /></div>';
+                        $hazard_remove = get_post_meta($enemy_missions[0]->ID, 'explore-hazard-remove', true);
+                        $hazard_remove = false === empty($hazard_remove) && true === in_array($explore_point->post_name, explode(',', $hazard_remove));
                     }
-                }
 
-                // Boss data / html.
-                if ('explore-enemy' === $explore_point->post_type && false === empty($boss_waves)) {
-                    if (true === $pulse_wave) {
-                        $html .= '<div class="pulse-wave-container" data-value="' . intval($value) . '" data-hazard="true">';
-                        $html .= self::getSVGCode( str_replace('inc/class-explore.php', 'assets', __FILE__ ) . '/src/images/pulse.svg');
-                        $html .= '</div>';
+
+                    $explore_path = false === empty($walking_path) ? wp_json_encode($walking_path) : '[{"top":"0","left":"0"}]';
+
+                    if ($walking_speed) {
+                        $html .= ' data-speed="' . esc_attr($walking_speed) . '" ';
                     }
-                }
 
-                $html .= '</div>';
+                    if ($time_between) {
+                        $html .= ' data-timebetween="' . esc_attr($time_between) . '" ';
+                    }
 
-                // Trigger HTML.
-                $projectile_trigger = get_post_meta($explore_point->ID, 'explore-projectile-trigger', true);
+                    if ('[{"top":"0","left":"0"}]' !== $explore_path && true === in_array($explore_point->post_type, ['explore-character', 'explore-enemy'])) {
+                        $html .= ' data-path=\'' . esc_attr($explore_path) . '\' ';
 
-                if ('explore-enemy' === $explore_point->post_type && false === empty($projectile_trigger['left'])) {
-                    $html .= '<div id="' . $explore_point->ID . '-t" class="wp-block-group map-item ' . $explore_point->post_name . '-trigger-map-item is-layout-flow wp-block-group-is-layout-flow"';
-                    $html .= 'style="left:' . $projectile_trigger['left'] ?? '0' . 'px;top:' . $projectile_trigger['top'] ?? '0' . 'px;height:' . $projectile_trigger['height'] ?? '0' . 'px; width:' . $projectile_trigger['width'] ?? '0' . 'px;"';
-                    $html .= 'data-trigger="true" data-triggee="' . $explore_point->post_name . '-map-item"';
-                    $html .= ' data-meta="explore-projectile-trigger"';
-                    $html .= '></div>';
-                }
-
-                // Trigger Walking Path.
-                if (true === in_array($explore_point->post_type, ['explore-enemy', 'explore-character'], true) && false === in_array( '', [$path_trigger_width, $path_trigger_height], true)) {
-                    $html .= '<div id="' . $explore_point->ID . '-t" class="path-trigger wp-block-group map-item ' . $explore_point->post_name . '-trigger-map-item is-layout-flow wp-block-group-is-layout-flow"';
-                    $html .= 'style="left:' . $path_trigger_left . 'px;top:' . $path_trigger_top . 'px;height:' . $path_trigger_height . 'px; width:' . $path_trigger_width . 'px;"';
-                    $html .= 'data-trigger="true" data-triggee="' . $explore_point->post_name . '-map-item"';
-                    $html .= ' data-meta="explore-path-trigger"';
-                    $html .= '></div>';
-                }
-
-                // Draggable Destination.
-                if (true === $draggable) {
-                    $drag_dest = get_post_meta($explore_point->ID, 'explore-drag-dest', true);
-
-                    if (false === empty($drag_dest)) {
-                        $drag_top = $drag_dest['top'] ?? '';
-                        $drag_left = $drag_dest['left'] ?? '';
-                        $drag_height = $drag_dest['height'] ?? '';
-                        $drag_width = $drag_dest['width'] ?? '';
-                        $drag_image = $drag_dest['image'] ?? '';
-                        $drag_mission = $drag_dest['mission'] ?? '';
-                        $remove = $drag_dest['remove-after'] ?? 'no';
-                        $offset = $drag_dest['offset'] ?? '10';
-                        $materialize_after_cutscene = $drag_dest['materialize-after-cutscene'] ?? 'none';
-
-                        $html .= '<div id="' . $explore_point->ID . '-d" class="drag-dest wp-block-group map-item ' . $explore_point->post_name . '-drag-dest-map-item is-layout-flow wp-block-group-is-layout-flow"';
-                        $html .= 'style="z-index:0;left:' . esc_html($drag_left) . 'px;top:' . $drag_top . 'px;height:' . $drag_height . 'px; width:' . $drag_width . 'px;"';
-
-                        if ('yes' === $remove) {
-                            $html .= ' data-removable="true" ';
+                        if ('yes' === $repeat) {
+                            $html .= ' data-repeat="true" ';
                         }
 
-                        if (false === empty($materialize_after_cutscene) && 'none' !== $materialize_after_cutscene) {
-                            $html .= ' data-showaftercutscene="' . esc_attr($materialize_after_cutscene) . '" ';
+                        if (false === empty($path_trigger_cutscene)) {
+                            $html .= ' data-trigger-cutscene="' . esc_attr($path_trigger_cutscene) . '"';
+                        }
+                    }
+
+                    if ('explore-weapon' === $explore_point->post_type) {
+                        $html .= ' data-strength=' . esc_attr($weapon_strength) . ' ';
+                    }
+
+                    if (true === $collectable || 'explore-weapon' === $explore_point->post_type) {
+                        $html .= ' data-collectable="true" ';
+                    }
+
+                    // Materialize this item after this cutscene.
+                    if (false === empty($materialize_after_cutscene)) {
+                        $html .= ' data-showaftercutscene="' . esc_attr($materialize_after_cutscene) . '"';
+                    }
+
+                    if (true === $draggable) {
+                        $html .= ' data-draggable="true" ';
+                    }
+
+                    if (true === $hazard_remove) {
+                        $html .= ' data-removable="true" ';
+                    }
+
+                    // Remove this after cutscene specified in data att.
+                    if (false === empty($remove_after_cutscene)) {
+                        $html .= ' data-removeaftercutscene="' . esc_attr($remove_after_cutscene) . '"';
+                    }
+
+                    $pulse_wave = false;
+                    $barrage_wave = false;
+
+                    // Enemy specific data-points.
+                    if ('explore-enemy' === $explore_point->post_type) {
+                        $speed = $explore_point_meta['explore-speed'][0] ?? '';
+                        $enemy_speed = $explore_point_meta['explore-enemy-speed'][0] ?? '';
+                        $enemy_weapon_type = $explore_point_meta['explore-weapon-weakness'][0] ?? '';
+
+                        if (false === empty($enemy_weapon_type)) {
+                            $html .= 'data-weapon="' . esc_attr($enemy_weapon_type) . '" ';
                         }
 
-                        $html .= 'data-offset="' . $offset . '"';
-                        $html .= 'data-meta="explore-drag-dest" ';
-                        $html .= 'data-mission="' . $drag_mission . '">';
-                        $html .= '<img height="' . $drag_height . 'px" width="' . $drag_width . 'px" src="' . $drag_image . '" alt="' . $explore_point->post_title . '-drag-dest">';
-                        $html .= '</div>';
+                        $html .= 'data-health="' . esc_attr($health) . '" data-healthamount="' . esc_attr($health) . '" data-enemyspeed="' . esc_attr($enemy_speed) . '" data-speed="' . esc_attr($speed) . '" data-enemy-type="' . esc_attr($explore_enemy_type) . '"';
+                        $wave_html = 'data-waves="';
+
+                        // Boss waves.
+                        if (true === is_array($boss_waves)) {
+                            foreach ($boss_waves as $boss_wave_name => $boss_wave) {
+                                if ('pulse-wave' === $boss_wave_name && 'on' === $boss_wave) {
+                                    $pulse_wave = true;
+                                }
+
+                                if ('projectile' === $boss_wave_name && 'on' === $boss_wave) {
+                                    $barrage_wave = true;
+                                }
+
+                                $wave_html .= $boss_wave_name . ',';
+                            }
+                        }
+
+                        // Add boss waves.
+                        $html .= wp_kses_post($wave_html) . '"';
+
+                        $html .= 'class="wp-block-group enemy-item ' . esc_attr($explore_point->post_name) . '-map-item is-layout-flow wp-block-group-is-layout-flow' . esc_attr($classes) . '"';
+                    } else {
+                        $html .= 'class="wp-block-group map-item ' . esc_attr($explore_point->post_name) . '-map-item is-layout-flow wp-block-group-is-layout-flow' . esc_attr($classes) . '"';
                     }
-                }
 
-                if (false === empty($materialize_item_trigger['top']) && false === $is_materialized_item_triggered) {
-                    $materialize_item_top = $materialize_item_trigger['top'];
-                    $materialize_item_left = $materialize_item_trigger['left'] ?? '';
-                    $materialize_item_height = $materialize_item_trigger['height'] ?? '';
-                    $materialize_item_width = $materialize_item_trigger['width'] ?? '';
+                    $html .= '>';
 
-                    $html .= '<div class="materialize-item-trigger wp-block-group map-item ' . $explore_point->post_name . '-materialize-item-map-item is-layout-flow wp-block-group-is-layout-flow" data-type="point" data-value="0"';
-                    $html .= ' data-meta="explore-materialize-item-trigger"';
-                    $html .= 'style="z-index:0;left:' . esc_html($materialize_item_left) . 'px;top:' . $materialize_item_top . 'px;height:' . $materialize_item_height . 'px; width:' . $materialize_item_width . 'px;"';
-                    $html .= '">';
+                    // If item is video.
+                    if (false === empty($video_override)) {
+                        $html .= '<video style="position:absolute;z-index: 1;width: 100%;height:100%;top:0; left:0;" src="' . esc_url($video_override) . '" autoplay loop muted></video>';
+                    }
+
+                    // Sign.
+                    if ('explore-sign' === $explore_point->post_type) {
+                        $html .= '<img src="' . esc_url($item_image) . '" class="sign-image" />';
+                    }
+
+                    $html .= true === in_array($explore_point->post_type, ['explore-character', 'explore-sign'], true) ? apply_filters('the_content', $explore_point->post_content) : '';
+
+                    if (true === in_array($explore_point->post_type, ['explore-character', 'explore-enemy'], true)) {
+                        $character_info = self::getCharacterImages($explore_point, '');
+                        $direction_images = $character_info['direction_images'] ?? false;
+
+                        if ($direction_images) {
+                            foreach ($direction_images as $direction_label => $direction_image) {
+                                $fight_animation = false !== stripos($direction_label, 'punch') ? ' fight-image' : '';
+
+                                $html .= '<img height = "';
+                                $html .= false === empty($character_info['height']) ? esc_attr($character_info['height']) : '185';
+                                $html .= 'px" width = "';
+                                $html .= false === empty($character_info['width']) ? esc_attr($character_info['width']) : '115';
+                                $html .= 'px" class="character-icon' . esc_attr($fight_animation);
+                                $html .= 'static' === $direction_label ? ' engage' : '';
+                                $html .= '" id = "' . esc_attr($explore_point->post_name);
+                                $html .= esc_attr($direction_label);
+                                $html .= '" src = "';
+                                $html .= esc_url($direction_image) . '" />';
+                            }
+                        }
+                    }
+
+                    // Projectile html for enemy.
+                    if ('explore-enemy' === $explore_point->post_type && ('shooter' === $explore_enemy_type || true === $barrage_wave)) {
+                        $projectile = $explore_point_meta['explore-projectile'][0] ?? '';
+
+                        if (false !== $projectile) {
+                            $projectile_width = $projectile['width'] ?? '0';
+                            $projectile_height = $projectile['height'] ?? '0';
+                            $projectile_image_url = $projectile['image-url'] ?? '';
+
+                            $html .= '<div class="projectile" data-value="' . esc_attr($value) . '"><img alt="projectile" style="width:' . esc_attr($projectile_width) . 'px; height: ' . esc_attr($projectile_height) . 'px;" src="' . esc_url($projectile_image_url) . '" /></div>';
+                        }
+                    }
+
+                    // Boss data / html.
+                    if ('explore-enemy' === $explore_point->post_type && false === empty($boss_waves)) {
+                        if (true === $pulse_wave) {
+                            $html .= '<div class="pulse-wave-container" data-value="' . esc_attr($value) . '" data-hazard="true">';
+                            $html .= self::getSVGCode(
+                                plugin_dir_url(dirname(__FILE__)) . '../assets/src/images/pulse.svg'
+                            );
+                            $html .= '</div>';
+                        }
+                    }
+
                     $html .= '</div>';
+
+                    // Trigger HTML.
+                    $projectile_trigger = $explore_point_meta['explore-projectile-trigger'][0] ?? '';
+
+                    if ('explore-enemy' === $explore_point->post_type && false === empty($projectile_trigger['left'])) {
+                        $projectile_trigger_width = $projectile_trigger['width'] ?? '0';
+                        $projectile_trigger_height = $projectile_trigger['height'] ?? '0';
+                        $projectile_trigger_top = $projectile_trigger['top'] ?? '0';
+                        $projectile_trigger_left = $projectile_trigger['left'];
+
+
+                        $html .= '<div id="' . esc_attr($explore_point->ID) . '-t" class="wp-block-group map-item ' . esc_attr($explore_point->post_name) . '-trigger-map-item is-layout-flow wp-block-group-is-layout-flow"';
+                        $html .= 'style="left:' . esc_attr($projectile_trigger_left) . 'px;top:' . esc_attr($projectile_trigger_top) . 'px;height:' . esc_attr($projectile_trigger_height) . 'px; width:' . esc_attr($projectile_trigger_width) . 'px;"';
+                        $html .= 'data-trigger="true" data-triggee="' . esc_attr($explore_point->post_name) . '-map-item"';
+                        $html .= ' data-meta="explore-projectile-trigger"';
+                        $html .= '></div>';
+                    }
+
+                    // Trigger Walking Path.
+                    if (true === in_array($explore_point->post_type, ['explore-enemy', 'explore-character'], true) && false === in_array('', [$path_trigger_width, $path_trigger_height], true)) {
+                        $html .= '<div id="' . esc_attr($explore_point->ID) . '-t" class="path-trigger wp-block-group map-item ' . esc_attr($explore_point->post_name) . '-trigger-map-item is-layout-flow wp-block-group-is-layout-flow"';
+                        $html .= 'style="left:' . esc_attr($path_trigger_left) . 'px;top:' . esc_attr($path_trigger_top) . 'px;height:' . esc_attr($path_trigger_height) . 'px; width:' . esc_attr($path_trigger_width) . 'px;"';
+                        $html .= 'data-trigger="true" data-triggee="' . esc_attr($explore_point->post_name) . '-map-item"';
+                        $html .= ' data-meta="explore-path-trigger"';
+                        $html .= '></div>';
+                    }
+
+                    // Draggable Destination.
+                    if (true === $draggable) {
+                        $drag_dest = $explore_point_meta['explore-drag-dest'][0] ?? '';
+
+                        if (false === empty($drag_dest)) {
+                            $drag_top = $drag_dest['top'] ?? '';
+                            $drag_left = $drag_dest['left'] ?? '';
+                            $drag_height = $drag_dest['height'] ?? '';
+                            $drag_width = $drag_dest['width'] ?? '';
+                            $drag_image = $drag_dest['image'] ?? '';
+                            $drag_mission = $drag_dest['mission'] ?? '';
+                            $remove = $drag_dest['remove-after'] ?? 'no';
+                            $offset = $drag_dest['offset'] ?? '10';
+                            $materialize_after_cutscene = $drag_dest['materialize-after-cutscene'] ?? 'none';
+
+                            $html .= '<div id="' . esc_attr($explore_point->ID) . '-d" class="drag-dest wp-block-group map-item ' . esc_attr($explore_point->post_name) . '-drag-dest-map-item is-layout-flow wp-block-group-is-layout-flow"';
+                            $html .= 'style="z-index:0;left:' . esc_attr($drag_left) . 'px;top:' . esc_attr($drag_top) . 'px;height:' . esc_attr($drag_height) . 'px; width:' . esc_attr($drag_width) . 'px;"';
+
+                            if ('yes' === $remove) {
+                                $html .= ' data-removable="true" ';
+                            }
+
+                            if (false === empty($materialize_after_cutscene) && 'none' !== $materialize_after_cutscene) {
+                                $html .= ' data-showaftercutscene="' . esc_attr($materialize_after_cutscene) . '" ';
+                            }
+
+                            $html .= 'data-offset="' . esc_attr($offset) . '"';
+                            $html .= 'data-meta="explore-drag-dest" ';
+                            $html .= 'data-mission="' . esc_attr($drag_mission) . '">';
+                            $html .= '<img height="' . esc_attr($drag_height) . 'px" width="' . esc_attr($drag_width) . 'px" src="' . esc_attr($drag_image) . '" alt="' . esc_attr($explore_point->post_title) . '-drag-dest">';
+                            $html .= '</div>';
+                        }
+                    }
+
+                    if (false === empty($materialize_item_trigger['top']) && false === $is_materialized_item_triggered) {
+                        $materialize_item_top = $materialize_item_trigger['top'];
+                        $materialize_item_left = $materialize_item_trigger['left'] ?? '';
+                        $materialize_item_height = $materialize_item_trigger['height'] ?? '';
+                        $materialize_item_width = $materialize_item_trigger['width'] ?? '';
+
+                        $html .= '<div class="materialize-item-trigger wp-block-group map-item ' . esc_attr($explore_point->post_name) . '-materialize-item-map-item is-layout-flow wp-block-group-is-layout-flow" data-type="point" data-value="0"';
+                        $html .= ' data-meta="explore-materialize-item-trigger"';
+                        $html .= 'style="z-index:0;left:' . esc_attr($materialize_item_left) . 'px;top:' . esc_attr($materialize_item_top) . 'px;height:' . esc_attr($materialize_item_height) . 'px; width:' . esc_attr($materialize_item_width) . 'px;"';
+                        $html .= '">';
+                        $html .= '</div>';
+                    }
                 }
             }
-         }
+        }
 
         $indicator = get_option('explore_indicator_icon', plugin_dir_url(__FILE__) . '../assets/src/images/indicator.svg');
         $indicator = false === empty($indicator) ? $indicator : plugin_dir_url(__FILE__) . '../assets/src/images/indicator.svg';
@@ -1648,73 +2000,97 @@ class Explore
 
          return $html;
     }
-
+////////////////
     /**
-     * @param $item_name
-     * @param $location
-     * @param $userid
+     * @param string $item_name
+     * @param string $location
+     * @param integer $userid
      * @return bool
      */
-    public static function isMaterializedItemTriggered($item_name, $location, $userid): bool
+    public static function isMaterializedItemTriggered(string $item_name, string $location, int $userid): bool
     {
-        $materialize_items = get_user_meta($userid, 'explore_materialized_items', true);
-
-        if (false === empty($materialize_items[$location]) && is_array($materialize_items[$location])) {
-            foreach ($materialize_items[$location] as $materialize_item) {
-                if ( $item_name  === $materialize_item) {
-                    return true;
-                }
-            }
+        if (0 >= $userid) {
+            $user   = wp_get_current_user();
+            $userid = $user->ID;
         }
 
-        return false;
+        if (0 >= $userid) {
+            return false;
+        }
+
+        $materialize_items = get_user_meta($userid, 'explore_materialized_items', true);
+
+        if (
+            ! is_array($materialize_items)
+            || ! isset($materialize_items[$location])
+            || ! is_array($materialize_items[$location])
+        ) {
+            return false;
+        }
+
+        return in_array($item_name, $materialize_items[$location], true);
     }
 
     /**
      * Build html for map items.
-     * @param $explore_cutscenes
-     * @param $position
-     * @param $userid
+     * @param array $explore_cutscenes
+     * @param string $position
+     * @param integer $userid
      * @return string
      */
-    public static function getMapCutsceneHTML($explore_cutscenes, $position, $userid): string
+    public static function getMapCutsceneHTML(array $explore_cutscenes, string $position, int $userid): string
     {
-        $userid = $userid ?? get_current_user_id();
-        $html = '';
-        $area = get_posts(['post_type' => 'explore-area', 'name' => $position, 'posts_per_page' => 1]);
-        $is_area_cutscene = 'yes' === get_post_meta($area[0]->ID, 'explore-is-cutscene', true);
+        if (0 >= $userid) {
+            $user   = wp_get_current_user();
+            $userid = $user->ID;
+        }
+
+        $html   = '';
+        $area   = get_posts(
+            [
+                'post_type'      => 'explore-area',
+                'name'           => sanitize_key($position),
+                'posts_per_page' => 1,
+                'no_found_rows'  => true,
+                'post_status'    => 'publish',
+            ]
+        );
+
+        $is_area_cutscene = false === empty($area[0]) && 'yes' === get_post_meta($area[0]->ID, 'explore-is-cutscene', true);
+        $area_name        = false === empty($area[0]) ? $area[0]->post_name : '';
 
         foreach( $explore_cutscenes as $explore_cutscene ) {
-            $character = get_post_meta( $explore_cutscene->ID, 'explore-character', true );
-            $next_area = get_post_meta( $explore_cutscene->ID, 'explore-next-area', true );
-            $minigame = get_post_meta( $explore_cutscene->ID, 'explore-cutscene-minigame', true);
-            $mute_music = get_post_meta( $explore_cutscene->ID, 'explore-mute-music', true );
-            $value_type = get_post_meta( $explore_cutscene->ID, 'explore-value-type', true );
-            $value = get_post_meta( $explore_cutscene->ID, 'value', true );
-            $has_video = has_block( 'video', $explore_cutscene );
-            $cutscene_trigger = get_post_meta($explore_cutscene->ID, 'explore-cutscene-trigger', true);
-            $character_position = get_post_meta($explore_cutscene->ID, 'explore-cutscene-character-position', true);
-            $next_area_position = get_post_meta($explore_cutscene->ID, 'explore-cutscene-next-area-position', true);
-            $npc_face_me = get_post_meta($explore_cutscene->ID, 'explore-npc-face-me', true);
-            $character_position_left = $character_position['left'] ?? '';
-            $character_position_top = $character_position['top'] ?? '';
-            $next_area_position_left = $next_area_position['left'] ?? '';
-            $next_area_position_top = $next_area_position['top'] ?? '';
-            $walking_path = get_post_meta($explore_cutscene->ID, 'explore-path-after-cutscene', true);
-            $walking_speed = get_post_meta($explore_cutscene->ID, 'explore-speed', true);
-            $time_between = get_post_meta($explore_cutscene->ID, 'explore-time-between', true);
-            $character_position_trigger = get_post_meta($explore_cutscene->ID, 'explore-cutscene-move-npc', true) ?? '';
-            $mission_cutscene = get_post_meta($explore_cutscene->ID, 'explore-mission-cutscene', true);
-            $music = get_post_meta($explore_cutscene->ID, 'explore-cutscene-music', true);
-            $materialize_cutscene = get_post_meta($explore_cutscene->ID, 'explore-materialize-after-cutscene', true); // The cutscene that materializes this cutscene.
-            $mission_complete_cutscene = get_post_meta($explore_cutscene->ID, 'explore-mission-complete-cutscene', true);
-            $boss_fight = get_post_meta($explore_cutscene->ID, 'explore-cutscene-boss', true);
-            $cutscene_trigger_type = get_post_meta($explore_cutscene->ID, 'explore-trigger-type', true) ?? '';
-            $next_area_datapoint = false === empty($next_area) ? ' data-nextarea="' . $next_area . '"' : '';
-            $cutscene_name = $explore_cutscene->post_name;
-            $is_cutscene_triggered = self::isMaterializedItemTriggered($explore_cutscene->post_name, $area[0]->post_name, $userid);
-            $communicate_engage = get_post_meta($explore_cutscene->ID, 'explore-engage-communicate', true);
-            $character_ids = [];
+            $cutscene_post_meta         = get_post_meta($explore_cutscene->ID);
+            $character                  = $cutscene_post_meta['explore-character'][0] ?? '';
+            $next_area                  = $cutscene_post_meta['explore-next-area'][0] ?? '';
+            $minigame                   = $cutscene_post_meta['explore-cutscene-minigame'][0] ?? '';
+            $mute_music                 = $cutscene_post_meta['explore-mute-music'][0] ?? '';
+            $value_type                 = $cutscene_post_meta['explore-value-type'][0] ?? '';
+            $value                      = $cutscene_post_meta['value'][0] ?? '';
+            $has_video                  = has_block('video', $explore_cutscene->post_content);
+            $cutscene_trigger           = $cutscene_post_meta['explore-cutscene-trigger'][0] ?? '';
+            $character_position         = $cutscene_post_meta['explore-cutscene-character-position'][0] ?? '';
+            $next_area_position         = $cutscene_post_meta['explore-cutscene-next-area-position'][0] ?? '';
+            $npc_face_me                = $cutscene_post_meta['explore-npc-face-me'][0] ?? '';
+            $character_position_left    = $character_position['left'] ?? '';
+            $character_position_top     = $character_position['top'] ?? '';
+            $next_area_position_left    = $next_area_position['left'] ?? '';
+            $next_area_position_top     = $next_area_position['top'] ?? '';
+            $walking_path               = $cutscene_post_meta['explore-path-after-cutscene'][0] ?? '';
+            $walking_speed              = $cutscene_post_meta['explore-speed'][0] ?? '';
+            $time_between               = $cutscene_post_meta['explore-time-between'][0] ?? '';
+            $character_position_trigger = $cutscene_post_meta['explore-cutscene-move-npc'][0] ?? '';
+            $mission_cutscene           = $cutscene_post_meta['explore-mission-cutscene'][0] ?? '';
+            $music                      = $cutscene_post_meta['explore-cutscene-music'][0] ?? '';
+            $materialize_cutscene       = $cutscene_post_meta['explore-materialize-after-cutscene'][0] ?? ''; // The cutscene that materializes this cutscene.
+            $mission_complete_cutscene  = $cutscene_post_meta['explore-mission-complete-cutscene'][0] ?? '';
+            $boss_fight                 = $cutscene_post_meta['explore-cutscene-boss'][0] ?? '';
+            $cutscene_trigger_type      = $cutscene_post_meta['explore-trigger-type'][0] ?? '';
+            $next_area_datapoint        = false === empty($next_area) ? ' data-nextarea="' . esc_attr($next_area) . '"' : '';
+            $cutscene_name              = $explore_cutscene->post_name;
+            $is_cutscene_triggered      = self::isMaterializedItemTriggered($explore_cutscene->post_name, $area_name, $userid);
+            $communicate_engage         = $cutscene_post_meta['explore-engage-communicate'][0] ?? '';
+            $character_ids              = [];
 
             $html .= '<div class="wp-block-group map-cutscene ' . esc_attr($cutscene_name) . '-map-cutscene is-layout-flow wp-block-group-is-layout-flow"';
             $html .= ' id="' . esc_attr($explore_cutscene->ID) . '"';
@@ -1724,44 +2100,44 @@ class Explore
             }
 
             if (false === empty($cutscene_trigger_type)) {
-                $html .= ' data-triggertype="' . $cutscene_trigger_type . '"';
+                $html .= ' data-triggertype="' . esc_attr($cutscene_trigger_type) . '"';
             }
 
             if (false === empty($npc_face_me)) {
-                $html .= ' data-npcfaceme="' . $npc_face_me . '"';
+                $html .= ' data-npcfaceme="' . esc_attr($npc_face_me) . '"';
             }
 
             if (false === empty($communicate_engage)) {
-                $html .= ' data-communicate="' . str_replace(' ', '-', strtolower($communicate_engage)) . '"';
+                $html .= ' data-communicate="' . esc_attr(str_replace(' ', '-', strtolower($communicate_engage))) . '"';
             }
 
             $explore_path = false === empty($walking_path) ? wp_json_encode($walking_path) : '[{"top":"0","left":"0"}]';
 
             if ( $walking_speed ) {
-                $html .= ' data-speed="' . $walking_speed . '" ';
+                $html .= ' data-speed="' . esc_attr($walking_speed) . '" ';
             }
 
             if ( $time_between ) {
-                $html .= ' data-timebetween="' . $time_between . '" ';
+                $html .= ' data-timebetween="' . esc_attr($time_between) . '" ';
             }
 
             if ('[{"top":"0","left":"0"}]' !== $explore_path) {
-                $html .= ' data-path=\'' . $explore_path . '\' ';
+                $html .= ' data-path=\'' . esc_attr($explore_path) . '\' ';
             }
 
                 // Add for use in making cutscene triggered by touching character.
             if (false === empty($character)) {
-                $html .= ' data-character="' . $character . '"';
+                $html .= ' data-character="' . esc_attr($character) . '"';
             }
 
             // Add for type of value you receive once completing this cutscene.
             if (false === empty($value_type)) {
-                $html .= ' data-type="' . $value_type . '"';
+                $html .= ' data-type="' . esc_attr($value_type) . '"';
             }
 
             // Add for type of value you receive once completing this cutscene.
             if (false === empty($value)) {
-                $html .= ' data-value="' . $value . '"';
+                $html .= ' data-value="' . esc_attr($value) . '"';
             }
 
             if (false === empty($music)) {
@@ -1794,21 +2170,52 @@ class Explore
 
             // Add character position point if selected.
             if (false === empty($character_position_top)) {
-                $html .= 'data-character-position=[{"left":"' . $character_position_left . '","top":"' . $character_position_top . '","trigger":"' . $character_position_trigger . '"}]';
+                $data = wp_json_encode([
+                    [
+                        'left'    => $character_position_left,
+                        'top'     => $character_position_top,
+                        'trigger' => $character_position_trigger,
+                    ],
+                ]);
+
+                $html .= " data-character-position='" . esc_attr( $data ) . "'";
             }
 
             if (false === empty($next_area)) {
-                $area_obj = get_posts(['name' => $next_area, 'post_type' => 'explore-area', 'post_status' => 'publish', 'posts_per_page' => 1]);
+                $area_obj = get_posts(
+                    [
+                        'name'           => sanitize_key($next_area),
+                        'post_type'      => 'explore-area',
+                        'post_status'    => 'publish',
+                        'posts_per_page' => 1,
+                        'no_found_rows'  => true,
+                    ]
+                );
 
                 $html .= $next_area_datapoint;
-                $html .= false === empty($next_area_position_top) ? ' data-nextarea-position={"left":"' . $next_area_position_left . '","top":"' . $next_area_position_top . '"}' : '';
-                $html .= ' data-mapurl="' . get_post_meta($area_obj[0]->ID, 'explore-map', true) . '"';
+
+                if (false === empty($next_area_position_top)) {
+                    $next_area_position_data = wp_json_encode([
+                        'left' => $next_area_position_left,
+                        'top'  => $next_area_position_top,
+                    ]);
+
+                    $html .= " data-nextarea-position='" . esc_attr( $next_area_position_data ) . "'";
+                }
+
+                if (isset($area_obj[0]->ID)) {
+                    $html .= ' data-mapurl="' . esc_url(get_post_meta($area_obj[0]->ID, 'explore-map', true)) . '"';
+                }
             }
 
             $html .= '>';
 
-            foreach (parse_blocks($explore_cutscene->post_content) as $blocks) {
-                $character_ids[] = $blocks['attrs']['selectedCharacter'] ?? '';
+            $blocks = parse_blocks( (string) $explore_cutscene->post_content );
+
+            if (is_array($blocks)) {
+                foreach ($blocks as $block) {
+                    $character_ids[] = $block['attrs']['selectedCharacter'] ?? '';
+                }
             }
 
             $unique_character_ids = array_unique($character_ids);
@@ -1817,7 +2224,7 @@ class Explore
                 $html .= '<div class="character-image-wrapper">';
                 foreach($unique_character_ids as $character_id) {
                     if ( false === empty($character_id) ) {
-                        $html .= '<div data-character="' . $character_id . '" class="cut-character"><img src="' . get_the_post_thumbnail_url($character_id) . '"/></div>';
+                        $html .= '<div data-character="' . esc_attr($character_id) . '" class="cut-character"><img src="' . esc_url(get_the_post_thumbnail_url($character_id)) . '"/></div>';
                     }
                 }
                 $html .= '</div>';
@@ -1825,15 +2232,15 @@ class Explore
 
             $html .= '<div class="character-name-wrapper">';
             foreach($unique_character_ids as $character_id) {
-                $character_name = get_post_meta($character_id, 'explore-character-name', true);
-                $character_name = false === empty($character_name) ? $character_name : get_post_field( 'post_title', $character_id );
-
                 if ( false === empty($character_id) ) {
-                    $html .= '<div data-character="' . $character_id . '" class="character-name">' . esc_html($character_name) . '</div>';
+                    $character_name = get_post_meta($character_id, 'explore-character-name', true);
+                    $character_name = false === empty($character_name) ? $character_name : get_post_field('post_title', $character_id);
+
+                    $html .= '<div data-character="' . esc_attr($character_id) . '" class="character-name">' . esc_html($character_name) . '</div>';
                 }
             }
 
-            $html .= 'explore-area' !== $explore_cutscene->post_type ? $explore_cutscene->post_content : '';
+            $html .= 'explore-area' !== $explore_cutscene->post_type ? apply_filters('the_content', $explore_cutscene->post_content) : '';
             $html .= '</div>';
 
             if (true === $has_video) {
@@ -1842,35 +2249,20 @@ class Explore
 
             $html .= '</div>';
 
-            $path_trigger_left = false === empty($cutscene_trigger['left']) && 0 !== $cutscene_trigger['left'] ? $cutscene_trigger['left'] : '';
-            $path_trigger_top = false === empty($cutscene_trigger['top']) && 0 !== $cutscene_trigger['top'] ? $cutscene_trigger['top'] : '';
-            $path_trigger_height = false === empty($cutscene_trigger['height']) && 0 !== $cutscene_trigger['height'] ? $cutscene_trigger['height'] : '';
-            $path_trigger_width = false === empty($cutscene_trigger['width']) && 0 !== $cutscene_trigger['width'] ? $cutscene_trigger['width'] : '';
+            $path_trigger_left   = false === empty($cutscene_trigger['left']) && 0 !== $cutscene_trigger['left'] ? $cutscene_trigger['left'] : '0';
+            $path_trigger_top    = false === empty($cutscene_trigger['top']) && 0 !== $cutscene_trigger['top'] ? $cutscene_trigger['top'] : '0';
+            $path_trigger_height = false === empty($cutscene_trigger['height']) && 0 !== $cutscene_trigger['height'] ? $cutscene_trigger['height'] : '0';
+            $path_trigger_width  = false === empty($cutscene_trigger['width']) && 0 !== $cutscene_trigger['width'] ? $cutscene_trigger['width'] : '0';
 
             // Trigger Cutscene.
             if (false === in_array( '', [$path_trigger_width, $path_trigger_height], true) && false === $is_cutscene_triggered) {
-                $html .= '<div id="' . $explore_cutscene->ID . '-t" class="cutscene-trigger wp-block-group map-item ' . $explore_cutscene->post_name . '-cutscene-trigger-map-item is-layout-flow wp-block-group-is-layout-flow"';
-                $html .= 'style="left:' . $path_trigger_left . 'px;top:' . $path_trigger_top . 'px;height:' . $path_trigger_height . 'px; width:' . $path_trigger_width . 'px;"';
-                $html .= 'data-trigger="true" data-triggee="' . $explore_cutscene->post_name . '"';
-                $html .= ' data-triggertype="' . $cutscene_trigger_type . '"';
+                $html .= '<div id="' . esc_attr($explore_cutscene->ID) . '-t" class="cutscene-trigger wp-block-group map-item ' . esc_attr($explore_cutscene->post_name) . '-cutscene-trigger-map-item is-layout-flow wp-block-group-is-layout-flow"';
+                $html .= 'style="left:' . esc_attr($path_trigger_left) . 'px;top:' . esc_attr($path_trigger_top) . 'px;height:' . esc_attr($path_trigger_height) . 'px; width:' . esc_attr($path_trigger_width) . 'px;"';
+                $html .= 'data-trigger="true" data-triggee="' . esc_attr($explore_cutscene->post_name) . '"';
+                $html .= ' data-triggertype="' . esc_attr($cutscene_trigger_type) . '"';
 
                 if (false === empty($materialize_cutscene)) {
-                    $html .= ' data-materializecutscene="' . $materialize_cutscene . '"';
-                }
-
-                $html .= ' data-meta="explore-cutscene-trigger"';
-                $html .= '></div>';
-            }
-
-            // Materialize Cutscene Trigger.
-            if (false === in_array( '', [$path_trigger_width, $path_trigger_height], true) && false === $is_cutscene_triggered) {
-                $html .= '<div id="' . $explore_cutscene->ID . '-t" class="cutscene-trigger wp-block-group map-item ' . $explore_cutscene->post_name . '-cutscene-trigger-map-item is-layout-flow wp-block-group-is-layout-flow"';
-                $html .= 'style="left:' . $path_trigger_left . 'px;top:' . $path_trigger_top . 'px;height:' . $path_trigger_height . 'px; width:' . $path_trigger_width . 'px;"';
-                $html .= 'data-trigger="true" data-triggee="' . $explore_cutscene->post_name . '"';
-                $html .= ' data-triggertype="' . $cutscene_trigger_type . '"';
-
-                if (false === empty($materialize_cutscene)) {
-                    $html .= ' data-materializecutscene="' . $materialize_cutscene . '"';
+                    $html .= ' data-materializecutscene="' . esc_attr($materialize_cutscene) . '"';
                 }
 
                 $html .= ' data-meta="explore-cutscene-trigger"';
@@ -1880,68 +2272,99 @@ class Explore
 
         return $html;
     }
-
+//////// check this later/////
     /**
      * Build html for map items.
      *
+     * @param string $location
+     * @param integer $userid
      * @return string
      */
-    public static function getMapCommunicateHTML($location, $userid): string
+    public static function getMapCommunicateHTML(string $location, int $userid): string
     {
-        $html = '';
+        if (0 >= $userid) {
+            $user   = wp_get_current_user();
+            $userid = $user->ID;
+        }
+
+        $html   = '';
         $trhtml = '';
 
-        $location_obj = get_posts(['name' => $location, 'post_type' => 'explore-area', 'numberposts' => 1]);
-        $location_communicate_type = get_post_meta($location_obj[0]->ID, 'explore-communicate-type', true);
-        $communication_type = get_term_by('name', $location_communicate_type, 'explore-communication-type');
-        $communication_background = false === empty($communication_type) ? get_term_meta($communication_type->term_id, 'explore-background', true) : '';
-        $current_received = get_user_meta($userid, 'explore_received_communicates', true);
+        $location_obj = get_posts(
+            [
+                'name'           => sanitize_key($location),
+                'post_type'      => 'explore-area',
+                'posts_per_page' => 1,
+                'post_status'    => 'publish',
+                'no_found_rows'  => true,
+            ]
+        );
 
-        if ( false === empty($communication_background)) {
-            $html .= '<div style="background: url(' . $communication_background . ') no-repeat; background-size: contain;" class="communication-wrapper ' . $communication_type->slug . '-map-item" id="' . $communication_type->term_id . '">';
+        $location_communicate_type = isset($location_obj[0]->ID) ? get_post_meta($location_obj[0]->ID, 'explore-communicate-type', true) : '';
+        $communication_type        = false === empty($location_communicate_type) ? get_term_by('name', $location_communicate_type, 'explore-communication-type') : '';
+        $communication_background  = false === empty($communication_type) ? get_term_meta($communication_type->term_id, 'explore-background', true) : '';
+        $current_received          = 0 < $userid ? get_user_meta($userid, 'explore_received_communicates', true) : '';
+
+        if (false === empty($communication_background)) {
+            $html .= '<div style="background: url(' . esc_url($communication_background) . ') no-repeat; background-size: contain;" class="communication-wrapper ' . esc_attr($communication_type->slug) . '-map-item" id="' . esc_attr($communication_type->term_id) . '">';
 
             $explore_communicates = get_posts(
                 [
-                    'post_per_page' => -1,
-                    'post_type' => 'explore-communicate',
-                    'tax_query' => [
+                    'posts_per_page' => -1,
+                    'post_type'      => 'explore-communicate',
+                    'post_status'    => 'publish',
+                    'no_found_rows'  => true,
+                    'tax_query'      => [
                         [
                             'taxonomy' => 'explore-communication-type',
-                            'field' => 'name',
-                            'terms' => $location_communicate_type,
+                            'field'    => 'name',
+                            'terms'    => sanitize_key($location_communicate_type),
                         ]
                     ],
                     'meta_query' => [
                         [
-                            'key' => 'explore-area',
-                            'value' => $location,
+                            'key'   => 'explore-area',
+                            'value' => sanitize_key($location),
                         ]
                     ],
                 ]
             );
 
             $included_posts = get_posts([
-                'posts_per_page' => -1,
-                'post_type' => 'explore-communicate',
-                'post__in' => $current_received[$communication_type->term_id],
+                'posts_per_page' => 500,
+                'post_type'      => 'explore-communicate',
+                'post__in'       => (
+                    is_array($current_received)
+                    && isset($current_received[$communication_type->term_id])
+                    && is_array($current_received[ $communication_type->term_id])
+                ) ? $current_received[$communication_type->term_id] : [],
+                'post_status'    => 'publish',
+                'no_found_rows'  => true,
             ]);
 
+            $explore_communicates = is_array($explore_communicates) ? $explore_communicates : [];
+            $included_posts       = is_array($included_posts) ? $included_posts : [];
             $explore_communicates = array_unique(
                 array_merge($explore_communicates, $included_posts),
                 SORT_REGULAR
             );
 
             foreach ($explore_communicates as $explore_communicate) {
-                $materialize_after_mission = get_post_meta($explore_communicate->ID, 'explore-materialize-after-mission', true); // The mission that makes this communicate appear.
-                $mute_music = get_post_meta($explore_communicate->ID, 'explore-mute-music', true);
-                $communicate_trigger_top = get_post_meta($explore_communicate->ID, 'explore-top', true);
-                $communicate_trigger_left = get_post_meta($explore_communicate->ID, 'explore-left', true);
-                $communicate_trigger_height = get_post_meta($explore_communicate->ID, 'explore-height', true);
-                $communicate_trigger_width = get_post_meta($explore_communicate->ID, 'explore-width', true);
-                $communicate_type = get_post_meta($explore_communicate->ID, 'explore-communicate-type', true);
-                $mission_communicate = get_post_meta($explore_communicate->ID, 'explore-mission-communicate', true);
-                $music = get_post_meta($explore_communicate->ID, 'explore-communicate-music', true);
-                $communicate_name = $explore_communicate->post_name;
+                if (!$communication_type || !isset($communication_type->term_id, $communication_type->slug)) {
+                    return '';
+                }
+
+                $explore_communicate_meta   = get_post_meta($explore_communicate->ID);
+                $materialize_after_mission  = $explore_communicate_meta['explore-materialize-after-mission'][0] ?? ''; // The mission that makes this communicate appear.
+                $mute_music                 = $explore_communicate_meta['explore-mute-music'][0] ?? '';
+                $communicate_trigger_top    = $explore_communicate_meta['explore-top'][0] ?? '';
+                $communicate_trigger_left   = $explore_communicate_meta['explore-left'][0] ?? '';
+                $communicate_trigger_height = $explore_communicate_meta['explore-height'][0] ?? '';
+                $communicate_trigger_width  = $explore_communicate_meta['explore-width'][0] ?? '';
+                $communicate_type           = $explore_communicate_meta['explore-communicate-type'][0] ?? '';
+                $mission_communicate        = $explore_communicate_meta['explore-mission-communicate'][0] ?? '';
+                $music                      = $explore_communicate_meta['explore-communicate-music'][0] ?? '';
+                $communicate_name           = $explore_communicate->post_name;
 
                 $html .= '<div class="wp-block-group map-communicate ' . esc_attr($communicate_name) . '-map-communicate is-layout-flow wp-block-group-is-layout-flow"';
                 $html .= ' id="' . esc_attr($explore_communicate->ID) . '"';
@@ -1965,28 +2388,32 @@ class Explore
 
                 $html .= '>';
 
-                $character_id = parse_blocks($explore_communicate->post_content)[0]['attrs']['selectedCharacter'] ?? '';
+                $blocks = parse_blocks((string) $explore_communicate->post_content);
+                $character_id = '';
 
-                $html .= '<div data-character="' . $character_id . '" class="communicate-character"><img src="' . get_the_post_thumbnail_url($character_id) . '"/></div>';
+                if (is_array($blocks) && isset($blocks[0]['attrs']['selectedCharacter'])) {
+                    $character_id = $blocks[0]['attrs']['selectedCharacter'];
+                }
+
+                $html .= '<div data-character="' . esc_attr($character_id) . '" class="communicate-character"><img src="' . esc_url(get_the_post_thumbnail_url($character_id)) . '"/></div>';
                 $html .= '<div class="message-wrapper">';
-                $html .= '<span class="communicate-name">' . get_the_title($character_id) . '</span>';
-                $html .= $explore_communicate->post_content;
+                $html .= '<span class="communicate-name">' . esc_html(get_the_title($character_id)) . '</span>';
+                $html .= apply_filters('the_content', $explore_communicate->post_content);
                 $html .= '</div>';
                 $html .= '</div>';
 
                 // Trigger communicate.
-                if (false === in_array('', [$communicate_trigger_top, $communicate_trigger_height], true)) {
-                    $trhtml .= '<div id="' . $explore_communicate->ID . '-t" class="communicate-trigger wp-block-group map-item ' . $explore_communicate->post_name . '-communicate-trigger-map-item is-layout-flow wp-block-group-is-layout-flow"';
-                    $trhtml .= 'style="left:' . $communicate_trigger_left . 'px;top:' . $communicate_trigger_top . 'px;height:' . $communicate_trigger_height . 'px; width:' . $communicate_trigger_width . 'px;"';
-                    $trhtml .= 'data-trigger="true" data-triggee="' . $explore_communicate->post_name . '"';
-                    $trhtml .= 'data-materializemission="' . $materialize_after_mission . '"';
+                if ('' !== $communicate_trigger_top && '' !== $communicate_trigger_height) {
+                    $trhtml .= '<div id="' . esc_attr($explore_communicate->ID) . '-t" class="communicate-trigger wp-block-group map-item ' . esc_attr($explore_communicate->post_name) . '-communicate-trigger-map-item is-layout-flow wp-block-group-is-layout-flow"';
+                    $trhtml .= 'style="left:' . esc_attr($communicate_trigger_left) . 'px;top:' . esc_attr($communicate_trigger_top) . 'px;height:' . esc_attr($communicate_trigger_height) . 'px; width:' . esc_attr($communicate_trigger_width) . 'px;"';
+                    $trhtml .= 'data-trigger="true" data-triggee="' . esc_attr($explore_communicate->post_name) . '"';
+                    $trhtml .= 'data-materializemission="' . esc_attr($materialize_after_mission) . '"';
                     $trhtml .= ' data-meta="explore-communicate-trigger"';
                     $trhtml .= '></div>';
                 }
             }
 
             $html .= '</div>';
-
             $html .= $trhtml;
         }
 
@@ -1995,44 +2422,48 @@ class Explore
 
     /**
      * Build html for minigame items.
-     * @param $explore_minigames
+     * @param array $explore_minigames
      *
      * @return string
      */
-    public static function getMinigameHTML($explore_minigames): string
+    public static function getMinigameHTML(array $explore_minigames): string
     {
         $html = '';
 
         foreach($explore_minigames as $minigame) {
-            $minigame_mission = get_post_meta( $minigame->ID, 'explore-mission', true);
-            $music = get_post_meta($minigame->ID, 'explore-minigame-music', true);
-            $minigame_type = get_post_meta($minigame->ID, 'explore-minigame-type', true);
-            $binary_translate_word = get_post_meta($minigame->ID, 'explore-translate-binary-word', true);
-            $draggable_images = get_post_meta($minigame->ID, 'explore-draggable-items', true);
+            if (isset($minigame->ID)) {
+                $minigame_mission      = get_post_meta($minigame->ID, 'explore-mission', true);
+                $music                 = get_post_meta($minigame->ID, 'explore-minigame-music', true);
+                $minigame_type         = get_post_meta($minigame->ID, 'explore-minigame-type', true);
+                $binary_translate_word = get_post_meta($minigame->ID, 'explore-translate-binary-word', true);
+                $draggable_images      = get_post_meta($minigame->ID, 'explore-draggable-items', true);
 
-            $html .= '<div class="minigame ' . esc_attr($minigame->post_name) . '-minigame-item" data-music="' . esc_attr($music) . '" data-mission="' . esc_attr($minigame_mission) . '">';
-            $html .= '<div class="computer-chip">' . self::getSVGCode(get_the_post_thumbnail_url($minigame->ID)) . '</div>';
-            $html .= '<div class="draggable-images">';
-            if (false === empty($draggable_images)) {
-                foreach ($draggable_images as $draggable_image) {
-                    $html .= '<img class="minigame-draggable-image" src="' . ($draggable_image['draggable-item'] ?? '') . '" draggable="true" />';
+                $html .= '<div class="minigame ' . esc_attr($minigame->post_name) . '-minigame-item" data-music="' . esc_attr($music) . '" data-mission="' . esc_attr($minigame_mission) . '">';
+                $html .= '<div class="computer-chip">' . self::getSVGCode(get_the_post_thumbnail_url($minigame->ID)) . '</div>';
+                $html .= '<div class="draggable-images">';
+
+                if (false === empty($draggable_images) && true === is_array($draggable_images)) {
+                    foreach ($draggable_images as $draggable_image) {
+                        $html .= '<img class="minigame-draggable-image" src="' . esc_url($draggable_image['draggable-item'] ?? '') . '" draggable="true" />';
+                    }
                 }
-            }
-            $html .= '</div>';
 
-            if (false === empty($minigame_type) && 'draggable' === $minigame_type && false === empty($binary_translate_word)) {
-                $html .= '<div class="minigame-programming" >';
-                $html .= '<div class="input-section">';
-                $html .= '<div class="programming-output">';
-                $html .= '<textarea style="max-width:100%;" cols="150" rows="20"></textarea>';
                 $html .= '</div>';
-                $html .= '</div>';
-                $html .= '<p class="programming-subject">Translate the <strong>' . $binary_translate_word . '</strong> into binary:</p>';
-                $html .= '<img class="alignnone size-full wp-image-3674" src="' . plugin_dir_url(__FILE__) . '../assets/src/images/binary.svg" alt="" />';
+
+                if (false === empty($minigame_type) && 'draggable' === $minigame_type && false === empty($binary_translate_word)) {
+                    $html .= '<div class="minigame-programming" >';
+                    $html .= '<div class="input-section">';
+                    $html .= '<div class="programming-output">';
+                    $html .= '<textarea style="max-width:100%;" cols="150" rows="20"></textarea>';
+                    $html .= '</div>';
+                    $html .= '</div>';
+                    $html .= '<p class="programming-subject">Translate the <strong>' . esc_html($binary_translate_word) . '</strong> into binary:</p>';
+                    $html .= '<img class="alignnone size-full wp-image-3674" src="' . esc_url(plugin_dir_url(__FILE__) . '../assets/src/images/binary.svg') . '" alt="" />';
+                    $html .= '</div>';
+                }
+
                 $html .= '</div>';
             }
-
-            $html .= '</div>';
         }
 
         return $html;
@@ -2040,71 +2471,75 @@ class Explore
 
     /**
      * Build html for explainers.
-     * @param $explore_explainers
-     * @param $type
+     * @param array $explore_explainers
+     * @param string $type
      *
      * @return string
      */
-    public static function getExplainerHTML($explore_explainers, $type): string
+    public static function getExplainerHTML(array $explore_explainers, string $type): string
     {
-        if (true === empty($explore_explainers)) {
+        if (true === empty($explore_explainers) || true === empty($type)) {
             return '';
         }
 
-        $html = '';
-
-        $border_color = get_option('explore_explainer_border_color', '');
-        $border_radius = get_option('explore_explainer_border_radius', '');
-        $border_size = get_option('explore_explainer_border_size', '');
-        $border_style = get_option('explore_explainer_border_style', '');
+        $html          = '';
+        $border_color  = get_option('explore_explainer_border_color', '');
+        $border_radius = absint(get_option('explore_explainer_border_radius', '0'));
+        $border_size   = absint(get_option('explore_explainer_border_size', '0'));
+        $border_style  = get_option('explore_explainer_border_style', '');
 
         foreach($explore_explainers as $explainer) {
-            $explainer_type = get_post_meta($explainer->ID, 'explore-explainer-type', true);
-            $sound_byte = get_post_meta($explainer->ID, 'explore-sound-byte', true);
+            $explainer_meta = get_post_meta($explainer->ID);
+            $explainer_type = $explainer_meta['explore-explainer-type'][0] ?? '';
+            $sound_byte     = $explainer_meta['explore-sound-byte'][0] ?? '';
 
             if ($type === $explainer_type) {
-                $trigger = get_post_meta( $explainer->ID, 'explore-explainer-trigger', true);
-                $explainer_left = get_post_meta( $explainer->ID, 'explore-left', true);
-                $explainer_top = get_post_meta( $explainer->ID, 'explore-top', true);
-                $explainer_width = 'fullscreen' === $type ? 'width: 100%; max-width:' . get_post_meta( $explainer->ID, 'explore-width', true) : 'width:' . get_post_meta( $explainer->ID, 'explore-width', true);
-                $arrow_style = get_post_meta( $explainer->ID, 'explore-explainer-arrow', true);
-                $materialize_after_cutscene = get_post_meta($explainer->ID, 'explore-materialize-after-cutscene', true);
-
-                $path_trigger_top = false === empty($trigger['top']) && 0 !== $trigger['top'] ? $trigger['top'] : false;
-                $path_trigger_left = false === empty($trigger['left']) && 0 !== $trigger['left'] ? $trigger['left'] : '';
-                $path_trigger_width = false === empty($trigger['width']) && 0 !== $trigger['width'] ? $trigger['width'] : '';
-                $path_trigger_height = false === empty($trigger['height']) && 0 !== $trigger['height'] ? $trigger['height'] : '';
-                $arrow_img = get_option( 'explore_arrow_icon', plugin_dir_url(__FILE__) . '../assets/src/images/arrow-icon.svg');
-                $arrow_img = false === empty($arrow_img) ? $arrow_img : plugin_dir_url(__FILE__) . '../assets/src/images/arrow-icon.svg';
-                $orientation = $arrow_style['orientation'] ?? 'top';
-                $side = $arrow_style['side'] ?? 'right';
-                $rotation = $arrow_style['rotate'] ?? '0';
-                $arrow_style_css = 'transform: rotate(' . $rotation . 'deg); ' . $orientation . ': -130px;' . ' ' . $side . ': 0;';
-                $fullscreen = 'fullscreen' === $type ? ' fullscreen' : '';
+                $trigger                    = $explainer_meta['explore-explainer-trigger'][0] ?? '';
+                $explainer_left             = $explainer_meta['explore-left'][0] ?? '0';
+                $explainer_top              = $explainer_meta['explore-top'][0] ?? '0';
+                $width_value                = $explainer_meta['explore-width'][0] ?? '0';
+                $explainer_width            = ('fullscreen' === $type)
+                    ? 'width: 100%; max-width:' . $width_value
+                    : 'width:' . $width_value;
+                $arrow_style                = $explainer_meta['explore-explainer-arrow'][0] ?? '';
+                $materialize_after_cutscene = $explainer_meta['explore-materialize-after-cutscene'][0] ?? '';
+                $trigger                    = is_array($trigger) ? $trigger : [];
+                $arrow_style                = is_array($arrow_style) ? $arrow_style : [];
+                $path_trigger_top           = false === empty($trigger['top']) && '0' !== $trigger['top'] ? $trigger['top'] : false;
+                $path_trigger_left          = false === empty($trigger['left']) && '0' !== $trigger['left'] ? $trigger['left'] : false;
+                $path_trigger_width         = false === empty($trigger['width']) && '0' !== $trigger['width'] ? $trigger['width'] : false;
+                $path_trigger_height        = false === empty($trigger['height']) && '0' !== $trigger['height'] ? $trigger['height'] : false;
+                $arrow_img                  = get_option('explore_arrow_icon', plugin_dir_url(__FILE__) . '../assets/src/images/arrow-icon.svg');
+                $arrow_img                  = false === empty($arrow_img) ? $arrow_img : plugin_dir_url(__FILE__) . '../assets/src/images/arrow-icon.svg';
+                $orientation                = $arrow_style['orientation'] ?? 'top';
+                $side                       = $arrow_style['side'] ?? 'right';
+                $rotation                   = $arrow_style['rotate'] ?? '0';
+                $arrow_style_css            = 'transform: rotate(' . esc_attr($rotation) . 'deg); ' . esc_attr($orientation) . ': -130px;' . ' ' . esc_attr($side) . ': 0;';
+                $fullscreen                 = 'fullscreen' === $type ? ' fullscreen' : '';
 
                 if (false !== $path_trigger_top) {
-                    $html .= '<div id="' . $explainer->ID . '-t" data-trigger="true" class="' . $explainer->post_name . '-explainer-trigger-map-item explainer-trigger map-item" data-triggee="' . $explainer->post_name . '" ';
+                    $html .= '<div id="' . esc_attr($explainer->ID) . '-t" data-trigger="true" class="' . esc_attr($explainer->post_name) . '-explainer-trigger-map-item explainer-trigger map-item" data-triggee="' . esc_attr($explainer->post_name) . '" ';
                     $html .= ' data-meta="explore-explainer-trigger"';
 
                     // Materialize this item after this cutscene.
                     if (false === empty($materialize_after_cutscene)) {
-                        $html .= ' data-showaftercutscene="' . $materialize_after_cutscene . '"';
+                        $html .= ' data-showaftercutscene="' . esc_attr($materialize_after_cutscene) . '"';
                     }
 
-                    $html .= 'style="left:' . $path_trigger_left . 'px;top:' . $path_trigger_top . 'px;height:' . $path_trigger_height . 'px; width:' . $path_trigger_width . 'px;"';
+                    $html .= 'style="left:' . esc_attr($path_trigger_left) . 'px;top:' . esc_attr($path_trigger_top) . 'px;height:' . esc_attr($path_trigger_height) . 'px; width:' . esc_attr($path_trigger_width) . 'px;"';
                     $html .= '></div>';
                 }
 
                 if (false === empty($explainer_top)) {
-                    $html .= '<div id="' . $explainer->ID . '" class="' . $explainer->post_name . '-explainer-item explainer-container map-item' . $fullscreen . '" ';
-                    $html .= 'style="left:' . $explainer_left . 'px;top:' . $explainer_top . 'px;height:auto; ' . $explainer_width . 'px; border: ' . $border_size . 'px ' . $border_style . ' ' . $border_color . '; border-radius: ' . $border_radius . 'px;"';
-                    $html .= ' data-type="' . $explainer_type . '"';
+                    $html .= '<div id="' . esc_attr($explainer->ID) . '" class="' . esc_attr($explainer->post_name) . '-explainer-item explainer-container map-item' . esc_attr($fullscreen) . '" ';
+                    $html .= 'style="left:' . esc_attr($explainer_left) . 'px;top:' . esc_attr($explainer_top) . 'px;height:auto; ' . esc_attr($explainer_width) . 'px; border: ' . esc_attr($border_size) . 'px ' . esc_attr($border_style) . ' ' . esc_attr($border_color) . '; border-radius: ' . esc_attr($border_radius) . 'px;"';
+                    $html .= ' data-type="' . esc_attr($explainer_type) . '"';
                     $html .= '>';
-                    $html .= $arrow_img && 'fullscreen' !== $type ? '<img data-rotate="' . $rotation . '" width="120" height="120" style="'. esc_attr($arrow_style_css) . '" src="' . $arrow_img . '" />' : '';
-                    $html .= wp_kses_post($explainer->post_content);
+                    $html .= $arrow_img && 'fullscreen' !== $type ? '<img data-rotate="' . esc_attr($rotation) . '" width="120" height="120" style="'. esc_attr($arrow_style_css) . '" src="' . esc_url($arrow_img) . '" />' : '';
+                    $html .= wp_kses_post(apply_filters('the_content', $explainer->post_content));
 
                     if (false === empty($sound_byte)) {
-                        $html .= '<audio id="' . $explainer->ID . '-s" src="' . $sound_byte . '"></audio>';
+                        $html .= '<audio id="' . esc_attr($explainer->ID) . '-s" src="' . esc_url($sound_byte) . '"></audio>';
                     }
 
                     $html .= '</div>';
@@ -2117,25 +2552,32 @@ class Explore
 
     /**
      * Build html for map abilities.
-     * @param $explore_abilities
+     * @param array $explore_abilities
      *
      * @return string
      */
-    public static function getMapAbilitiesHTML($explore_abilities): string
+    public static function getMapAbilitiesHTML(array $explore_abilities): string
     {
-        $html = '';
-        $magics = get_user_meta(get_current_user_id(), 'explore_magic', true);
+        $html   = '';
+        $user   = wp_get_current_user();
+        $userid = $user->ID;
+        $magics = 0 !== $userid ? get_user_meta($userid, 'explore_magic', true) : [];
 
-        foreach( $explore_abilities as $explore_ability ) {
+        foreach($explore_abilities as $explore_ability) {
+            if (!isset($explore_ability->ID)) {
+                continue;
+            }
+
             if (false === is_array($magics) || false === in_array($explore_ability->ID, $magics, true)) {
-                $unlockable = get_post_meta($explore_ability->ID, 'explore-unlock-level', true);
+                $explore_ability_id = $explore_ability->ID ?? '';
+                $unlockable = '' !== $explore_ability_id ? get_post_meta($explore_ability->ID, 'explore-unlock-level', true) : '';
 
                 $html .= '<div class="map-ability" ';
-                $html .= 'id="' . $explore_ability->ID . '" ';
+                $html .= 'id="' . esc_attr($explore_ability_id) . '" ';
                 $html .= 'data-genre="explore-magic" ';
 
                 if (false === empty($unlockable)) {
-                    $html .= 'data-unlockable="' . intval($unlockable) . '" ';
+                    $html .= 'data-unlockable="' . esc_attr($unlockable) . '" ';
                 }
 
                 $html .= '></div>';
@@ -2153,98 +2595,176 @@ class Explore
     public function registerPostType(): void
     {
         $post_types = [
-            'explore-area' => [
+            'explore-area'        => [
                 'Area',
-                'supports' => [ 'title' ]
+                'supports' => ['title']
             ],
-            'explore-point' => [
+            'explore-point'       => [
                 'Item',
-                'supports' => [ 'title', 'thumbnail' ]
+                'supports' => ['title', 'thumbnail']
             ],
-            'explore-character' => [
+            'explore-character'   => [
                 'Character',
-                'supports' => [ 'title', 'thumbnail' ]
+                'supports' => ['title', 'thumbnail']
             ],
-            'explore-cutscene' => [
+            'explore-cutscene'    => [
                 'Cutscene',
-                'supports' => [ 'title', 'editor' ]
+                'supports' => ['title', 'editor']
             ],
-            'explore-enemy' => [
+            'explore-enemy'       => [
                 'Enemy',
-                'supports' => [ 'title', 'thumbnail' ]
+                'supports' => ['title', 'thumbnail']
             ],
-            'explore-weapon' => [
+            'explore-weapon'      => [
                 'Weapon',
-                'supports' => [ 'title', 'editor', 'thumbnail' ]
+                'supports' => ['title', 'editor', 'thumbnail']
             ],
-//            'explore-magic' => [
-//                'Magic',
-//                'supports' => [ 'title', 'thumbnail' ]
-//            ], // TODO: Future feature that needs fleshing out.
-            'explore-mission' => [
+            'explore-mission'     => [
                 'Mission',
-                'supports' => [ 'title']
+                'supports' => ['title']
             ],
-            'explore-sign' => [
+            'explore-sign'        => [
                 'Focus View',
-                'supports' => [ 'title', 'editor', 'thumbnail' ]
+                'supports' => ['title', 'editor', 'thumbnail']
             ],
-            'explore-minigame' => [
+            'explore-minigame'    => [
                 'Minigame',
-                'supports' => [ 'title', 'thumbnail' ]
+                'supports' => ['title', 'thumbnail']
             ],
-            'explore-explainer' => [
+            'explore-explainer'   => [
                 'Explainer',
-                'supports' => [ 'title', 'editor' ]
+                'supports' => ['title', 'editor']
             ],
-            'explore-wall' => [
+            'explore-wall'      => [
                 'Wall',
-                'supports' => [ 'title' ]
+                'supports' => ['title']
             ],
             'explore-communicate' => [
                 'Communication',
-                'supports' => [ 'title', 'editor', 'thumbnail' ]
+                'supports' => ['title', 'editor', 'thumbnail']
             ],
         ];
 
         $taxo_types = [
             'explore-communication-type' => [
-                'name' => 'Communication Type',
+                'name'       => 'Communication Type',
                 'post-types' => ['explore-communicate']
             ]
         ];
 
         foreach($post_types as $slug => $info) {
-            $labels = [
-                'name'                  => _x( $info[0] . 's', $info[0], 'orbem-studio' ),
-                'singular_name'         => _x( $info[0], 'Post Type Singular Name', 'orbem-studio' ),
-                'menu_name'             => __( $info[0] . 's', 'orbem-studio' ),
-                'name_admin_bar'        => __( $info[0], 'orbem-studio' ),
-                'archives'              => __( $info[0] . ' Archives', 'orbem-studio' ),
-                'attributes'            => __( $info[0] . ' Attributes', 'orbem-studio' ),
-                'parent_item_colon'     => __( 'Parent ' . $info[0] . ':', 'orbem-studio' ),
-                'all_items'             => __( 'All ' . $info[0] . 's', 'orbem-studio' ),
-                'add_new_item'          => __( 'Add New ' . $info[0], 'orbem-studio' ),
-                'add_new'               => __( 'Add New', 'orbem-studio' ),
-                'new_item'              => __( 'New ' . $info[0], 'orbem-studio' ),
-                'edit_item'             => __( 'Edit ' . $info[0], 'orbem-studio' ),
-                'update_item'           => __( 'Update ' . $info[0], 'orbem-studio' ),
-                'view_item'             => __( 'View ' . $info[0], 'orbem-studio' ),
-                'view_items'            => __( 'View ' . $info[0] . 's', 'orbem-studio' ),
-                'search_items'          => __( 'Search ' . $info[0], 'orbem-studio' ),
-                'not_found'             => __( 'No ' . $info[0] . 's found', 'orbem-studio' ),
-                'not_found_in_trash'    => __( 'No ' . $info[0] . 's found in Trash', 'orbem-studio' ),
-                'featured_image'        => __( $info[0] . ' Image', 'orbem-studio' ),
-                'set_featured_image'    => __( 'Set ' . $info[0] . ' image', 'orbem-studio' ),
-                'remove_featured_image' => __( 'Remove ' . $info[0] . ' image', 'orbem-studio' ),
-                'use_featured_image'    => __( 'Use as ' . $info[0] . ' image', 'orbem-studio' ),
-                'uploaded_to_this_item' => __( 'Uploaded to this ' . $info[0], 'orbem-studio' ),
-                'items_list'            => __( $info[0] . 's list', 'orbem-studio' ),
-                'items_list_navigation' => __( $info[0] . 's list navigation', 'orbem-studio' ),
-                'filter_items_list'     => __( 'Filter ' . $info[0] . 's list', 'orbem-studio' ),
-            ];
+            $labels = [];
 
-            $args = array(
+            if (isset($info[0])) {
+                $singular = $info[0];
+                $plural   = $info[0] . 's';
+
+                $labels = [
+                    'name'                  => sprintf(
+                        esc_html_x('%s', 'Post type plural name', 'orbem-studio'),
+                        $plural
+                    ),
+                    'singular_name'         => sprintf(
+                        esc_html_x('%s', 'Post type singular name', 'orbem-studio'),
+                        $singular
+                    ),
+                    'menu_name'             => sprintf(
+                        esc_html__('%s', 'orbem-studio'),
+                        $plural
+                    ),
+                    'name_admin_bar'        => sprintf(
+                        esc_html__('%s', 'orbem-studio'),
+                        $singular
+                    ),
+                    'archives'              => sprintf(
+                        esc_html__('%s Archives', 'orbem-studio'),
+                        $singular
+                    ),
+                    'attributes'            => sprintf(
+                        esc_html__('%s Attributes', 'orbem-studio'),
+                        $singular
+                    ),
+                    'parent_item_colon'     => sprintf(
+                        esc_html__('Parent %s:', 'orbem-studio'),
+                        $singular
+                    ),
+                    'all_items'             => sprintf(
+                        esc_html__('All %s', 'orbem-studio'),
+                        $plural
+                    ),
+                    'add_new_item'          => sprintf(
+                        esc_html__('Add New %s', 'orbem-studio'),
+                        $singular
+                    ),
+                    'add_new'               => esc_html__('Add New', 'orbem-studio'),
+                    'new_item'              => sprintf(
+                        esc_html__('New %s', 'orbem-studio'),
+                        $singular
+                    ),
+                    'edit_item'             => sprintf(
+                        esc_html__('Edit %s', 'orbem-studio'),
+                        $singular
+                    ),
+                    'update_item'           => sprintf(
+                        esc_html__('Update %s', 'orbem-studio'),
+                        $singular
+                    ),
+                    'view_item'             => sprintf(
+                        esc_html__('View %s', 'orbem-studio'),
+                        $singular
+                    ),
+                    'view_items'            => sprintf(
+                        esc_html__('View %s', 'orbem-studio'),
+                        $plural
+                    ),
+                    'search_items'          => sprintf(
+                        esc_html__('Search %s', 'orbem-studio'),
+                        $singular
+                    ),
+                    'not_found'             => sprintf(
+                        esc_html__('No %s found', 'orbem-studio'),
+                        $plural
+                    ),
+                    'not_found_in_trash'    => sprintf(
+                        esc_html__('No %s found in Trash', 'orbem-studio'),
+                        $plural
+                    ),
+                    'featured_image'        => sprintf(
+                        esc_html__('%s Image', 'orbem-studio'),
+                        $singular
+                    ),
+                    'set_featured_image'    => sprintf(
+                        esc_html__('Set %s image', 'orbem-studio'),
+                        $singular
+                    ),
+                    'remove_featured_image' => sprintf(
+                        esc_html__('Remove %s image', 'orbem-studio'),
+                        $singular
+                    ),
+                    'use_featured_image'    => sprintf(
+                        esc_html__('Use as %s image', 'orbem-studio'),
+                        $singular
+                    ),
+                    'uploaded_to_this_item' => sprintf(
+                        esc_html__('Uploaded to this %s', 'orbem-studio'),
+                        $singular
+                    ),
+                    'items_list'            => sprintf(
+                        esc_html__('%s list', 'orbem-studio'),
+                        $plural
+                    ),
+                    'items_list_navigation' => sprintf(
+                        esc_html__('%s list navigation', 'orbem-studio'),
+                        $plural
+                    ),
+                    'filter_items_list'     => sprintf(
+                        esc_html__('Filter %s list', 'orbem-studio'),
+                        $plural
+                    ),
+                ];
+            }
+
+            $args = [
                 'labels'             => $labels,
                 'menu_icon'          => 'dashicons-location-alt',
                 'public'             => false,
@@ -2256,10 +2776,11 @@ class Explore
                 'capability_type'    => 'page',
                 'has_archive'        => false,
                 'hierarchical'       => false,
+                'map_meta_cap'       => true,
                 'menu_position'      => null,
                 'show_in_rest'       => true,
                 'supports'           => $info['supports'],
-            );
+            ];
 
             register_post_type( $slug, $args );
         }
@@ -2267,7 +2788,7 @@ class Explore
         foreach($taxo_types as $slug => $stuff) {
             // Add explore area sync with explore point taxo.
             $arg2s = [
-                'label'             => __($stuff['name'], 'orbem-studio'),
+                'label'             => esc_html__($stuff['name'], 'orbem-studio'),
                 'hierarchical'      => true,
                 'public'            => true,
                 'show_ui'           => true,
@@ -2287,23 +2808,38 @@ class Explore
      */
     public static function getCurrentPointWidth(): array
     {
-        $user = get_current_user_id();
-        $gear = get_user_meta($user, 'explore_current_gear', true);
-        $types = ['health', 'mana', 'power', 'money'];
-        $final_amounts = [
-            'mana' => 100,
-            'health' => 100
+        $user   = wp_get_current_user();
+        $userid = (int) $user->ID;
+
+        $base_amounts = [
+            'health' => 100,
+            'mana'   => 100,
+            'power'  => 100,
+            'money'  => 0,
         ];
 
-        foreach($types as $type) {
-            if ( isset($gear[$type]) && is_array($gear[$type]) ) {
-                foreach($gear[$type] as $gear_amount) {
-                    $final_amounts[$type] += array_values($gear_amount)[0] ?? 0;
+        if (0 === $userid) {
+            return $base_amounts;
+        }
+
+        $gear = get_user_meta($userid, 'explore_current_gear', true);
+
+        if (!is_array($gear)) {
+            return $base_amounts;
+        }
+
+        foreach ($base_amounts as $type => $base_value) {
+            if (!empty($gear[$type]) && is_array($gear[$type])) {
+                foreach ($gear[$type] as $gear_amount) {
+                    if (is_array($gear_amount)) {
+                        $value = (int) reset($gear_amount);
+                        $base_amounts[$type] += $value;
+                    }
                 }
             }
         }
 
-        return $final_amounts;
+        return $base_amounts;
     }
 
     /**
@@ -2327,26 +2863,50 @@ class Explore
 
     /**
      * Get current level.
+     *
+     * @return int
      */
-    public static function getCurrentLevel(): int|string
+    public static function getCurrentLevel(): int
     {
         $levels = self::getLevelMap();
-        $points = get_user_meta(get_current_user_id(), 'explore_points', true);
-        $points = true === isset($points['point']['points']) ? $points['point']['points'] : 0;
 
-        if (false === empty($levels)) {
-            foreach ($levels as $index => $level) {
-                if (count($levels) === ($index - 1)) {
-                    break;
-                }
+        if (empty($levels) || !is_array($levels)) {
+            return 1;
+        }
 
-                if ($points > $level && $points < $levels[$index + 1] || $points === $level) {
-                    return $index + 1;
-                }
+        sort($levels, SORT_NUMERIC);
+
+        $user   = wp_get_current_user();
+        $userid = (int) $user->ID;
+
+        if (0 === $userid) {
+            return 1;
+        }
+
+        $meta   = get_user_meta($userid, 'explore_points', true);
+        $points = 0;
+
+        if (is_array($meta) && isset($meta['point']['points'])) {
+            $points = (int) $meta['point']['points'];
+        }
+
+        $count = count($levels);
+
+        for ($i = 0; $i < $count; $i++) {
+            $current = $levels[$i];
+            $next    = $levels[$i + 1] ?? null;
+
+            if ($points === $current) {
+                return $i + 1;
+            }
+
+            if (null !== $next && $points > $current && $points < $next) {
+                return $i + 1;
             }
         }
 
-        return 1;
+        // If points exceed all thresholds, return max level
+        return $count;
     }
 
     /**
@@ -2364,18 +2924,22 @@ class Explore
      * Register new block category for orbem studio.
      *
      * @param array $categories The current block categories.
-     * @param WP_Post $post       Post object.
+     * @param WP_Block_Editor_Context $context
      *
      * @filter block_categories_all
      */
-    public function block_category(array $categories): array
+    public function blockCategory(array $categories, \WP_Block_Editor_Context $context): array
     {
+        if (empty($context->post)) {
+            return $categories;
+        }
+
         return array_merge(
             $categories,
             [
                 [
                     'slug'  => 'orbem-order-studio',
-                    'title' => __( 'Orbem Studio', 'orbem-studio' ),
+                    'title' => esc_html__('Orbem Studio', 'orbem-studio'),
                 ],
             ]
         );
@@ -2383,82 +2947,147 @@ class Explore
 
     /**
      * Get the main character's images.
-     * @param $main_character
-     * @param $location
+     *
+     * @param string|\WP_Post $main_character
      * @return array
      */
-    public static function getCharacterImages($main_character): array
+    public static function getCharacterImages(string|\WP_Post $main_character): array
     {
-        $main_character = is_object($main_character) ? $main_character : get_posts(['post_type' => ['explore-character', 'explore-enemy'], 'name' => $main_character, 'post_status' => 'publish', 'posts_per_page' => 1]);
+        if (is_string($main_character)) {
+            $posts = get_posts([
+                'post_type'      => ['explore-character', 'explore-enemy'],
+                'name'           => sanitize_key($main_character),
+                'post_status'    => 'publish',
+                'posts_per_page' => 1,
+                'no_found_rows'  => true,
+            ]);
 
-        if (false === is_wp_error($main_character)) {
-            $main_character = false === empty($main_character) && is_array($main_character) ? $main_character[0] : $main_character;
-            if (false === empty($main_character)) {
-                $images = get_post_meta($main_character->ID, 'explore-character-images', true);
-                $weapon_images = get_post_meta($main_character->ID, 'explore-weapon-images', true);
-                $images = true === is_array($weapon_images) ? array_merge($images, $weapon_images) : $images;
-                $name = get_post_meta($main_character->ID, 'explore-character-name', true);
-                $name = false === empty($name) ? $name : $main_character->post_title;
-
-                if (true === isset($images) && true === is_array($images)) {
-                    return [
-                        'direction_images' => $images,
-                        'height' => get_post_meta($main_character->ID, 'explore-height', true),
-                        'width' => get_post_meta($main_character->ID, 'explore-width', true),
-                        'ability' => get_post_meta($main_character->ID, 'explore-ability', true),
-                        'weapon' => get_post_meta($main_character->ID, 'explore-weapon-choice', true),
-                        'id' => $main_character->ID,
-                        'name' => $name,
-                        'voice' => get_post_meta($main_character->ID, 'explore-voice', true),
-                    ];
-                }
+            if (empty($posts) || ! $posts[0] instanceof \WP_Post) {
+                return [];
             }
+
+            $main_character = $posts[0];
         }
 
-        return [];
+        if (! isset($main_character->ID)) {
+            return [];
+        }
+
+        $meta = get_post_meta($main_character->ID);
+
+        $images        = $meta['explore-character-images'][0] ?? [];
+        $weapon_images = $meta['explore-weapon-images'][0] ?? [];
+
+        if (! is_array($images)) {
+            $images = [];
+        }
+
+        if (is_array($weapon_images)) {
+            $images = array_merge($images, $weapon_images);
+        }
+
+        if (empty($images)) {
+            return [];
+        }
+
+        $name = $meta['explore-character-name'][0] ?? $main_character->post_title;
+
+        return [
+            'direction_images' => $images,
+            'height'           => $meta['explore-height'][0] ?? '',
+            'width'            => $meta['explore-width'][0] ?? '',
+            'ability'          => $meta['explore-ability'][0] ?? '',
+            'weapon'           => $meta['explore-weapon-choice'][0] ?? '',
+            'id'               => $main_character->ID,
+            'name'             => $name,
+            'voice'            => $meta['explore-voice'][0] ?? '',
+        ];
     }
 
     /**
-     * @action init
-     * @return void
+     * Google SSO oauth callback.
+     * @param WP_REST_Request $request
+     * @return WP_REST_Response
      */
-    public function handle_google_oauth_callback(): void
+    public function handleGoogleOauthCallback(WP_REST_Request $request): WP_REST_Response
     {
-        if ($_SERVER['REQUEST_METHOD'] === 'POST' && str_contains($_SERVER['REQUEST_URI'], '/google-oauth-callback')) {
-            $credential = $_POST['credential'];
-            $client_id = get_option('explore_google_login_client_id', '');
+        $data       = $request->get_json_params();
+        $nonce      = isset($data['nonce']) ? sanitize_text_field($data['nonce']) : '';
+        $credential = isset($data['credential']) ? sanitize_text_field(wp_unslash($data['credential'])) : '';
+        $client_id  = get_option('explore_google_login_client_id', '');
 
-            $payload = json_decode(base64_decode(str_replace('_', '/', str_replace('-', '+', explode('.', $credential)[1]))), true);
-            if ($payload['aud'] !== $client_id) {
-                wp_send_json(['success' => false, 'message' => 'Invalid audience']);
-            }
-
-            $email = sanitize_email($payload['email']);
-            $first_name = sanitize_user($payload['given_name']);
-
-            $user = get_user_by('email', $email);
-
-            if (!$user) {
-                // Create new user
-                $username = sanitize_user($first_name);
-                if (username_exists($username)) {
-                    $username .= '_' . wp_generate_password(4, false);
-                }
-                $user_id = wp_create_user($username, wp_generate_password(), $email);
-                wp_update_user([
-                    'ID' => $user_id,
-                    'first_name' => $first_name,
-                ]);
-                $user = get_user_by('id', $user_id);
-            }
-
-            // Log in the user
-            wp_set_current_user($user->ID);
-            wp_set_auth_cookie($user->ID);
-            do_action('wp_login', $user->user_login, $user);
-
-            wp_send_json(['success' => true]);
+        if (
+            empty($nonce)
+            || empty($credential)
+            || empty($client_id)
+            || !wp_verify_nonce($nonce, 'google_sso_nonce')
+        ) {
+            return rest_ensure_response([
+                'success' => false,
+                'data'    => esc_html__('Missing or invalid data point', 'orbem-studio'),
+            ]);
         }
+
+        $response = wp_remote_get(
+            'https://oauth2.googleapis.com/tokeninfo?id_token=' . rawurlencode($credential),
+            ['timeout' => 10]
+        );
+
+        if (is_wp_error($response)) {
+            return rest_ensure_response(['success' => false]);
+        }
+
+        $payload = json_decode(wp_remote_retrieve_body($response), true);
+
+        if (empty($payload['aud']) || $payload['aud'] !== $client_id) {
+            return rest_ensure_response([
+                'success' => false,
+                'data'    => esc_html__('Invalid credentials', 'orbem-studio'),
+            ]);
+        }
+
+        $payload = json_decode(base64_decode(str_replace('_', '/', str_replace('-', '+', explode('.', $credential)[1]))), true);
+        if ($payload['aud'] !== $client_id || $payload['iss'] !== 'https://accounts.google.com') {
+            return rest_ensure_response([
+                'success' => false,
+                'data' => esc_html__('Invalid audience or issuer', 'orbem-studio'),
+            ]);
+        }
+
+        if ($payload['email_verified'] !== 'true') {
+            return rest_ensure_response([
+                'success' => false,
+                'data' => esc_html__('Invalid email provided to google', 'orbem-studio'),
+            ]);
+        }
+
+        $email = sanitize_email($payload['email']);
+        $first_name = sanitize_user($payload['given_name']);
+        $user = get_user_by('email', $email);
+
+        if (!$user) {
+            // Create new user
+            $username = sanitize_user($first_name);
+            if (username_exists($username)) {
+                $username .= '_' . wp_generate_password(4, false);
+            }
+            $user_id = wp_create_user($username, wp_generate_password(), $email);
+            wp_update_user([
+                'ID' => $user_id,
+                'first_name' => $first_name,
+            ]);
+            $user = get_user_by('id', $user_id);
+        }
+
+        // Log in the user
+        wp_set_current_user($user->ID);
+        wp_set_auth_cookie($user->ID);
+        do_action('wp_login', $user->user_login, $user);
+
+        return rest_ensure_response([
+            'success' => true,
+            'data' => esc_html__('Success', 'orbem-studio'),
+        ]);
     }
 
     /**
@@ -2470,10 +3099,11 @@ class Explore
         ob_start();
         ?>
         <div id="g_id_onload"
-             data-client_id="<?php echo get_option('explore_google_login_client_id', ''); ?>"
+             data-client_id="<?php echo esc_attr(get_option('explore_google_login_client_id', '')); ?>"
+             data-nonce="<?php echo esc_attr(wp_create_nonce('google_sso_nonce')); ?>"
              data-context="signin"
              data-ux_mode="popup"
-             data-callback="handleCredentialResponse"
+             data-callback="exploreHandleCredentialResponse"
              data-auto_prompt="false">
         </div>
 

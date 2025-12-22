@@ -1,4 +1,6 @@
-/** @global {string} wpThemeURL */
+/* @global siteRESTURL */
+/* @global OrbemStudio */
+/* @global orbemNonce */
 
 import { initImageUpload } from './image-upload';
 import { enterExplorePoint, engageExploreGame } from './explore';
@@ -198,15 +200,17 @@ export function engageDevMode() {
 
                     item.classList.add('engage');
 
-                    const filehref = `https://${wpThemeURL}/wp-json/orbemorder/v1/get-new-fields/`;
+                    const filehref = `${siteRESTURL}/get-new-fields/`;
                     const jsonString = {
                         type: postType,
+                        nonce: orbemNonce
                     };
                     // Save position of item.
                     fetch(filehref, {
                         method: 'POST', // Specify the HTTP method.
                         headers: {
                             'Content-Type': 'application/json', // Set the content type to JSON.
+                            'X-WP-Nonce': OrbemStudio.nonce
                         },
                         body: JSON.stringify(jsonString) // The JSON stringified payload.
                     })
@@ -312,18 +316,20 @@ export function engageDevMode() {
                             // Submit the new size for the find item.
                             submitSize.addEventListener('click', () => {
 
-                                const filehref = `https://${wpThemeURL}/wp-json/orbemorder/v1/set-item-size/`;
+                                const filehref = `${siteRESTURL}/set-item-size/`;
                                 const jsonString = {
                                     height: heightInput.value,
                                     width: widthInput.value,
                                     id: theID,
                                     meta: item.dataset?.meta,
+                                    nonce: orbemNonce
                                 };
                                 // Save position of item.
                                 fetch(filehref, {
                                     method: 'POST', // Specify the HTTP method.
                                     headers: {
                                         'Content-Type': 'application/json', // Set the content type to JSON.
+                                        'X-WP-Nonce': OrbemStudio.nonce
                                     },
                                     body: JSON.stringify(jsonString) // The JSON stringified payload.
                                 })
@@ -447,7 +453,7 @@ export function engageDevMode() {
             function handleDragEnd() {
                 if (draggedContainer) {
                     sendItemCoodinateTimeout = setTimeout(() => {
-                        const filehref = `https://${wpThemeURL}/wp-json/orbemorder/v1/set-item-position/`;
+                        const filehref = `${siteRESTURL}/set-item-position/`;
                         const theID = 'true' === draggedContainer.dataset.trigger || true === draggedContainer.classList.contains('drag-dest') ? draggedContainer.id.replace('-t', '').replace('-d', '') : draggedContainer.id;
                         const jsonString = {
                             top: draggedContainer.style.top.replace('px', ''),
@@ -456,6 +462,7 @@ export function engageDevMode() {
                             width: draggedContainer.style.width.replace('px', ''),
                             id: theID,
                             meta: draggedContainer.dataset?.meta,
+                            nonce: orbemNonce
                         };
 
                         if (theID === recordThePath) {
@@ -467,6 +474,7 @@ export function engageDevMode() {
                             method: 'POST', // Specify the HTTP method.
                             headers: {
                                 'Content-Type': 'application/json', // Set the content type to JSON.
+                                'X-WP-Nonce': OrbemStudio.nonce
                             },
                             body: JSON.stringify(jsonString) // The JSON stringified payload.
                         })
@@ -561,7 +569,7 @@ export function engageDevMode() {
                 // Handle the dragend event
                 function handleWallDragEnd() {
                     isDragging = false;
-                    const filehref = `https://${wpThemeURL}/wp-json/orbemorder/v1/add-new/`;
+                    const filehref = `${siteRESTURL}/add-new/`;
 
                     let currentLocation = document.querySelector('.game-container');
                     currentLocation = currentLocation.className.replace('game-container ', '');
@@ -581,12 +589,14 @@ export function engageDevMode() {
                                 'explore-top': topPos,
                                 'explore-left': leftPos,
                             },
+                            nonce: orbemNonce
                         };
                         // Save position of item.
                         fetch(filehref, {
                             method: 'POST', // Specify the HTTP method.
                             headers: {
                                 'Content-Type': 'application/json', // Set the content type to JSON.
+                                'X-WP-Nonce': OrbemStudio.nonce
                             },
                             body: JSON.stringify(jsonString) // The JSON stringified payload.
                         })
@@ -651,7 +661,7 @@ function makeNewFormSub() {
 
             const formData = new FormData(submitNewItem);
             const values = parseFormDataToNestedObject(formData);
-            const filehref = `https://${wpThemeURL}/wp-json/orbemorder/v1/add-new/`;
+            const filehref = `${siteRESTURL}/add-new/`;
             const selectedPostType = document.querySelector('#add-new-list li.engage' );
             let postType = '';
 
@@ -667,6 +677,7 @@ function makeNewFormSub() {
                 type: postType,
                 area: currentLocation ?? '',
                 values,
+                nonce: orbemNonce
             };
 
             // Save position of item.
@@ -674,6 +685,7 @@ function makeNewFormSub() {
                 method: 'POST', // Specify the HTTP method.
                 headers: {
                     'Content-Type': 'application/json', // Set the content type to JSON.
+                    'X-WP-Nonce': OrbemStudio.nonce
                 },
                 body: JSON.stringify(jsonString) // The JSON stringified payload.
             })

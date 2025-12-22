@@ -1,13 +1,13 @@
 /* global gameURL */
 /* global explorePoints */
-/* global currentUserId */
 /* global musicNames */
 /* global levelMaps */
 /* global exploreAbilities */
 /* global OrbemOrder */
-/* global wpThemeURL */
+/* global siteRESTURL */
 /* global previousCutsceneArea */
 /* global TTSAPIKEY */
+/* global orbemNonce */
 
 import { engageDevMode } from './devmode';
 
@@ -938,7 +938,7 @@ function persistItemRemoval( item, type, amount, timeoutTime, reset ) {
     "use strict";
 
 
-    const filehref = `https://${wpThemeURL}/wp-json/orbemorder/v1/add-explore-points/`;
+    const filehref = `${siteRESTURL}/add-explore-points/`;
 
     // Don't allow health to be 0.
     if ( 'health' === type && 0 === amount ) {
@@ -963,9 +963,9 @@ function persistItemRemoval( item, type, amount, timeoutTime, reset ) {
             const jsonString = {
                 type: type,
                 item: persistItems,
-                userid: currentUserId,
                 amount: amount,
                 reset: reset,
+                nonce: orbemNonce
             };
 
             // Save position of item.
@@ -1100,11 +1100,11 @@ function saveMission( mission, value, position ) {
             }
         }
 
-        const filehref = `https://${wpThemeURL}/wp-json/orbemorder/v1/mission/`;
+        const filehref = `${siteRESTURL}/mission/`;
 
         const jsonString = {
-            userid: currentUserId,
             mission,
+            nonce: orbemNonce
         };
 
         // Save position of item.
@@ -1154,11 +1154,11 @@ function showNextMission( theMission ) {
 function addCharacter( character ) {
     "use strict";
 
-    const filehref = `https://${wpThemeURL}/wp-json/orbemorder/v1/add-character/`;
+    const filehref = `${siteRESTURL}/add-character/`;
 
     const jsonString = {
-        userid: currentUserId,
         slug: character,
+        nonce: orbemNonce
     };
 
     // Save position of item.
@@ -1193,8 +1193,8 @@ function equipNewItem(type, id, amount, unequip, name) {
         type: type,
         itemid: id,
         amount: amount,
-        userid: currentUserId,
-        unequip: unequip
+        unequip: unequip,
+        nonce: orbemNonce
     };
 
     if ('weapons' === type) {
@@ -1202,7 +1202,7 @@ function equipNewItem(type, id, amount, unequip, name) {
     }
 
     // Save position of item.
-    fetch(`https://${wpThemeURL}/wp-json/orbemorder/v1/equip-explore-item/`, {
+    fetch(`${siteRESTURL}/equip-explore-item/`, {
         method: 'POST', // Specify the HTTP method
         headers: {
             'Content-Type': 'application/json', // Set the content type to JSON
@@ -1232,11 +1232,11 @@ function equipNewItem(type, id, amount, unequip, name) {
 function addNewSpell(id) {
     "use strict";
 
-    const filehref = `https://${wpThemeURL}/wp-json/orbemorder/v1/addspell/`;
+    const filehref = `${siteRESTURL}/addspell/`;
 
     const jsonString = {
         spellid: id,
-        userid: currentUserId,
+        nonce: orbemNonce
     };
 
     // Save position of item.
@@ -1298,11 +1298,11 @@ function saveSettings(music, sfx, talking) {
         music,
         sfx,
         talking,
-        userid: currentUserId
+        nonce: orbemNonce
     };
 
     // Save position of item.
-    fetch(`https://${wpThemeURL}/wp-json/orbemorder/v1/save-settings/`, {
+    fetch(`${siteRESTURL}/save-settings/`, {
         method: 'POST', // Specify the HTTP method
         headers: {
             'Content-Type': 'application/json', // Set the content type to JSON
@@ -1329,15 +1329,15 @@ function saveSettings(music, sfx, talking) {
 function saveStorageItem(id, name, type, value, remove) {
     "use strict";
 
-    const filehref = `https://${wpThemeURL}/wp-json/orbemorder/v1/save-storage-item/`;
+    const filehref = `${siteRESTURL}/save-storage-item/`;
 
     const jsonString = {
-        user: currentUserId,
         id,
         name,
         value,
         type,
-        remove
+        remove,
+        nonce: orbemNonce
     };
 
     // Save position of item.
@@ -1363,10 +1363,10 @@ function saveStorageItem(id, name, type, value, remove) {
 async function resetExplore() {
     "use strict";
 
-    const filehref = `https://${wpThemeURL}/wp-json/orbemorder/v1/resetexplore/`;
+    const filehref = `${siteRESTURL}/resetexplore/`;
 
     const jsonString = {
-        userid: currentUserId,
+        nonce: orbemNonce
     };
 
     // Save position of item.
@@ -1395,12 +1395,12 @@ async function resetExplore() {
 function addUserCoordianate(left, top) {
     "use strict";
 
-    const filehref = `https://${wpThemeURL}/wp-json/orbemorder/v1/coordinates/`;
+    const filehref = `${siteRESTURL}/coordinates/`;
 
     const jsonString = {
         left: left.replace('px', ''),
         top: top.replace('px', ''),
-        userid: currentUserId,
+        nonce: orbemNonce
     };
 
     // Save position of item.
@@ -1467,12 +1467,12 @@ const hurtTheEnemy = (function () {
 
                         // Save new health.
                         const position = cleanClassName(value.className);
-                        const filehref = `https://${wpThemeURL}/wp-json/orbemorder/v1/enemy/`;
+                        const filehref = `${siteRESTURL}/enemy/`;
 
                         const jsonString = {
-                            userid: currentUserId,
                             health: 0,
-                            position
+                            position,
+                            nonce: orbemNonce
                         };
 
                         // Save position of item.
@@ -1564,7 +1564,7 @@ const enterNewArea = (function () {
 
         // Don't repeat enter.
         if ( false === called ) {
-            const filehref = `https://${ wpThemeURL }/wp-json/orbemorder/v1/area/`;
+            const filehref = `${siteRESTURL}/area/`;
             let newMusic = '';
 
             if ( musicNames ) {
@@ -1572,8 +1572,8 @@ const enterNewArea = (function () {
             }
 
             const jsonString = {
-                userid: currentUserId,
-                position
+                position,
+                nonce: orbemNonce
             };
 
             // Save position of item.
@@ -1836,11 +1836,11 @@ const showItemDescription = (function () {
 
         // Don't repeat item get.
         if ( false === called ) {
-            const filehref = `https://${ wpThemeURL }/wp-json/orbemorder/v1/get-item-description/`;
+            const filehref = `${siteRESTURL}/get-item-description/`;
 
             const jsonString = {
-                userid: currentUserId,
-                id
+                id,
+                nonce: orbemNonce
             };
 
             fetch(filehref, {
@@ -3618,10 +3618,10 @@ function saveMaterializedItem(area, materializedItemsArray) {
     const jsonString = {
         area: area,
         item: materializedItemsArray,
-        userid: currentUserId
+        nonce: orbemNonce
     };
     // Save position of item.
-    fetch(`https://${wpThemeURL}/wp-json/orbemorder/v1/save-materialized-item/`, {
+    fetch(`${siteRESTURL}/save-materialized-item/`, {
         method: 'POST', // Specify the HTTP method
         headers: {
             'Content-Type': 'application/json', // Set the content type to JSON
@@ -3641,11 +3641,11 @@ function enableAbility(ability) {
 
     const jsonString = {
         slug: ability,
-        userid: currentUserId
+        nonce: orbemNonce
     };
 
     // Save position of item.
-    fetch(`https://${wpThemeURL}/wp-json/orbemorder/v1/enable-ability/`, {
+    fetch(`${siteRESTURL}/enable-ability/`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -3796,11 +3796,11 @@ function setPreviousCutsceneArea( cutsceneName ) {
 
     const jsonString = {
         cutscene: cutsceneName,
-        userid: currentUserId
+        nonce: orbemNonce
     };
 
     // Set the cutscene area previously viewed.
-    fetch(`https://${wpThemeURL}/wp-json/orbemorder/v1/set-previous-cutscene-area/`, {
+    fetch(`${siteRESTURL}/set-previous-cutscene-area/`, {
         method: 'POST', // Specify the HTTP method
         headers: {
             'Content-Type': 'application/json', // Set the content type to JSON
@@ -5407,13 +5407,13 @@ function engageDraggableFunction() {
                 }
 
                 // Save position of item.
-                const filehref = `https://${wpThemeURL}/wp-json/orbemorder/v1/save-drag/`;
+                const filehref = `${siteRESTURL}/save-drag/`;
 
                 const jsonString = {
                     slug: cleanClass,
                     top: dragmeitem.style.top.replace('px', ''),
                     left: dragmeitem.style.left.replace('px', ''),
-                    userid: currentUserId
+                    nonce: orbemNonce
                 };
 
                 // Save position of item.
@@ -5921,7 +5921,8 @@ async function makeTalk( text, voiceName, providedAudio ) {
         audioConfig: {
             audioEncoding: "MP3",
             volumeGainDb: ( parseInt(window.talkingVolume) + 7 ),
-        }
+        },
+        nonce: orbemNonce
     };
 
     if (pitch && speakingRate) {
@@ -6104,22 +6105,31 @@ function spinMiroLogo(element,name) {
 }
 
 // Add the SSO response function for login/signin if it doesn't exist in the theme.
-if (typeof window.handleCredentialResponse !== 'function') {
-    window.handleCredentialResponse = function(response) {
+if (typeof window.exploreHandleCredentialResponse !== 'function') {
+    window.exploreHandleCredentialResponse = function(response) {
         "use strict";
+        // Save position of item.
+        const filehref = `${siteRESTURL}/google-oauth-callback/`;
+        const googleContainer = document.getElementById('g_id_onload');
+        const jsonString = {
+            credential: response.credential,
+            nonce: googleContainer?.dataset?.nonce || '',
+        };
 
-        const token = response.credential;
-
-        fetch('/google-oauth-callback', {
-            method: 'POST',
+        // Save position of item.
+        fetch(filehref, {
+            method: 'POST', // Specify the HTTP method
             headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
+                'Content-Type': 'application/json', // Set the content type to JSON
             },
-            body: new URLSearchParams({
-                credential: token
-            })
+            body: JSON.stringify(jsonString) // The JSON stringified payload
         })
-            .then(res => res.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok ' + response.statusText);
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.success) {
                     window.location.reload();

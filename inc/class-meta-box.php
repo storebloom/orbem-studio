@@ -80,7 +80,7 @@ class Meta_Box {
         }
 
 		// Include the meta box template.
-		include "{$this->plugin->dir_path}templates/meta/meta-box.php";
+		include "{$this->plugin->dir_path}/templates/meta/meta-box.php";
 	}
 
     /**
@@ -299,7 +299,7 @@ class Meta_Box {
                     ],
                     'The area this mission will appear in.'
                 ],
-                'value'                => [
+                'explore-value'        => [
                     'number',
                     'How many points/monies this mission will award for completion'
                 ],
@@ -491,7 +491,7 @@ class Meta_Box {
                     ],
                     'Should this cutscene mute the area\'s current music when playing? (Good for video cutscenes)'
                 ],
-                'value'                         => [
+                'explore-value'      => [
                     'number',
                     'The amound of reward you will receive when completing this cutscene. (Separate from mission rewards)'
                 ],
@@ -818,7 +818,7 @@ class Meta_Box {
                     ],
                     'Specifies the type of enemy this is. Blocker: is default with no ability, Shooter: shoots projectiles, Runner: runs into character to hurt, Boss: has boss fighting waves.'
                 ],
-                'value'                    => [
+                'explore-value'  => [
                     'number',
                     'The damage value this enemy will cause.'
                 ],
@@ -848,7 +848,7 @@ class Meta_Box {
                 'explore-path' => [
                     [
                         'repeater' => [
-                            'top' => 'number',
+                            'top'  => 'number',
                             'left' => 'number'
                         ]
                     ],
@@ -1180,7 +1180,7 @@ class Meta_Box {
                     ],
                     'What type of item this is. Collectable: will be collected when touched. Breakable: will disappear or display interacted image when engaged with. Draggable: Will allow user to drag this item. Hazard: Will cause harm to the user when stepped on.'
                 ],
-                'value'                    => [
+                'explore-value'      => [
                     'number',
                     'The value of this item when interacted with.'
                 ],

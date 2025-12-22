@@ -3,10 +3,10 @@
  * This is the game options menu.
  */
 
-$setup_triggered = get_option('orbem_studio_setup_triggered', '');
+$setup_triggered = get_option('orbem_studio_setup_triggered', 'false');
 
 if ('false' !== $setup_triggered) {
-    include $this->plugin->dir_path . 'templates/setup.php';
+    include $this->plugin->dir_path . '/templates/setup.php';
 }
 ?>
 <div class="title-section">

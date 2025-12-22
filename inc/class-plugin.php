@@ -20,6 +20,13 @@ class Plugin extends Plugin_Base {
     public Util $util;
 
     /**
+     * Meta Box instance
+     *
+     * @var meta_box
+     */
+    public $meta_box;
+
+    /**
      * Explore instance
      *
      * @var Explore
@@ -32,12 +39,14 @@ class Plugin extends Plugin_Base {
 	public function __construct() {
 		parent::__construct();
 
+        $meta_box = new Meta_Box( $this );
+
 		// Initiate classes.
 		$classes = array(
             new Util( $this ),
 			new Explore( $this ),
-            new Meta_Box( $this ),
-            new Dev_Mode( $this ),
+            $meta_box,
+            new Dev_Mode( $this, $meta_box ),
             new Menu( $this )
 		);
 
@@ -75,18 +84,18 @@ class Plugin extends Plugin_Base {
         $game_page = get_option('explore_game_page', '');
         $page = get_queried_object();
 
-        if (false === empty($game_page) && false === empty($page->post_name) && $game_page === $page->post_name) {
+        if (false === empty($game_page) && false === empty($page->post_name) && $page instanceof \WP_Post && $game_page === $page->post_name) {
             self::enqueueScript('orbem-order/app');
             self::enqueueStyle('orbem-order/app');
 
             $current_user_id = get_current_user_id();
 
-            // Register the WebSocket script
+            // Register the WebSocket script.
             //wp_enqueue_script('socket-io', 'https://cdn.socket.io/4.0.1/socket.io.min.js', array(), null, true);
             wp_add_inline_script('orbem-order/app',
-                'const gameURL = "' . get_option('explore_game_url', get_home_url()) . '";
-            const wpThemeURL = "' . str_replace(['https://', 'http://', 'www'], '', get_home_url()) . '";
-                const previousCutsceneArea = "' . get_user_meta($current_user_id, 'explore_previous_cutscene_area', true) . '";',
+                'const gameURL = ' . wp_json_encode(get_option('explore_game_url', get_home_url())) . ';
+                const siteRESTURL = ' . rest_url('orbemorder/v1') . ';
+                const previousCutsceneArea = ' . wp_json_encode(get_user_meta($current_user_id, 'explore_previous_cutscene_area', true)) . ';',
             );
 
             $explore_points = get_user_meta($current_user_id, 'explore_points', true);
@@ -96,14 +105,14 @@ class Plugin extends Plugin_Base {
             $explore_abilities = $explore_abilities ?? [];
             $default_weapon    = get_option('explore_default_weapon', '');
 
-            if ('' === $explore_points) {
+            if (true === empty($explore_points)) {
                 $explore_points = [
-                    'health' => ['points' => 100, 'positions' => []],
-                    'mana' => ['points' => 100, 'positions' => []],
-                    'point' => ['points' => 0, 'positions' => []],
-                    'gear' => ['positions' => []],
+                    'health'  => ['points' => 100, 'positions' => []],
+                    'mana'    => ['points' => 100, 'positions' => []],
+                    'point'   => ['points' => 0, 'positions' => []],
+                    'gear'    => ['positions' => []],
                     'weapons' => ['positions' => []],
-                    'money' => ['positions' => []],
+                    'money'   => ['positions' => []],
                 ];
             }
 
@@ -112,9 +121,10 @@ class Plugin extends Plugin_Base {
                 'const currentUserId ="' . get_current_user_id() . '";' .
                 'const explorePoints = ' . wp_json_encode($explore_points) . ';' .
                 'const exploreAbilities = ' . wp_json_encode($explore_abilities) . ';' .
-                'const levelMaps = "' . wp_json_encode(Explore::getLevelMap()) . '";' .
-                'const defaultWeapon = "' . $default_weapon . '";' .
-                'const TTSAPIKEY = "' . get_option('explore_google_tts_api_key', '') . '";'
+                'const levelMaps = ' . wp_json_encode(Explore::getLevelMap()) . ';' .
+                'const defaultWeapon = "' . sanitize_text_field(wp_unslash(($default_weapon))) . '";' .
+                'const TTSAPIKEY = "' . sanitize_text_field(get_option('explore_google_tts_api_key', '')) . '";' .
+                'const orbemNonce = "' . wp_create_nonce('orbem_wp_rest') . '";',
             );
         }
     }
@@ -127,7 +137,7 @@ class Plugin extends Plugin_Base {
 	 */
 	public function enqueueAdminAssets(): void
     {
-        if (true === is_admin() || true === current_user_can('manage_options')) {
+        if (true === current_user_can('manage_options')) {
             self::enqueueScript('orbem-order/admin');
             self::enqueueStyle('orbem-order/admin');
             self::enqueueScript('orbem-order/image-upload');
@@ -206,9 +216,7 @@ class Plugin extends Plugin_Base {
                     $javascript_uri,
                     $asset_script['dependencies'],
                     $asset_script['version'],
-                    array(
-                        'in_footer' => false,
-                    )
+                    false
                 );
             }
         }
@@ -234,11 +242,9 @@ class Plugin extends Plugin_Base {
         $localizes = array();
 
         $current_user_id = get_current_user_id();
-
         $explore_points = get_user_meta($current_user_id, 'explore_points', true);
         $explore_points = $explore_points ?? [];
         $default_weapon  = get_option('explore_default_weapon', '');
-
         $explore_abilities = get_user_meta($current_user_id, 'explore_abilities', true);
         $explore_abilities = $explore_abilities ?? [];
 
@@ -318,7 +324,7 @@ class Plugin extends Plugin_Base {
         $game_page = get_option('explore_game_page', '');
         $page = get_queried_object();
 
-        if (false === empty($game_page) && false === empty($page->post_name) && $game_page === $page->post_name) {
+        if (false === empty($game_page) && false === empty($page->post_name) && $page instanceof \WP_Post && $game_page === $page->post_name) {
             return plugin_dir_path(__FILE__) . '../templates/explore.php';
         }
 
@@ -343,7 +349,7 @@ class Plugin extends Plugin_Base {
         if (!$tax_obj) return;
 
         wp_dropdown_categories([
-            'show_option_all' => sprintf(__('All %s'), $tax_obj->label),
+            'show_option_all' => sprintf('All %s', $tax_obj->label),
             'taxonomy'        => $taxonomy,
             'name'            => $taxonomy,
             'orderby'         => 'name',

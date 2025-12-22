@@ -18,16 +18,16 @@ class Util
     /**
      * Theme instance.
      *
-     * @var object
+     * @var Plugin
      */
-    public object $plugin;
+    public Plugin $plugin;
 
     /**
      * Class constructor.
      *
-     * @param object $plugin Plugin class.
+     * @param Plugin $plugin Plugin class.
      */
-    public function __construct(object $plugin)
+    public function __construct(Plugin $plugin)
     {
         $this->plugin = $plugin;
         $this->plugin->util = $this;
@@ -59,37 +59,59 @@ class Util
     /**
      * Get the list of posts by post type. Just the post names.
      *
-     * @param $post_type
+     * @param string $post_type
      * @param bool $taxo
      * @param string $meta_key
      * @param string $meta_value
      * @return array
      */
-    public function getOrbemArray($post_type, bool $taxo = false, string $meta_key = '', string $meta_value = ''): array
-    {
+    public function getOrbemArray(
+        string $post_type,
+        bool $taxo = false,
+        string $meta_key = '',
+        string $meta_value = ''
+    ): array {
         $explore_array = [];
+
+        $post_type = sanitize_key($post_type);
+        $meta_key  = sanitize_key($meta_key);
+
         if ($taxo) {
-            $explore_taxos = get_terms($post_type);
-            foreach($explore_taxos as $explore_taxo) {
-                $explore_array[] = $explore_taxo->name;
-            }
-        } else {
-            $meta_query = '';
+            $terms = get_terms([
+                'taxonomy'   => $post_type,
+                'hide_empty' => false,
+            ]);
 
-            if (false === empty($meta_key)) {
-                $meta_query = [
-                    'meta_query' => [
-                        'key' => $meta_key,
-                        'value' => $meta_value,
-                        'compare' => '=',
-                    ]
-                ];
+            if (!is_wp_error($terms)) {
+                foreach ($terms as $term) {
+                    $explore_array[] = $term->name;
+                }
             }
-            $explore_posts = get_posts(['post_status' => 'publish', 'post_type' => $post_type, 'numberposts' => -1, 'fields' => ['post_name'], $meta_query]);
 
-            foreach ($explore_posts as $explore_post) {
-                $explore_array[] = $explore_post->post_name;
-            }
+            return $explore_array;
+        }
+
+        $args = [
+            'post_status'    => 'publish',
+            'post_type'      => $post_type,
+            'numberposts'    => -1,
+            'no_found_rows'  => true,
+        ];
+
+        if ($meta_key !== '') {
+            $args['meta_query'] = [
+                [
+                    'key'   => $meta_key,
+                    'value' => $meta_value,
+                    'compare' => '=',
+                ]
+            ];
+        }
+
+        $posts = get_posts($args);
+
+        foreach ($posts as $post) {
+            $explore_array[] = $post->post_name;
         }
 
         return $explore_array;

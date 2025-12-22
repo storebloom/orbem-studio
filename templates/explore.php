@@ -14,76 +14,76 @@ if (false === $first_area) {
     return;
 }
 
-$hide_storage = get_option('explore_hide_storage', false);
-$hud_bars = get_option('explore_hud_bars', []);
-$require_login = get_option('explore_require_login', false);
-$money_img = get_option('explore_money_image', false);
-$plugin_dir = str_replace( '/templates/', '', plugin_dir_url( __FILE__ ));
-$plugin_dir_path = plugin_dir_path( __FILE__ );
-$default_weapon = get_option('explore_default_weapon', '');
-$userid = get_current_user_id();
-$game_url = get_option('explore_game_page', '');
-$game_url = false === empty($game_url) ? get_permalink(get_page_by_path($game_url)) : '/';
-$walking_sound = get_option('explore_walking_sound', false);
-$points_sound = get_option('explore_points_sound', false);
-$points = get_user_meta($userid, 'explore_points', true);
-$weapon = get_user_meta($userid, 'explore_current_weapons', true);
-$equipped_weapon = false === empty($weapon) ? get_post($weapon[0]) : Explore::getWeaponByName($default_weapon);
-$is_projectile = false === empty($equipped_weapon) ? get_post_meta($equipped_weapon->ID, 'explore-projectile', true) : false;
-$is_it_projectile = false === empty($is_projectile) ? $is_projectile : 'no';
-$location = get_user_meta($userid, 'current_location', true);
-$location = false === empty($location) ? $location : $first_area;
-$coordinates = get_user_meta($userid, 'current_coordinates', true);
-$back = false === empty($coordinates) ? ' Back' : '';
-$explore_area = get_posts(['post_type' => 'explore-area', 'name' => $location]);
-$explore_area = $explore_area[0] ?? false;
-$is_area_cutscene = $explore_area ? get_post_meta($explore_area->ID, 'explore-is-cutscene', true) : '';
-$explore_area_map = $explore_area ? get_post_meta($explore_area->ID, 'explore-map', true) : '';
-$explore_area_start_top = $explore_area ? get_post_meta($explore_area->ID, 'explore-start-top', true) : '';
-$explore_area_start_left = $explore_area ? get_post_meta($explore_area->ID, 'explore-start-left', true) : '';
-$explore_start_direction = $explore_area ? get_post_meta($explore_area->ID, 'explore-start-direction', true) : '';
-$explore_start_direction = false === empty($explore_start_direction) ? $explore_start_direction : 'down';
+$hide_storage                 = get_option('explore_hide_storage', false);
+$hud_bars                     = get_option('explore_hud_bars', []);
+$require_login                = get_option('explore_require_login', false);
+$money_img                    = get_option('explore_money_image', false);
+$plugin_dir                   = str_replace( '/templates/', '', plugin_dir_url(__FILE__));
+$plugin_dir_path              = plugin_dir_path(__FILE__);
+$default_weapon               = get_option('explore_default_weapon', '');
+$userid                       = get_current_user_id();
+$game_url                     = get_option('explore_game_page', '');
+$game_url                     = false === empty($game_url) ? get_permalink(get_page_by_path($game_url)) : '/';
+$walking_sound                = get_option('explore_walking_sound', false);
+$points_sound                 = get_option('explore_points_sound', false);
+$points                       = get_user_meta($userid, 'explore_points', true);
+$weapon                       = get_user_meta($userid, 'explore_current_weapons', true);
+$equipped_weapon              = false === empty($weapon) ? get_post($weapon[0]) : Explore::getWeaponByName($default_weapon);
+$is_projectile                = false === empty($equipped_weapon) ? get_post_meta($equipped_weapon->ID, 'explore-projectile', true) : false;
+$is_it_projectile             = false === empty($is_projectile) ? $is_projectile : 'no';
+$location                     = get_user_meta($userid, 'current_location', true);
+$location                     = false === empty($location) ? $location : $first_area;
+$coordinates                  = get_user_meta($userid, 'current_coordinates', true);
+$back                         = false === empty($coordinates) ? ' Back' : '';
+$explore_area                 = get_posts(['post_type' => 'explore-area', 'name' => $location]);
+$explore_area                 = $explore_area[0] ?? false;
+$is_area_cutscene             = $explore_area ? get_post_meta($explore_area->ID, 'explore-is-cutscene', true) : '';
+$explore_area_map             = $explore_area ? get_post_meta($explore_area->ID, 'explore-map', true) : '';
+$explore_area_start_top       = $explore_area ? get_post_meta($explore_area->ID, 'explore-start-top', true) : '';
+$explore_area_start_left      = $explore_area ? get_post_meta($explore_area->ID, 'explore-start-left', true) : '';
+$explore_start_direction      = $explore_area ? get_post_meta($explore_area->ID, 'explore-start-direction', true) : '';
+$explore_start_direction      = false === empty($explore_start_direction) ? $explore_start_direction : 'down';
 $explore_area_start_direction = $explore_start_direction . '-dir';
-$explore_weapon_start = true === isset($equipped_weapon) && $default_weapon !== $equipped_weapon->post_name ? '-' . $equipped_weapon->post_name : '';
+$explore_weapon_start         = true === isset($equipped_weapon) && $default_weapon !== $equipped_weapon->post_name ? '-' . $equipped_weapon->post_name : '';
+$explore_points               = Explore::getExplorePoints($location);
+$explore_cutscenes            = Explore::getExplorePosts($location, 'explore-cutscene');
+$explore_minigames            = Explore::getExplorePosts($location, 'explore-minigame');
+$explore_walls                = Explore::getExplorePosts($location, 'explore-wall');
+$explore_explainers           = Explore::getExplorePosts($location, 'explore-explainer');
+$explore_missions             = Explore::getExplorePosts($location, 'explore-mission');
+$explore_abilities            = Explore::getExploreAbilities();
+$rst                          = 'true' === filter_input( INPUT_GET, 'rst', FILTER_UNSAFE_RAW) ? ' reset' :'';
+$health                       = true === isset($points['health']['points']) ? $points['health']['points'] : 100;
+$mana                         = true === isset($points['mana']['points']) ? $points['mana']['points'] : 100;
+$point                        = true === isset($points['point']['points']) ? $points['point']['points'] : 0;
+$money                        = true === isset($points['money']['points']) ? $points['money']['points'] : 0;
+$point_widths                 = Explore::getCurrentPointWidth();
+$current_level                = Explore::getCurrentLevel();
+$max_points                   = Explore::getLevelMap();
+$explore_attack               = false === empty($equipped_weapon) ? get_post_meta($equipped_weapon->ID, 'explore-attack', true) : false;
+$weapon_strength              = false === empty($explore_attack) ? wp_json_encode($explore_attack) : '""';
+$intro_video                  = get_option('explore_intro_video', false);
+$signin_screen                = get_option('explore_signin_screen', '');
+$start_music                  = get_option('explore_start_music', false);
+$main_character               = get_option('explore_main_character', false);
+$main_character_info          = Explore::getCharacterImages($main_character);
+$direction_images             = $main_character_info['direction_images'] ?? [];
+$main_character_id            = $main_character_info['id'] ?? false;
+$is_admin                     = user_can(get_current_user_id(), 'manage_options');
 
-$explore_points = Explore::getExplorePoints($location);
-$explore_cutscenes = Explore::getExplorePosts($location, 'explore-cutscene');
-$explore_minigames = Explore::getExplorePosts($location, 'explore-minigame');
-$explore_walls = Explore::getExplorePosts($location, 'explore-wall');
-$explore_explainers = Explore::getExplorePosts($location, 'explore-explainer');
-$explore_missions = Explore::getExplorePosts($location, 'explore-mission');
-$explore_abilities = Explore::getExploreAbilities();
-$rst = 'true' === filter_input( INPUT_GET, 'rst', FILTER_UNSAFE_RAW) ? ' reset' :'';
-$health = true === isset($points['health']['points']) ? $points['health']['points'] : 100;
-$mana = true === isset($points['mana']['points']) ? $points['mana']['points'] : 100;
-$point = true === isset($points['point']['points']) ? $points['point']['points'] : 0;
-$money = true === isset($points['money']['points']) ? $points['money']['points'] : 0;
-$point_widths = Explore::getCurrentPointWidth();
-$current_level = Explore::getCurrentLevel();
-$max_points = Explore::getLevelMap();
-$explore_attack = false === empty($equipped_weapon) ? get_post_meta($equipped_weapon->ID, 'explore-attack', true) : false;
-$weapon_strength = false === empty($explore_attack) ? wp_json_encode($explore_attack) : '""';
-$intro_video = get_option('explore_intro_video', false);
-$signin_screen = get_option('explore_signin_screen', '');
-$start_music = get_option('explore_start_music', false);
-$main_character = get_option('explore_main_character', false);
-$main_character_info = Explore::getCharacterImages($main_character, $location);
-$direction_images = $main_character_info['direction_images'] ?? [];
-$main_character_id = $main_character_info['id'] ?? false;
-$is_admin = user_can(get_current_user_id(), 'manage_options');
 if ( $is_admin ) {
     $item_list = array_merge($explore_points, $explore_minigames, $explore_explainers, $explore_walls);
-    $triggers = Dev_Mode::getTriggers($item_list, $explore_cutscenes, $explore_missions);
+    $triggers  = Dev_Mode::getTriggers($item_list, $explore_cutscenes, $explore_missions);
     $item_list = array_merge($item_list, $triggers);
 }
 
-$new_type = false === empty($coordinates) ? 'new-explore' : 'try-engage-explore';
-$new_type = is_user_logged_in() && false !== empty($coordinates) ? 'engage-explore' : $new_type;
+$new_type   = false === empty($coordinates) ? 'new-explore' : 'try-engage-explore';
+$new_type   = is_user_logged_in() && false !== empty($coordinates) ? 'engage-explore' : $new_type;
 $health_bar = $hud_bars['health'] ?? '';
-$mana_bar = $hud_bars['mana'] ?? '';
-$power_bar = $hud_bars['power'] ?? '';
+$mana_bar   = $hud_bars['mana'] ?? '';
+$power_bar  = $hud_bars['power'] ?? '';
 $points_bar = $hud_bars['points'] ?? '';
-$money_bar = $hud_bars['money'] ?? '';
+$money_bar  = $hud_bars['money'] ?? '';
 
 extract([
     'userid' => $userid,
@@ -94,7 +94,7 @@ include plugin_dir_path(__FILE__) . 'plugin-header.php';
 <main id="primary"<?php echo esc_attr(true === $is_admin ? ' data-devmode=true' : ''); ?> class="site-main<?php echo esc_attr($rst); ?>">
     <?php include $plugin_dir_path . 'start-screen.php'; ?>
     <?php if (true === $is_admin) : ?>
-        <?php echo html_entity_decode(Dev_Mode::getDevModeHTML($item_list)); ?>
+        <?php echo html_entity_decode(Dev_Mode::getDevModeHTML()); ?>
     <?php endif; ?>
     <div class="game-container <?php echo esc_attr($location); ?>" data-main="<?php echo esc_attr($main_character); ?>" data-fadeout="true" style="background: url(<?php echo esc_url($explore_area_map ?? ''); ?>) no-repeat left top; background-size: cover;">
         <?php if ((false === empty($explore_area_map) && false !== stripos($explore_area_map, '.webm')) || (false === empty($explore_area_map) && false !== stripos($explore_area_map, '.mp4'))): ?>
@@ -129,7 +129,7 @@ include plugin_dir_path(__FILE__) . 'plugin-header.php';
                 <div class="point-info-wrap">
                     <span class="current-level">lvl. <?php echo esc_html($current_level); ?></span>
                     <span class="current-points">
-                        <span class="my-points"><?php echo esc_html($point);?></span>/<span class="next-level-points"><?php echo esc_html($max_points[$current_level]); ?></span>
+                        <span class="my-points"><?php echo esc_html($point);?></span>/<span class="next-level-points"><?php echo esc_html($max_points[$current_level] ?? 1); ?></span>
                     </span>
                 </div>
             <?php endif; ?>
@@ -163,11 +163,6 @@ include plugin_dir_path(__FILE__) . 'plugin-header.php';
                 <?php endif; ?>
             </div>
         </div>
-        <div id="magic">
-            <div class="magic-content">
-                <?php include $plugin_dir_path . '/components/explore-magic.php'; ?>
-            </div>
-        </div>
         <?php echo html_entity_decode(Explore::getExplainerHTML($explore_explainers, 'menu')); ?>
         <?php echo html_entity_decode(Explore::getExplainerHTML($explore_explainers, 'fullscreen')); ?>
         <div class="touch-buttons">
@@ -194,21 +189,21 @@ include plugin_dir_path(__FILE__) . 'plugin-header.php';
             <img alt="controls" src="<?php echo $plugin_dir . '/assets/src/images/keys.png'; ?>" />
         </span>
         <div
-            style="top: <?php echo false === empty($coordinates['top']) ? esc_attr($coordinates['top']) : $explore_area_start_top; ?>px; left: <?php echo false === empty($coordinates['left']) ? esc_attr($coordinates['left']) : $explore_area_start_left; ?>px"
+            style="top: <?php echo false === empty($coordinates['top']) ? esc_attr($coordinates['top']) : esc_attr($explore_area_start_top); ?>px; left: <?php echo false === empty($coordinates['left']) ? esc_attr($coordinates['left']) : esc_attr($explore_area_start_left); ?>px"
             class="<?php echo esc_attr($explore_area_start_direction); ?>"
             data-mainid="<?php echo esc_attr($main_character_id); ?>"
             id="map-character"
-            data-name="<?php echo $main_character_info['name']; ?>"
+            data-name="<?php echo esc_attr($main_character_info['name'] ?? ''); ?>"
             data-voice="<?php echo esc_attr($main_character_info['voice'] ?? '');?>"
-            data-ability="<?php echo false === empty($main_character_info['ability']) ? esc_attr($main_character_info['ability']) : ''; ?>"
+            data-ability="<?php echo esc_attr($main_character_info['ability'] ?? ''); ?>"
         >
             <span class="misc-gauge-wrap"><span class="misc-gauge"></span></span>
             <?php foreach($direction_images as $direction_label => $direction_image):
                 $fight_animation = false !== stripos($direction_label, 'punch') ? ' fight-image' : '';
-                $dir_image = 'static-' . $explore_start_direction . $explore_weapon_start;
+                $dir_image       = 'static-' . $explore_start_direction . $explore_weapon_start;
                 ?>
                 <img
-                    alt="<?php echo $main_character_info['name'] . ' ' . $direction_label; ?>"
+                    alt="<?php echo esc_attr($main_character_info['name'] . ' ' . $direction_label); ?>"
                     height="<?php echo false === empty($main_character_info['height']) ? esc_attr($main_character_info['height']) : 185; ?>px"
                     width="<?php echo false === empty($main_character_info['width']) ? esc_attr($main_character_info['width']) : 115; ?>px"
                     class="map-character-icon<?php echo esc_attr($direction_label === $dir_image ? ' engage' : ''); echo esc_attr($fight_animation); ?>"
@@ -217,17 +212,17 @@ include plugin_dir_path(__FILE__) . 'plugin-header.php';
                 />
             <?php endforeach; ?>
         </div>
-        <div style="top: <?php echo false === empty($coordinates['top']) ? esc_attr( intval($coordinates['top']) + 500) : 4018; ?>px; left: <?php echo false === empty($coordinates['left']) ? esc_attr(intval($coordinates['left'] + 500)) : 2442; ?>px" class="map-weapon" data-direction="<?php echo esc_attr($explore_start_direction); ?>" data-projectile="<?php echo esc_attr($is_it_projectile); ?>" data-weapon="<?php echo esc_attr( $equipped_weapon->post_name ?? $default_weapon ); ?>" data-strength=<?php echo esc_attr($weapon_strength); ?>></div>
+        <div style="top: <?php echo false === empty($coordinates['top']) ? esc_attr(intval($coordinates['top']) + 500) : 4018; ?>px; left: <?php echo false === empty($coordinates['left']) ? esc_attr(intval($coordinates['left'] + 500)) : 2442; ?>px" class="map-weapon" data-direction="<?php echo esc_attr($explore_start_direction); ?>" data-projectile="<?php echo esc_attr($is_it_projectile); ?>" data-weapon="<?php echo esc_attr($equipped_weapon->post_name ?? $default_weapon); ?>" data-strength=<?php echo esc_attr($weapon_strength); ?>></div>
         <div class="default-map" data-iscutscene="<?php echo esc_attr($is_area_cutscene); ?>" data-startleft="<?php echo false === empty($explore_area_start_left) ? esc_attr($explore_area_start_left) : ''; ?>" data-starttop="<?php echo false === empty($explore_area_start_top) ? esc_attr($explore_area_start_top) : ''; ?>">
             <?php if (false !== $explore_area): ?>
                 <?php echo Explore::getMapSVG($explore_area); ?>
-                <?php echo html_entity_decode(Explore::getMapItemHTML($explore_points, get_current_user_id(), ($explore_area ? $explore_area->post_name : ''))); ?>
-                <?php echo html_entity_decode(Explore::getMapCutsceneHTML($explore_cutscenes, ($explore ? $explore_area->post_name : ''), get_current_user_id())); ?>
+                <?php echo html_entity_decode(Explore::getMapItemHTML($explore_points, ($explore_area ? $explore_area->post_name : ''))); ?>
+                <?php echo html_entity_decode(Explore::getMapCutsceneHTML($explore_cutscenes, ($explore_area ? $explore_area->post_name : ''), $userid)); ?>
             <?php endif;?>
             <?php echo html_entity_decode(Explore::getMinigameHTML($explore_minigames)); ?>
             <?php echo html_entity_decode(Explore::getMapAbilitiesHTML($explore_abilities)); ?>
             <?php echo html_entity_decode(Explore::getExplainerHTML($explore_explainers, 'map')); ?>
-            <?php echo html_entity_decode(Explore::getMapCommunicateHTML($location, get_current_user_id())); ?>
+            <?php echo html_entity_decode(Explore::getMapCommunicateHTML($location, $userid)); ?>
         </div>
     </div>
 

@@ -7,9 +7,10 @@
  */
 
 $settings = get_user_meta($userid, 'explore_settings', true);
-$music = true === isset($settings['music']) ? intval($settings['music']) : 5;
-$sfx = true === isset($settings['sfx']) ? intval($settings['sfx']) : 5;
-$talking = true === isset($settings['talking']) ? intval($settings['talking']) : -12;
+$settings = is_array($settings) ? $settings : [];
+$music    = true === isset($settings['music']) ? intval($settings['music']) : 5;
+$sfx      = true === isset($settings['sfx']) ? intval($settings['sfx']) : 5;
+$talking  = true === isset($settings['talking']) ? intval($settings['talking']) : -12;
 ?>
 <div class="settings-form">
     <span class="close-settings">X</span>
@@ -26,7 +27,7 @@ $talking = true === isset($settings['talking']) ? intval($settings['talking']) :
         Talking Volume
         <input id="talking-volume" type="range" min="-40" max="16" value="<?php echo esc_attr($talking); ?>"/>
     </label>
-    <button id="update-settings">Save</button>
+    <button type="button" id="update-settings">Save</button>
 
     <a href="<?php echo esc_url($game_url); ?>">Leave Game</a>
 </div>
