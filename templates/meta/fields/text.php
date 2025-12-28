@@ -1,43 +1,41 @@
 <?php
 /**
- * @var string         $key
- * @var boolean|string $main_key
- * @var boolean|int    $repeat_index
+ * @var string         $orbem_studio_key
+ * @var boolean|string $orbem_studio_main_key
+ * @var boolean|int    $orbem_studio_repeat_index
  */
 
-$final_value = false === empty($meta_values[$key]) ? $meta_values[$key] : '';
+$orbem_studio_final_value = false === empty($orbem_studio_meta_values[$orbem_studio_key]) ? $orbem_studio_meta_values[$orbem_studio_key] : '';
 
 // Start with the simple case.
-$final_key = $key;
+$orbem_studio_final_key = $orbem_studio_key;
 
 // If there's a main key, build on it.
-if (false !== $main_key) {
-    $final_key = $main_key . '[';
-    $final_value = $meta_values[$main_key][$key] ?? '';
+if (false !== $orbem_studio_main_key) {
+    $orbem_studio_final_key = $orbem_studio_main_key . '[';
+    $orbem_studio_final_value = $meta_values[$orbem_studio_main_key][$orbem_studio_key] ?? '';
 
-    if (false !== $repeat_index) {
-        // main[repeat][key]
-        $final_key .= $repeat_index . '][' . $key;
-        $final_value = $meta_values[$main_key][$repeat_index][$key] ?? '';
+    if (false !== $orbem_studio_repeat_index) {
+        $orbem_studio_final_key .= $orbem_studio_repeat_index . '][' . $orbem_studio_key;
+        $orbem_studio_final_value = $meta_values[$orbem_studio_main_key][$orbem_studio_repeat_index][$orbem_studio_key] ?? '';
     } else {
-        // main[key]
-        $final_key .= $key;
+        $orbem_studio_final_key .= $orbem_studio_key;
     }
 
-    $final_key .= ']';
+    $orbem_studio_final_key .= ']';
 }
 ?>
 <p>
 <label>
-    <?php if (false !== $main_key): ?>
-        <?php echo esc_html(ucfirst(str_replace(['explore-', '-'],['', ' '],$key))); ?>
+    <?php if (false !== $orbem_studio_main_key): ?>
+        <?php echo esc_html(ucfirst(str_replace(['explore-', '-'],['', ' '],$orbem_studio_key))); ?>
         <br>
     <?php endif; ?>
 <input class="top"
        type="text"
-       name="<?php echo esc_attr($final_key); ?>"
-       id="<?php echo esc_attr($key); ?>"
-       value="<?php echo false === $main_key ? esc_html($final_value) : esc_html($meta_values[$main_key][$key] ?? ''); ?>"
+       name="<?php echo esc_attr($orbem_studio_final_key); ?>"
+       id="<?php echo esc_attr($orbem_studio_key); ?>"
+       value="<?php echo false === $orbem_studio_main_key ? esc_html($orbem_studio_final_value) : esc_html($orbem_studio_meta_values[$orbem_studio_main_key][$orbem_studio_key] ?? ''); ?>"
 />
 </label>
 </p>

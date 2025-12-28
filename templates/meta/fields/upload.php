@@ -2,32 +2,47 @@
 use OrbemStudio\Meta_Box;
 
 /**
- * @var string         $key
- * @var boolean|string $main_key
- * @var boolean|int    $repeat_index
- * @var array          $meta_values
+ * @var string         $orbem_studio_key
+ * @var boolean|string $orbem_studio_main_key
+ * @var boolean|int    $orbem_studio_repeat_index
+ * @var array          $orbem_studio_meta_values
  */
 
-$final_value = false === empty($meta_values[$key]) ? $meta_values[$key] : '';
+$orbem_studio_final_value = false === empty($orbem_studio_meta_values[$orbem_studio_key]) ? $orbem_studio_meta_values[$orbem_studio_key] : '';
 
 // Start with the simple case.
-$final_key = $key;
+$orbem_studio_final_key = $orbem_studio_key;
 
 // If there's a main key, build on it.
-if (false !== $main_key) {
-    $final_key = $main_key . '[';
-    $final_value = $meta_values[$main_key][$key] ?? '';
+if (false !== $orbem_studio_main_key) {
+    $orbem_studio_final_key = $orbem_studio_main_key . '[';
+    $orbem_studio_final_value = $orbem_studio_meta_values[$orbem_studio_main_key][$orbem_studio_key] ?? '';
 
-    if (false !== $repeat_index) {
+    if (false !== $orbem_studio_repeat_index) {
         // main[repeat][key]
-        $final_key .= $repeat_index . '][' . $key;
-        $final_value = $meta_values[$main_key][$repeat_index][$key] ?? '';
+        $orbem_studio_final_key .= $orbem_studio_repeat_index . '][' . $orbem_studio_key;
+        $orbem_studio_final_value = $orbem_studio_meta_values[$orbem_studio_main_key][$orbem_studio_repeat_index][$orbem_studio_key] ?? '';
     } else {
         // main[key]
-        $final_key .= $key;
+        $orbem_studio_final_key .= $orbem_studio_key;
     }
 
-    $final_key .= ']';
+    $orbem_studio_final_key .= ']';
 }
 
-echo Meta_Box::imageUploadHTML(false !== $main_key ? esc_html(ucfirst(str_replace(['explore-', '-'],['', ' '],$key))) : '', $final_key, $final_value);
+$orbem_studio_allowed_tags          = wp_kses_allowed_html('post');
+$orbem_studio_allowed_tags['input'] = [
+    'type'        => true,
+    'name'        => true,
+    'value'       => true,
+    'id'          => true,
+    'class'       => true,
+    'checked'     => true,
+    'disabled'    => true,
+    'readonly'    => true,
+    'placeholder' => true,
+    'required'    => true,
+    'data-*'      => true,
+];
+
+echo wp_kses(Meta_Box::imageUploadHTML(false !== $orbem_studio_main_key ? esc_html(ucfirst(str_replace(['explore-', '-'],['', ' '], $orbem_studio_key))) : '', $orbem_studio_final_key, $orbem_studio_final_value), $orbem_studio_allowed_tags);

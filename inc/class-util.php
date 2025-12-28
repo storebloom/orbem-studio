@@ -99,6 +99,7 @@ class Util
         ];
 
         if ($meta_key !== '') {
+            // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
             $args['meta_query'] = [
                 [
                     'key'   => $meta_key,

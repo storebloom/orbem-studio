@@ -20,13 +20,6 @@ class Plugin extends Plugin_Base {
     public Util $util;
 
     /**
-     * Meta Box instance
-     *
-     * @var meta_box
-     */
-    public $meta_box;
-
-    /**
      * Explore instance
      *
      * @var Explore
@@ -82,50 +75,20 @@ class Plugin extends Plugin_Base {
     public function enqueueFrontAssets(): void
     {
         $game_page = get_option('explore_game_page', '');
-        $page = get_queried_object();
+        $page      = get_queried_object();
 
         if (false === empty($game_page) && false === empty($page->post_name) && $page instanceof \WP_Post && $game_page === $page->post_name) {
+            wp_enqueue_script('google-gsi', 'https://accounts.google.com/gsi/client', [], '1.0.0',
+                [
+                    'strategy' => 'defer',
+                    'in_footer' => false
+                ]
+            );
             self::enqueueScript('orbem-order/app');
             self::enqueueStyle('orbem-order/app');
 
-            $current_user_id = get_current_user_id();
-
             // Register the WebSocket script.
             //wp_enqueue_script('socket-io', 'https://cdn.socket.io/4.0.1/socket.io.min.js', array(), null, true);
-            wp_add_inline_script('orbem-order/app',
-                'const gameURL = ' . wp_json_encode(get_option('explore_game_url', get_home_url())) . ';
-                const siteRESTURL = ' . rest_url('orbemorder/v1') . ';
-                const previousCutsceneArea = ' . wp_json_encode(get_user_meta($current_user_id, 'explore_previous_cutscene_area', true)) . ';',
-            );
-
-            $explore_points = get_user_meta($current_user_id, 'explore_points', true);
-            $explore_points = $explore_points ?? [];
-
-            $explore_abilities = get_user_meta($current_user_id, 'explore_abilities', true);
-            $explore_abilities = $explore_abilities ?? [];
-            $default_weapon    = get_option('explore_default_weapon', '');
-
-            if (true === empty($explore_points)) {
-                $explore_points = [
-                    'health'  => ['points' => 100, 'positions' => []],
-                    'mana'    => ['points' => 100, 'positions' => []],
-                    'point'   => ['points' => 0, 'positions' => []],
-                    'gear'    => ['positions' => []],
-                    'weapons' => ['positions' => []],
-                    'money'   => ['positions' => []],
-                ];
-            }
-
-            wp_add_inline_script(
-                'orbem-order/app',
-                'const currentUserId ="' . get_current_user_id() . '";' .
-                'const explorePoints = ' . wp_json_encode($explore_points) . ';' .
-                'const exploreAbilities = ' . wp_json_encode($explore_abilities) . ';' .
-                'const levelMaps = ' . wp_json_encode(Explore::getLevelMap()) . ';' .
-                'const defaultWeapon = "' . sanitize_text_field(wp_unslash(($default_weapon))) . '";' .
-                'const TTSAPIKEY = "' . sanitize_text_field(get_option('explore_google_tts_api_key', '')) . '";' .
-                'const orbemNonce = "' . wp_create_nonce('orbem_wp_rest') . '";',
-            );
         }
     }
 
@@ -133,7 +96,6 @@ class Plugin extends Plugin_Base {
 	 * Enqueue admin scripts/styles.
 	 *
 	 * @action admin_enqueue_scripts
-     * @action wp_enqueue_scripts
 	 */
 	public function enqueueAdminAssets(): void
     {
@@ -153,8 +115,8 @@ class Plugin extends Plugin_Base {
      * @action init
      */
     public function autoRegisterAssets(): void {
-        $asset_root = $this->dir_path . 'assets/build/';
-        $asset_uri  = $this->dir_url . 'assets/build/';
+        $asset_root = $this->dir_path . '/assets/build/';
+        $asset_uri  = $this->dir_url . '/assets/build/';
 
         $asset_files = glob( $asset_root . '*.asset.php' );
 
@@ -216,7 +178,9 @@ class Plugin extends Plugin_Base {
                     $javascript_uri,
                     $asset_script['dependencies'],
                     $asset_script['version'],
-                    false
+                    [
+                        'in_footer' => false,
+                    ]
                 );
             }
         }
@@ -234,12 +198,12 @@ class Plugin extends Plugin_Base {
     public static function enqueueScript(
         string       $handle,
         string       $src = '',
-        array        $dependencies = array(),
+        array        $dependencies = [],
         false|string $version = false,
         bool         $in_footer = false
     ): void
     {
-        $localizes = array();
+        $localizes = [];
 
         $current_user_id = get_current_user_id();
         $explore_points = get_user_meta($current_user_id, 'explore_points', true);
@@ -258,17 +222,32 @@ class Plugin extends Plugin_Base {
             ];
         }
 
+        $explore_areas = get_posts(['post_type' => 'explore-area', 'numberposts' => 500, 'no_found_rows' => true, 'post_status' => 'publish']);
+        $music_names = '';
+
+        foreach($explore_areas as $explore_area):
+            if (false === isset($explore_area->ID) || false === get_post($explore_area->ID)) {
+                continue;
+            }
+
+            $music = get_post_meta($explore_area->ID, 'explore-music', true);
+            $music_names .= '"' . esc_html($explore_area->post_name) . '":"' . esc_html($music) . '",';
+        endforeach;
+
         $localizes[] = array(
             'object_name' => 'OrbemOrder',
             'value'       => [
-                'currentUserId' => $current_user_id,
                 'explorePoints' => $explore_points,
                 'exploreAbilities' => $explore_abilities,
-                'levelMaps' => Explore::getLevelMap(),
+                'levelMaps' => wp_json_encode(Explore::getLevelMap()),
                 'gameURL' => get_permalink(get_page_by_path(get_option('explore_game_page', ''))),
                 'wpThemeURL' => str_replace(['https://', 'http://', 'www'], '', get_home_url()),
                 'defaultWeapon' => $default_weapon,
-                'TTSAPIKEY' => get_option('explore_google_tts_api_key', '')
+                'TTSAPIKEY' => get_option('explore_google_tts_api_key', ''),
+                'orbemNonce' => wp_create_nonce('wp_rest'),
+                'siteRESTURL' => rest_url('orbemorder/v1'),
+                'previousCutsceneArea' => get_user_meta($current_user_id, 'explore_previous_cutscene_area', true),
+                'musicNames' => wp_kses_post($music_names)
             ]
         );
 
@@ -319,7 +298,7 @@ class Plugin extends Plugin_Base {
      * @param $template
      * @return string
      */
-    public function exploreIncludeTemplate( $template ): string
+    public function exploreIncludeTemplate($template): string
     {
         $game_page = get_option('explore_game_page', '');
         $page = get_queried_object();
@@ -353,7 +332,7 @@ class Plugin extends Plugin_Base {
             'taxonomy'        => $taxonomy,
             'name'            => $taxonomy,
             'orderby'         => 'name',
-            'selected'        => $_GET[$taxonomy] ?? '',
+            'selected'        => esc_attr($tax_obj->term_id),
             'hierarchical'    => true,
             'depth'           => 0,
             'show_count'      => false,
@@ -377,12 +356,12 @@ class Plugin extends Plugin_Base {
 
         if (!str_starts_with($post_type, 'explore-')) return;
 
+        $term_id = filter_input(INPUT_GET, $taxonomy, FILTER_SANITIZE_NUMBER_INT);
+
         if (
-            isset($_GET[$taxonomy]) &&
-            is_numeric($_GET[$taxonomy]) &&
-            intval($_GET[$taxonomy]) !== 0
+            isset($term_id) &&
+            $term_id !== 0
         ) {
-            $term_id = intval($_GET[$taxonomy]);
             $term = get_term($term_id, $taxonomy);
             if ($term && !is_wp_error($term)) {
                 $query->set($taxonomy, $term->slug); // Use slug, not term ID
@@ -397,8 +376,10 @@ class Plugin extends Plugin_Base {
      * @param $editor_context
      * @return string[]
      */
-    public function blockGutenbergBlocks( $allowed_blocks, $editor_context ): array
+    public function blockGutenbergBlocks($allowed_blocks, $editor_context): array
     {
+        $allowed_blocks = is_array($allowed_blocks) ? $allowed_blocks : [];
+
         // Target only your custom post type
         if (!empty($editor_context->post) && true === in_array($editor_context->post->post_type, ['explore-magic', 'explore-explainer', 'explore-sign'])) {
             return [

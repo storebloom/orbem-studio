@@ -1,35 +1,129 @@
 === Orbem Studio ===
-Plugin Name: Orbem Studio
 Contributors: scottstorebloom
-Tags: rpg, game engine, video game, role play game, pixel art, pixel rpg
-Author URI: https://orbemorder.com/
-Author: scottstorebloom
-Requires at least: 6.0
-Tested up to: 6.8
+Donate link: https://www.patreon.com/c/OrbemOrder
+Tags: game engine, rpg, storytelling, gamification, narrative game
+Requires at least: 6.1
+Tested up to: 6.9
+Requires PHP: 8.1
 Stable tag: 1.0.0
-Version: 1.0.0
-
 License: GPLv2 or later
+License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Build your own RPG video game using the power of WordPress
+Build fully interactive, story-driven games directly inside WordPress. No external engines required!
 
 == Description ==
 
-== WordPress Features ==
+**Orbem Studio** turns WordPress into a fully featured, browser-based game engine.
+
+Design immersive, map-driven experiences with characters, missions, cutscenes, items, abilities, and progression systems all managed through WordPress’ familiar admin interface.
+
+Orbem Studio is built for developers and creators who want real gameplay, not just gamified UI. It provides structured systems, performance-focused architecture, and developer tooling that allows complete games to be authored, played, and extended entirely within WordPress.
+
+Whether you’re building a narrative RPG, an educational experience, or an experimental interactive world, Orbem Studio gives you the tools to ship.
+
+== Key Features ==
+
+= 🎮 Full Front-End Game Engine =
+* Real-time player movement
+* Interactive maps and collision-aware elements
+* Directional character asset and animations assignments
+* Trigger-based interactions
+
+= 🧩 Modular Game Objects =
+* Areas, missions, cutscenes, enemies, items, explainer popups, focus view items, weapons, and characters
+* All content managed as WordPress custom post types using proprietary custom fields
+* Fully extensible metadata-driven design
+
+= 🧠 Mission & Progression System =
+* Branching mission chains
+* Conditional triggers and unlocks
+* Persistent player state
+* Health, mana, power, experience, currency, and leveling
+
+= 🛠 Developer Mode (Admin-Only) =
+* Live in-game object/character placement
+* Visual trigger overlays
+* Admin-only editing tools
+* Level selector for easy level building
+* Rapid iteration without page reloads
+* Front end wall-builder
+
+= 📦 Inventory & Equipment System =
+* Storage limits
+* Weapons, gear, and consumables
+* Equip / unequip logic
+* Character-bound equipment support
+
+= 🔊 Media-Rich Storytelling =
+* Cutscenes and scripted events
+* Per-area & per-cutscene music
+* Sound effects and audio triggers
+* Intro videos and cinematic playback
+
+= 🔐 Secure & Performant =
+* REST API–based architecture
+* Permission-aware custom endpoints
+* Subscriber-safe gameplay routes
+* Optimized meta access and caching strategies
+
+= 🧑‍💻 Built for Developers =
+* Clean, modern PHP architecture
+* Environment-aware behavior (local vs production)
+* Extensible via hooks and filters
+* No hard dependency on third-party services
+
+== Use Cases ==
+
+* Narrative RPGs
+* Interactive fiction
+* Educational games
+* Gamified onboarding
+* Experimental storytelling
+* Browser-based adventure games
+
+If it can be represented spatially and interactively, Orbem Studio can power it.
 
 == Screenshots ==
 
+1. Live gameplay view showing player movement, HUD, missions, and interactive map elements.
+2. Developer Mode overlay with visual triggers and in-game editing tools.
+3. Inventory and character management panels.
+4. Global config options.
+
 == Installation ==
 
-== Privacy ==
+1. Upload the `orbem-studio` folder to `/wp-content/plugins/`
+2. Activate the plugin through the **Plugins** menu in WordPress
+3. Follow setup steps in the global game settings under **Orbem Studio** in the admin menu
+4. Publish the page and begin building your game world
 
 == Frequently Asked Questions ==
 
-**?**
+= Does this require an external game engine? =
+No. Orbem Studio runs entirely inside WordPress.
 
-Answer
+= Is this plugin for developers only? =
+Developers can extend the game engine if desired, but non-technical creators can build complete experiences using the admin interface alone.
+
+= Can subscribers play the game? =
+Yes. Gameplay routes are designed to support subscribers and logged-in users safely.
+
+= Can guests play without logging in? =
+This is configurable. You can require login or allow guest gameplay depending on your settings. (Note: logged-out users will not have persisted game play data)
+
+= Is Orbem Studio extensible? =
+Yes. All systems are designed to be extended using WordPress hooks, filters, and custom metadata.
 
 == Changelog ==
 
 = 1.0.0 =
-* Initial plugin launch.
+* Initial public release
+* Core game engine
+* Developer Mode
+* Mission, inventory, and progression systems
+* Secure REST-based architecture
+
+== Upgrade Notice ==
+
+= 1.0.0 =
+First stable release.

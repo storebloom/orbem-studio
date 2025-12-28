@@ -9,10 +9,10 @@
 <div class="tutorial-wrap<?php echo $things_made ? ' hide-overlay' : '' ; ?>">
     <div class="tutorial-container<?php echo $things_made ? ' hide-overlay' : '' ; ?>">
         <div class="tutorial-step<?php echo true !== $finished_area ? ' engage' : ''; ?>" data-step="1">
-            Go <a href="<?php echo admin_url('post-new.php?post_type=explore-area'); ?>">here</a> to create your first "area" where your game will start.
+            Go <a href="<?php echo esc_url(admin_url('post-new.php?post_type=explore-area')); ?>">here</a> to create your first "area" where your game will start.
         </div>
         <div class="tutorial-step<?php echo true === $finished_area && true !== $finished_character ? ' engage' : ''; ?>" data-step="2">
-            Go <a href="<?php echo admin_url('post-new.php?post_type=explore-character'); ?>">here</a> to create your first main character.
+            Go <a href="<?php echo esc_url(admin_url('post-new.php?post_type=explore-character')); ?>">here</a> to create your first main character.
         </div>
         <div class="tutorial-step<?php echo $things_made ? ' engage' : ''; ?>" data-step="3">
             Choose the page you want to display your game on.

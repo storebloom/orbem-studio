@@ -1,13 +1,4 @@
-/* global gameURL */
-/* global explorePoints */
-/* global musicNames */
-/* global levelMaps */
-/* global exploreAbilities */
 /* global OrbemOrder */
-/* global siteRESTURL */
-/* global previousCutsceneArea */
-/* global TTSAPIKEY */
-/* global orbemNonce */
 
 import { engageDevMode } from './devmode';
 
@@ -152,7 +143,7 @@ document.addEventListener("DOMContentLoaded", function(){
     }
 
     // Engage transport function.
-    if ( 'undefined' !== typeof exploreAbilities && 0 < exploreAbilities.length && exploreAbilities.includes('transportation') ) {
+    if ( 'undefined' !== typeof OrbemOrder.exploreAbilities && 0 < OrbemOrder.exploreAbilities.length && OrbemOrder.exploreAbilities.includes('transportation') ) {
         engageTransportFunction();
     }
 
@@ -231,8 +222,8 @@ document.addEventListener("DOMContentLoaded", function(){
                 gauge.style.width = amount + 'px';
             } else if (true === point.classList.contains( 'point-amount' )) {
                 const newLevel = getCurrentLevel( amount );
-                if ( levelMaps ) {
-                    window.nextLevelPointAmount = JSON.parse(levelMaps)[newLevel];
+                if ( OrbemOrder.levelMaps ) {
+                    window.nextLevelPointAmount = JSON.parse(OrbemOrder.levelMaps)[newLevel];
 
                     point.setAttribute('data-amount', amount);
                     gauge.style.width = getPointsGaugeAmount(amount);
@@ -285,7 +276,7 @@ document.addEventListener("DOMContentLoaded", function(){
             await resetExplore();
 
             setTimeout(() => {
-                window.location.href = gameURL;
+                window.location.href = OrbemOrder.gameURL;
             }, 1000);
         });
     }
@@ -856,11 +847,11 @@ function addUserPoints(amount, type, position, collectable, missionName) {
     }
 
     // Add to explorePoints.
-    if ( explorePoints && explorePoints[type] && false === explorePoints[type].positions.includes(position) && false === Array.isArray(position) ) {
-        explorePoints[type].positions.push( position );
-    } else if ( explorePoints && explorePoints[type] && false === explorePoints[type].positions.includes(position) && true === Array.isArray(position) ) {
+    if ( OrbemOrder.explorePoints && OrbemOrder.explorePoints[type] && false === OrbemOrder.explorePoints[type].positions.includes(position) && false === Array.isArray(position) ) {
+        OrbemOrder.explorePoints[type].positions.push( position );
+    } else if ( OrbemOrder.explorePoints && OrbemOrder.explorePoints[type] && false === OrbemOrder.explorePoints[type].positions.includes(position) && true === Array.isArray(position) ) {
         position.forEach( positionName => {
-            explorePoints[type].positions.push( positionName );
+            OrbemOrder.explorePoints[type].positions.push( positionName );
         });
     }
 
@@ -938,7 +929,7 @@ function persistItemRemoval( item, type, amount, timeoutTime, reset ) {
     "use strict";
 
 
-    const filehref = `${siteRESTURL}/add-explore-points/`;
+    const filehref = `${OrbemOrder.siteRESTURL}/add-explore-points/`;
 
     // Don't allow health to be 0.
     if ( 'health' === type && 0 === amount ) {
@@ -965,7 +956,6 @@ function persistItemRemoval( item, type, amount, timeoutTime, reset ) {
                 item: persistItems,
                 amount: amount,
                 reset: reset,
-                nonce: orbemNonce
             };
 
             // Save position of item.
@@ -973,6 +963,7 @@ function persistItemRemoval( item, type, amount, timeoutTime, reset ) {
                 method: 'POST', // Specify the HTTP method
                 headers: {
                   'Content-Type': 'application/json', // Set the content type to JSON
+                  'X-WP-Nonce': OrbemOrder.orbemNonce
                 },
                 body: JSON.stringify(jsonString) // The JSON stringified payload
             })
@@ -987,11 +978,11 @@ function persistItemRemoval( item, type, amount, timeoutTime, reset ) {
                     }
 
                     // Add to explore points var.
-                    if ( explorePoints && type ) {
-                        if ( explorePoints[type].positions && Array.isArray(explorePoints[type].positions)) {
-                            explorePoints[type].positions = explorePoints[type].positions.concat(persistItems);
+                    if ( OrbemOrder.explorePoints && type ) {
+                        if ( OrbemOrder.explorePoints[type].positions && Array.isArray(OrbemOrder.explorePoints[type].positions)) {
+                            OrbemOrder.explorePoints[type].positions = OrbemOrder.explorePoints[type].positions.concat(persistItems);
                         } else {
-                            explorePoints[type].positions = persistItems;
+                            OrbemOrder.explorePoints[type].positions = persistItems;
                         }
                     }
 
@@ -1028,14 +1019,16 @@ function saveMission( mission, value, position ) {
         const theMission = document.querySelector('.' + mission + '-mission-item');
 
         // Materialize commuincation.
-        const communicate = document.querySelector( '[data-materializemission="' + mission + '"]');
+        const materializes = document.querySelectorAll( '[data-materializemission="' + mission + '"]' );
 
-        if ( communicate ) {
-            communicate.style.display = 'block';
+        if ( materializes ) {
+            materializes.forEach(  materialize => {
+                materialize.style.display = 'block';
+            } );
         }
 
         if (theMission) {
-            const missionPoints = theMission.dataset.points;
+            const missionPoints = parseInt(theMission.dataset.points);
             const hazardRemoveText = theMission.dataset.hazardremove;
             const missionAbility = theMission.dataset.ability;
 
@@ -1097,14 +1090,15 @@ function saveMission( mission, value, position ) {
 
                 // Give points.
                 runPointAnimation(value, position, true, missionPoints, mission);
+            } else if ( value && 0 === missionPoints ) {
+                persistItemRemoval(position, 'point', 0, 2000, '');
             }
         }
 
-        const filehref = `${siteRESTURL}/mission/`;
+        const filehref = `${OrbemOrder.siteRESTURL}/mission/`;
 
         const jsonString = {
             mission,
-            nonce: orbemNonce
         };
 
         // Save position of item.
@@ -1112,6 +1106,7 @@ function saveMission( mission, value, position ) {
             method: 'POST', // Specify the HTTP method
             headers: {
                 'Content-Type': 'application/json', // Set the content type to JSON
+                'X-WP-Nonce': OrbemOrder.orbemNonce
             },
             body: JSON.stringify(jsonString) // The JSON stringified payload
         })
@@ -1154,11 +1149,10 @@ function showNextMission( theMission ) {
 function addCharacter( character ) {
     "use strict";
 
-    const filehref = `${siteRESTURL}/add-character/`;
+    const filehref = `${OrbemOrder.siteRESTURL}/add-character/`;
 
     const jsonString = {
         slug: character,
-        nonce: orbemNonce
     };
 
     // Save position of item.
@@ -1166,6 +1160,7 @@ function addCharacter( character ) {
         method: 'POST', // Specify the HTTP method
         headers: {
             'Content-Type': 'application/json', // Set the content type to JSON
+            'X-WP-Nonce': OrbemOrder.orbemNonce
         },
         body: JSON.stringify(jsonString) // The JSON stringified payload
     })
@@ -1194,7 +1189,6 @@ function equipNewItem(type, id, amount, unequip, name) {
         itemid: id,
         amount: amount,
         unequip: unequip,
-        nonce: orbemNonce
     };
 
     if ('weapons' === type) {
@@ -1202,10 +1196,11 @@ function equipNewItem(type, id, amount, unequip, name) {
     }
 
     // Save position of item.
-    fetch(`${siteRESTURL}/equip-explore-item/`, {
+    fetch(`${OrbemOrder.siteRESTURL}/equip-explore-item/`, {
         method: 'POST', // Specify the HTTP method
         headers: {
             'Content-Type': 'application/json', // Set the content type to JSON
+            'X-WP-Nonce': OrbemOrder.orbemNonce
         },
         body: JSON.stringify(jsonString) // The JSON stringified payload
     })
@@ -1232,11 +1227,10 @@ function equipNewItem(type, id, amount, unequip, name) {
 function addNewSpell(id) {
     "use strict";
 
-    const filehref = `${siteRESTURL}/addspell/`;
+    const filehref = `${OrbemOrder.siteRESTURL}/addspell/`;
 
     const jsonString = {
         spellid: id,
-        nonce: orbemNonce
     };
 
     // Save position of item.
@@ -1244,6 +1238,7 @@ function addNewSpell(id) {
         method: 'POST', // Specify the HTTP method
         headers: {
             'Content-Type': 'application/json', // Set the content type to JSON
+            'X-WP-Nonce': OrbemOrder.orbemNonce
         },
         body: JSON.stringify(jsonString) // The JSON stringified payload
     })
@@ -1298,14 +1293,14 @@ function saveSettings(music, sfx, talking) {
         music,
         sfx,
         talking,
-        nonce: orbemNonce
     };
 
     // Save position of item.
-    fetch(`${siteRESTURL}/save-settings/`, {
+    fetch(`${OrbemOrder.siteRESTURL}/save-settings/`, {
         method: 'POST', // Specify the HTTP method
         headers: {
             'Content-Type': 'application/json', // Set the content type to JSON
+            'X-WP-Nonce': OrbemOrder.orbemNonce
         },
         body: JSON.stringify(jsonString) // The JSON stringified payload
     })
@@ -1329,7 +1324,7 @@ function saveSettings(music, sfx, talking) {
 function saveStorageItem(id, name, type, value, remove) {
     "use strict";
 
-    const filehref = `${siteRESTURL}/save-storage-item/`;
+    const filehref = `${OrbemOrder.siteRESTURL}/save-storage-item/`;
 
     const jsonString = {
         id,
@@ -1337,7 +1332,6 @@ function saveStorageItem(id, name, type, value, remove) {
         value,
         type,
         remove,
-        nonce: orbemNonce
     };
 
     // Save position of item.
@@ -1345,6 +1339,7 @@ function saveStorageItem(id, name, type, value, remove) {
         method: 'POST', // Specify the HTTP method
         headers: {
             'Content-Type': 'application/json', // Set the content type to JSON
+            'X-WP-Nonce': OrbemOrder.orbemNonce
         },
         body: JSON.stringify(jsonString) // The JSON stringified payload
     })
@@ -1363,10 +1358,9 @@ function saveStorageItem(id, name, type, value, remove) {
 async function resetExplore() {
     "use strict";
 
-    const filehref = `${siteRESTURL}/resetexplore/`;
+    const filehref = `${OrbemOrder.siteRESTURL}/resetexplore/`;
 
     const jsonString = {
-        nonce: orbemNonce
     };
 
     // Save position of item.
@@ -1374,6 +1368,7 @@ async function resetExplore() {
         method: 'POST', // Specify the HTTP method
         headers: {
             'Content-Type': 'application/json', // Set the content type to JSON
+            'X-WP-Nonce': OrbemOrder.orbemNonce
         },
         body: JSON.stringify(jsonString) // The JSON stringified payload
     })
@@ -1395,19 +1390,20 @@ async function resetExplore() {
 function addUserCoordianate(left, top) {
     "use strict";
 
-    const filehref = `${siteRESTURL}/coordinates/`;
+    const filehref = `${OrbemOrder.siteRESTURL}/coordinates/`;
 
     const jsonString = {
         left: left.replace('px', ''),
-        top: top.replace('px', ''),
-        nonce: orbemNonce
+        top: top.replace('px', '')
     };
 
     // Save position of item.
     fetch(filehref, {
         method: 'POST', // Specify the HTTP method
+        credentials: 'same-origin',
         headers: {
             'Content-Type': 'application/json', // Set the content type to JSON
+            'X-WP-Nonce': OrbemOrder.orbemNonce
         },
         body: JSON.stringify(jsonString) // The JSON stringified payload
     })
@@ -1467,12 +1463,11 @@ const hurtTheEnemy = (function () {
 
                         // Save new health.
                         const position = cleanClassName(value.className);
-                        const filehref = `${siteRESTURL}/enemy/`;
+                        const filehref = `${OrbemOrder.siteRESTURL}/enemy/`;
 
                         const jsonString = {
                             health: 0,
                             position,
-                            nonce: orbemNonce
                         };
 
                         // Save position of item.
@@ -1480,6 +1475,7 @@ const hurtTheEnemy = (function () {
                             method: 'POST', // Specify the HTTP method
                             headers: {
                                 'Content-Type': 'application/json', // Set the content type to JSON
+                                'X-WP-Nonce': OrbemOrder.orbemNonce
                             },
                             body: JSON.stringify(jsonString) // The JSON stringified payload
                         })
@@ -1520,7 +1516,7 @@ const enterNewArea = (function () {
     return function(position, weapon, mapUrl, nextAreaPosition) {
         fadeOutScene();
 
-        window.previousCutsceneArea = '' === window.previousCutsceneArea ? previousCutsceneArea ?? '' : window.previousCutsceneArea;
+        window.previousCutsceneArea = '' === window.previousCutsceneArea ? OrbemOrder.previousCutsceneArea ?? '' : window.previousCutsceneArea;
 
         // Incase using level selector.
         playStartScreenMusic(false);
@@ -1564,16 +1560,15 @@ const enterNewArea = (function () {
 
         // Don't repeat enter.
         if ( false === called ) {
-            const filehref = `${siteRESTURL}/area/`;
+            const filehref = `${OrbemOrder.siteRESTURL}/area/`;
             let newMusic = '';
 
-            if ( musicNames ) {
-                newMusic = musicNames[position];
+            if ( OrbemOrder.musicNames ) {
+                newMusic = OrbemOrder.musicNames[position];
             }
 
             const jsonString = {
                 position,
-                nonce: orbemNonce
             };
 
             // Save position of item.
@@ -1581,6 +1576,7 @@ const enterNewArea = (function () {
                 method: 'POST', // Specify the HTTP method
                 headers: {
                     'Content-Type': 'application/json',
+                    'X-WP-Nonce': OrbemOrder.orbemNonce
                 },
                 body: JSON.stringify(jsonString)
             })
@@ -1594,7 +1590,8 @@ const enterNewArea = (function () {
                 .then(data => {
 
                 let newMapItems = data;
-                newMapItems = JSON.parse( newMapItems.data );
+
+                newMapItems = newMapItems.data;
                 const mapItemStyles = document.getElementById( 'map-item-styles' );
                 const mainCont = document.querySelector( '.site-main' );
                 const head = document.querySelector( 'head' );
@@ -1731,7 +1728,7 @@ const enterNewArea = (function () {
                         if ( '' !== window.previousCutsceneArea ) {
                             removeItems( document.querySelectorAll('[data-removeaftercutscene]' ), window.previousCutsceneArea );
 
-                            const showItems = document.querySelectorAll('[data-showaftercutscene="' + window.previousCutsceneArea + '"]');
+                            const showItems = document.querySelectorAll('[data-showaftercutscene=' + window.previousCutsceneArea + ']');
 
                             if ( showItems ) {
                                 showItems.forEach(showItem => {
@@ -1799,6 +1796,10 @@ const enterNewArea = (function () {
                     playSong(newMusic, position);
                     window.allowMovement = true;
                     theWeapon.style.display = "block";
+
+                    if ( 'undefined' !== typeof OrbemOrder.exploreAbilities && 0 < OrbemOrder.exploreAbilities.length && OrbemOrder.exploreAbilities.includes('transportation') ) {
+                        engageTransportFunction();
+                    }
                 }, 100 );
             });
 
@@ -1836,17 +1837,16 @@ const showItemDescription = (function () {
 
         // Don't repeat item get.
         if ( false === called ) {
-            const filehref = `${siteRESTURL}/get-item-description/`;
-
+            const filehref = `${OrbemOrder.siteRESTURL}/get-item-description/`;
             const jsonString = {
                 id,
-                nonce: orbemNonce
             };
 
             fetch(filehref, {
                 method: 'POST', // Specify the HTTP method
                 headers: {
                     'Content-Type': 'application/json', // Set the content type to JSON
+                    'X-WP-Nonce': OrbemOrder.orbemNonce
                 },
                 body: JSON.stringify(jsonString) // The JSON stringified payload
             })
@@ -1865,7 +1865,7 @@ const showItemDescription = (function () {
                 }
 
                 let newItemDescription = data;
-                newItemDescription = JSON.parse( newItemDescription.data );
+                newItemDescription = newItemDescription.data;
                 const description = document.querySelector( '.retrieval-points #item-description' );
                 const selectedItem = document.querySelector( '.storage-item.engage' );
                 const equipButton = document.createElement( 'button' );
@@ -2583,7 +2583,7 @@ function addNoPoints() {
     const types = ['health', 'mana', 'point', 'gear', 'weapons', 'money'];
 
     types.forEach( type => {
-        const selectedCharacterPositions = undefined !== explorePoints[type] ? explorePoints[type].positions : [];
+        const selectedCharacterPositions = undefined !== OrbemOrder.explorePoints[type] ? OrbemOrder.explorePoints[type].positions : [];
 
         // Add no point class to positions already gotten.
         if ( selectedCharacterPositions ) {
@@ -2691,7 +2691,7 @@ export function engageExploreGame() {
 
     const container = document.querySelector('.game-container');
     const touchButtons = document.querySelector( '.touch-buttons' );
-    window.previousCutsceneArea = previousCutsceneArea ?? '';
+    window.previousCutsceneArea = OrbemOrder.previousCutsceneArea ?? '';
 
     // Set all first cutscene dialogues to engage.
     const allFirstDialogues = document.querySelectorAll( '.map-cutscene .wp-block-orbem-paragraph-mp3:first-of-type, .map-communicate .wp-block-orbem-paragraph-mp3' );
@@ -2755,8 +2755,8 @@ export function engageExploreGame() {
 
     let newMusic = '';
 
-    if ( musicNames && currentLocation ) {
-        newMusic = musicNames[currentLocation];
+    if ( OrbemOrder.musicNames && currentLocation ) {
+        newMusic = OrbemOrder.musicNames[currentLocation];
     }
 
     // Start music.
@@ -2812,13 +2812,13 @@ export function engageExploreGame() {
         const cutSceneName = cleanClassName(document.querySelector( '.map-cutscene' ).className);
         window.previousCutsceneArea = cutSceneName;
         setPreviousCutsceneArea( window.previousCutsceneArea );
-        engageCutscene(cutSceneName, true);
+        engageCutscene( cutSceneName, true );
     }
 
     if ( '' !== window.previousCutsceneArea ) {
         removeItems( document.querySelectorAll('[data-removeaftercutscene]' ), window.previousCutsceneArea );
 
-        const showItems = document.querySelectorAll('[data-showaftercutscene="' + window.previousCutsceneArea + '"]');
+        const showItems = document.querySelectorAll('[data-showaftercutscene=' + window.previousCutsceneArea + ']');
 
         if ( showItems ) {
             showItems.forEach(showItem => {
@@ -2886,10 +2886,12 @@ function loadMissionBlockades() {
         missions.forEach( mission => {
             const blockade = mission.dataset.blockade;
             const missionName = cleanClassName(mission.className);
-            const communicate = document.querySelector( '[data-materializemission="' + missionName + '"]');
+            const materializes = document.querySelectorAll( '[data-materializemission="' + missionName + '"]');
 
-            if ( communicate ) {
-                communicate.style.display = 'none';
+            if ( materializes ) {
+                materializes.forEach( materialize => {
+                    materialize.style.display = 'none';
+                });
             }
 
             if ( blockade && '' !== blockade ) {
@@ -2987,12 +2989,11 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
             if (value && box && elementsOverlap(finalCharPos, value, 5)) {
                 // Pause NPC from moving if touching MC.
                 if ( 'explore-character' === value.dataset.genre && '' !== value.dataset.path ) {
-
                     value.dataset.canmove = 'false';
 
                     const cutsceneTrigger = document.getElementById(cutsceneEl.id + '-t');
 
-                    if ( !cutsceneTrigger && cutsceneEl && false === cutsceneEl.classList.contains('been-viewed')  && 'engagement' !== cutsceneEl.dataset.triggertype) {
+                    if ( !cutsceneTrigger && cutsceneEl && false === cutsceneEl.classList.contains('been-viewed') && 'engagement' !== cutsceneEl.dataset.triggertype) {
                         engageCutscene( cutsceneEl, false );
                     }
                 }
@@ -3201,7 +3202,7 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
                     storeExploreItem(value);
 
                     // If just points. store it.
-                    if ('point' === value.dataset.type) {
+                    if ('point' === value.dataset.type && value.dataset?.value && 0 < value.dataset.value) {
                         runPointAnimation(value, cleanClassName(value.className), false, value.dataset.value, '');
                     }
                 }
@@ -3618,13 +3619,13 @@ function saveMaterializedItem(area, materializedItemsArray) {
     const jsonString = {
         area: area,
         item: materializedItemsArray,
-        nonce: orbemNonce
     };
     // Save position of item.
-    fetch(`${siteRESTURL}/save-materialized-item/`, {
+    fetch(`${OrbemOrder.siteRESTURL}/save-materialized-item/`, {
         method: 'POST', // Specify the HTTP method
         headers: {
             'Content-Type': 'application/json', // Set the content type to JSON
+            'X-WP-Nonce': OrbemOrder.orbemNonce
         },
         body: JSON.stringify(jsonString) // The JSON stringified payload
     })
@@ -3641,14 +3642,14 @@ function enableAbility(ability) {
 
     const jsonString = {
         slug: ability,
-        nonce: orbemNonce
     };
 
     // Save position of item.
-    fetch(`${siteRESTURL}/enable-ability/`, {
+    fetch(`${OrbemOrder.siteRESTURL}/enable-ability/`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
+            'X-WP-Nonce': OrbemOrder.orbemNonce
         },
         body: JSON.stringify(jsonString)
     })
@@ -3796,14 +3797,14 @@ function setPreviousCutsceneArea( cutsceneName ) {
 
     const jsonString = {
         cutscene: cutsceneName,
-        nonce: orbemNonce
     };
 
     // Set the cutscene area previously viewed.
-    fetch(`${siteRESTURL}/set-previous-cutscene-area/`, {
+    fetch(`${OrbemOrder.siteRESTURL}/set-previous-cutscene-area/`, {
         method: 'POST', // Specify the HTTP method
         headers: {
             'Content-Type': 'application/json', // Set the content type to JSON
+            'X-WP-Nonce': OrbemOrder.orbemNonce
         },
         body: JSON.stringify(jsonString) // The JSON stringified payload
     })
@@ -3975,7 +3976,7 @@ function engageCutscene( position, areaCutscene ) {
              * Handles key events during a cutscene, allowing progression through dialogue and ending the cutscene.
              * @param {KeyboardEvent} event - The keyboard event object.
              */
-            const  cutsceneKeys = ( event ) => {
+            const cutsceneKeys = ( event ) => {
                 if ( true === window.allowCutscene ) {
                     if ( event.code === 'Space' && dialogues && cutscene.classList.contains( 'engage' ) ) {
                         nextDialogue();
@@ -4307,7 +4308,7 @@ function afterCutscene( cutscene, areaCutscene, character ) {
     const cutsceneCharacter = character ? document.getElementById( character ) : false;
     const indicator = document.querySelector( '.indicator-icon' );
     const communicateDevice = cutscene.dataset?.communicate;
-    const materializeCutscene = document.querySelector('[data-materializecutscene="' + cutsceneName + '"]');
+    const materializeCutscene = document.querySelector( '[data-materializecutscene="' + cutsceneName + '"]' );
 
     if ( materializeCutscene && false === materializeCutscene.classList.contains('enable') ) {
         materializeCutscene.classList.add( 'enable' );
@@ -4340,8 +4341,8 @@ function afterCutscene( cutscene, areaCutscene, character ) {
     }
 
     // restart music if it changed.
-    if ( ( 'yes' === cutscene.dataset.mutemusic || cutscene.dataset.music && '' !== cutscene.dataset.music ) && musicNames[currentLocation] ) {
-        playSong( musicNames[currentLocation], currentLocation );
+    if ( ( 'yes' === cutscene.dataset.mutemusic || cutscene.dataset.music && '' !== cutscene.dataset.music ) && OrbemOrder.musicNames[currentLocation] ) {
+        playSong( OrbemOrder.musicNames[currentLocation], currentLocation );
     }
 
     // Stop talking.
@@ -4366,7 +4367,7 @@ function afterCutscene( cutscene, areaCutscene, character ) {
 
     // If cutscene has walking path. Move NPC after cutscene.
     if ( cutsceneHasPath ) {
-        moveNPC(cutsceneCharacter, cutscene);
+        moveNPC( cutsceneCharacter, cutscene );
     }
 
     // Remove after cutscene.
@@ -4768,6 +4769,8 @@ function cleanClassName(classes) {
     if ( 'string' === typeof classes ) {
         return classes.replace('wp-block-group map-item ', '')
             .replace('-map-item', '')
+            .replace('drag-dest ', '')
+            .replace(' completed-mission', '')
             .replace('wp-block-group enemy-item ', '')
             .replace(' no-point', '')
             .replace(' is-layout-flow', '')
@@ -5245,7 +5248,7 @@ function runPointAnimation( value, position, isMission, missionPoints, missionNa
             // Add level check.
             const oldLevel = getCurrentLevel( currentPoints );
             const newLevel = getCurrentLevel( newPoints );
-            window.nextLevelPointAmount = JSON.parse(levelMaps)[newLevel];
+            window.nextLevelPointAmount = JSON.parse(OrbemOrder.levelMaps)[newLevel];
 
             // If new level is different than the old, then set UI to new.
             if ( oldLevel !== newLevel ) {
@@ -5397,23 +5400,24 @@ function engageDraggableFunction() {
 
                         if ('true' === dragDest.dataset.removable) {
                             dragDest.remove();
+                            persistItemRemoval(cleanClassName(dragDest.className), 'point', 0, 2000, '')
                         }
 
                         // Remove drag item if disappear is yes.
                         if ('yes' === dragmeitem.dataset.disappear) {
                             dragmeitem.remove();
+                            persistItemRemoval(cleanClass, 'point', 0, 2000, '')
                         }
                     }
                 }
 
                 // Save position of item.
-                const filehref = `${siteRESTURL}/save-drag/`;
+                const filehref = `${OrbemOrder.siteRESTURL}/save-drag/`;
 
                 const jsonString = {
                     slug: cleanClass,
                     top: dragmeitem.style.top.replace('px', ''),
                     left: dragmeitem.style.left.replace('px', ''),
-                    nonce: orbemNonce
                 };
 
                 // Save position of item.
@@ -5421,6 +5425,7 @@ function engageDraggableFunction() {
                     method: 'POST', // Specify the HTTP method
                     headers: {
                         'Content-Type': 'application/json', // Set the content type to JSON
+                        'X-WP-Nonce': OrbemOrder.orbemNonce
                     },
                     body: JSON.stringify(jsonString) // The JSON stringified payload
                 })
@@ -5654,8 +5659,8 @@ function directCharacter( topDown, leftRight, mapCharacter ) {
 function getCurrentLevel( currentPoints ) {
     "use strict";
 
-    if ( levelMaps ) {
-        const levels = JSON.parse( levelMaps );
+    if ( OrbemOrder.levelMaps ) {
+        const levels = JSON.parse( OrbemOrder.levelMaps );
 
         for (const key in levels) {
 
@@ -5880,8 +5885,8 @@ function afterMinigame(minigame) {
     }
 
     // restart level music.
-    if ( minigame.dataset.music && '' !== minigame.dataset.music && musicNames ) {
-        playSong( musicNames[currentLocation], currentLocation );
+    if ( minigame.dataset.music && '' !== minigame.dataset.music && OrbemOrder.musicNames ) {
+        playSong( OrbemOrder.musicNames[currentLocation], currentLocation );
     }
 }
 
@@ -5899,68 +5904,72 @@ function textToBinary(str) {
 async function makeTalk( text, voiceName, providedAudio ) {
     "use strict";
 
-    if ( true === text.includes('**') || '' === text || '...' === text ) {
+    if ( true === text.includes('**') || '' === text || '…' === text || '...' === text ) {
         setTimeout( () => {
             window.nextDialogue = true;
         }, 1500 );
         return;
     }
 
-    const apiKey = TTSAPIKEY ?? '';
-    const url = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`;
-    let pitch = 0;
-
-    let speakingRate = 1.2;
-
-    const requestBody = {
-        input: { ssml: '<speak>' + text + '</speak>' },
-        voice: {
-            name: voiceName,
-            languageCode: "en-US" // Make sure this matches the language of the voice name
-        },
-        audioConfig: {
-            audioEncoding: "MP3",
-            volumeGainDb: ( parseInt(window.talkingVolume) + 7 ),
-        },
-        nonce: orbemNonce
-    };
-
-    if (pitch && speakingRate) {
-        requestBody.audioConfig.pitch = pitch;
-        requestBody.audioConfig.speakingRate = speakingRate;
-    }
-
-    try {
-        const response = await fetch(url, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(requestBody)
-        });
-
-        if (!response.ok) {
-            return;
-        }
-
-        const data = await response.json();
-        const audioContent = data?.audioContent;
-
-        // Play the audio
-        talkAudio = new Audio(`data:audio/mp3;base64,${audioContent}`);
-        let finalVolume = 0.5;
-
-        if ( false !== providedAudio ) {
-            talkAudio = providedAudio;
-            finalVolume = scaleDbToUnit(parseInt(window.talkingVolume));
-        }
-
-        talkAudio.volume = finalVolume;
+    if ( false !== providedAudio ) {
+        talkAudio = providedAudio;
+        talkAudio.volume = scaleDbToUnit(parseInt(window.talkingVolume));
         talkAudio.play();
 
         talkAudio.addEventListener('ended', () => {
             window.nextDialogue = true;
         });
-    } catch (error) {
-        window.audioError = error.message;
+    }
+
+    if ( false === providedAudio ) {
+        const apiKey = OrbemOrder.TTSAPIKEY ?? '';
+        const url = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`;
+        let pitch = 0;
+
+        let speakingRate = 1.2;
+
+        const requestBody = {
+            input: { ssml: '<speak>' + text + '</speak>' },
+            voice: {
+                name: voiceName,
+                languageCode: "en-US" // Make sure this matches the language of the voice name
+            },
+            audioConfig: {
+                audioEncoding: "MP3",
+                volumeGainDb: (parseInt(window.talkingVolume) + 7),
+            },
+        };
+
+        if (pitch && speakingRate) {
+            requestBody.audioConfig.pitch = pitch;
+            requestBody.audioConfig.speakingRate = speakingRate;
+        }
+
+        try {
+            const response = await fetch(url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(requestBody)
+            });
+
+            if (!response.ok) {
+                return;
+            }
+
+            const data = await response.json();
+            const audioContent = data?.audioContent;
+
+            // Play the audio
+            talkAudio = new Audio(`data:audio/mp3;base64,${audioContent}`);
+            talkAudio.volume = 0.5;
+            talkAudio.play();
+
+            talkAudio.addEventListener('ended', () => {
+                window.nextDialogue = true;
+            });
+        } catch (error) {
+            window.audioError = error.message;
+        }
     }
 
     function scaleDbToUnit(value, dbMin = -40, dbMax = 16) {
@@ -6109,7 +6118,7 @@ if (typeof window.exploreHandleCredentialResponse !== 'function') {
     window.exploreHandleCredentialResponse = function(response) {
         "use strict";
         // Save position of item.
-        const filehref = `${siteRESTURL}/google-oauth-callback/`;
+        const filehref = `${OrbemOrder.siteRESTURL}/google-oauth-callback/`;
         const googleContainer = document.getElementById('g_id_onload');
         const jsonString = {
             credential: response.credential,
@@ -6121,6 +6130,7 @@ if (typeof window.exploreHandleCredentialResponse !== 'function') {
             method: 'POST', // Specify the HTTP method
             headers: {
                 'Content-Type': 'application/json', // Set the content type to JSON
+                'X-WP-Nonce': OrbemOrder.orbemNonce
             },
             body: JSON.stringify(jsonString) // The JSON stringified payload
         })

@@ -3,14 +3,14 @@
  * This is the game options menu.
  */
 
-$setup_triggered = get_option('orbem_studio_setup_triggered', 'false');
+$orbem_studio_setup_triggered = get_option('orbem_studio_setup_triggered', 'false');
 
-if ('false' !== $setup_triggered) {
+if ('false' !== $orbem_studio_setup_triggered) {
     include $this->plugin->dir_path . '/templates/setup.php';
 }
 ?>
 <div class="title-section">
-    <img src="<?php echo $this->plugin->dir_url; ?>/assets/src/images/logo.svg" alt="orbem studio logo" width="80px" />
+    <img src="<?php echo esc_url($this->plugin->dir_url); ?>/assets/src/images/logo.svg" alt="orbem studio logo" width="80px" />
     <span>
         <h1>Orbem Studio</h1>
         <span class="subtitle-h3">Where Stories Become Playable Worlds</span>

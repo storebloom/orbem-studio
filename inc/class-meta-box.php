@@ -67,15 +67,15 @@ class Meta_Box {
 	 */
 	public function explorePointBox($post): void
     {
-        $front_end = is_string($post);
+        $orbem_studio_front_end = is_string($post);
         $post_type = is_string($post) ? $post : $post->post_type;
-        $meta_data = $this->getMetaData($post_type);
-        $values = [];
+        $orbem_studio_meta_data = $this->getMetaData($post_type);
+        $orbem_studio_values = [];
 
 
         if ( false !== $post_type ) {
-            foreach ($meta_data as $meta_key => $meta_info) {
-                $values[$meta_key] = get_post_meta($post->ID, $meta_key, true);
+            foreach ($orbem_studio_meta_data as $meta_key => $meta_info) {
+                $orbem_studio_values[$meta_key] = get_post_meta($post->ID, $meta_key, true);
             }
         }
 
@@ -1890,12 +1890,12 @@ class Meta_Box {
      * @param $key
      * @param $value
      * @param $meta_values
-     * @param bool $main_key
-     * @param bool $sub_value
-     * @param bool $repeat_index
+     * @param bool|string $main_key
+     * @param bool|string|array $sub_value
+     * @param bool|int $repeat_index
      * @return false|string
      */
-    public static function getMetaHtml($key, $value, $meta_values, bool $main_key = false, bool $sub_value = false, bool $repeat_index = false): false|string
+    public static function getMetaHtml($orbem_studio_key, $value, $orbem_studio_meta_values, bool|string $orbem_studio_main_key = false, bool|string|array $orbem_studio_sub_value = false, bool|int $orbem_studio_repeat_index = false): false|string
     {
         ob_start();
         if ( false === is_array($value)) {
@@ -1926,8 +1926,8 @@ class Meta_Box {
                 <input type="text" id="<?php echo esc_attr($slug); ?>" name="<?php echo esc_attr($slug); ?>" value="<?php echo esc_attr($values); ?>" class="widefat explore-upload-field" readonly />
             </p>
             <p>
-                <button type="button" class="upload_image_button button"><?php _e('Select', 'orbem-studio'); ?></button>
-                <button type="button" class="remove_image_button button"><?php _e('Remove', 'orbem-studio'); ?></button>
+                <button type="button" class="upload_image_button button"><?php esc_html_e('Select', 'orbem-studio'); ?></button>
+                <button type="button" class="remove_image_button button"><?php esc_html_e('Remove', 'orbem-studio'); ?></button>
             </p>
         </div>
         <?php
@@ -1945,7 +1945,7 @@ class Meta_Box {
 
         echo '<h2>Communicator Background</h2>';
         echo '<h4>Insert the background image that will show as the communicator device. Text and voice messages will show on top of it like a cell phone.</h4>';
-        echo self::imageUploadHTML('',  'explore-background', $meta_values);
+        echo wp_kses_post(self::imageUploadHTML('',  'explore-background', $meta_values));
     }
 
     /**

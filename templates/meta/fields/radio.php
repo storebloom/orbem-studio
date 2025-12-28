@@ -1,22 +1,22 @@
 <?php
 /**
- * @var string $key
- * @var array $sub_value
- * @var boolean|string $main_key
+ * @var string $orbem_studio_key
+ * @var array $orbem_studio_sub_value
+ * @var boolean|string $orbem_studio_main_key
  */
-$final_value = false === empty($meta_values[$key]) ? $meta_values[$key] : '';
+$orbem_studio_final_value = false === empty($orbem_studio_meta_values[$orbem_studio_key]) ? $orbem_studio_meta_values[$orbem_studio_key] : '';
 ?>
-<?php foreach ($sub_value as $sub_value_value) : ?>
+<?php foreach ($orbem_studio_sub_value as $orbem_studio_sub_value_value) : ?>
 <p>
 <label>
-    <?php echo esc_html(ucfirst(str_replace(['explore-', '-'],['', ' '],$sub_value_value))); ?>
+    <?php echo esc_html(ucfirst(str_replace(['explore-', '-'],['', ' '],$orbem_studio_sub_value_value))); ?>
     <br>
     <input class="repeat"
            type="radio"
-           name="<?php echo false === $main_key ? esc_attr($key) : esc_attr($main_key . '[' . $key. ']'); ?>"
-           id="<?php echo false === $main_key ? esc_attr($key) : esc_attr($main_key . '[' . $key. ']'); ?>"
-           value="<?php echo esc_attr($sub_value_value); ?>"
-    <?php checked( $sub_value_value, (false !== $main_key ? $meta_values[$main_key][$key] ?? '' : $final_value)); ?>
+           name="<?php echo false === $orbem_studio_main_key ? esc_attr($orbem_studio_key) : esc_attr($orbem_studio_main_key . '[' . $orbem_studio_key. ']'); ?>"
+           id="<?php echo false === $orbem_studio_main_key ? esc_attr($orbem_studio_key) : esc_attr($orbem_studio_main_key . '[' . $orbem_studio_key. ']'); ?>"
+           value="<?php echo esc_attr($orbem_studio_sub_value_value); ?>"
+    <?php checked($orbem_studio_sub_value_value, (false !== $orbem_studio_main_key ? $orbem_studio_meta_values[$orbem_studio_main_key][$orbem_studio_key] ?? '' : $orbem_studio_final_value)); ?>
     />
 </label>
 </p>

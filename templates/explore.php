@@ -7,164 +7,266 @@
 use OrbemStudio\Explore;
 use OrbemStudio\Dev_Mode;
 
-$first_area = get_option('explore_first_area', false);
+$orbem_studio_first_area = get_option('explore_first_area', false);
 
-if (false === $first_area) {
+if (false === $orbem_studio_first_area) {
     echo '<h1>A first area selection is required to play a game. Select one <strong><a href="/wp-admin/admin.php?page=orbem-studio">here</a></strong></h1>';
     return;
 }
 
-$hide_storage                 = get_option('explore_hide_storage', false);
-$hud_bars                     = get_option('explore_hud_bars', []);
-$require_login                = get_option('explore_require_login', false);
-$money_img                    = get_option('explore_money_image', false);
-$plugin_dir                   = str_replace( '/templates/', '', plugin_dir_url(__FILE__));
-$plugin_dir_path              = plugin_dir_path(__FILE__);
-$default_weapon               = get_option('explore_default_weapon', '');
-$userid                       = get_current_user_id();
-$game_url                     = get_option('explore_game_page', '');
-$game_url                     = false === empty($game_url) ? get_permalink(get_page_by_path($game_url)) : '/';
-$walking_sound                = get_option('explore_walking_sound', false);
-$points_sound                 = get_option('explore_points_sound', false);
-$points                       = get_user_meta($userid, 'explore_points', true);
-$weapon                       = get_user_meta($userid, 'explore_current_weapons', true);
-$equipped_weapon              = false === empty($weapon) ? get_post($weapon[0]) : Explore::getWeaponByName($default_weapon);
-$is_projectile                = false === empty($equipped_weapon) ? get_post_meta($equipped_weapon->ID, 'explore-projectile', true) : false;
-$is_it_projectile             = false === empty($is_projectile) ? $is_projectile : 'no';
-$location                     = get_user_meta($userid, 'current_location', true);
-$location                     = false === empty($location) ? $location : $first_area;
-$coordinates                  = get_user_meta($userid, 'current_coordinates', true);
-$back                         = false === empty($coordinates) ? ' Back' : '';
-$explore_area                 = get_posts(['post_type' => 'explore-area', 'name' => $location]);
-$explore_area                 = $explore_area[0] ?? false;
-$is_area_cutscene             = $explore_area ? get_post_meta($explore_area->ID, 'explore-is-cutscene', true) : '';
-$explore_area_map             = $explore_area ? get_post_meta($explore_area->ID, 'explore-map', true) : '';
-$explore_area_start_top       = $explore_area ? get_post_meta($explore_area->ID, 'explore-start-top', true) : '';
-$explore_area_start_left      = $explore_area ? get_post_meta($explore_area->ID, 'explore-start-left', true) : '';
-$explore_start_direction      = $explore_area ? get_post_meta($explore_area->ID, 'explore-start-direction', true) : '';
-$explore_start_direction      = false === empty($explore_start_direction) ? $explore_start_direction : 'down';
-$explore_area_start_direction = $explore_start_direction . '-dir';
-$explore_weapon_start         = true === isset($equipped_weapon) && $default_weapon !== $equipped_weapon->post_name ? '-' . $equipped_weapon->post_name : '';
-$explore_points               = Explore::getExplorePoints($location);
-$explore_cutscenes            = Explore::getExplorePosts($location, 'explore-cutscene');
-$explore_minigames            = Explore::getExplorePosts($location, 'explore-minigame');
-$explore_walls                = Explore::getExplorePosts($location, 'explore-wall');
-$explore_explainers           = Explore::getExplorePosts($location, 'explore-explainer');
-$explore_missions             = Explore::getExplorePosts($location, 'explore-mission');
-$explore_abilities            = Explore::getExploreAbilities();
-$rst                          = 'true' === filter_input( INPUT_GET, 'rst', FILTER_UNSAFE_RAW) ? ' reset' :'';
-$health                       = true === isset($points['health']['points']) ? $points['health']['points'] : 100;
-$mana                         = true === isset($points['mana']['points']) ? $points['mana']['points'] : 100;
-$point                        = true === isset($points['point']['points']) ? $points['point']['points'] : 0;
-$money                        = true === isset($points['money']['points']) ? $points['money']['points'] : 0;
-$point_widths                 = Explore::getCurrentPointWidth();
-$current_level                = Explore::getCurrentLevel();
-$max_points                   = Explore::getLevelMap();
-$explore_attack               = false === empty($equipped_weapon) ? get_post_meta($equipped_weapon->ID, 'explore-attack', true) : false;
-$weapon_strength              = false === empty($explore_attack) ? wp_json_encode($explore_attack) : '""';
-$intro_video                  = get_option('explore_intro_video', false);
-$signin_screen                = get_option('explore_signin_screen', '');
-$start_music                  = get_option('explore_start_music', false);
-$main_character               = get_option('explore_main_character', false);
-$main_character_info          = Explore::getCharacterImages($main_character);
-$direction_images             = $main_character_info['direction_images'] ?? [];
-$main_character_id            = $main_character_info['id'] ?? false;
-$is_admin                     = user_can(get_current_user_id(), 'manage_options');
+$orbem_studio_allowed_tags = wp_kses_allowed_html( 'post' );
 
-if ( $is_admin ) {
-    $item_list = array_merge($explore_points, $explore_minigames, $explore_explainers, $explore_walls);
-    $triggers  = Dev_Mode::getTriggers($item_list, $explore_cutscenes, $explore_missions);
-    $item_list = array_merge($item_list, $triggers);
+$orbem_studio_allowed_tags['svg'] = [
+    'class'           => true,
+    'aria-hidden'     => true,
+    'aria-labelledby' => true,
+    'role'            => true,
+    'xmlns'           => true,
+    'width'           => true,
+    'height'          => true,
+    'viewbox'         => true,
+    'fill'            => true,
+];
+
+$orbem_studio_allowed_tags['defs'] = [];
+
+$orbem_studio_allowed_tags['style'] = [
+    'type' => true,
+];
+
+$orbem_studio_allowed_tags['g'] = [
+    'class'        => true,
+    'id'           => true,
+    'fill'         => true,
+    'stroke'       => true,
+    'stroke-width' => true,
+    'transform'    => true,
+    'opacity'      => true,
+];
+
+$orbem_studio_allowed_tags['path'] = [
+    'class'        => true,
+    'd'            => true,
+    'fill'         => true,
+    'stroke'       => true,
+    'stroke-width' => true,
+    'opacity'      => true,
+];
+
+$orbem_studio_allowed_tags['ellipse'] = [
+    'class'        => true,
+    'cx'           => true,
+    'cy'           => true,
+    'rx'           => true,
+    'ry'           => true,
+    'fill'         => true,
+    'stroke'       => true,
+    'stroke-width' => true,
+    'opacity'      => true,
+];
+
+$orbem_studio_allowed_tags['circle'] = [
+    'class'        => true,
+    'cx'           => true,
+    'cy'           => true,
+    'r'            => true,
+    'fill'         => true,
+    'stroke'       => true,
+    'stroke-width' => true,
+    'opacity'      => true,
+];
+
+$orbem_studio_allowed_tags['rect'] = [
+    'class'        => true,
+    'x'            => true,
+    'y'            => true,
+    'width'        => true,
+    'height'       => true,
+    'rx'           => true,
+    'ry'           => true,
+    'fill'         => true,
+    'stroke'       => true,
+    'stroke-width' => true,
+    'opacity'      => true,
+];
+
+$orbem_studio_allowed_tags['line'] = [
+    'x1'           => true,
+    'y1'           => true,
+    'x2'           => true,
+    'y2'           => true,
+    'stroke'       => true,
+    'stroke-width' => true,
+];
+
+$orbem_studio_allowed_tags['polygon'] = [
+    'points'       => true,
+    'fill'         => true,
+    'stroke'       => true,
+    'stroke-width' => true,
+];
+
+$orbem_studio_allowed_tags['polyline'] = [
+    'points'       => true,
+    'fill'         => true,
+    'stroke'       => true,
+    'stroke-width' => true,
+];
+
+$orbem_studio_allowed_tags['title'] = [];
+$orbem_studio_allowed_tags['desc']  = [];
+
+$orbem_studio_hide_storage                 = get_option('explore_hide_storage', false);
+$orbem_studio_hud_bars                     = get_option('explore_hud_bars', []);
+$orbem_studio_require_login                = get_option('explore_require_login', false);
+$orbem_studio_money_img                    = get_option('explore_money_image', false);
+$orbem_studio_plugin_dir                   = str_replace( '/templates/', '', plugin_dir_url(__FILE__));
+$orbem_studio_plugin_dir_path              = plugin_dir_path(__FILE__);
+$orbem_studio_default_weapon               = get_option('explore_default_weapon', '');
+$orbem_studio_userid                       = get_current_user_id();
+$orbem_studio_game_url                     = get_option('explore_game_page', '');
+$orbem_studio_game_url                     = false === empty($orbem_studio_game_url) ? get_permalink(get_page_by_path($orbem_studio_game_url)) : '/';
+$orbem_studio_walking_sound                = get_option('explore_walking_sound', false);
+$orbem_studio_points_sound                 = get_option('explore_points_sound', false);
+$orbem_studio_points                       = get_user_meta($orbem_studio_userid, 'explore_points', true);
+$orbem_studio_weapon                       = get_user_meta($orbem_studio_userid, 'explore_current_weapons', true);
+$orbem_studio_equipped_weapon              = false === empty($orbem_studio_weapon) ? get_post($orbem_studio_weapon[0]) : Explore::getWeaponByName($orbem_studio_default_weapon);
+$orbem_studio_is_projectile                = false === empty($orbem_studio_equipped_weapon) ? get_post_meta($orbem_studio_equipped_weapon->ID, 'explore-projectile', true) : false;
+$orbem_studio_is_it_projectile             = false === empty($orbem_studio_is_projectile) ? $orbem_studio_is_projectile : 'no';
+$orbem_studio_location                     = get_user_meta($orbem_studio_userid, 'current_location', true);
+$orbem_studio_location                     = false === empty($orbem_studio_location) ? $orbem_studio_location : $orbem_studio_first_area;
+$orbem_studio_coordinates                  = get_user_meta($orbem_studio_userid, 'current_coordinates', true);
+$orbem_studio_back                         = false === empty($orbem_studio_coordinates) ? ' Back' : '';
+$orbem_studio_explore_area                 = get_posts(['post_type' => 'explore-area', 'name' => $orbem_studio_location]);
+$orbem_studio_explore_area                 = $orbem_studio_explore_area[0] ?? false;
+$orbem_studio_is_area_cutscene             = $orbem_studio_explore_area ? get_post_meta($orbem_studio_explore_area->ID, 'explore-is-cutscene', true) : '';
+$orbem_studio_explore_area_map             = $orbem_studio_explore_area ? get_post_meta($orbem_studio_explore_area->ID, 'explore-map', true) : '';
+$orbem_studio_explore_area_start_top       = $orbem_studio_explore_area ? get_post_meta($orbem_studio_explore_area->ID, 'explore-start-top', true) : '';
+$orbem_studio_explore_area_start_left      = $orbem_studio_explore_area ? get_post_meta($orbem_studio_explore_area->ID, 'explore-start-left', true) : '';
+$orbem_studio_explore_start_direction      = $orbem_studio_explore_area ? get_post_meta($orbem_studio_explore_area->ID, 'explore-start-direction', true) : '';
+$orbem_studio_explore_start_direction      = false === empty($orbem_studio_explore_start_direction) ? $orbem_studio_explore_start_direction : 'down';
+$orbem_studio_explore_area_start_direction = $orbem_studio_explore_start_direction . '-dir';
+$orbem_studio_explore_weapon_start         = true === isset($orbem_studio_equipped_weapon) && $orbem_studio_default_weapon !== $orbem_studio_equipped_weapon->post_name ? '-' . $orbem_studio_equipped_weapon->post_name : '';
+$orbem_studio_explore_points               = Explore::getExplorePoints($orbem_studio_location);
+$orbem_studio_explore_cutscenes            = Explore::getExplorePosts($orbem_studio_location, 'explore-cutscene');
+$orbem_studio_explore_minigames            = Explore::getExplorePosts($orbem_studio_location, 'explore-minigame');
+$orbem_studio_explore_walls                = Explore::getExplorePosts($orbem_studio_location, 'explore-wall');
+$orbem_studio_explore_explainers           = Explore::getExplorePosts($orbem_studio_location, 'explore-explainer');
+$orbem_studio_explore_missions             = Explore::getExplorePosts($orbem_studio_location, 'explore-mission');
+$orbem_studio_explore_abilities            = Explore::getExploreAbilities();
+$orbem_studio_rst                          = 'true' === filter_input( INPUT_GET, 'rst', FILTER_UNSAFE_RAW) ? ' reset' :'';
+$orbem_studio_health                       = true === isset($orbem_studio_points['health']['points']) ? $orbem_studio_points['health']['points'] : 100;
+$orbem_studio_mana                         = true === isset($orbem_studio_points['mana']['points']) ? $orbem_studio_points['mana']['points'] : 100;
+$orbem_studio_point                        = true === isset($orbem_studio_points['point']['points']) ? $orbem_studio_points['point']['points'] : 0;
+$orbem_studio_money                        = true === isset($orbem_studio_points['money']['points']) ? $orbem_studio_points['money']['points'] : 0;
+$orbem_studio_point_widths                 = Explore::getCurrentPointWidth();
+$orbem_studio_current_level                = Explore::getCurrentLevel();
+$orbem_studio_max_points                   = Explore::getLevelMap();
+$orbem_studio_explore_attack               = false === empty($orbem_studio_equipped_weapon) ? get_post_meta($orbem_studio_equipped_weapon->ID, 'explore-attack', true) : false;
+$orbem_studio_weapon_strength              = false === empty($orbem_studio_explore_attack) ? wp_json_encode($orbem_studio_explore_attack) : '""';
+$orbem_studio_intro_video                  = get_option('explore_intro_video', false);
+$orbem_studio_signin_screen                = get_option('explore_signin_screen', '');
+$orbem_studio_start_music                  = get_option('explore_start_music', false);
+$orbem_studio_main_character               = get_option('explore_main_character', false);
+$orbem_studio_main_character_info          = Explore::getCharacterImages($orbem_studio_main_character);
+$orbem_studio_direction_images             = $orbem_studio_main_character_info['direction_images'] ?? [];
+$orbem_studio_main_character_id            = $orbem_studio_main_character_info['id'] ?? false;
+$orbem_studio_is_admin                     = user_can(get_current_user_id(), 'manage_options');
+
+if ( $orbem_studio_is_admin ) {
+    $orbem_studio_item_list = array_merge($orbem_studio_explore_points, $orbem_studio_explore_minigames, $orbem_studio_explore_explainers, $orbem_studio_explore_walls);
+    $orbem_studio_triggers  = Dev_Mode::getTriggers($orbem_studio_item_list, $orbem_studio_explore_cutscenes, $orbem_studio_explore_missions);
+    $orbem_studio_item_list = array_merge($orbem_studio_item_list, $orbem_studio_triggers);
 }
 
-$new_type   = false === empty($coordinates) ? 'new-explore' : 'try-engage-explore';
-$new_type   = is_user_logged_in() && false !== empty($coordinates) ? 'engage-explore' : $new_type;
-$health_bar = $hud_bars['health'] ?? '';
-$mana_bar   = $hud_bars['mana'] ?? '';
-$power_bar  = $hud_bars['power'] ?? '';
-$points_bar = $hud_bars['points'] ?? '';
-$money_bar  = $hud_bars['money'] ?? '';
+$orbem_studio_new_type   = false === empty($orbem_studio_coordinates) ? 'new-explore' : 'try-engage-explore';
+$orbem_studio_new_type   = is_user_logged_in() && false !== empty($orbem_studio_coordinates) ? 'engage-explore' : $orbem_studio_new_type;
+$orbem_studio_health_bar = $orbem_studio_hud_bars['health'] ?? '';
+$orbem_studio_mana_bar   = $orbem_studio_hud_bars['mana'] ?? '';
+$orbem_studio_power_bar  = $orbem_studio_hud_bars['power'] ?? '';
+$orbem_studio_points_bar = $orbem_studio_hud_bars['points'] ?? '';
+$orbem_studio_money_bar  = $orbem_studio_hud_bars['money'] ?? '';
 
 extract([
-    'userid' => $userid,
+    'userid' => $orbem_studio_userid,
 ]);
 
 include plugin_dir_path(__FILE__) . 'plugin-header.php';
 ?>
-<main id="primary"<?php echo esc_attr(true === $is_admin ? ' data-devmode=true' : ''); ?> class="site-main<?php echo esc_attr($rst); ?>">
-    <?php include $plugin_dir_path . 'start-screen.php'; ?>
-    <?php if (true === $is_admin) : ?>
-        <?php echo html_entity_decode(Dev_Mode::getDevModeHTML()); ?>
+<main id="primary"<?php echo esc_attr(true === $orbem_studio_is_admin ? ' data-devmode=true' : ''); ?> class="site-main<?php echo esc_attr($orbem_studio_rst); ?>">
+    <?php include $orbem_studio_plugin_dir_path . 'start-screen.php'; ?>
+    <?php if (true === $orbem_studio_is_admin) : ?>
+        <?php echo wp_kses_post(html_entity_decode(Dev_Mode::getDevModeHTML())); ?>
     <?php endif; ?>
-    <div class="game-container <?php echo esc_attr($location); ?>" data-main="<?php echo esc_attr($main_character); ?>" data-fadeout="true" style="background: url(<?php echo esc_url($explore_area_map ?? ''); ?>) no-repeat left top; background-size: cover;">
-        <?php if ((false === empty($explore_area_map) && false !== stripos($explore_area_map, '.webm')) || (false === empty($explore_area_map) && false !== stripos($explore_area_map, '.mp4'))): ?>
-            <video style="position:absolute;z-index: 1;width: 100%;height:100%;top:0; left:0;" src="<?php echo esc_attr($explore_area_map); ?>" autoplay loop muted></video>
+    <div class="game-container <?php echo esc_attr($orbem_studio_location); ?>" data-main="<?php echo esc_attr($orbem_studio_main_character); ?>" data-fadeout="true" style="background: url(<?php echo esc_url($orbem_studio_explore_area_map ?? ''); ?>) no-repeat left top; background-size: cover;">
+        <?php if ((false === empty($orbem_studio_explore_area_map) && false !== stripos($orbem_studio_explore_area_map, '.webm')) || (false === empty($orbem_studio_explore_area_map) && false !== stripos($orbem_studio_explore_area_map, '.mp4'))): ?>
+            <video style="position:absolute;z-index: 1;width: 100%;height:100%;top:0; left:0;" src="<?php echo esc_attr($orbem_studio_explore_area_map); ?>" autoplay loop muted></video>
         <?php endif; ?>
         <div id="explore-points">
-            <?php if ('on' === $health_bar) : ?>
-                <div class="health-amount point-bar" data-type="health" data-amount="<?php echo esc_attr($health + ($point_widths['health'] - 100)); ?>" style="width: <?php echo isset($point_widths['health']) ? esc_attr($point_widths['health']) : 100; ?>px;"><div class="gauge"></div></div>
+            <?php if ('on' === $orbem_studio_health_bar) : ?>
+                <div class="health-amount point-bar" data-type="health" data-amount="<?php echo esc_attr($orbem_studio_health + ($orbem_studio_point_widths['health'] - 100)); ?>" style="width: <?php echo isset($orbem_studio_point_widths['health']) ? esc_attr($orbem_studio_point_widths['health']) : 100; ?>px;"><div class="gauge"></div></div>
             <?php endif; ?>
-            <?php if ('on' === $mana_bar) : ?>
-                <div class="mana-amount point-bar" data-type="mana" data-amount="<?php echo esc_attr($mana + ($point_widths['mana'] - 100)); ?>" style="width: <?php echo isset($point_widths['mana']) ? esc_attr($point_widths['mana']) : 100; ?>px;"><div class="gauge"></div></div>
+            <?php if ('on' === $orbem_studio_mana_bar) : ?>
+                <div class="mana-amount point-bar" data-type="mana" data-amount="<?php echo esc_attr($orbem_studio_mana + ($orbem_studio_point_widths['mana'] - 100)); ?>" style="width: <?php echo isset($orbem_studio_point_widths['mana']) ? esc_attr($orbem_studio_point_widths['mana']) : 100; ?>px;"><div class="gauge"></div></div>
             <?php endif; ?>
-            <?php if ('on' === $power_bar) : ?>
-                <div class="power-amount point-bar" data-type="power" data-amount="100" style="width: <?php echo isset($point_widths['power']) ? esc_attr($point_widths['power']) : 100; ?>px;"><div class="gauge"></div></div>
+            <?php if ('on' === $orbem_studio_power_bar) : ?>
+                <div class="power-amount point-bar" data-type="power" data-amount="100" style="width: <?php echo isset($orbem_studio_point_widths['power']) ? esc_attr($orbem_studio_point_widths['power']) : 100; ?>px;"><div class="gauge"></div></div>
             <?php endif; ?>
-            <?php if ('on' === $money_bar) : ?>
-                <div class="money-amount point-bar" data-type="money" data-amount="<?php echo esc_attr($money); ?>">
+            <?php if ('on' === $orbem_studio_money_bar) : ?>
+                <div class="money-amount point-bar" data-type="money" data-amount="<?php echo esc_attr($orbem_studio_money); ?>">
                     <div class="count">
-                        <?php if (false === empty($money_img)): ?>
-                            <img alt="money icon" class="money-image" src="<?php echo esc_url($money_img); ?>" />
+                        <?php if (false === empty($orbem_studio_money_img)): ?>
+                            <img alt="money icon" class="money-image" src="<?php echo esc_url($orbem_studio_money_img); ?>" />
                         <?php else : ?>
                             $
                         <?php endif; ?>
-                        <span class="money-text"><?php echo esc_html($money); ?></span>
+                        <span class="money-text"><?php echo esc_html($orbem_studio_money); ?></span>
                     </div>
                 </div>
             <?php endif; ?>
-            <?php if ('on' === $points_bar) : ?>
-                <div class="point-amount point-bar" data-type="point" data-amount="<?php echo esc_attr($point); ?>" style="width: <?php echo isset($point_widths['point']) ? esc_attr($point_widths['point']) : 100; ?>px;">
+            <?php if ('on' === $orbem_studio_points_bar) : ?>
+                <div class="point-amount point-bar" data-type="point" data-amount="<?php echo esc_attr($orbem_studio_point); ?>" style="width: <?php echo isset($orbem_studio_point_widths['point']) ? esc_attr($orbem_studio_point_widths['point']) : 100; ?>px;">
                     <div class="gauge"></div>
                 </div>
                 <div class="point-info-wrap">
-                    <span class="current-level">lvl. <?php echo esc_html($current_level); ?></span>
+                    <span class="current-level">lvl. <?php echo esc_html($orbem_studio_current_level); ?></span>
                     <span class="current-points">
-                        <span class="my-points"><?php echo esc_html($point);?></span>/<span class="next-level-points"><?php echo esc_html($max_points[$current_level] ?? 1); ?></span>
+                        <span class="my-points"><?php echo esc_html($orbem_studio_point);?></span>/<span class="next-level-points"><?php echo esc_html($orbem_studio_max_points[$orbem_studio_current_level] ?? 1); ?></span>
                     </span>
                 </div>
             <?php endif; ?>
             <div id="missions">
                 <div class="missions-content">
-                    <?php include $plugin_dir_path . '/components/explore-missions.php'; ?>
+                    <?php include $orbem_studio_plugin_dir_path . '/components/explore-missions.php'; ?>
                 </div>
             </div>
         </div>
         <div id="settings">
             <div class="setting-content">
-                <?php include $plugin_dir_path . '/components/explore-settings.php'; ?>
+                <?php include $orbem_studio_plugin_dir_path . '/components/explore-settings.php'; ?>
             </div>
         </div>
         <div id="characters" style="display: none;">
             <div class="characters-content">
-                <?php include $plugin_dir_path . '/components/explore-characters.php'; ?>
+                <?php include $orbem_studio_plugin_dir_path . '/components/explore-characters.php'; ?>
             </div>
         </div>
-        <?php if ('on' !== $hide_storage) : ?>
+        <?php if ('on' !== $orbem_studio_hide_storage) : ?>
             <div id="storage">
                 <div class="storage-content">
-                    <?php include $plugin_dir_path . '/components/explore-storage.php'; ?>
+                    <?php include $orbem_studio_plugin_dir_path . '/components/explore-storage.php'; ?>
                 </div>
             </div>
         <?php endif; ?>
         <div id="weapon">
             <div class="weapon-content">
-                <?php if (false === empty($equipped_weapon)) : ?>
-                    <img alt="equipped weapon" src="<?php echo esc_url(get_the_post_thumbnail_url($equipped_weapon->ID)); ?>" width="60px" height="60px" />
+                <?php if (false === empty($orbem_studio_equipped_weapon)) : ?>
+                    <img alt="equipped weapon" src="<?php echo esc_url(get_the_post_thumbnail_url($orbem_studio_equipped_weapon->ID)); ?>" width="60px" height="60px" />
                 <?php endif; ?>
             </div>
         </div>
-        <?php echo html_entity_decode(Explore::getExplainerHTML($explore_explainers, 'menu')); ?>
-        <?php echo html_entity_decode(Explore::getExplainerHTML($explore_explainers, 'fullscreen')); ?>
+        <?php echo wp_kses_post(html_entity_decode(Explore::getExplainerHTML($orbem_studio_explore_explainers, 'menu'))); ?>
+        <?php echo wp_kses_post(html_entity_decode(Explore::getExplainerHTML($orbem_studio_explore_explainers, 'fullscreen'))); ?>
         <div class="touch-buttons">
             <span class="top-left">
             </span>
@@ -185,47 +287,46 @@ include plugin_dir_path(__FILE__) . 'plugin-header.php';
             <span class="bottom-right">
             </span>
         </div>
-        <span id="key-guide" href="<?php echo esc_url($game_url); ?>">
-            <img alt="controls" src="<?php echo $plugin_dir . '/assets/src/images/keys.png'; ?>" />
+        <span id="key-guide" href="<?php echo esc_url($orbem_studio_game_url); ?>">
+            <img alt="controls" src="<?php echo esc_url($orbem_studio_plugin_dir . '/assets/src/images/keys.png'); ?>" />
         </span>
         <div
-            style="top: <?php echo false === empty($coordinates['top']) ? esc_attr($coordinates['top']) : esc_attr($explore_area_start_top); ?>px; left: <?php echo false === empty($coordinates['left']) ? esc_attr($coordinates['left']) : esc_attr($explore_area_start_left); ?>px"
-            class="<?php echo esc_attr($explore_area_start_direction); ?>"
-            data-mainid="<?php echo esc_attr($main_character_id); ?>"
+            style="top: <?php echo false === empty($orbem_studio_coordinates['top']) ? esc_attr($orbem_studio_coordinates['top']) : esc_attr($orbem_studio_explore_area_start_top); ?>px; left: <?php echo false === empty($orbem_studio_coordinates['left']) ? esc_attr($orbem_studio_coordinates['left']) : esc_attr($orbem_studio_explore_area_start_left); ?>px"
+            class="<?php echo esc_attr($orbem_studio_explore_area_start_direction); ?>"
+            data-mainid="<?php echo esc_attr($orbem_studio_main_character_id); ?>"
             id="map-character"
-            data-name="<?php echo esc_attr($main_character_info['name'] ?? ''); ?>"
-            data-voice="<?php echo esc_attr($main_character_info['voice'] ?? '');?>"
-            data-ability="<?php echo esc_attr($main_character_info['ability'] ?? ''); ?>"
+            data-name="<?php echo esc_attr($orbem_studio_main_character_info['name'] ?? ''); ?>"
+            data-voice="<?php echo esc_attr($orbem_studio_main_character_info['voice'] ?? '');?>"
+            data-ability="<?php echo esc_attr($orbem_studio_main_character_info['ability'] ?? ''); ?>"
         >
             <span class="misc-gauge-wrap"><span class="misc-gauge"></span></span>
-            <?php foreach($direction_images as $direction_label => $direction_image):
-                $fight_animation = false !== stripos($direction_label, 'punch') ? ' fight-image' : '';
-                $dir_image       = 'static-' . $explore_start_direction . $explore_weapon_start;
+            <?php foreach($orbem_studio_direction_images as $orbem_studio_direction_label => $orbem_studio_direction_image):
+                $orbem_studio_fight_animation = false !== stripos($orbem_studio_direction_label, 'punch') ? ' fight-image' : '';
+                $orbem_studio_dir_image       = 'static-' . $orbem_studio_explore_start_direction . $orbem_studio_explore_weapon_start;
                 ?>
                 <img
-                    alt="<?php echo esc_attr($main_character_info['name'] . ' ' . $direction_label); ?>"
-                    height="<?php echo false === empty($main_character_info['height']) ? esc_attr($main_character_info['height']) : 185; ?>px"
-                    width="<?php echo false === empty($main_character_info['width']) ? esc_attr($main_character_info['width']) : 115; ?>px"
-                    class="map-character-icon<?php echo esc_attr($direction_label === $dir_image ? ' engage' : ''); echo esc_attr($fight_animation); ?>"
-                    id="<?php echo esc_attr($main_character . '-' . $direction_label); ?>"
-                    src="<?php echo esc_url($direction_image); ?>"
+                    alt="<?php echo esc_attr($orbem_studio_main_character_info['name'] . ' ' . $orbem_studio_direction_label); ?>"
+                    height="<?php echo false === empty($orbem_studio_main_character_info['height']) ? esc_attr($orbem_studio_main_character_info['height']) : 185; ?>px"
+                    width="<?php echo false === empty($orbem_studio_main_character_info['width']) ? esc_attr($orbem_studio_main_character_info['width']) : 115; ?>px"
+                    class="map-character-icon<?php echo esc_attr($orbem_studio_direction_label === $orbem_studio_dir_image ? ' engage' : ''); echo esc_attr($orbem_studio_fight_animation); ?>"
+                    id="<?php echo esc_attr($orbem_studio_main_character . '-' . $orbem_studio_direction_label); ?>"
+                    src="<?php echo esc_url($orbem_studio_direction_image); ?>"
                 />
             <?php endforeach; ?>
         </div>
-        <div style="top: <?php echo false === empty($coordinates['top']) ? esc_attr(intval($coordinates['top']) + 500) : 4018; ?>px; left: <?php echo false === empty($coordinates['left']) ? esc_attr(intval($coordinates['left'] + 500)) : 2442; ?>px" class="map-weapon" data-direction="<?php echo esc_attr($explore_start_direction); ?>" data-projectile="<?php echo esc_attr($is_it_projectile); ?>" data-weapon="<?php echo esc_attr($equipped_weapon->post_name ?? $default_weapon); ?>" data-strength=<?php echo esc_attr($weapon_strength); ?>></div>
-        <div class="default-map" data-iscutscene="<?php echo esc_attr($is_area_cutscene); ?>" data-startleft="<?php echo false === empty($explore_area_start_left) ? esc_attr($explore_area_start_left) : ''; ?>" data-starttop="<?php echo false === empty($explore_area_start_top) ? esc_attr($explore_area_start_top) : ''; ?>">
-            <?php if (false !== $explore_area): ?>
-                <?php echo Explore::getMapSVG($explore_area); ?>
-                <?php echo html_entity_decode(Explore::getMapItemHTML($explore_points, ($explore_area ? $explore_area->post_name : ''))); ?>
-                <?php echo html_entity_decode(Explore::getMapCutsceneHTML($explore_cutscenes, ($explore_area ? $explore_area->post_name : ''), $userid)); ?>
+        <div style="top: <?php echo false === empty($orbem_studio_coordinates['top']) ? esc_attr(intval($orbem_studio_coordinates['top']) + 500) : 4018; ?>px; left: <?php echo false === empty($orbem_studio_coordinates['left']) ? esc_attr(intval($orbem_studio_coordinates['left'] + 500)) : 2442; ?>px" class="map-weapon" data-direction="<?php echo esc_attr($orbem_studio_explore_start_direction); ?>" data-projectile="<?php echo esc_attr($orbem_studio_is_it_projectile); ?>" data-weapon="<?php echo esc_attr($orbem_studio_equipped_weapon->post_name ?? $orbem_studio_default_weapon); ?>" data-strength=<?php echo esc_attr($orbem_studio_weapon_strength); ?>></div>
+        <div class="default-map" data-iscutscene="<?php echo esc_attr($orbem_studio_is_area_cutscene); ?>" data-startleft="<?php echo false === empty($orbem_studio_explore_area_start_left) ? esc_attr($orbem_studio_explore_area_start_left) : ''; ?>" data-starttop="<?php echo false === empty($orbem_studio_explore_area_start_top) ? esc_attr($orbem_studio_explore_area_start_top) : ''; ?>">
+            <?php if (false !== $orbem_studio_explore_area): ?>
+                <?php echo wp_kses_post(Explore::getMapSVG($orbem_studio_explore_area)); ?>
+                <?php echo wp_kses(html_entity_decode(Explore::getMapItemHTML($orbem_studio_explore_points, ($orbem_studio_explore_area ? $orbem_studio_explore_area->post_name : ''))), $orbem_studio_allowed_tags); ?>
+                <?php echo wp_kses_post(html_entity_decode(Explore::getMapCutsceneHTML($orbem_studio_explore_cutscenes, ($orbem_studio_explore_area ? $orbem_studio_explore_area->post_name : ''), $orbem_studio_userid))); ?>
             <?php endif;?>
-            <?php echo html_entity_decode(Explore::getMinigameHTML($explore_minigames)); ?>
-            <?php echo html_entity_decode(Explore::getMapAbilitiesHTML($explore_abilities)); ?>
-            <?php echo html_entity_decode(Explore::getExplainerHTML($explore_explainers, 'map')); ?>
-            <?php echo html_entity_decode(Explore::getMapCommunicateHTML($location, $userid)); ?>
+            <?php echo wp_kses(html_entity_decode(Explore::getMinigameHTML($orbem_studio_explore_minigames)), $orbem_studio_allowed_tags ); ?>
+            <?php echo wp_kses_post(html_entity_decode(Explore::getMapAbilitiesHTML($orbem_studio_explore_abilities))); ?>
+            <?php echo wp_kses_post(html_entity_decode(Explore::getExplainerHTML($orbem_studio_explore_explainers, 'map'))); ?>
+            <?php echo wp_kses_post(html_entity_decode(Explore::getMapCommunicateHTML($orbem_studio_location, $orbem_studio_userid))); ?>
         </div>
     </div>
-
     <div class="loading-screen">
         LOADING...
     </div>
@@ -233,24 +334,24 @@ include plugin_dir_path(__FILE__) . 'plugin-header.php';
         <h2>Awww you died</h2>
         <button class="try-again">Try again</button>
     </div>
-    <?php if (false === empty($intro_video) && true === empty($coordinates)) : ?>
+    <?php if (false === empty($orbem_studio_intro_video) && true === empty($orbem_studio_coordinates)) : ?>
         <div class="intro-video engage">
             <span id="skip-intro-video">SKIP</span>
             <span id="unmute">🔇</span>
-            <video id="intro-video" src="<?php echo esc_attr($intro_video); ?>"  muted></video>
+            <video id="intro-video" src="<?php echo esc_attr($orbem_studio_intro_video); ?>"  muted></video>
         </div>
     <?php endif; ?>
-    <?php if (false === empty($start_music)) : ?>
+    <?php if (false === empty($orbem_studio_start_music)) : ?>
         <div class="start-screen-music">
             <span id="music-unmute">🔇</span>
         </div>
-        <audio id="start-screen-music" src="<?php echo esc_attr($start_music); ?>" loop <?php echo false === empty($coordinates) ? 'autoplay' : ''; ?> muted></audio>
+        <audio id="start-screen-music" src="<?php echo esc_attr($orbem_studio_start_music); ?>" loop <?php echo false === empty($orbem_studio_coordinates) ? 'autoplay' : ''; ?> muted></audio>
     <?php endif; ?>
-    <?php if (false !== $walking_sound) : ?>
-        <audio id="walking" src="<?php echo esc_attr($walking_sound); ?>"></audio>
+    <?php if (false !== $orbem_studio_walking_sound) : ?>
+        <audio id="walking" src="<?php echo esc_attr($orbem_studio_walking_sound); ?>"></audio>
     <?php endif; ?>
-    <?php if (false !== $points_sound) : ?>
-        <audio id="ching" src="<?php echo esc_attr($points_sound); ?>"></audio>
+    <?php if (false !== $orbem_studio_points_sound) : ?>
+        <audio id="ching" src="<?php echo esc_attr($orbem_studio_points_sound); ?>"></audio>
     <?php endif; ?>
 </main>
 <?php

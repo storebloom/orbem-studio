@@ -1,12 +1,12 @@
-/* @global siteRESTURL */
-/* @global OrbemStudio */
-/* @global orbemNonce */
+/* global OrbemOrder */
 
 import { initImageUpload } from './image-upload';
 import { enterExplorePoint, engageExploreGame } from './explore';
 
 export function engageDevMode() {
     "use strict";
+
+    let recordThePath = false;
 
     window.devmode = false;
     let devZoom = 1;
@@ -23,6 +23,93 @@ export function engageDevMode() {
         zoomOut.addEventListener('click', () => {
             zoomGameContainer('out');
         });
+    }
+
+    // Drag logic.
+    let draggedContainer = null;
+    let offsetX = 0;
+    let offsetY = 0;
+    let sendItemCoodinateTimeout;
+
+    // Handle the dragstart event
+    function handleDragStart(event) {
+        clearTimeout(sendItemCoodinateTimeout);
+        event.preventDefault();
+        draggedContainer = event.target.closest('.map-item'); // Get the container element
+
+        // Remove transition for items that moved.
+        draggedContainer.style.transition = '';
+
+        if (draggedContainer) {
+            // Calculate the offset of the mouse from the top-left corner of the container
+            const rect = draggedContainer.getBoundingClientRect();
+            offsetX = ( event.clientX - rect.left );
+            offsetY = ( event.clientY - rect.top );
+
+            event.dataTransfer.setData('text/plain', '');
+
+            // Add mousemove event listener to update container position
+            document.addEventListener('mousemove', handleMouseMove);
+        }
+    }
+
+    // Handle the mousemove event to update container position
+    function handleMouseMove(event) {
+        if (draggedContainer) {
+            // Calculate the mouse position relative to the .default-map element
+            const mapRect = document.querySelector('.game-container').getBoundingClientRect();
+
+            const mouseX = 'menu' === draggedContainer.dataset.type ? event.clientX : event.clientX - mapRect.left;
+            const mouseY = 'menu' === draggedContainer.dataset.type ? event.clientY : event.clientY - mapRect.top;
+
+            // Update container position based on mouse position relative to the container
+            draggedContainer.style.left = `${( mouseX / devZoom ) - offsetX}px`;
+            draggedContainer.style.top = `${( mouseY / devZoom ) - offsetY}px`;
+        }
+    }
+
+    // Handle the dragend event
+    function handleDragEnd() {
+        if (draggedContainer) {
+            sendItemCoodinateTimeout = setTimeout(() => {
+                const filehref = `${OrbemOrder.siteRESTURL}/set-item-position/`;
+                const theID = 'true' === draggedContainer.dataset.trigger || true === draggedContainer.classList.contains('drag-dest') ? draggedContainer.id.replace('-t', '').replace('-d', '') : draggedContainer.id;
+                const jsonString = {
+                    top: draggedContainer.style.top.replace('px', ''),
+                    left: draggedContainer.style.left.replace('px', ''),
+                    height: draggedContainer.style.height.replace('px', ''),
+                    width: draggedContainer.style.width.replace('px', ''),
+                    id: theID,
+                    meta: draggedContainer.dataset?.meta,
+                };
+
+                if (theID === recordThePath) {
+                    jsonString.walkingPath = 'true';
+                }
+
+                // Save position of item.
+                fetch(filehref, {
+                    method: 'POST', // Specify the HTTP method.
+                    headers: {
+                        'Content-Type': 'application/json', // Set the content type to JSON.
+                        'X-WP-Nonce': OrbemOrder.orbemNonce
+                    },
+                    body: JSON.stringify(jsonString) // The JSON stringified payload.
+                })
+                    .then(response => {
+                        // Check if the response status is in the range 200-299.
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok ' + response.statusText);
+                        }
+                    });
+
+                // Clear the reference to the dragged container.
+                draggedContainer = null;
+            }, 1000);
+
+            // Remove mousemove event listener
+            document.removeEventListener('mousemove', handleMouseMove);
+        }
     }
 
     function zoomGameContainer(whichWay) {
@@ -121,8 +208,6 @@ export function engageDevMode() {
         const addNewListItems = document.querySelectorAll('#add-new-list li');
         const godMode = document.getElementById('god-mode');
         const noTouch = document.getElementById('no-touch');
-        const showCollision = document.getElementById('show-collision-map');
-        let recordThePath = false;
 
         // Pinpoint.
         const pinPointIcon = document.getElementById('open-pinpoint');
@@ -164,17 +249,7 @@ export function engageDevMode() {
         window.godMode = false;
         window.noTouch = false;
 
-        if (godMode && noTouch && showCollision) {
-            showCollision.addEventListener('change', () => {
-                const collisionMap = document.querySelector('.default-map > svg');
-
-                if (showCollision.checked) {
-                    collisionMap.style.opacity = '1';
-                } else {
-                    collisionMap.style.opacity = '0';
-                }
-            });
-
+        if (godMode && noTouch) {
             godMode.addEventListener('change', () => {
                 if (godMode.checked) {
                     window.godMode = true;
@@ -200,17 +275,16 @@ export function engageDevMode() {
 
                     item.classList.add('engage');
 
-                    const filehref = `${siteRESTURL}/get-new-fields/`;
+                    const filehref = `${OrbemOrder.siteRESTURL}/get-new-fields/`;
                     const jsonString = {
                         type: postType,
-                        nonce: orbemNonce
                     };
                     // Save position of item.
                     fetch(filehref, {
                         method: 'POST', // Specify the HTTP method.
                         headers: {
                             'Content-Type': 'application/json', // Set the content type to JSON.
-                            'X-WP-Nonce': OrbemStudio.nonce
+                            'X-WP-Nonce': OrbemOrder.orbemNonce
                         },
                         body: JSON.stringify(jsonString) // The JSON stringified payload.
                     })
@@ -316,20 +390,19 @@ export function engageDevMode() {
                             // Submit the new size for the find item.
                             submitSize.addEventListener('click', () => {
 
-                                const filehref = `${siteRESTURL}/set-item-size/`;
+                                const filehref = `${OrbemOrder.siteRESTURL}/set-item-size/`;
                                 const jsonString = {
                                     height: heightInput.value,
                                     width: widthInput.value,
                                     id: theID,
                                     meta: item.dataset?.meta,
-                                    nonce: orbemNonce
                                 };
                                 // Save position of item.
                                 fetch(filehref, {
                                     method: 'POST', // Specify the HTTP method.
                                     headers: {
                                         'Content-Type': 'application/json', // Set the content type to JSON.
-                                        'X-WP-Nonce': OrbemStudio.nonce
+                                        'X-WP-Nonce': OrbemOrder.orbemNonce
                                     },
                                     body: JSON.stringify(jsonString) // The JSON stringified payload.
                                 })
@@ -405,95 +478,6 @@ export function engageDevMode() {
         }
 
         if (items && items.length) {
-
-            // Drag logic.
-            let draggedContainer = null;
-            let offsetX = 0;
-            let offsetY = 0;
-            let sendItemCoodinateTimeout;
-
-            // Handle the dragstart event
-            function handleDragStart(event) {
-                clearTimeout(sendItemCoodinateTimeout);
-                event.preventDefault();
-                draggedContainer = event.target.closest('.map-item'); // Get the container element
-
-                // Remove transition for items that moved.
-                draggedContainer.style.transition = '';
-
-                if (draggedContainer) {
-                    // Calculate the offset of the mouse from the top-left corner of the container
-                    const rect = draggedContainer.getBoundingClientRect();
-                    offsetX = ( event.clientX - rect.left );
-                    offsetY = ( event.clientY - rect.top );
-
-                    event.dataTransfer.setData('text/plain', '');
-
-                    // Add mousemove event listener to update container position
-                    document.addEventListener('mousemove', handleMouseMove);
-                }
-            }
-
-            // Handle the mousemove event to update container position
-            function handleMouseMove(event) {
-                if (draggedContainer) {
-                    // Calculate the mouse position relative to the .default-map element
-                    const mapRect = document.querySelector('.game-container').getBoundingClientRect();
-
-                    const mouseX = 'menu' === draggedContainer.dataset.type ? event.clientX : event.clientX - mapRect.left;
-                    const mouseY = 'menu' === draggedContainer.dataset.type ? event.clientY : event.clientY - mapRect.top;
-
-                    // Update container position based on mouse position relative to the container
-                    draggedContainer.style.left = `${( mouseX / devZoom ) - offsetX}px`;
-                    draggedContainer.style.top = `${( mouseY / devZoom ) - offsetY}px`;
-                }
-            }
-
-            // Handle the dragend event
-            function handleDragEnd() {
-                if (draggedContainer) {
-                    sendItemCoodinateTimeout = setTimeout(() => {
-                        const filehref = `${siteRESTURL}/set-item-position/`;
-                        const theID = 'true' === draggedContainer.dataset.trigger || true === draggedContainer.classList.contains('drag-dest') ? draggedContainer.id.replace('-t', '').replace('-d', '') : draggedContainer.id;
-                        const jsonString = {
-                            top: draggedContainer.style.top.replace('px', ''),
-                            left: draggedContainer.style.left.replace('px', ''),
-                            height: draggedContainer.style.height.replace('px', ''),
-                            width: draggedContainer.style.width.replace('px', ''),
-                            id: theID,
-                            meta: draggedContainer.dataset?.meta,
-                            nonce: orbemNonce
-                        };
-
-                        if (theID === recordThePath) {
-                            jsonString.walkingPath = 'true';
-                        }
-
-                        // Save position of item.
-                        fetch(filehref, {
-                            method: 'POST', // Specify the HTTP method.
-                            headers: {
-                                'Content-Type': 'application/json', // Set the content type to JSON.
-                                'X-WP-Nonce': OrbemStudio.nonce
-                            },
-                            body: JSON.stringify(jsonString) // The JSON stringified payload.
-                        })
-                            .then(response => {
-                                // Check if the response status is in the range 200-299.
-                                if (!response.ok) {
-                                    throw new Error('Network response was not ok ' + response.statusText);
-                                }
-                            });
-
-                        // Clear the reference to the dragged container.
-                        draggedContainer = null;
-                    }, 1000);
-
-                    // Remove mousemove event listener
-                    document.removeEventListener('mousemove', handleMouseMove);
-                }
-            }
-
             items.forEach(item => {
                 item.draggable = true;
                 item.addEventListener('dragstart', handleDragStart);
@@ -569,7 +553,7 @@ export function engageDevMode() {
                 // Handle the dragend event
                 function handleWallDragEnd() {
                     isDragging = false;
-                    const filehref = `${siteRESTURL}/add-new/`;
+                    const filehref = `${OrbemOrder.siteRESTURL}/add-new/`;
 
                     let currentLocation = document.querySelector('.game-container');
                     currentLocation = currentLocation.className.replace('game-container ', '');
@@ -589,14 +573,13 @@ export function engageDevMode() {
                                 'explore-top': topPos,
                                 'explore-left': leftPos,
                             },
-                            nonce: orbemNonce
                         };
                         // Save position of item.
                         fetch(filehref, {
                             method: 'POST', // Specify the HTTP method.
                             headers: {
                                 'Content-Type': 'application/json', // Set the content type to JSON.
-                                'X-WP-Nonce': OrbemStudio.nonce
+                                'X-WP-Nonce': OrbemOrder.orbemNonce
                             },
                             body: JSON.stringify(jsonString) // The JSON stringified payload.
                         })
@@ -661,7 +644,7 @@ function makeNewFormSub() {
 
             const formData = new FormData(submitNewItem);
             const values = parseFormDataToNestedObject(formData);
-            const filehref = `${siteRESTURL}/add-new/`;
+            const filehref = `${OrbemOrder.siteRESTURL}/add-new/`;
             const selectedPostType = document.querySelector('#add-new-list li.engage' );
             let postType = '';
 
@@ -677,7 +660,6 @@ function makeNewFormSub() {
                 type: postType,
                 area: currentLocation ?? '',
                 values,
-                nonce: orbemNonce
             };
 
             // Save position of item.
@@ -685,7 +667,7 @@ function makeNewFormSub() {
                 method: 'POST', // Specify the HTTP method.
                 headers: {
                     'Content-Type': 'application/json', // Set the content type to JSON.
-                    'X-WP-Nonce': OrbemStudio.nonce
+                    'X-WP-Nonce': OrbemOrder.orbemNonce
                 },
                 body: JSON.stringify(jsonString) // The JSON stringified payload.
             })

@@ -266,7 +266,7 @@ class Menu
                                             name="<?php echo esc_attr($field_key . '[' . $option . ']'); ?>"
                                             id="<?php echo esc_attr($field_key . '[' . $option . ']'); ?>"
                                         >
-                                        <?php echo ucwords(str_replace('-',' ', $option)); ?>
+                                        <?php echo esc_html(ucwords(str_replace('-',' ', $option))); ?>
                                     </label>
                                 </p>
                             <?php endforeach;?>

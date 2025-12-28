@@ -51,7 +51,7 @@ class Dev_Mode
     public function restRoutes(): void
     {
         $namespace = 'orbemorder/v1';
-        $permission_callback = function() { return is_user_logged_in() && get_current_user_id() > 0 && current_user_can('edit_posts'); };
+        $permission_callback = function() { return current_user_can('edit_posts'); };
 
         // Set item position.
         register_rest_route($namespace, '/set-item-position/', array(
@@ -84,10 +84,10 @@ class Dev_Mode
 
     /**
      * Change position of item.
-     * @param WP_REST_Request $request
-     * @return WP_REST_Response
+     * @param \WP_REST_Request $request
+     * @return \WP_REST_Response
      */
-    public function setItemPosition(WP_REST_Request $request): WP_REST_Response
+    public function setItemPosition(\WP_REST_Request $request): \WP_REST_Response
     {
         $user   = wp_get_current_user();
         $userid = (int) $user->ID;
@@ -101,19 +101,7 @@ class Dev_Mode
         }
 
         // Get request data.
-        $data  = $request->get_json_params();
-        $nonce = isset($data['nonce']) ? sanitize_text_field($data['nonce']) : '';
-
-        if (
-            empty($nonce)
-            || !wp_verify_nonce($nonce, 'orbem_wp_rest')
-        ) {
-            return rest_ensure_response([
-                'success' => false,
-                'data'    => esc_html__('Invalid nonce', 'orbem-studio'),
-            ]);
-        }
-
+        $data         = $request->get_json_params();
         $left         = isset($data['left']) ? intval($data['left']) : '';
         $top          = isset($data['top']) ? intval($data['top']) : '';
         $height       = isset($data['height']) ? intval($data['height']) : '';
@@ -171,10 +159,10 @@ class Dev_Mode
 
     /**
      * Set item size front end.
-     * @param WP_REST_Request $request
-     * @return WP_REST_Response
+     * @param \WP_REST_Request $request
+     * @return \WP_REST_Response
      */
-    public function setItemSize(WP_REST_Request $request): WP_REST_Response
+    public function setItemSize(\WP_REST_Request $request): \WP_REST_Response
     {
         $user   = wp_get_current_user();
         $userid = (int) $user->ID;
@@ -188,19 +176,7 @@ class Dev_Mode
         }
 
         // Get request data.
-        $data  = $request->get_json_params();
-        $nonce = isset($data['nonce']) ? sanitize_text_field($data['nonce']) : '';
-
-        if (
-            empty($nonce)
-            || !wp_verify_nonce($nonce, 'orbem_wp_rest')
-        ) {
-            return rest_ensure_response([
-                'success' => false,
-                'data'    => esc_html__('Invalid nonce', 'orbem-studio'),
-            ]);
-        }
-
+        $data   = $request->get_json_params();
         $height = isset($data['height']) ? intval($data['height']) : '';
         $width  = isset($data['width']) ? intval($data['width']) : '';
         $meta   = isset($data['meta']) ? sanitize_text_field($data['meta']) : '';
@@ -238,10 +214,10 @@ class Dev_Mode
 
     /**
      * Get fields.
-     * @param WP_REST_Request $request
-     * @return WP_REST_Response
+     * @param \WP_REST_Request $request
+     * @return \WP_REST_Response
      */
-    public function getNewFields(WP_REST_Request $request): WP_REST_Response
+    public function getNewFields(\WP_REST_Request $request): \WP_REST_Response
     {
         $user   = wp_get_current_user();
         $userid = (int) $user->ID;
@@ -255,19 +231,7 @@ class Dev_Mode
         }
 
         // Get request data.
-        $data  = $request->get_json_params();
-        $nonce = isset($data['nonce']) ? sanitize_text_field($data['nonce']) : '';
-
-        if (
-            empty($nonce)
-            || !wp_verify_nonce($nonce, 'orbem_wp_rest')
-        ) {
-            return rest_ensure_response([
-                'success' => false,
-                'data'    => esc_html__('Invalid nonce', 'orbem-studio'),
-            ]);
-        }
-
+        $data      = $request->get_json_params();
         $post_type = isset($data['type']) ? sanitize_text_field(wp_unslash($data['type'])) : '';
 
         ob_start();
@@ -288,10 +252,10 @@ class Dev_Mode
 
     /**
      * Add new item.
-     * @param WP_REST_Request $request
-     * @return WP_REST_Response
+     * @param \WP_REST_Request $request
+     * @return \WP_REST_Response
      */
-    public function addNew(WP_REST_Request $request): WP_REST_Response
+    public function addNew(\WP_REST_Request $request): \WP_REST_Response
     {
         $user   = wp_get_current_user();
         $userid = (int) $user->ID;
@@ -305,19 +269,7 @@ class Dev_Mode
         }
 
         // Get request data.
-        $data  = $request->get_json_params();
-        $nonce = isset($data['nonce']) ? sanitize_text_field($data['nonce']) : '';
-
-        if (
-            empty($nonce)
-            || !wp_verify_nonce($nonce, 'orbem_wp_rest')
-        ) {
-            return rest_ensure_response([
-                'success' => false,
-                'data'    => esc_html__('Invalid nonce', 'orbem-studio'),
-            ]);
-        }
-
+        $data        = $request->get_json_params();
         $post_type   = isset($data['type']) ? sanitize_text_field(wp_unslash($data['type'])) : '';
         $area        = isset($data['area']) ? sanitize_text_field(wp_unslash($data['area'])) : '';
         $area        = false === empty($area) ? $area : get_user_meta($userid, 'current_location', true);
@@ -430,12 +382,7 @@ class Dev_Mode
     {
         $user = wp_get_current_user();
 
-        if (
-            ! $user->exists()
-            || ! current_user_can('manage_options')
-            || ! defined('WP_DEBUG')
-            || ! WP_DEBUG
-        ) {
+        if (!current_user_can('manage_options')) {
             return '';
         }
 
@@ -470,7 +417,6 @@ class Dev_Mode
             ?>
         </div>
         <?php
-
         return ob_get_clean();
     }
 }
