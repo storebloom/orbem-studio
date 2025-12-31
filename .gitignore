@@ -10,3 +10,4 @@ vendor
 .DS_Store
 composer.json
 composer.lock
+wp.env.json
