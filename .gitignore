@@ -4,3 +4,7 @@ assets/build
 assets/build*
 node_modules
 vendor
+/assets/src/js/
+/assets/src/sass/
+.idea
+.DS_Store
