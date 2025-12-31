@@ -8,3 +8,5 @@ vendor
 /assets/src/sass/
 .idea
 .DS_Store
+composer.json
+composer.lock
