@@ -2,12 +2,12 @@
 /**
  * Characters panel for game.
  *
- * @var int $userid
+ * @var int $orbem_studio_userid
  */
 
 use OrbemStudio\Explore;
 
-$orbem_studio_characters = get_user_meta($userid, 'explore_characters', true);
+$orbem_studio_characters = get_user_meta($orbem_studio_userid, 'explore_characters', true);
 ?>
 <div class="characters-form">
     <span class="close-settings">X</span>

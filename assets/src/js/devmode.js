@@ -35,7 +35,7 @@ export function engageDevMode() {
     function handleDragStart(event) {
         clearTimeout(sendItemCoodinateTimeout);
         event.preventDefault();
-        draggedContainer = event.target.closest('.map-item'); // Get the container element
+        draggedContainer = event.target.closest('.map-item, .enemy-item'); // Get the container element
 
         // Remove transition for items that moved.
         draggedContainer.style.transition = '';
@@ -202,7 +202,7 @@ export function engageDevMode() {
     }
 
     setTimeout(() => {
-        const items = document.querySelectorAll('.map-item');
+        const items = document.querySelectorAll('.map-item, .enemy-item');
         const findItems = document.querySelectorAll('.find-explore-item');
         const mainCharacter = document.getElementById('map-character');
         const addNewListItems = document.querySelectorAll('#add-new-list li');

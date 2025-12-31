@@ -242,7 +242,7 @@ class Dev_Mode
             ]);
         }
 
-        $this->meta_box->explore_point_box($post_type);
+        $this->meta_box->explorePointBox($post_type);
 
         return rest_ensure_response([
             'success' => true,

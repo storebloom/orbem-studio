@@ -113,8 +113,15 @@ $orbem_studio_allowed_tags['polyline'] = [
     'stroke-width' => true,
 ];
 
-$orbem_studio_allowed_tags['title'] = [];
-$orbem_studio_allowed_tags['desc']  = [];
+$orbem_studio_allowed_tags['title']     = [];
+$orbem_studio_allowed_tags['desc']      = [];
+$orbem_studio_allowed_tags['img']['draggable'] = true;
+$orbem_studio_allowed_tags['input']     = [
+    'value' => true,
+    'type'  => true,
+    'id'    => true,
+    'class' => true,
+];
 
 $orbem_studio_hide_storage                 = get_option('explore_hide_storage', false);
 $orbem_studio_hud_bars                     = get_option('explore_hud_bars', []);
@@ -188,7 +195,7 @@ $orbem_studio_points_bar = $orbem_studio_hud_bars['points'] ?? '';
 $orbem_studio_money_bar  = $orbem_studio_hud_bars['money'] ?? '';
 
 extract([
-    'userid' => $orbem_studio_userid,
+    'orbem_studio_userid' => $orbem_studio_userid,
 ]);
 
 include plugin_dir_path(__FILE__) . 'plugin-header.php';
@@ -196,7 +203,7 @@ include plugin_dir_path(__FILE__) . 'plugin-header.php';
 <main id="primary"<?php echo esc_attr(true === $orbem_studio_is_admin ? ' data-devmode=true' : ''); ?> class="site-main<?php echo esc_attr($orbem_studio_rst); ?>">
     <?php include $orbem_studio_plugin_dir_path . 'start-screen.php'; ?>
     <?php if (true === $orbem_studio_is_admin) : ?>
-        <?php echo wp_kses_post(html_entity_decode(Dev_Mode::getDevModeHTML())); ?>
+        <?php echo wp_kses(html_entity_decode(Dev_Mode::getDevModeHTML()), $orbem_studio_allowed_tags); ?>
     <?php endif; ?>
     <div class="game-container <?php echo esc_attr($orbem_studio_location); ?>" data-main="<?php echo esc_attr($orbem_studio_main_character); ?>" data-fadeout="true" style="background: url(<?php echo esc_url($orbem_studio_explore_area_map ?? ''); ?>) no-repeat left top; background-size: cover;">
         <?php if ((false === empty($orbem_studio_explore_area_map) && false !== stripos($orbem_studio_explore_area_map, '.webm')) || (false === empty($orbem_studio_explore_area_map) && false !== stripos($orbem_studio_explore_area_map, '.mp4'))): ?>

@@ -13,7 +13,7 @@
         <label>
             <input
                 type="checkbox"
-                <?php checked($meta_values[$orbem_studio_key][$orbem_studio_option] ?? '', 'on'); ?>
+                <?php checked($orbem_studio_meta_values[$orbem_studio_key][$orbem_studio_option] ?? '', 'on'); ?>
                 name="<?php echo esc_attr($orbem_studio_key . '[' . $orbem_studio_option . ']'); ?>"
                 id="<?php echo esc_attr($orbem_studio_key . '[' . $orbem_studio_option . ']'); ?>"
             >

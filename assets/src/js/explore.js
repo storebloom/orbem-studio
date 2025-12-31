@@ -877,7 +877,7 @@ function addUserPoints(amount, type, position, collectable, missionName) {
     }
 
     if ( '' !== position && true === ['money', 'point', 'health', 'mana'].includes( type ) && position !== missionName ) {
-        persistItemRemoval( position, type, amount, 2000, '' );
+        persistItemRemoval( position, type, amount, 2000, '', false );
     }
 }
 
@@ -902,7 +902,7 @@ function triggerGameOver() {
         inHazard = false;
         hazardItem = false;
 
-        persistItemRemoval( 'projectile', 'health', 100, 0, 'true' );
+        persistItemRemoval( 'projectile', 'health', 100, 0, 'true', false );
 
         if ( defaultMap ) {
             // Reset user position.
@@ -924,8 +924,9 @@ function triggerGameOver() {
  * @param amount
  * @param timeoutTime
  * @param reset
+ * @param direct
  */
-function persistItemRemoval( item, type, amount, timeoutTime, reset ) {
+function persistItemRemoval( item, type, amount, timeoutTime, reset, direct ) {
     "use strict";
 
 
@@ -948,6 +949,12 @@ function persistItemRemoval( item, type, amount, timeoutTime, reset ) {
         // Always use projectile if health update.
         if ( 'health' === type ) {
             persistItems = ['projectile'];
+        }
+
+        persistItems = Array.from(new Set(persistItems));
+
+        if ( true === direct ) {
+            amount = 'health' !== type ? getCurrentPoints( type ) + amount : getPointsGaugeAmount( type ) - amount;
         }
 
         persistTimeout = setTimeout(() => {
@@ -1061,7 +1068,7 @@ function saveMission( mission, value, position ) {
                             false === Array.isArray(position) && position !== hazardRemove
                         ) {
                             // Make sure it doesn't come back.
-                            persistItemRemoval(hazardRemove, 'point', 0, 2000, '');
+                            persistItemRemoval(hazardRemove, 'point', 0, 2000, '', true);
                         }
                     });
                 }
@@ -1073,6 +1080,10 @@ function saveMission( mission, value, position ) {
                 // Enable transportation if mission complete.
                 if ( missionAbility && 'transportation' === missionAbility ) {
                     engageTransportFunction();
+
+                    if ( 'undefined' === typeof OrbemOrder.exploreAbilities || (0 < OrbemOrder.exploreAbilities.length && false === OrbemOrder.exploreAbilities.includes('transportation') ) ) {
+                        OrbemOrder.exploreAbilities = OrbemOrder.exploreAbilities.push('transportation');
+                    }
 
                     // Enable transportation in DB.
                     enableAbility('transportation');
@@ -1091,7 +1102,7 @@ function saveMission( mission, value, position ) {
                 // Give points.
                 runPointAnimation(value, position, true, missionPoints, mission);
             } else if ( value && 0 === missionPoints ) {
-                persistItemRemoval(position, 'point', 0, 2000, '');
+                persistItemRemoval(position, 'point', 0, 2000, '', true);
             }
         }
 
@@ -3178,7 +3189,7 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
                         document.addEventListener('keydown', closeExplainer );
 
                         // Persist to avoid showing again on refresh.
-                        persistItemRemoval(value.dataset.triggee, 'point', 0, 2000, '');
+                        persistItemRemoval( value.dataset.triggee, 'point', 0, 2000, '', true);
                     }
                 }
 
@@ -4185,7 +4196,7 @@ function engageCommunicate( communicate, communicateTrigger ) {
 
     if ( communicateTrigger ) {
         communicateTrigger.remove();
-        persistItemRemoval(communicateEl.id, 'communicate', communicateParent.id, 2000, '');
+        persistItemRemoval( communicateEl.id, 'communicate', communicateParent.id, 2000, '', false );
     }
 
     // Show communicate.
@@ -4442,7 +4453,7 @@ function removeItems( removeThings, cutsceneName ) {
         if ( cutsceneName === removeThing.dataset.removeaftercutscene ) {
             removeThing.remove();
 
-            persistItemRemoval(cleanClassName(removeThing.className), 'point', 0, 2000, '');
+            persistItemRemoval( cleanClassName(removeThing.className), 'point', 0, 2000, '', true );
         }
     } );
 }
@@ -5235,9 +5246,9 @@ function runPointAnimation( value, position, isMission, missionPoints, missionNa
     const thePoints = document.querySelector( `#explore-points .${ positionType }-amount` );
     let currentPoints = 100;
 
-    const objectAmount = true === isMission ? parseInt(missionPoints) : value.dataset?.value;
+    const objectAmount = true === isMission ? parseInt(missionPoints) : parseInt(value.dataset?.value);
 
-    if ( thePoints ) {
+    if ( thePoints && 0 < objectAmount ) {
         currentPoints = thePoints.dataset.amount;
         if ( 'point' === positionType ) {
             const newPoints = parseInt( currentPoints ) + parseInt( objectAmount ?? '0' );
@@ -5250,7 +5261,7 @@ function runPointAnimation( value, position, isMission, missionPoints, missionNa
             const newLevel = getCurrentLevel( newPoints );
             window.nextLevelPointAmount = JSON.parse(OrbemOrder.levelMaps)[newLevel];
 
-            // If new level is different than the old, then set UI to new.
+            // If new level is different from the old, then set UI to new.
             if ( oldLevel !== newLevel ) {
                 const currentLevelEl = document.querySelector( '.current-level' );
 
@@ -5400,13 +5411,13 @@ function engageDraggableFunction() {
 
                         if ('true' === dragDest.dataset.removable) {
                             dragDest.remove();
-                            persistItemRemoval(cleanClassName(dragDest.className), 'point', 0, 2000, '')
+                            persistItemRemoval( cleanClassName(dragDest.className), 'point', 0, 2000, '', true )
                         }
 
                         // Remove drag item if disappear is yes.
                         if ('yes' === dragmeitem.dataset.disappear) {
                             dragmeitem.remove();
-                            persistItemRemoval(cleanClass, 'point', 0, 2000, '')
+                            persistItemRemoval( cleanClass, 'point', 0, 2000, '', true )
                         }
                     }
                 }
