@@ -1720,7 +1720,7 @@ class Explore
 
                     // Projectile html for enemy.
                     if ('explore-enemy' === $explore_point->post_type && ('shooter' === $explore_enemy_type || true === $barrage_wave)) {
-                        $projectile = $explore_point_meta['explore-projectile'][0] ?? '';
+                        $projectile = $explore_point_meta['explore-projectile'] ?? '';
 
                         if (false !== $projectile) {
                             $projectile_width = $projectile['width'] ?? '0';
@@ -1736,7 +1736,7 @@ class Explore
                         if (true === $pulse_wave) {
                             $html .= '<div class="pulse-wave-container" data-value="' . esc_attr($value) . '" data-hazard="true">';
                             $html .= self::getSVGCode(
-                                plugin_dir_url(dirname(__FILE__)) . '../assets/src/images/pulse.svg'
+                                plugin_dir_url(dirname(__FILE__)) . 'assets/src/images/pulse.svg'
                             );
                             $html .= '</div>';
                         }
