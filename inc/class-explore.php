@@ -3028,4 +3028,91 @@ class Explore
         <?php
         return ob_get_clean();
     }
+
+    /**
+     * Add all inline styles for game assets.
+     * @action wp_enqueue_scripts
+     *
+     */
+    public static function enqueueDynamicStyles() {
+        // Prepare dynamic CSS
+        $dynamic_css = self::generateDynamicStyles('');
+
+        if (! empty($dynamic_css)) {
+            wp_add_inline_style('orbem-order/app', $dynamic_css);
+        }
+
+        $menu_css = self::generateDynamicStyles('menu');
+
+        if (! empty($menu_css)) {
+            wp_add_inline_style('orbem-order/explore', $menu_css);
+        }
+    }
+
+    /**
+     * Generate dynamic inline CSS for game elements.
+     * @param string $type
+     * @return string
+     */
+    protected static function generateDynamicStyles(string $type): string {
+
+        // Fetch options and user meta
+        $first_area           = get_option('explore_first_area', false);
+        $current_location     = get_user_meta(get_current_user_id(), 'current_location', true);
+        $position             = ! empty( $current_location ) ? $current_location : get_post_field('post_name', $first_area);
+        $explore_points       = self::getExplorePoints($position);
+
+        $css = '';
+
+        if ('menu' === $type) {
+            $setting_icon         = get_option('explore_settings_icon', plugin_dir_url(__FILE__) . '../assets/src/images/settings-default.svg');
+            $storage_icon         = get_option('explore_storage_icon', plugin_dir_url(__FILE__) . '../assets/src/images/storage-default.svg');
+            $characters_icon      = get_option('explore_crew_icon', plugin_dir_url(__FILE__) . '../assets/src/images/crew-default.svg');
+            $cutscene_border_color  = get_option('explore_cutscene_border_color', '');
+            $cutscene_border_radius = get_option('explore_cutscene_border_radius', '');
+            $cutscene_border_style  = get_option('explore_cutscene_border_style', '');
+            $cutscene_border_size   = get_option('explore_cutscene_border_size', '');
+            $character_hover_border = get_option('explore_crewmate_hover_border_color', '');
+            $skip_button_color      = get_option('explore_skip_button_color', '');
+
+            // Menu icons & hover
+            return "
+        #settings:not(.engage):before { content: url('" . esc_url($setting_icon) . "'); cursor: pointer; position: absolute; top: 50%; transform: translateY(-50%); width: 50px; }
+        #storage:not(.engage):before { content: url('" . esc_url($storage_icon) . "'); cursor: pointer; position: absolute; top: 50%; transform: translateY(-50%); width: 50px; }
+        #characters:not(.engage):before { content: url('" . esc_url($characters_icon) . "'); cursor: pointer; position: absolute; top: 50%; transform: translateY(-50%); width: 50px; }
+        .map-cutscene .character-name { border: " . esc_attr($cutscene_border_color) . " solid 2px; }
+        .map-cutscene .wp-block-orbem-paragraph-mp3 { border: " . esc_attr($cutscene_border_size) . "px " . esc_attr($cutscene_border_style) . " " . esc_attr($cutscene_border_color) . "; border-radius: " . esc_attr($cutscene_border_radius) . "px; }
+        #skip-intro-video, #skip-cutscene-video { background: " . esc_attr($skip_button_color) . "; }
+        html body .game-container #characters .characters-content .characters-form .character-list .character-item:hover { border: 4px solid " . esc_attr($character_hover_border) . "; }
+        ";
+        }
+
+        // Explore map points
+        if (is_array($explore_points)) {
+            foreach ($explore_points as $point) {
+                if ( ! isset($point->ID) || ! get_post($point->ID) ) {
+                    continue;
+                }
+
+                $top     = get_post_meta($point->ID, 'explore-top', true) . 'px';
+                $left    = get_post_meta($point->ID, 'explore-left', true) . 'px';
+                $height  = get_post_meta($point->ID, 'explore-height', true) . 'px';
+                $width   = get_post_meta($point->ID, 'explore-width', true) . 'px';
+                $bg_url  = get_the_post_thumbnail_url($point->ID);
+                $type    = $point->post_type === 'explore-enemy' ? '.enemy-item' : '.map-item';
+
+                $css .= "
+                body .game-container .default-map {$type}.{$point->post_name}-map-item[data-genre='" . esc_attr($point->post_type) . "'] {
+                    top: " . esc_attr($top) . ";
+                    left: " . esc_attr($left) . ";
+                    " . ($height !== '0px' ? 'height:' . esc_attr($height) . ';' : '') . "
+                    " . ($width !== '0px' ? 'width:' . esc_attr($width) . ';' : '') . "
+                    " . (! empty($bg_url) ? "background: url('" . esc_url($bg_url) . "') no-repeat; background-size: cover;" : '') . "
+                }
+                ";
+            }
+        }
+
+        return $css;
+    }
 }

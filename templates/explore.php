@@ -1,4 +1,6 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) exit;
+
 /**
  * Template Name: Explore
  * Register form template.
@@ -161,7 +163,7 @@ $orbem_studio_explore_walls                = Explore::getExplorePosts($orbem_stu
 $orbem_studio_explore_explainers           = Explore::getExplorePosts($orbem_studio_location, 'explore-explainer');
 $orbem_studio_explore_missions             = Explore::getExplorePosts($orbem_studio_location, 'explore-mission');
 $orbem_studio_explore_abilities            = Explore::getExploreAbilities();
-$orbem_studio_rst                          = 'true' === filter_input( INPUT_GET, 'rst', FILTER_UNSAFE_RAW) ? ' reset' :'';
+$orbem_studio_rst                          = 'true' === wp_unslash(filter_input( INPUT_GET, 'rst', FILTER_UNSAFE_RAW)) ? ' reset' :'';
 $orbem_studio_health                       = true === isset($orbem_studio_points['health']['points']) ? $orbem_studio_points['health']['points'] : 100;
 $orbem_studio_mana                         = true === isset($orbem_studio_points['mana']['points']) ? $orbem_studio_points['mana']['points'] : 100;
 $orbem_studio_point                        = true === isset($orbem_studio_points['point']['points']) ? $orbem_studio_points['point']['points'] : 0;

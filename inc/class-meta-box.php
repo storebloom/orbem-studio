@@ -107,17 +107,50 @@ class Meta_Box {
                     $type = array_keys($value[0]);
                 }
 
-                if (true === is_array($value[0]) && ['radio'] !== $type && ['select'] !== $type) {
-                    $array_value = filter_input_array(
-                        INPUT_POST, [$key => ['filter' => FILTER_UNSAFE_RAW, 'flags' => FILTER_REQUIRE_ARRAY]]
-                    );
-                    $array_value = $array_value[$key] ?? [];
-                    update_post_meta($post_id, $key, $array_value );
+                $raw_value = wp_unslash(filter_input(INPUT_POST, $key, FILTER_UNSAFE_RAW));
+
+                if (
+                    true === is_array($value[0])
+                    && ['radio'] !== $type
+                    && ['select'] !== $type
+                    && isset($raw_value)
+                ) {
+                    $sanitized = $this->sanitizeRecursive($raw_value);
+
+                    update_post_meta($post_id, $key, $sanitized);
                 } else {
-                    update_post_meta($post_id, $key, sanitize_text_field(wp_unslash(filter_input(INPUT_POST, $key, FILTER_UNSAFE_RAW))) ?? '');
+                    update_post_meta($post_id, $key, sanitize_text_field($raw_value) ?? '');
                 }
             }
         }
+    }
+
+    /**
+     * Recursively sanitize array values.
+     *
+     * @param mixed $value
+     * @return mixed
+     */
+    private function sanitizeRecursive(mixed $value): mixed
+    {
+        if (is_array($value)) {
+            return array_map([$this, 'sanitizeRecursive'], $value);
+        }
+
+        // Scalars
+        if (is_string($value)) {
+            return sanitize_text_field(wp_unslash($value));
+        }
+
+        if (is_int($value) || is_float($value)) {
+            return $value;
+        }
+
+        if (is_bool($value)) {
+            return (bool) $value;
+        }
+
+        return null;
     }
 
     public function getMetaData($post_type = '')

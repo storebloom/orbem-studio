@@ -1,4 +1,6 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) exit;
+
 /**
  * @var string         $orbem_studio_key
  * @var boolean|string $orbem_studio_main_key

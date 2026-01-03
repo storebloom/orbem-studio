@@ -7,6 +7,8 @@
 
 namespace OrbemStudio;
 
+if ( ! defined( 'ABSPATH' ) ) exit;
+
 /**
  * Bootstrap the plugin.
  */

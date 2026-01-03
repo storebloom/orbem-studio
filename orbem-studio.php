@@ -1,4 +1,6 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) exit;
+
 /**
  * Plugin Name: Orbem Studio
  * Plugin URI: https://orbem.studio/
