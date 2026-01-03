@@ -45,36 +45,6 @@ document.addEventListener("DOMContentLoaded", function(){
     window.mainCharacter = currentLocation.dataset?.main;
     currentLocation = currentLocation.className.replace( 'game-container ', '');
 
-    // TODO: Get multiplayer mode working.
-    // var socket = io.connect('https://localhost:3030');
-    //
-    // // Check for successful connection
-    // socket.on('connect', function() {
-    //     console.log('Connected to the server!');
-    // });
-    //
-    // const tatami = document.querySelector('.tatami-post-1-map-item');
-    //
-    // socket.on('elementUpdated', function(data) {
-    //     updateElementOnPage(data); // Function to update the DOM based on received data
-    // });
-    //
-    // if (tatami) {
-    //     tatami.addEventListener('click', function (e) {
-    //         var elementData = {left: e.target.style.left, top: e.target.style.top};
-    //         socket.emit('updateElement', elementData); // Send the updated data to the server
-    //     });
-    // }
-    //
-    // function updateElementOnPage(data) {
-    //     const tatami = document.querySelector('.tatami-post-1-map-item');
-    //
-    //     if ( tatami ) {
-    //         tatami.style.left = (parseInt(data.left.replace('px', '')) + 10) + 'px';
-    //         tatami.style.top = (parseInt(data.top.replace('px', '')) + 10) + 'px';
-    //     }
-    // }
-
     // Explore page functions.
     window.history.pushState({}, document.title, window.location.pathname);
 
