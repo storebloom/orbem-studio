@@ -1,7 +1,5 @@
 node_modules
 vendor
-/assets/src/js/
-/assets/src/sass/
 .idea
 .DS_Store
 composer.json
