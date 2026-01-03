@@ -3065,15 +3065,20 @@ class Explore
         $css = '';
 
         if ('menu' === $type) {
-            $setting_icon         = get_option('explore_settings_icon', plugin_dir_url(__FILE__) . '../assets/src/images/settings-default.svg');
-            $storage_icon         = get_option('explore_storage_icon', plugin_dir_url(__FILE__) . '../assets/src/images/storage-default.svg');
-            $characters_icon      = get_option('explore_crew_icon', plugin_dir_url(__FILE__) . '../assets/src/images/crew-default.svg');
+            $setting_icon           = get_option('explore_settings_icon', '');
+            $setting_icon           = false === empty($setting_icon) ? $setting_icon : plugin_dir_url(__FILE__) . '../assets/src/images/settings-default.svg';
+            $storage_icon           = get_option('explore_storage_icon', '');
+            $storage_icon           = false === empty($storage_icon) ? $storage_icon : plugin_dir_url(__FILE__) . '../assets/src/images/storage-default.svg';
+            $characters_icon        = get_option('explore_crew_icon', '');
+            $characters_icon        = false === empty($characters_icon) ? $characters_icon : plugin_dir_url(__FILE__) . '../assets/src/images/crew-default.svg';
             $cutscene_border_color  = get_option('explore_cutscene_border_color', '');
             $cutscene_border_radius = get_option('explore_cutscene_border_radius', '');
             $cutscene_border_style  = get_option('explore_cutscene_border_style', '');
             $cutscene_border_size   = get_option('explore_cutscene_border_size', '');
             $character_hover_border = get_option('explore_crewmate_hover_border_color', '');
             $skip_button_color      = get_option('explore_skip_button_color', '');
+
+            var_dump(plugin_dir_url(__FILE__) . '../assets/src/images/settings-default.svg');
 
             // Menu icons & hover
             return "
