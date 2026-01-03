@@ -7,6 +7,8 @@
 
 namespace OrbemStudio;
 
+if ( ! defined( 'ABSPATH' ) ) exit;
+
 use ReflectionObject;
 use function call_user_func;
 use function trailingslashit;

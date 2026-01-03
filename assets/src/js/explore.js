@@ -1,5 +1,6 @@
 /* global OrbemOrder */
 
+import '../sass/menu.scss';
 import { engageDevMode } from './devmode';
 
 let persistTimeout;

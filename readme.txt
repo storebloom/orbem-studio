@@ -97,6 +97,57 @@ If it can be represented spatially and interactively, Orbem Studio can power it.
 3. Follow setup steps in the global game settings under **Orbem Studio** in the admin menu
 4. Publish the page and begin building your game world
 
+== External Services ==
+
+This plugin connects to third-party services to provide optional functionality related to authentication and text-to-speech features.
+
+= Google Text-to-Speech API =
+
+Orbem Studio can optionally use the Google Text-to-Speech API to generate spoken audio for in-game dialogue and narration.
+
+What the service is used for:
+The service is used to convert in-game cutscene and explainer popup text content into synthesized speech audio.
+
+What data is sent and when:
+When text-to-speech is enabled by the site administrator and triggered by player interaction, the plugin sends the following data to Google:
+- The text content to be synthesized
+- The configured language and voice parameters
+- The API key provided by the site administrator
+
+No personal user data is sent by default. The text content is only sent at the moment audio generation is requested.
+
+Service provider:
+Google LLC
+
+Terms of Service:
+https://cloud.google.com/terms
+
+Privacy Policy:
+https://policies.google.com/privacy
+
+
+= Google OAuth / Token Verification =
+
+Orbem Studio supports optional Google Sign-In functionality to allow users to authenticate using their Google account.
+
+What the service is used for:
+The service is used to verify the authenticity of a Google ID token during login.
+
+What data is sent and when:
+When a user logs in using Google Sign-In, the plugin sends:
+- The Google ID token provided by the user’s browser
+
+This request is made once per login attempt to verify the token’s validity. The plugin does not store Google credentials.
+
+Service provider:
+Google LLC
+
+Terms of Service:
+https://developers.google.com/identity/terms
+
+Privacy Policy:
+https://policies.google.com/privacy
+
 == Frequently Asked Questions ==
 
 = Does this require an external game engine? =

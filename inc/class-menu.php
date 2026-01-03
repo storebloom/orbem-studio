@@ -161,43 +161,7 @@ class Menu
      */
     public function registerGameOptions(): void
     {
-        $pages = get_posts(['post_type' => 'page', 'post_status' => 'publish', 'posts_per_page' => -1, 'no_found_rows' => true]);
-        $areas = get_posts(['post_type' => 'explore-area', 'post_status' => 'publish', 'posts_per_page' => -1, 'no_found_rows' => true]);
-        $characters = get_posts(['post_type' => 'explore-character', 'post_status' => 'publish', 'posts_per_page' => -1, 'no_found_rows' => true]);
-        $weapons = get_posts(['post_type' => 'explore-weapon', 'post_status' => 'publish', 'posts_per_page' => -1, 'no_found_rows' => true]);
-
-        $settings = [
-            'explore_game_page' => ['select', 'Page For Game', 'This is the page on your website that users will play your game on.', $pages],
-            'explore_first_area' => ['select', 'Starting Area', 'The starting area/level of the game.', $areas],
-            'explore_main_character' => ['select', 'Main Character', 'Your main character that users will control first.', $characters],
-            'explore_default_weapon' => ['select', 'Default Weapon', 'The starting weapon your main character will have. (Can be "fist" for no weapon)', $weapons],
-            'explore_require_login' => ['checkbox', 'Require Login', 'Require users to login in order to play or give a "logged out" option.'],
-            'explore_google_login_client_id' => ['text', 'Google Login ClientID', 'Add your Google client id to allow SSO login. (Search google how if you this is confusing)'],
-            'explore_google_tts_api_key' => ['text', 'Google TTS API Key', 'Add your Google TTS API key to allow cutscenes and explainers to talk using text to speech.'],
-            'explore_hud_bars'     => ['multiselect', 'HUD bars', 'Choose which bars you wish to use for your game.', ['health', 'mana', 'power', 'money', 'points']],
-            'explore_settings_icon' => ['upload', 'Settings Icon', 'Override settings icon in HUD'],
-            'explore_hide_storage' => ['checkbox', 'Hide Storage Menu', 'If checked the storage menu will not appear in HUD.'],
-            'explore_storage_icon' => ['upload', 'Storage Menu Icon', 'Override storage menu icon in HUD'],
-            'explore_crew_icon'   => ['upload', 'Crewmate Menu Icon', 'Override crewmate menu icon in HUD'],
-            'explore_money_image' => ['upload', 'Money Icon', 'Override money icon for in game currency.'],
-            'explore_indicator_icon' => ['upload', 'Indicator Icon', 'Override your indicator icon that shows when "focus view" or "character" game assets are interactable.'],
-            'explore_arrow_icon' => ['upload', 'Arrow Icon', 'Override the default arrow icon that is used to point for explainer popups.'],
-            'explore_cutscene_border_color' => ['color', 'Cutscene Border Color', 'The cutscene popup border color.'],
-            'explore_cutscene_border_size' => ['number', 'Cutscene Border Size', 'The border size of the Cutscene popups (in pixel).'],
-            'explore_cutscene_border_radius' => ['number', 'Cutscene Border Radius', 'The border radius of the Cutscene popups.'],
-            'explore_cutscene_border_style' => ['select', 'Cutscene Border Style', 'The border style of the Cutscene popups.', ['solid', 'dashed', 'dotted']],
-            'explore_skip_button_color' => ['color', 'Skip Button Color', 'The skip button background color (text is white).'],
-            'explore_explainer_border_color' => ['color', 'Explainer Border Color', 'The border color of the explainer popups.'],
-            'explore_explainer_border_size' => ['number', 'Explainer Border Size', 'The border size of the explainer popups (in pixel).'],
-            'explore_explainer_border_radius' => ['number', 'Explainer Border Radius', 'The border radius of the explainer popups.'],
-            'explore_explainer_border_style' => ['select', 'Explainer Border Style', 'The border style of the explainer popups.', ['solid', 'dashed', 'dotted']],
-            'explore_crewmate_hover_border_color' => ['color', 'Playable Character Border Color', 'The border color when you hover over a character in the crew mate selector.'],
-            'explore_intro_video' => ['upload', 'Intro Video', 'The video that will play when users first visit the game page.'],
-            'explore_start_music' => ['upload', 'Start Screen Music', 'The music that will play after the intro video and on the start screen.'],
-            'explore_signin_screen' => ['upload', 'Sign In Screen Background Image', 'The image/video that will show on the start screen.'],
-            'explore_walking_sound' => ['upload', 'Walking Sound Effect', 'The sound that will play when your main character walks.'],
-            'explore_points_sound' => ['upload', 'Sound When Points Are Given', 'The sound that will play when you complete a mission or collect something.']
-        ];
+        $settings = $this->getGameOptionSettings();
 
         add_settings_section('game_options_section', 'Global Game Options', function () {
             settings_fields('game_options');
@@ -205,12 +169,7 @@ class Menu
 
         foreach ( $settings as $key => $value ) {
             register_setting('game_options', $key, [
-                'sanitize_callback' => function ($input) {
-                    if (is_array($input)) {
-                        return array_map('sanitize_text_field', $input);
-                    }
-                    return sanitize_text_field($input);
-                },
+                'sanitize_callback' => [$this, 'sanitizeGameOption'],
             ]);
 
             add_settings_field(
@@ -277,6 +236,119 @@ class Menu
                 'game_options_section',
                 [$key, $value]
             );
+        }
+    }
+
+    /**
+     * Helper to get game option settings.
+     *
+     * @return array
+     */
+    protected function getGameOptionSettings(): array
+    {
+        $pages = get_posts(['post_type' => 'page', 'post_status' => 'publish', 'posts_per_page' => -1, 'no_found_rows' => true]);
+        $areas = get_posts(['post_type' => 'explore-area', 'post_status' => 'publish', 'posts_per_page' => -1, 'no_found_rows' => true]);
+        $characters = get_posts(['post_type' => 'explore-character', 'post_status' => 'publish', 'posts_per_page' => -1, 'no_found_rows' => true]);
+        $weapons = get_posts(['post_type' => 'explore-weapon', 'post_status' => 'publish', 'posts_per_page' => -1, 'no_found_rows' => true]);
+
+        return [
+            'explore_game_page' => ['select', 'Page For Game', 'This is the page on your website that users will play your game on.', $pages],
+            'explore_first_area' => ['select', 'Starting Area', 'The starting area/level of the game.', $areas],
+            'explore_main_character' => ['select', 'Main Character', 'Your main character that users will control first.', $characters],
+            'explore_default_weapon' => ['select', 'Default Weapon', 'The starting weapon your main character will have. (Can be "fist" for no weapon)', $weapons],
+            'explore_require_login' => ['checkbox', 'Require Login', 'Require users to login in order to play or give a "logged out" option.'],
+            'explore_google_login_client_id' => ['text', 'Google Login ClientID', 'Add your Google client id to allow SSO login. (Search google how if you this is confusing)'],
+            'explore_google_tts_api_key' => ['text', 'Google TTS API Key', 'Add your Google TTS API key to allow cutscenes and explainers to talk using text to speech.'],
+            'explore_hud_bars'     => ['multiselect', 'HUD bars', 'Choose which bars you wish to use for your game.', ['health', 'mana', 'power', 'money', 'points']],
+            'explore_settings_icon' => ['upload', 'Settings Icon', 'Override settings icon in HUD'],
+            'explore_hide_storage' => ['checkbox', 'Hide Storage Menu', 'If checked the storage menu will not appear in HUD.'],
+            'explore_storage_icon' => ['upload', 'Storage Menu Icon', 'Override storage menu icon in HUD'],
+            'explore_crew_icon'   => ['upload', 'Crewmate Menu Icon', 'Override crewmate menu icon in HUD'],
+            'explore_money_image' => ['upload', 'Money Icon', 'Override money icon for in game currency.'],
+            'explore_indicator_icon' => ['upload', 'Indicator Icon', 'Override your indicator icon that shows when "focus view" or "character" game assets are interactable.'],
+            'explore_arrow_icon' => ['upload', 'Arrow Icon', 'Override the default arrow icon that is used to point for explainer popups.'],
+            'explore_cutscene_border_color' => ['color', 'Cutscene Border Color', 'The cutscene popup border color.'],
+            'explore_cutscene_border_size' => ['number', 'Cutscene Border Size', 'The border size of the Cutscene popups (in pixel).'],
+            'explore_cutscene_border_radius' => ['number', 'Cutscene Border Radius', 'The border radius of the Cutscene popups.'],
+            'explore_cutscene_border_style' => ['select', 'Cutscene Border Style', 'The border style of the Cutscene popups.', ['solid', 'dashed', 'dotted']],
+            'explore_skip_button_color' => ['color', 'Skip Button Color', 'The skip button background color (text is white).'],
+            'explore_explainer_border_color' => ['color', 'Explainer Border Color', 'The border color of the explainer popups.'],
+            'explore_explainer_border_size' => ['number', 'Explainer Border Size', 'The border size of the explainer popups (in pixel).'],
+            'explore_explainer_border_radius' => ['number', 'Explainer Border Radius', 'The border radius of the explainer popups.'],
+            'explore_explainer_border_style' => ['select', 'Explainer Border Style', 'The border style of the explainer popups.', ['solid', 'dashed', 'dotted']],
+            'explore_crewmate_hover_border_color' => ['color', 'Playable Character Border Color', 'The border color when you hover over a character in the crew mate selector.'],
+            'explore_intro_video' => ['upload', 'Intro Video', 'The video that will play when users first visit the game page.'],
+            'explore_start_music' => ['upload', 'Start Screen Music', 'The music that will play after the intro video and on the start screen.'],
+            'explore_signin_screen' => ['upload', 'Sign In Screen Background Image', 'The image/video that will show on the start screen.'],
+            'explore_walking_sound' => ['upload', 'Walking Sound Effect', 'The sound that will play when your main character walks.'],
+            'explore_points_sound' => ['upload', 'Sound When Points Are Given', 'The sound that will play when you complete a mission or collect something.']
+        ];
+    }
+
+    /**
+     * Sanitize function for game options.
+     *
+     * @param mixed $value
+     * @return mixed
+     */
+    public function sanitizeGameOption(mixed $value): mixed
+    {
+        $option_name = current_filter() === 'sanitize_option'
+            ? null
+            : str_replace('sanitize_option_', '', current_filter());
+
+        $settings = $this->getGameOptionSettings();
+
+        if (!$option_name || !isset($settings[$option_name])) {
+            return sanitize_text_field($value);
+        }
+
+        $type    = $settings[$option_name][0];
+        $choices = $settings[$option_name][3] ?? [];
+
+        switch ($type) {
+            case 'upload':
+                return esc_url_raw($value);
+
+            case 'color':
+                return sanitize_hex_color($value);
+
+            case 'number':
+                return is_numeric($value) ? absint($value) : 0;
+
+            case 'checkbox':
+                return $value === 'on' ? 'on' : '';
+
+            case 'select':
+                $allowed = array_map(
+                    static function ($option) {
+                        return is_object($option) ? $option->post_name : $option;
+                    },
+                    $choices
+                );
+
+                return in_array($value, $allowed, true) ? $value : '';
+
+            case 'multiselect':
+                if ( ! is_array($value) ) {
+                    return [];
+                }
+
+                $allowed = array_map('sanitize_key', $choices);
+                $clean   = [];
+
+                foreach ($value as $key => $checked) {
+                    $key = sanitize_key($key);
+
+                    if (in_array($key, $allowed, true) && $checked === 'on') {
+                        $clean[$key] = 'on';
+                    }
+                }
+
+                return $clean;
+
+            default:
+                return sanitize_text_field($value);
         }
     }
 
