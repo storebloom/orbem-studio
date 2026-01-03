@@ -107,18 +107,21 @@ class Meta_Box {
                     $type = array_keys($value[0]);
                 }
 
-                $raw_value = wp_unslash(filter_input(INPUT_POST, $key, FILTER_UNSAFE_RAW));
-
                 if (
                     true === is_array($value[0])
                     && ['radio'] !== $type
                     && ['select'] !== $type
-                    && isset($raw_value)
                 ) {
+                    $raw_value = wp_unslash(filter_input_array(
+                        INPUT_POST, [$key => ['filter' => FILTER_UNSAFE_RAW, 'flags' => FILTER_REQUIRE_ARRAY]]
+                    ));
+
                     $sanitized = $this->sanitizeRecursive($raw_value);
 
-                    update_post_meta($post_id, $key, $sanitized);
+                    update_post_meta($post_id, $key, $sanitized[$key]);
                 } else {
+                    $raw_value = wp_unslash(filter_input(INPUT_POST, $key, FILTER_UNSAFE_RAW));
+
                     update_post_meta($post_id, $key, sanitize_text_field($raw_value) ?? '');
                 }
             }
