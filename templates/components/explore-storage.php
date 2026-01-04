@@ -79,7 +79,7 @@ $orbem_studio_current_explore_weapon = get_user_meta($orbem_studio_userid, 'expl
                             data-character="<?php echo false === empty($orbem_studio_character) ? esc_attr($orbem_studio_character) : ''; ?>"
 
                             <?php if (true === $orbem_studio_weapons_and_gear) : ?>
-                            data-strength="<?php echo false === empty($orbem_studio_attack) ? wp_json_encode($orbem_studio_attack) : '""'; ?>"
+                            data-strength=<?php echo false === empty($orbem_studio_attack) ? wp_json_encode($orbem_studio_attack) : '""'; ?>
                             data-projectile="<?php echo false === empty($orbem_studio_is_projectile) ? esc_attr($orbem_studio_is_projectile) : 'no'; ?>"
                             <?php endif; ?>
 

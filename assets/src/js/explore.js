@@ -479,18 +479,19 @@ function engageStorageMenus() {
                     currentTab.classList.remove( 'engage' );
                 }
 
+                const selectedTabContent = document.querySelector( '.retrieval-points [data-menu="' + storageTab.className.replace('-tab', '') + '"]' );
+
                 // Select new tab.
                 storageTab.classList.add( 'engage' );
 
-                const tabContent = document.querySelectorAll( '.storage-menu' );
                 const currentTabContent = document.querySelector( '.storage-menu.engage' );
 
                 if ( currentTabContent ) {
                     currentTabContent.classList.remove( 'engage' );
                 }
 
-                if ( tabContent ) {
-                    tabContent[storageIndex].classList.add( 'engage' );
+                if ( selectedTabContent ) {
+                    selectedTabContent.classList.add( 'engage' );
                 }
             } );
         } );

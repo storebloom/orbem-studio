@@ -3078,8 +3078,6 @@ class Explore
             $character_hover_border = get_option('explore_crewmate_hover_border_color', '');
             $skip_button_color      = get_option('explore_skip_button_color', '');
 
-            var_dump(plugin_dir_url(__FILE__) . '../assets/src/images/settings-default.svg');
-
             // Menu icons & hover
             return "
         #settings:not(.engage):before { content: url('" . esc_url($setting_icon) . "'); cursor: pointer; position: absolute; top: 50%; transform: translateY(-50%); width: 50px; }
