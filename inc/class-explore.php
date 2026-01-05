@@ -2970,21 +2970,13 @@ class Explore
         }
 
         $email = sanitize_email($payload['email']);
-        $first_name = sanitize_user($payload['given_name']);
         $user = get_user_by('email', $email);
 
         if (!$user) {
-            // Create new user
-            $username = sanitize_user($first_name);
-            if (username_exists($username)) {
-                $username .= '_' . wp_generate_password(4, false);
-            }
-            $user_id = wp_create_user($username, wp_generate_password(), $email);
-            wp_update_user([
-                'ID' => $user_id,
-                'first_name' => $first_name,
+            return rest_ensure_response([
+                'success' => false,
+                'data' => esc_html__('User does not exist.', 'orbem-studio'),
             ]);
-            $user = get_user_by('id', $user_id);
         }
 
         // Log in the user
