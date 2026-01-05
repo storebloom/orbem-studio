@@ -51,7 +51,11 @@ class Dev_Mode
     public function restRoutes(): void
     {
         $namespace = 'orbemorder/v1';
-        $permission_callback = function() { return current_user_can('edit_posts'); };
+
+        // Callback that makes sure a user is an administrators on this site in order to access devmode features.
+        $permission_callback = function () {
+            return current_user_can('manage_options');
+        };
 
         // Set item position.
         register_rest_route($namespace, '/set-item-position/', array(
@@ -74,12 +78,12 @@ class Dev_Mode
             'permission_callback' => $permission_callback
         ));
 
-        // Create new whatever.
-        register_rest_route($namespace, '/add-new/', array(
+        // Create new whatever orbem studio post type. Requires administrator access.
+        register_rest_route($namespace, '/add-new/', [
             'methods' => 'POST',
             'callback' => [$this, 'addNew'],
             'permission_callback' => $permission_callback
-        ));
+        ]);
     }
 
     /**
@@ -110,7 +114,7 @@ class Dev_Mode
         $walking_path = isset($data['walkingPath']) ? sanitize_text_field($data['walkingPath']) : '';
         $item         = isset($data['id']) ? absint($data['id']) : 0;
 
-        if ($item <= 0 || ! get_post($item)) {
+        if ($item <= 0 || ! get_post($item) || !current_user_can('edit_post', $item)) {
             return rest_ensure_response([
                 'success' => false,
                 'data'    => esc_html__('Invalid item ID', 'orbem-studio'),
@@ -182,7 +186,7 @@ class Dev_Mode
         $meta   = isset($data['meta']) ? sanitize_text_field($data['meta']) : '';
         $item   = isset($data['id']) ? absint($data['id']) : 0;
 
-        if ('' === $width || '' === $height || $item <= 0 || ! get_post($item)) {
+        if ('' === $width || '' === $height || $item <= 0 || ! get_post($item) || !current_user_can('edit_post', $item)) {
             return rest_ensure_response([
                 'success' => false,
                 'data'    => esc_html__('Invalid item ID or missing data param', 'orbem-studio'),
@@ -234,13 +238,14 @@ class Dev_Mode
         $data      = $request->get_json_params();
         $post_type = isset($data['type']) ? sanitize_text_field(wp_unslash($data['type'])) : '';
 
-        ob_start();
         if (!str_starts_with($post_type, 'explore-')) {
             return rest_ensure_response([
                 'success' => false,
                 'data'    => esc_html__('Invalid post type', 'orbem-studio'),
             ]);
         }
+
+        ob_start();
 
         $this->meta_box->explore_point_box($post_type);
 

@@ -6,7 +6,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
  * Plugin URI: https://orbem.studio/
  * Description: Build your own RPG video game using the power of WordPress
  * Version: 1.0.0
- * Author: scottstorebloom
+ * Author: orbemorder
  * Author URI: https://orbemorder.com/
  * Text Domain: orbem-studio
  * Domain Path: /languages
