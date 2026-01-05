@@ -1053,10 +1053,6 @@ function saveMission( mission, value, position ) {
                 if ( missionAbility && 'transportation' === missionAbility ) {
                     engageTransportFunction();
 
-                    if ( 'undefined' === typeof OrbemOrder.exploreAbilities || (0 < OrbemOrder.exploreAbilities.length && false === OrbemOrder.exploreAbilities.includes('transportation') ) ) {
-                        OrbemOrder.exploreAbilities = OrbemOrder.exploreAbilities.push('transportation');
-                    }
-
                     // Enable transportation in DB.
                     enableAbility('transportation');
                 }
@@ -1780,7 +1776,7 @@ const enterNewArea = (function () {
                     window.allowMovement = true;
                     theWeapon.style.display = "block";
 
-                    if ( 'undefined' !== typeof OrbemOrder.exploreAbilities && 0 < OrbemOrder.exploreAbilities.length && OrbemOrder.exploreAbilities.includes('transportation') ) {
+                    if ( 'undefined' !== typeof OrbemOrder.exploreAbilities && 0 < OrbemOrder.exploreAbilities.length && OrbemOrder.exploreAbilities.includes('transportation') || ( newMapItems['explore-ability'].includes('transportation') ) ) {
                         engageTransportFunction();
                     }
                 }, 100 );

@@ -932,6 +932,7 @@ class Explore
         $explore_walls                 = self::getExplorePosts($position, 'explore-wall');
         $explore_explainers            = self::getExplorePosts($position, 'explore-explainer');
         $explore_abilities             = self::getExploreAbilities();
+        $explore_ability               = get_user_meta($orbem_studio_userid, 'explore_abilities', true);
 
         // HTML generated internally from trusted templates.
         $map_items             = self::getMapItemHTML($orbem_studio_explore_points, $position);
@@ -981,6 +982,7 @@ class Explore
                 'menu-explainers'         => $explainers_menu,
                 'fullscreen-explainers'   => $explainers_fullscreen,
                 'map-abilities'           => $map_abilities,
+                'explore-ability'         => $explore_ability,
                 'map-item-styles-scripts' => $area_item_styles_scripts,
                 'start-top'               => false !== $area_id ? get_post_meta($area_id, 'explore-start-top', true) : '',
                 'start-left'              => false !== $area_id ? get_post_meta($area_id, 'explore-start-left', true) : '',
