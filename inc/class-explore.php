@@ -3085,7 +3085,7 @@ class Explore
         // Explore map points
         if (is_array($explore_points)) {
             foreach ($explore_points as $point) {
-                if ( ! isset($point->ID) || ! get_post($point->ID) ) {
+                if (! isset($point->ID) || ! get_post($point->ID) || 'explore-character' == $point->post_type) {
                     continue;
                 }
 

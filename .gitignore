@@ -5,4 +5,3 @@ vendor
 composer.json
 composer.lock
 wp.env.json
-assets/src/js/explore.js
