@@ -247,11 +247,13 @@ class Dev_Mode
 
         ob_start();
 
-        $this->meta_box->explorePointBox($post_type);
+        $this->meta_box->explore_point_box($post_type);
+
+        $newFields = ob_get_clean();
         
         return rest_ensure_response([
             'success' => true,
-            'data'    => ob_get_clean(),
+            'data'    => $newFields,
         ]);
     }
 
