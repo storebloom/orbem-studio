@@ -221,7 +221,7 @@ class Plugin extends Plugin_Base {
         }
 
         $explore_areas = get_posts(['post_type' => 'explore-area', 'numberposts' => 500, 'no_found_rows' => true, 'post_status' => 'publish']);
-        $music_names = '';
+        $music_names = [];
 
         foreach($explore_areas as $explore_area):
             if (false === isset($explore_area->ID) || false === get_post($explore_area->ID)) {
@@ -229,7 +229,7 @@ class Plugin extends Plugin_Base {
             }
 
             $music = get_post_meta($explore_area->ID, 'explore-music', true);
-            $music_names .= '"' . esc_html($explore_area->post_name) . '":"' . esc_html($music) . '",';
+            $music_names[$explore_area->post_name] = esc_url($music);
         endforeach;
 
         $localizes[] = array(
@@ -245,7 +245,7 @@ class Plugin extends Plugin_Base {
                 'orbemNonce' => wp_create_nonce('wp_rest'),
                 'siteRESTURL' => rest_url('orbemorder/v1'),
                 'previousCutsceneArea' => get_user_meta($current_user_id, 'explore_previous_cutscene_area', true),
-                'musicNames' => wp_kses_post($music_names)
+                'musicNames' => wp_json_encode($music_names)
             ]
         );
 

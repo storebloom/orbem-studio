@@ -1543,7 +1543,7 @@ const enterNewArea = (function () {
             let newMusic = '';
 
             if ( OrbemOrder.musicNames ) {
-                newMusic = OrbemOrder.musicNames[position];
+                newMusic = JSON.parse(OrbemOrder.musicNames)[position];
             }
 
             const jsonString = {
@@ -2735,7 +2735,7 @@ export function engageExploreGame() {
     let newMusic = '';
 
     if ( OrbemOrder.musicNames && currentLocation ) {
-        newMusic = OrbemOrder.musicNames[currentLocation];
+        newMusic = JSON.parse(OrbemOrder.musicNames)[currentLocation];
     }
 
     // Start music.
@@ -4319,9 +4319,15 @@ function afterCutscene( cutscene, areaCutscene, character ) {
         mcImage.classList.remove( 'engage' );
     }
 
+    let newMusic = '';
+
+    if ( OrbemOrder.musicNames ) {
+        newMusic = JSON.parse( OrbemOrder.musicNames )[currentLocation];
+    }
+
     // restart music if it changed.
-    if ( ( 'yes' === cutscene.dataset.mutemusic || cutscene.dataset.music && '' !== cutscene.dataset.music ) && OrbemOrder.musicNames[currentLocation] ) {
-        playSong( OrbemOrder.musicNames[currentLocation], currentLocation );
+    if ( ( 'yes' === cutscene.dataset.mutemusic || cutscene.dataset.music && '' !== cutscene.dataset.music ) && newMusic ) {
+        playSong( newMusic, currentLocation );
     }
 
     // Stop talking.
@@ -5863,9 +5869,15 @@ function afterMinigame(minigame) {
         engageCutscene( cleanClassName( cutscene.className ), false );
     }
 
+    let newMusic = '';
+
+    if ( OrbemOrder.musicNames ) {
+        newMusic = JSON.parse( OrbemOrder.musicNames )[currentLocation];
+    }
+
     // restart level music.
-    if ( minigame.dataset.music && '' !== minigame.dataset.music && OrbemOrder.musicNames ) {
-        playSong( OrbemOrder.musicNames[currentLocation], currentLocation );
+    if ( minigame.dataset.music && '' !== minigame.dataset.music && newMusic ) {
+        playSong( newMusic, currentLocation );
     }
 }
 
