@@ -1,4 +1,6 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) exit;
+
 /**
  * Meta Box Template
  *
@@ -94,8 +96,14 @@ $orbem_studio_allowed_tags['option'] = [
                 endif; ?>
             <?php endforeach; ?>
             </div>
-    <?php endif; endforeach; ?>
-    <?php if (true === $orbem_studio_front_end) :?>
+    <?php endif; endforeach;
+
+    wp_nonce_field(
+        'orbem_meta_box_save',
+        'orbem_meta_box_nonce'
+    );
+
+    if (true === $orbem_studio_front_end) :?>
         <button type="submit" id="submit-new">Submit</button>
         </form>
     <?php endif;?>

@@ -1,3 +1,4 @@
+<?php if ( ! defined( 'ABSPATH' ) ) exit; ?>
 <div class="pinpoint-container">
     <span id="open-pinpoint">⌖</span>
     <div class="pinpoint-output">

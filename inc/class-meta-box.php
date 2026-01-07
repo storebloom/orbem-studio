@@ -90,6 +90,23 @@ class Meta_Box {
      */
     public function save_meta($post_id): void
     {
+        // Verify nonce
+        if (!isset($_POST['orbem_meta_box_nonce']) ||
+            !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['orbem_meta_box_nonce'])), 'orbem_meta_box_save')
+        ) {
+            return;
+        }
+        
+        // Check if revision.
+        if (true === wp_is_post_revision($post_id)) {
+            return;
+        }
+
+        // Capability check
+        if (!current_user_can('edit_post', $post_id)) {
+            return;
+        }
+
         // Check if the request came from the WordPress save post process
         if (wp_is_post_autosave($post_id)) {
             return;
@@ -101,23 +118,53 @@ class Meta_Box {
         if (false === in_array($post_type, ['post', 'page'], true)) {
             // Compile meta data.
             foreach ($meta_data as $key => $value) {
-                $type = false;
+                $type      = is_array($value[0]) ? key($value[0]) : $value[0];
+                $raw_value = $_POST[$key] ?? null;
+                $raw_value = wp_unslash($raw_value);
 
-                if (true === is_array($value[0])) {
-                    $type = array_keys($value[0]);
-                }
+                if (
+                    is_array($raw_value)
+                    && ! in_array($type, ['radio', 'select'], true)
+                ) {
+                    $sanitized = $this->sanitizeRecursive($raw_value);
 
-                if (true === is_array($value[0]) && ['radio'] !== $type && ['select'] !== $type) {
-                    $array_value = filter_input_array(
-                        INPUT_POST, [$key => ['filter' => FILTER_UNSAFE_RAW, 'flags' => FILTER_REQUIRE_ARRAY]]
-                    );
-                    $array_value = $array_value[$key] ?? [];
-                    update_post_meta($post_id, $key, $array_value );
+                    update_post_meta($post_id, $key, $sanitized);
                 } else {
-                    update_post_meta($post_id, $key, sanitize_text_field(wp_unslash(filter_input(INPUT_POST, $key, FILTER_UNSAFE_RAW))) ?? '');
+                    update_post_meta($post_id, $key, sanitize_text_field($raw_value) ?? '');
                 }
             }
         }
+    }
+
+    /**
+     * Recursively sanitize array values.
+     *
+     * @param mixed $value
+     * @return mixed
+     */
+    private function sanitizeRecursive(mixed $value): mixed
+    {
+        if (is_array($value)) {
+            $clean = [];
+            foreach ($value as $k => $v) {
+                $clean[sanitize_key($k)] = $this->sanitizeRecursive($v);
+            }
+            return $clean;
+        }
+
+        if (is_string($value)) {
+            return sanitize_text_field($value);
+        }
+
+        if (is_int($value) || is_float($value)) {
+            return $value;
+        }
+
+        if (is_bool($value)) {
+            return (bool) $value;
+        }
+
+        return null;
     }
 
     public function getMetaData($post_type = '')

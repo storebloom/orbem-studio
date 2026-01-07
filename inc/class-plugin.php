@@ -86,9 +86,7 @@ class Plugin extends Plugin_Base {
             );
             self::enqueueScript('orbem-order/app');
             self::enqueueStyle('orbem-order/app');
-
-            // Register the WebSocket script.
-            //wp_enqueue_script('socket-io', 'https://cdn.socket.io/4.0.1/socket.io.min.js', array(), null, true);
+            self::enqueueStyle('orbem-order/explore');
         }
     }
 
