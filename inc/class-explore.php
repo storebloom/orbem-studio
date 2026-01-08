@@ -893,11 +893,11 @@ class Explore
      */
     public function getOrbemArea(\WP_REST_Request $request): \WP_REST_Response
     {
-        $user   = wp_get_current_user();
-        $userid = (int) $user->ID;
+        $user                = wp_get_current_user();
+        $orbem_studio_userid = (int) $user->ID;
 
         // Endpoint intentionally accessible to all authenticated users.
-        if (0 === $userid) {
+        if (0 === $orbem_studio_userid) {
             return rest_ensure_response([
                 'success' => false,
                 'data'    => esc_html__('User not authenticated', 'orbem-studio'),
@@ -923,15 +923,16 @@ class Explore
             ] );
         }
 
-        $area_id            = $area[0]->ID ?? false;
-        $is_area_cutscene   = false !== $area_id ? get_post_meta($area_id, 'explore-is-cutscene', true) : false;
-        $orbem_studio_explore_points     = self::getExplorePoints($position);
-        $explore_cutscenes  = self::getExplorePosts($position, 'explore-cutscene');
-        $explore_minigames  = self::getExplorePosts($position, 'explore-minigame');
-        $orbem_studio_explore_missions   = self::getExplorePosts($position, 'explore-mission');
-        $explore_walls      = self::getExplorePosts($position, 'explore-wall');
-        $explore_explainers = self::getExplorePosts($position, 'explore-explainer');
-        $explore_abilities  = Explore::getExploreAbilities();
+        $area_id                       = $area[0]->ID ?? false;
+        $is_area_cutscene              = false !== $area_id ? get_post_meta($area_id, 'explore-is-cutscene', true) : false;
+        $orbem_studio_explore_points   = self::getExplorePoints($position);
+        $explore_cutscenes             = self::getExplorePosts($position, 'explore-cutscene');
+        $explore_minigames             = self::getExplorePosts($position, 'explore-minigame');
+        $orbem_studio_explore_missions = self::getExplorePosts($position, 'explore-mission');
+        $explore_walls                 = self::getExplorePosts($position, 'explore-wall');
+        $explore_explainers            = self::getExplorePosts($position, 'explore-explainer');
+        $explore_abilities             = self::getExploreAbilities();
+        $explore_ability               = get_user_meta($orbem_studio_userid, 'explore_abilities', true);
 
         // HTML generated internally from trusted templates.
         $map_items             = self::getMapItemHTML($orbem_studio_explore_points, $position);
@@ -939,11 +940,11 @@ class Explore
         $explainers_map        = self::getExplainerHTML($explore_explainers, 'map');
         $explainers_fullscreen = self::getExplainerHTML($explore_explainers, 'fullscreen');
         $minigames             = self::getMinigameHTML($explore_minigames);
-        $map_communicate       = self::getMapCommunicateHTML($position, $userid);
-        $map_cutscenes         = self::getMapCutsceneHTML($explore_cutscenes, $position, $userid);
+        $map_communicate       = self::getMapCommunicateHTML($position, $orbem_studio_userid);
+        $map_cutscenes         = self::getMapCutsceneHTML($explore_cutscenes, $position, $orbem_studio_userid);
         $map_abilities         = self::getMapAbilitiesHTML($explore_abilities);
 
-        $is_admin = user_can($userid, 'manage_options');
+        $is_admin = user_can($orbem_studio_userid, 'manage_options');
         $dev_mode = '';
 
         ob_start();
@@ -958,7 +959,7 @@ class Explore
         include_once $this->plugin->dir_path . '/templates/components/explore-characters.php';
         $map_characters = ob_get_clean();
 
-        update_user_meta($userid, 'current_location', $position);
+        update_user_meta($orbem_studio_userid, 'current_location', $position);
 
         // Only administrators can view dev mode.
         if ($is_admin) {
@@ -981,6 +982,7 @@ class Explore
                 'menu-explainers'         => $explainers_menu,
                 'fullscreen-explainers'   => $explainers_fullscreen,
                 'map-abilities'           => $map_abilities,
+                'explore-ability'         => $explore_ability,
                 'map-item-styles-scripts' => $area_item_styles_scripts,
                 'start-top'               => false !== $area_id ? get_post_meta($area_id, 'explore-start-top', true) : '',
                 'start-left'              => false !== $area_id ? get_post_meta($area_id, 'explore-start-left', true) : '',
@@ -1720,7 +1722,7 @@ class Explore
 
                     // Projectile html for enemy.
                     if ('explore-enemy' === $explore_point->post_type && ('shooter' === $explore_enemy_type || true === $barrage_wave)) {
-                        $projectile = $explore_point_meta['explore-projectile'][0] ?? '';
+                        $projectile = $explore_point_meta['explore-projectile'] ?? '';
 
                         if (false !== $projectile) {
                             $projectile_width = $projectile['width'] ?? '0';
@@ -1736,7 +1738,7 @@ class Explore
                         if (true === $pulse_wave) {
                             $html .= '<div class="pulse-wave-container" data-value="' . esc_attr($value) . '" data-hazard="true">';
                             $html .= self::getSVGCode(
-                                plugin_dir_url(dirname(__FILE__)) . '../assets/src/images/pulse.svg'
+                                plugin_dir_url(dirname(__FILE__)) . 'assets/src/images/pulse.svg'
                             );
                             $html .= '</div>';
                         }
@@ -2295,7 +2297,21 @@ class Explore
 
                 if (false === empty($draggable_images) && true === is_array($draggable_images)) {
                     foreach ($draggable_images as $draggable_image) {
-                        $html .= '<img class="minigame-draggable-image" src="' . esc_url($draggable_image['draggable-item'] ?? '') . '" draggable="true" />';
+                        $height = $draggable_image['height'] ?? '';
+                        $width  = $draggable_image['width'] ?? '';
+                        $style  = '';
+
+                        if ($height !== '') {
+                            $style .= 'height:' . intval($height) . 'px;';
+                        }
+
+                        if ($width !== '') {
+                            $style .= 'width:' . intval($width) . 'px;';
+                        }
+
+                        $style_attr = $style !== '' ? ' style="' . esc_attr($style) . '"' : '';
+
+                        $html .= '<img class="minigame-draggable-image" src="' . esc_url($draggable_image['draggable-item'] ?? '') . '"' . $style_attr . ' draggable="true" />';
                     }
                 }
 
@@ -3071,7 +3087,7 @@ class Explore
         // Explore map points
         if (is_array($explore_points)) {
             foreach ($explore_points as $point) {
-                if ( ! isset($point->ID) || ! get_post($point->ID) ) {
+                if (! isset($point->ID) || ! get_post($point->ID) || 'explore-character' == $point->post_type) {
                     continue;
                 }
 

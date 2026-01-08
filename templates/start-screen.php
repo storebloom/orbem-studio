@@ -15,6 +15,7 @@ use OrbemStudio\Explore;
 if (true === $orbem_studio_is_admin) {
     $orbem_studio_areas = get_posts(['post_type' => 'explore-area', 'posts_per_page' => -1, 'fields' => ['ids', 'post_name']]);
 }
+
 ?>
 <div class="explore-overlay engage" style="background: url(<?php echo esc_attr($orbem_studio_signin_screen); ?>) no-repeat center;background-size: cover;height: 100svh;left: 0;position: fixed;top: 0;width: 100%; z-index: 4;">
     <?php if ((false === empty($orbem_studio_signin_screen) && false !== stripos($orbem_studio_signin_screen, '.webm')) || (false === empty($orbem_studio_signin_screen) && false !== stripos($orbem_studio_signin_screen, '.mp4'))): ?>
@@ -29,7 +30,7 @@ if (true === $orbem_studio_is_admin) {
                     <?php esc_html_e('Continue', 'orbem-studio'); ?>
                 </button>
             <?php endif; ?>
-            <?php if ('' === $orbem_studio_require_login || true === is_user_logged_in()) : ?>
+            <?php if ('on' !== $orbem_studio_require_login || true === is_user_logged_in()) : ?>
                 <button type="button" class="engage" id="<?php echo esc_attr($orbem_studio_new_type); ?>">
                     <?php esc_html_e('New Game', 'orbem-studio'); ?>
                 </button>

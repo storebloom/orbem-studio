@@ -1,2 +1,7 @@
 node_modules
 vendor
+.idea
+.DS_Store
+composer.json
+composer.lock
+wp.env.json

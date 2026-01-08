@@ -46,36 +46,6 @@ document.addEventListener("DOMContentLoaded", function(){
     window.mainCharacter = currentLocation.dataset?.main;
     currentLocation = currentLocation.className.replace( 'game-container ', '');
 
-    // TODO: Get multiplayer mode working.
-    // var socket = io.connect('https://localhost:3030');
-    //
-    // // Check for successful connection
-    // socket.on('connect', function() {
-    //     console.log('Connected to the server!');
-    // });
-    //
-    // const tatami = document.querySelector('.tatami-post-1-map-item');
-    //
-    // socket.on('elementUpdated', function(data) {
-    //     updateElementOnPage(data); // Function to update the DOM based on received data
-    // });
-    //
-    // if (tatami) {
-    //     tatami.addEventListener('click', function (e) {
-    //         var elementData = {left: e.target.style.left, top: e.target.style.top};
-    //         socket.emit('updateElement', elementData); // Send the updated data to the server
-    //     });
-    // }
-    //
-    // function updateElementOnPage(data) {
-    //     const tatami = document.querySelector('.tatami-post-1-map-item');
-    //
-    //     if ( tatami ) {
-    //         tatami.style.left = (parseInt(data.left.replace('px', '')) + 10) + 'px';
-    //         tatami.style.top = (parseInt(data.top.replace('px', '')) + 10) + 'px';
-    //     }
-    // }
-
     // Explore page functions.
     window.history.pushState({}, document.title, window.location.pathname);
 
@@ -509,18 +479,19 @@ function engageStorageMenus() {
                     currentTab.classList.remove( 'engage' );
                 }
 
+                const selectedTabContent = document.querySelector( '.retrieval-points [data-menu="' + storageTab.className.replace('-tab', '') + '"]' );
+
                 // Select new tab.
                 storageTab.classList.add( 'engage' );
 
-                const tabContent = document.querySelectorAll( '.storage-menu' );
                 const currentTabContent = document.querySelector( '.storage-menu.engage' );
 
                 if ( currentTabContent ) {
                     currentTabContent.classList.remove( 'engage' );
                 }
 
-                if ( tabContent ) {
-                    tabContent[storageIndex].classList.add( 'engage' );
+                if ( selectedTabContent ) {
+                    selectedTabContent.classList.add( 'engage' );
                 }
             } );
         } );
@@ -878,7 +849,7 @@ function addUserPoints(amount, type, position, collectable, missionName) {
     }
 
     if ( '' !== position && true === ['money', 'point', 'health', 'mana'].includes( type ) && position !== missionName ) {
-        persistItemRemoval( position, type, amount, 2000, '' );
+        persistItemRemoval( position, type, amount, 2000, '', false );
     }
 }
 
@@ -903,7 +874,7 @@ function triggerGameOver() {
         inHazard = false;
         hazardItem = false;
 
-        persistItemRemoval( 'projectile', 'health', 100, 0, 'true' );
+        persistItemRemoval( 'projectile', 'health', 100, 0, 'true', false );
 
         if ( defaultMap ) {
             // Reset user position.
@@ -925,8 +896,9 @@ function triggerGameOver() {
  * @param amount
  * @param timeoutTime
  * @param reset
+ * @param direct
  */
-function persistItemRemoval( item, type, amount, timeoutTime, reset ) {
+function persistItemRemoval( item, type, amount, timeoutTime, reset, direct ) {
     "use strict";
 
 
@@ -949,6 +921,12 @@ function persistItemRemoval( item, type, amount, timeoutTime, reset ) {
         // Always use projectile if health update.
         if ( 'health' === type ) {
             persistItems = ['projectile'];
+        }
+
+        persistItems = Array.from(new Set(persistItems));
+
+        if ( true === direct ) {
+            amount = 'health' !== type ? getCurrentPoints( type ) + amount : getPointsGaugeAmount( type ) - amount;
         }
 
         persistTimeout = setTimeout(() => {
@@ -1062,7 +1040,7 @@ function saveMission( mission, value, position ) {
                             false === Array.isArray(position) && position !== hazardRemove
                         ) {
                             // Make sure it doesn't come back.
-                            persistItemRemoval(hazardRemove, 'point', 0, 2000, '');
+                            persistItemRemoval(hazardRemove, 'point', 0, 2000, '', true);
                         }
                     });
                 }
@@ -1092,7 +1070,7 @@ function saveMission( mission, value, position ) {
                 // Give points.
                 runPointAnimation(value, position, true, missionPoints, mission);
             } else if ( value && 0 === missionPoints ) {
-                persistItemRemoval(position, 'point', 0, 2000, '');
+                persistItemRemoval(position, 'point', 0, 2000, '', true);
             }
         }
 
@@ -1565,7 +1543,7 @@ const enterNewArea = (function () {
             let newMusic = '';
 
             if ( OrbemOrder.musicNames ) {
-                newMusic = OrbemOrder.musicNames[position];
+                newMusic = JSON.parse(OrbemOrder.musicNames)[position];
             }
 
             const jsonString = {
@@ -1798,7 +1776,7 @@ const enterNewArea = (function () {
                     window.allowMovement = true;
                     theWeapon.style.display = "block";
 
-                    if ( 'undefined' !== typeof OrbemOrder.exploreAbilities && 0 < OrbemOrder.exploreAbilities.length && OrbemOrder.exploreAbilities.includes('transportation') ) {
+                    if ( 'undefined' !== typeof OrbemOrder.exploreAbilities && 0 < OrbemOrder.exploreAbilities.length && OrbemOrder.exploreAbilities.includes('transportation') || ( newMapItems['explore-ability'].includes('transportation') ) ) {
                         engageTransportFunction();
                     }
                 }, 100 );
@@ -2757,7 +2735,7 @@ export function engageExploreGame() {
     let newMusic = '';
 
     if ( OrbemOrder.musicNames && currentLocation ) {
-        newMusic = OrbemOrder.musicNames[currentLocation];
+        newMusic = JSON.parse(OrbemOrder.musicNames)[currentLocation];
     }
 
     // Start music.
@@ -3179,7 +3157,7 @@ function miroExplorePosition(v,a,b,d,x, $newest) {
                         document.addEventListener('keydown', closeExplainer );
 
                         // Persist to avoid showing again on refresh.
-                        persistItemRemoval(value.dataset.triggee, 'point', 0, 2000, '');
+                        persistItemRemoval( value.dataset.triggee, 'point', 0, 2000, '', true);
                     }
                 }
 
@@ -4186,7 +4164,7 @@ function engageCommunicate( communicate, communicateTrigger ) {
 
     if ( communicateTrigger ) {
         communicateTrigger.remove();
-        persistItemRemoval(communicateEl.id, 'communicate', communicateParent.id, 2000, '');
+        persistItemRemoval( communicateEl.id, 'communicate', communicateParent.id, 2000, '', false );
     }
 
     // Show communicate.
@@ -4341,9 +4319,15 @@ function afterCutscene( cutscene, areaCutscene, character ) {
         mcImage.classList.remove( 'engage' );
     }
 
+    let newMusic = '';
+
+    if ( OrbemOrder.musicNames ) {
+        newMusic = JSON.parse( OrbemOrder.musicNames )[currentLocation];
+    }
+
     // restart music if it changed.
-    if ( ( 'yes' === cutscene.dataset.mutemusic || cutscene.dataset.music && '' !== cutscene.dataset.music ) && OrbemOrder.musicNames[currentLocation] ) {
-        playSong( OrbemOrder.musicNames[currentLocation], currentLocation );
+    if ( ( 'yes' === cutscene.dataset.mutemusic || cutscene.dataset.music && '' !== cutscene.dataset.music ) && newMusic ) {
+        playSong( newMusic, currentLocation );
     }
 
     // Stop talking.
@@ -4443,7 +4427,7 @@ function removeItems( removeThings, cutsceneName ) {
         if ( cutsceneName === removeThing.dataset.removeaftercutscene ) {
             removeThing.remove();
 
-            persistItemRemoval(cleanClassName(removeThing.className), 'point', 0, 2000, '');
+            persistItemRemoval( cleanClassName(removeThing.className), 'point', 0, 2000, '', true );
         }
     } );
 }
@@ -5236,9 +5220,9 @@ function runPointAnimation( value, position, isMission, missionPoints, missionNa
     const thePoints = document.querySelector( `#explore-points .${ positionType }-amount` );
     let currentPoints = 100;
 
-    const objectAmount = true === isMission ? parseInt(missionPoints) : value.dataset?.value;
+    const objectAmount = true === isMission ? parseInt(missionPoints) : parseInt(value.dataset?.value);
 
-    if ( thePoints ) {
+    if ( thePoints && 0 < objectAmount ) {
         currentPoints = thePoints.dataset.amount;
         if ( 'point' === positionType ) {
             const newPoints = parseInt( currentPoints ) + parseInt( objectAmount ?? '0' );
@@ -5251,7 +5235,7 @@ function runPointAnimation( value, position, isMission, missionPoints, missionNa
             const newLevel = getCurrentLevel( newPoints );
             window.nextLevelPointAmount = JSON.parse(OrbemOrder.levelMaps)[newLevel];
 
-            // If new level is different than the old, then set UI to new.
+            // If new level is different from the old, then set UI to new.
             if ( oldLevel !== newLevel ) {
                 const currentLevelEl = document.querySelector( '.current-level' );
 
@@ -5401,13 +5385,13 @@ function engageDraggableFunction() {
 
                         if ('true' === dragDest.dataset.removable) {
                             dragDest.remove();
-                            persistItemRemoval(cleanClassName(dragDest.className), 'point', 0, 2000, '')
+                            persistItemRemoval( cleanClassName(dragDest.className), 'point', 0, 2000, '', true )
                         }
 
                         // Remove drag item if disappear is yes.
                         if ('yes' === dragmeitem.dataset.disappear) {
                             dragmeitem.remove();
-                            persistItemRemoval(cleanClass, 'point', 0, 2000, '')
+                            persistItemRemoval( cleanClass, 'point', 0, 2000, '', true )
                         }
                     }
                 }
@@ -5885,9 +5869,15 @@ function afterMinigame(minigame) {
         engageCutscene( cleanClassName( cutscene.className ), false );
     }
 
+    let newMusic = '';
+
+    if ( OrbemOrder.musicNames ) {
+        newMusic = JSON.parse( OrbemOrder.musicNames )[currentLocation];
+    }
+
     // restart level music.
-    if ( minigame.dataset.music && '' !== minigame.dataset.music && OrbemOrder.musicNames ) {
-        playSong( OrbemOrder.musicNames[currentLocation], currentLocation );
+    if ( minigame.dataset.music && '' !== minigame.dataset.music && newMusic ) {
+        playSong( newMusic, currentLocation );
     }
 }
 

@@ -15,11 +15,11 @@ $orbem_studio_final_key = $orbem_studio_key;
 // If there's a main key, build on it.
 if (false !== $orbem_studio_main_key) {
     $orbem_studio_final_key = $orbem_studio_main_key . '[';
-    $orbem_studio_final_value = $meta_values[$orbem_studio_main_key][$orbem_studio_key] ?? '';
+    $orbem_studio_final_value = $orbem_studio_meta_values[$orbem_studio_main_key][$orbem_studio_key] ?? '';
 
     if (false !== $orbem_studio_repeat_index) {
         $orbem_studio_final_key .= $orbem_studio_repeat_index . '][' . $orbem_studio_key;
-        $orbem_studio_final_value = $meta_values[$orbem_studio_main_key][$orbem_studio_repeat_index][$orbem_studio_key] ?? '';
+        $orbem_studio_final_value = $orbem_studio_meta_values[$orbem_studio_main_key][$orbem_studio_repeat_index][$orbem_studio_key] ?? '';
     } else {
         $orbem_studio_final_key .= $orbem_studio_key;
     }

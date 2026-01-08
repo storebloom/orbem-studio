@@ -88,7 +88,7 @@ class Meta_Box {
      *
      * @action save_post, 1
      */
-    public function save_meta($post_id): void
+    public function saveMeta($post_id): void
     {
         // Verify nonce
         if (!isset($_POST['orbem_meta_box_nonce']) ||
@@ -130,6 +130,8 @@ class Meta_Box {
 
                     update_post_meta($post_id, $key, $sanitized);
                 } else {
+                    $raw_value = wp_unslash(filter_input(INPUT_POST, $key, FILTER_UNSAFE_RAW));
+
                     update_post_meta($post_id, $key, sanitize_text_field($raw_value) ?? '');
                 }
             }
@@ -1019,7 +1021,9 @@ class Meta_Box {
                 'explore-draggable-items' => [
                     [
                         'repeater' => [
-                            'draggable-item' => 'upload'
+                            'draggable-item' => 'upload',
+                            'width'          => 'number',
+                            'height'         => 'number',
                         ]
                     ],
                     'The items that will be draggable to complete the "draggable" minigame. (Background to drag on is the featured image).'
@@ -1934,12 +1938,12 @@ class Meta_Box {
 
     /**
      * Get meta html.
-     * @param $key
+     * @param $orbem_studio_key
      * @param $value
-     * @param $meta_values
-     * @param bool|string $main_key
-     * @param bool|string|array $sub_value
-     * @param bool|int $repeat_index
+     * @param $orbem_studio_meta_values
+     * @param bool|string $orbem_studio_main_key
+     * @param bool|string|array $orbem_studio_sub_value
+     * @param bool|int $orbem_studio_repeat_index
      * @return false|string
      */
     public static function getMetaHtml($orbem_studio_key, $value, $orbem_studio_meta_values, bool|string $orbem_studio_main_key = false, bool|string|array $orbem_studio_sub_value = false, bool|int $orbem_studio_repeat_index = false): false|string
@@ -1988,11 +1992,18 @@ class Meta_Box {
      */
     public function addTaxonomyImageUpload($term): void
     {
-        $meta_values = get_term_meta($term->term_id, 'explore-background', true);
+        $orbem_studio_meta_values           = get_term_meta($term->term_id, 'explore-background', true);
+        $orbem_studio_allowed_tags          = wp_kses_allowed_html( 'post' );
+        $orbem_studio_allowed_tags['input'] = [
+            'value' => true,
+            'type'  => true,
+            'id'    => true,
+            'class' => true,
+        ];
 
         echo '<h2>Communicator Background</h2>';
         echo '<h4>Insert the background image that will show as the communicator device. Text and voice messages will show on top of it like a cell phone.</h4>';
-        echo wp_kses_post(self::imageUploadHTML('',  'explore-background', $meta_values));
+        echo wp_kses(self::imageUploadHTML('',  'explore-background', $orbem_studio_meta_values), $orbem_studio_allowed_tags);
     }
 
     /**
