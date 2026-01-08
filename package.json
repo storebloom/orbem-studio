@@ -1,6 +1,6 @@
 {
   "name": "orbem-studio",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "Dependencies for Orbem Studio plugin",
   "devDependencies": {
     "@wordpress/scripts": "^30.15.0",
