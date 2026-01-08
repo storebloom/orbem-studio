@@ -5,7 +5,7 @@ Tags: game engine, rpg, storytelling, gamification, narrative game
 Requires at least: 6.1
 Tested up to: 6.9
 Requires PHP: 8.1
-Stable tag: 1.0.2
+Stable tag: 1.0.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -166,6 +166,9 @@ This is configurable. You can require login or allow guest gameplay depending on
 Yes. All systems are designed to be extended using WordPress hooks, filters, and custom metadata.
 
 == Changelog ==
+
+= 1.0.3 =
+* Minor enhancements.
 
 = 1.0.2 =
 * Fix activation tutorial.

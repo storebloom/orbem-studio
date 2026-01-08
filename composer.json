@@ -1,6 +1,7 @@
 {
     "name": "storebloom/orbem-studio",
     "description": "Orbem Studio plugin",
+    "version": "1.0.3",
     "type": "wordpress-plugin",
     "license": "GPL-2.0-or-later",
     "require": {
