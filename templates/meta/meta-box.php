@@ -1,10 +1,16 @@
 <?php
+/**
+ * Meta Box Template.
+ *
+ * @package OrbemStudio
+ */
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
 /**
- * Meta Box Template
+ * Meta Box Template.
  *
  * The template wrapper for post/page meta box.
  *
@@ -75,8 +81,8 @@ $orbem_studio_allowed_tags['option'] = array(
 			<?php foreach ( $orbem_studio_value[0] as $orbem_studio_sub_key => $orbem_studio_sub_value ) : ?>
 
 				<?php
-				if ( false === is_array( $orbem_studio_sub_value ) || true === in_array( $orbem_studio_sub_key, array( 'select', 'radio', 'repeater', 'multiselect' ) ) ) :
-					if ( false === in_array( $orbem_studio_sub_key, array( 'select', 'radio', 'repeater', 'multiselect' ) ) ) :
+				if ( false === is_array( $orbem_studio_sub_value ) || true === in_array( $orbem_studio_sub_key, array( 'select', 'radio', 'repeater', 'multiselect' ), true ) ) :
+					if ( false === in_array( $orbem_studio_sub_key, array( 'select', 'radio', 'repeater', 'multiselect' ), true ) ) :
 						?>
 							<?php echo wp_kses( Meta_Box::getMetaHtml( $orbem_studio_sub_key, $orbem_studio_sub_value, $orbem_studio_values, $orbem_studio_key ), $orbem_studio_allowed_tags ); ?>
 					<?php elseif ( 'repeater' !== $orbem_studio_sub_key ) : ?>
@@ -90,7 +96,7 @@ $orbem_studio_allowed_tags['option'] = array(
 				else :
 					foreach ( $orbem_studio_sub_value as $orbem_studio_sub_value_key_1 => $orbem_studio_sub_value_value_1 ) :
 						?>
-						<?php if ( false === in_array( $orbem_studio_sub_value_key_1, array( 'select', 'radio', 'repeater', 'multiselect' ) ) ) : ?>
+						<?php if ( false === in_array( $orbem_studio_sub_value_key_1, array( 'select', 'radio', 'repeater', 'multiselect' ), true ) ) : ?>
 							<?php echo wp_kses( Meta_Box::getMetaHtml( $orbem_studio_sub_value_key_1, $orbem_studio_sub_value_value_1, $orbem_studio_values, $orbem_studio_key ), $orbem_studio_allowed_tags ); ?>
 						<?php elseif ( 'repeater' !== $orbem_studio_sub_value_key_1 ) : ?>
 							<?php echo wp_kses( Meta_Box::getMetaHtml( $orbem_studio_sub_key, $orbem_studio_sub_value_key_1, $orbem_studio_values, $orbem_studio_key, $orbem_studio_sub_value_value_1 ), $orbem_studio_allowed_tags ); ?>

@@ -1,14 +1,22 @@
 <?php
+/**
+ * Style scripts template.
+ *
+ * @package OrbemStudio
+ */
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
 /**
+ * Style scripts template.
+ *
  * @var array $orbem_studio_explore_points
  */
 
 foreach ( $orbem_studio_explore_points as $orbem_studio_explore_point ) :
-	if ( false === isset( $orbem_studio_explore_point->ID, $orbem_studio_explore_point->post_type ) || 'explore-character' == $orbem_studio_explore_point->post_type || false === get_post( $orbem_studio_explore_point->ID ) ) {
+	if ( false === isset( $orbem_studio_explore_point->ID, $orbem_studio_explore_point->post_type ) || 'explore-character' === $orbem_studio_explore_point->post_type || false === get_post( $orbem_studio_explore_point->ID ) ) {
 		continue;
 	}
 

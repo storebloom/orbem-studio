@@ -38,6 +38,26 @@
         <exclude name="Generic.Commenting.DocComment.ShortNotCapital"/>
     </rule>
 
+    <!-- Don't flag inline comments that look like code -->
+    <rule ref="Squiz.PHP.CommentedOutCode">
+        <severity>0</severity>
+    </rule>
+
+    <!-- Don't require inline comments to end with punctuation -->
+    <rule ref="Squiz.Commenting.InlineComment.InvalidEndChar">
+        <severity>0</severity>
+    </rule>
+
+    <!-- Allow short ternary operators -->
+    <rule ref="Universal.Operators.DisallowShortTernary">
+        <severity>0</severity>
+    </rule>
+
+    <!-- Allow high posts_per_page values -->
+    <rule ref="WordPress.WP.PostsPerPage">
+        <severity>0</severity>
+    </rule>
+
     <rule ref="WordPress" />
 
     <rule ref="WordPress-Extra">

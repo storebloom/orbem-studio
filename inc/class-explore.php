@@ -341,7 +341,7 @@ class Explore {
 	/**
 	 * Call back function for rest route that adds points to user's explore game.
 	 *
-	 * @param \WP_REST_Request $request
+	 * @param \WP_REST_Request $request The arg values from rest route.
 	 * @return \WP_REST_Response
 	 */
 	public function addCharacterPoints( \WP_REST_Request $request ): \WP_REST_Response {
@@ -388,11 +388,11 @@ class Explore {
 	/**
 	 * Save explore points to array.
 	 *
-	 * @param $userid
-	 * @param $type
-	 * @param $amount
-	 * @param $item
-	 * @param bool $reset Is this being called by reset function.
+	 * @param int     $userid The user id.
+	 * @param string  $type The type of point.
+	 * @param int     $amount The amount of points.
+	 * @param array   $item The item.
+	 * @param boolean $reset Is this being called by reset function.
 	 * @return void
 	 */
 	public function savePoint( $userid, $type, $amount, $item, bool $reset = false ): void {
@@ -457,7 +457,7 @@ class Explore {
 				}
 
 				$explore_points[ $type ]['positions'] = array_merge( $explore_points[ $type ]['positions'], $item );
-			} elseif ( false === in_array( $item, $explore_points[ $type ]['positions'] ) ) {
+			} elseif ( false === in_array( $item, $explore_points[ $type ]['positions'], true ) ) {
 				$explore_points[ $type ]['positions'][] = sanitize_text_field( $item );
 			}
 
@@ -529,7 +529,7 @@ class Explore {
 	/**
 	 * Call back function for rest route that save materialized items per location when triggered.
 	 *
-	 * @param \WP_REST_Request $request
+	 * @param \WP_REST_Request $request The arg values from rest route.
 	 * @return \WP_REST_Response
 	 */
 	public function saveMaterializedItem( \WP_REST_Request $request ): \WP_REST_Response {
@@ -580,7 +580,7 @@ class Explore {
 	/**
 	 * Call back function for rest route that save materialized items per location when triggered.
 	 *
-	 * @param \WP_REST_Request $request
+	 * @param \WP_REST_Request $request The arg values from rest route.
 	 * @return \WP_REST_Response
 	 */
 	public function enableAbility( \WP_REST_Request $request ): \WP_REST_Response {
@@ -828,12 +828,12 @@ class Explore {
 				}
 			}
 		} elseif ( true === $unequip && false === empty( $current_equipped[ $the_effect_type ] ) ) {
-			$equip_position = array_search( $item_id, $current_equipped[ $the_effect_type ] );
+			$equip_position = array_search( $item_id, $current_equipped[ $the_effect_type ], true );
 			unset( $current_equipped[ $the_effect_type ][ $equip_position ] );
 		}
 
 		// Weapons.
-		if ( '' === $unequip && $current_equipped !== array( $item_id ) ) {
+		if ( '' === $unequip && array( $item_id ) !== $current_equipped ) {
 			$current_equipped = array( $item_id );
 		}
 
@@ -993,7 +993,7 @@ class Explore {
 
 		update_user_meta( $userid, 'explore_storage', $current_storage_items );
 
-		if ( true === in_array( $menu_map, array( 'gear', 'weapons' ) ) ) {
+		if ( true === in_array( $menu_map, array( 'gear', 'weapons' ), true ) ) {
 			$this->savePoint( $userid, $menu_map, 0, $name );
 		}
 
@@ -1210,7 +1210,7 @@ class Explore {
 		// Get content from the new explore-area post type.
 		$item_obj = get_post( $item );
 
-		if ( ! $item_obj || false === in_array( $item_obj->post_type, array( 'explore-point', 'explore-weapon', 'explore-gear' ) ) ) {
+		if ( ! $item_obj || false === in_array( $item_obj->post_type, array( 'explore-point', 'explore-weapon', 'explore-gear' ), true ) ) {
 			return rest_ensure_response(
 				array(
 					'success' => false,
@@ -1354,7 +1354,7 @@ class Explore {
 	/**
 	 * Get map SVG content.
 	 *
-	 * @param WP_Post $explore_area
+	 * @param WP_Post $explore_area The explore area post object.
 	 * @return string|false
 	 */
 	public static function getMapSVG( WP_Post $explore_area ): false|string {
@@ -1388,7 +1388,7 @@ class Explore {
 	/**
 	 * Get SVG content from image URL.
 	 *
-	 * @param string $image_url
+	 * @param string $image_url The image URL.
 	 * @return string
 	 */
 	public static function getSVGCode( string $image_url ): string {
@@ -1398,7 +1398,7 @@ class Explore {
 
 		$args = array( 'timeout' => 10 );
 
-		if ( wp_get_environment_type() === 'local' ) {
+		if ( 'local' === wp_get_environment_type() ) {
 			$args['sslverify'] = false;
 		}
 
@@ -1426,7 +1426,7 @@ class Explore {
 	/**
 	 * Grab all the points you can collide with.
 	 *
-	 * @param string $position The area to get game posts from.
+	 * @param string $position The position to get game posts from.
 	 * @return int[]|WP_Post[]
 	 */
 	public static function getExplorePoints( $position ): array {
@@ -1458,7 +1458,7 @@ class Explore {
 	/**
 	 * Return post object of currently equipped weapon.
 	 *
-	 * @param string $weapon_name
+	 * @param string $weapon_name The weapon name.
 	 *
 	 * @return WP_Post|null
 	 */
@@ -1487,8 +1487,8 @@ class Explore {
 	/**
 	 * Grab all the points you can collide with.
 	 *
-	 * @param string $position
-	 * @param string $post_type
+	 * @param string $position The position to get game posts from.
+	 * @param string $post_type The post type to get game posts from.
 	 * @return int[]|WP_Post[]
 	 */
 	public static function getExplorePosts( string $position, string $post_type ): array {
@@ -1560,8 +1560,8 @@ class Explore {
 	/**
 	 * Build html for map items.
 	 *
-	 * @param array  $explore_points
-	 * @param string $current_location
+	 * @param array  $explore_points The explore points.
+	 * @param string $current_location The current location.
 	 * @return string
 	 */
 	public static function getMapItemHTML( array $explore_points, string $current_location ): string {
@@ -1789,14 +1789,14 @@ class Explore {
 						$html .= ' data-mission="' . esc_attr( $missions[0]->post_name ) . '"';
 
 						$hazard_remove = get_post_meta( $missions[0]->ID, 'explore-hazard-remove', true );
-						$hazard_remove = false === empty( $hazard_remove ) && true === in_array( $explore_point->post_name, explode( ',', $hazard_remove ) );
+						$hazard_remove = false === empty( $hazard_remove ) && true === in_array( $explore_point->post_name, explode( ',', $hazard_remove ), true );
 					}
 
 					if ( false === empty( $enemy_missions[0] ) ) {
 						$html .= ' data-mission="' . esc_attr( $enemy_missions[0]->post_name ) . '"';
 
 						$hazard_remove = get_post_meta( $enemy_missions[0]->ID, 'explore-hazard-remove', true );
-						$hazard_remove = false === empty( $hazard_remove ) && true === in_array( $explore_point->post_name, explode( ',', $hazard_remove ) );
+						$hazard_remove = false === empty( $hazard_remove ) && true === in_array( $explore_point->post_name, explode( ',', $hazard_remove ), true );
 					}
 
 					$explore_path = false === empty( $walking_path ) ? wp_json_encode( $walking_path ) : '[{"top":"0","left":"0"}]';
@@ -1809,7 +1809,7 @@ class Explore {
 						$html .= ' data-timebetween="' . esc_attr( $time_between ) . '"';
 					}
 
-					if ( '[{"top":"0","left":"0"}]' !== $explore_path && true === in_array( $explore_point->post_type, array( 'explore-character', 'explore-enemy' ) ) ) {
+					if ( '[{"top":"0","left":"0"}]' !== $explore_path && true === in_array( $explore_point->post_type, array( 'explore-character', 'explore-enemy' ), true ) ) {
 						$html .= ' data-path=\'' . esc_attr( $explore_path ) . '\'';
 
 						if ( 'yes' === $repeat ) {
@@ -2038,9 +2038,11 @@ class Explore {
 	}
 
 	/**
-	 * @param string  $item_name
-	 * @param string  $location
-	 * @param integer $userid
+	 * Check if a materialized item has been triggered.
+	 *
+	 * @param string  $item_name The item name.
+	 * @param string  $location The location.
+	 * @param integer $userid The user id.
 	 * @return bool
 	 */
 	public static function isMaterializedItemTriggered( string $item_name, string $location, int $userid ): bool {
@@ -2069,9 +2071,9 @@ class Explore {
 	/**
 	 * Build html for map items.
 	 *
-	 * @param array   $explore_cutscenes
-	 * @param string  $position
-	 * @param integer $userid
+	 * @param array   $explore_cutscenes The explore cutscenes.
+	 * @param string  $position The position.
+	 * @param integer $userid The user id.
 	 * @return string
 	 */
 	public static function getMapCutsceneHTML( array $explore_cutscenes, string $position, int $userid ): string {
@@ -2322,8 +2324,8 @@ class Explore {
 	/**
 	 * Build html for map items.
 	 *
-	 * @param string  $location
-	 * @param integer $userid
+	 * @param string  $location The location.
+	 * @param integer $userid The user id.
 	 * @return string
 	 */
 	public static function getMapCommunicateHTML( string $location, int $userid ): string {
@@ -2481,7 +2483,7 @@ class Explore {
 	/**
 	 * Build html for minigame items.
 	 *
-	 * @param array $explore_minigames
+	 * @param array $explore_minigames The explore minigames.
 	 *
 	 * @return string
 	 */
@@ -2506,15 +2508,15 @@ class Explore {
 						$width  = $draggable_image['width'] ?? '';
 						$style  = '';
 
-						if ( $height !== '' ) {
+						if ( '' !== $height ) {
 							$style .= 'height:' . intval( $height ) . 'px;';
 						}
 
-						if ( $width !== '' ) {
+						if ( '' !== $width ) {
 							$style .= 'width:' . intval( $width ) . 'px;';
 						}
 
-						$style_attr = $style !== '' ? ' style="' . esc_attr( $style ) . '"' : '';
+						$style_attr = '' !== $style ? ' style="' . esc_attr( $style ) . '"' : '';
 
 						$html .= '<img class="minigame-draggable-image" src="' . esc_url( $draggable_image['draggable-item'] ?? '' ) . '"' . $style_attr . ' draggable="true" />';
 					}
@@ -2544,8 +2546,8 @@ class Explore {
 	/**
 	 * Build html for explainers.
 	 *
-	 * @param array  $explore_explainers
-	 * @param string $type
+	 * @param array  $explore_explainers The explore explainers.
+	 * @param string $type The type of explainer.
 	 *
 	 * @return string
 	 */
@@ -2593,7 +2595,7 @@ class Explore {
 				$orientation                = $arrow_style['orientation'] ?? 'top';
 				$side                       = $arrow_style['side'] ?? 'right';
 				$rotation                   = $arrow_style['rotate'] ?? '0';
-				$arrow_style_css            = 'transform: rotate(' . esc_attr( $rotation ) . 'deg); ' . esc_attr( $orientation ) . ': -130px;' . ' ' . esc_attr( $side ) . ': 0;';
+				$arrow_style_css            = 'transform: rotate(' . esc_attr( $rotation ) . 'deg); ' . esc_attr( $orientation ) . ': -130px; ' . esc_attr( $side ) . ': 0;';
 				$fullscreen                 = 'fullscreen' === $type ? ' fullscreen' : '';
 
 				if ( false !== $path_trigger_top ) {
@@ -2638,7 +2640,7 @@ class Explore {
 	/**
 	 * Build html for map abilities.
 	 *
-	 * @param array $explore_abilities
+	 * @param array $explore_abilities The explore abilities.
 	 *
 	 * @return string
 	 */
@@ -3030,8 +3032,8 @@ class Explore {
 	/**
 	 * Register new block category for orbem studio.
 	 *
-	 * @param array                   $categories The current block categories.
-	 * @param WP_Block_Editor_Context $context
+	 * @param array                    $categories The current block categories.
+	 * @param \WP_Block_Editor_Context $context The block editor context.
 	 *
 	 * @filter block_categories_all
 	 */
@@ -3054,7 +3056,7 @@ class Explore {
 	/**
 	 * Get the main character's images.
 	 *
-	 * @param string|\WP_Post $main_character
+	 * @param string|\WP_Post $main_character The main character.
 	 * @return array
 	 */
 	public static function getCharacterImages( string|\WP_Post $main_character ): array {
@@ -3119,7 +3121,7 @@ class Explore {
 	/**
 	 * Google SSO oauth callback.
 	 *
-	 * @param \WP_REST_Request $request
+	 * @param \WP_REST_Request $request The REST request object.
 	 * @return \WP_REST_Response
 	 */
 	public function handleGoogleOauthCallback( \WP_REST_Request $request ): \WP_REST_Response {
@@ -3162,8 +3164,9 @@ class Explore {
 			);
 		}
 
+		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode -- Required for JWT token decoding.
 		$payload = json_decode( base64_decode( str_replace( '_', '/', str_replace( '-', '+', explode( '.', $credential )[1] ) ) ), true );
-		if ( $payload['aud'] !== $client_id || $payload['iss'] !== 'https://accounts.google.com' ) {
+		if ( $client_id !== $payload['aud'] || 'https://accounts.google.com' !== $payload['iss'] ) {
 			return rest_ensure_response(
 				array(
 					'success' => false,
@@ -3172,7 +3175,7 @@ class Explore {
 			);
 		}
 
-		if ( $payload['email_verified'] !== 'true' ) {
+		if ( 'true' !== $payload['email_verified'] ) {
 			return rest_ensure_response(
 				array(
 					'success' => false,
@@ -3260,7 +3263,7 @@ class Explore {
 	/**
 	 * Generate dynamic inline CSS for game elements.
 	 *
-	 * @param string $type
+	 * @param string $type The type of styles to generate (e.g., 'menu').
 	 * @return string
 	 */
 	protected static function generateDynamicStyles( string $type ): string {
@@ -3302,7 +3305,7 @@ class Explore {
 		// Explore map points
 		if ( is_array( $explore_points ) ) {
 			foreach ( $explore_points as $point ) {
-				if ( ! isset( $point->ID ) || ! get_post( $point->ID ) || 'explore-character' == $point->post_type ) {
+				if ( ! isset( $point->ID ) || ! get_post( $point->ID ) || 'explore-character' === $point->post_type ) {
 					continue;
 				}
 
@@ -3311,14 +3314,14 @@ class Explore {
 				$height = get_post_meta( $point->ID, 'explore-height', true ) . 'px';
 				$width  = get_post_meta( $point->ID, 'explore-width', true ) . 'px';
 				$bg_url = get_the_post_thumbnail_url( $point->ID );
-				$type   = $point->post_type === 'explore-enemy' ? '.enemy-item' : '.map-item';
+				$type   = 'explore-enemy' === $point->post_type ? '.enemy-item' : '.map-item';
 
 				$css .= "
                 body .game-container .default-map {$type}.{$point->post_name}-map-item[data-genre='" . esc_attr( $point->post_type ) . "'] {
                     top: " . esc_attr( $top ) . ';
                     left: ' . esc_attr( $left ) . ';
-                    ' . ( $height !== '0px' ? 'height:' . esc_attr( $height ) . ';' : '' ) . '
-                    ' . ( $width !== '0px' ? 'width:' . esc_attr( $width ) . ';' : '' ) . '
+                    ' . ( '0px' !== $height ? 'height:' . esc_attr( $height ) . ';' : '' ) . '
+                    ' . ( '0px' !== $width ? 'width:' . esc_attr( $width ) . ';' : '' ) . '
                     ' . ( ! empty( $bg_url ) ? "background: url('" . esc_url( $bg_url ) . "') no-repeat; background-size: cover;" : '' ) . '
                 }
                 ';

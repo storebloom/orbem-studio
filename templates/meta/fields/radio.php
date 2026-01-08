@@ -1,9 +1,17 @@
 <?php
+/**
+ * Radio field template.
+ *
+ * @package OrbemStudio
+ */
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
 /**
+ * Radio field template.
+ *
  * @var string $orbem_studio_key
  * @var array $orbem_studio_sub_value
  * @var boolean|string $orbem_studio_main_key

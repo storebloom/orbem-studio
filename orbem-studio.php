@@ -1,4 +1,10 @@
 <?php
+/**
+ * Orbem Studio plugin file.
+ *
+ * @package OrbemStudio
+ */
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }

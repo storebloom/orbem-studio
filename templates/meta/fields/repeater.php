@@ -1,9 +1,17 @@
 <?php
+/**
+ * Repeater field template.
+ *
+ * @package OrbemStudio
+ */
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
 /**
+ * Repeater field template.
+ *
  * @var string $orbem_studio_key
  * @var boolean|array $orbem_studio_sub_value
  * @var array $orbem_studio_meta_values
@@ -28,11 +36,12 @@ $orbem_studio_allowed_tags['input'] = array(
 	'required'    => true,
 	'data-*'      => true,
 );
+$orbem_studio_final_value_count     = intval( count( $orbem_studio_final_value ) );
 ?>
 <p>
 <label>
 	<div class="field-container-wrap">
-		<?php for ( $orbem_studio_i = 0; $orbem_studio_i < count( $orbem_studio_final_value ); $orbem_studio_i++ ) : ?>
+		<?php for ( $orbem_studio_i = 0; $orbem_studio_i < $orbem_studio_final_value_count; $orbem_studio_i++ ) : ?>
 			<div class="field-container">
 				<span class="container-index"><?php echo esc_html( $orbem_studio_repeat_index ); ?></span>
 				<?php foreach ( $orbem_studio_sub_value as $orbem_studio_repeater_key => $orbem_studio_repeater_type ) : ?>

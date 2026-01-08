@@ -1,4 +1,10 @@
 <?php
+/**
+ * Upload field template.
+ *
+ * @package OrbemStudio
+ */
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -6,6 +12,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 use OrbemStudio\Meta_Box;
 
 /**
+ * Upload field template.
+ *
  * @var string         $orbem_studio_key
  * @var boolean|string $orbem_studio_main_key
  * @var boolean|int    $orbem_studio_repeat_index
