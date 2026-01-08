@@ -50,7 +50,7 @@ class Plugin extends Plugin_Base {
 
         // Configure your game.
         register_activation_hook(
-            $this->dir_path . 'orbem-studio.php',
+            $this->dir_path . '/orbem-studio.php',
             [$this, 'activateOrbemStudio']
         );
 	}
@@ -60,10 +60,10 @@ class Plugin extends Plugin_Base {
      */
     public function activateOrbemStudio(): void
     {
-        $setup_triggered = get_option('orbem_studio_setup_triggered', false);
+        $setup_triggered = get_option('orbem_studio_setup_triggered', 'false');
 
-        if (false === $setup_triggered) {
-            update_option('orbem_studio_setup_triggered', true);
+        if ('false' === $setup_triggered) {
+            update_option('orbem_studio_setup_triggered', 'true');
         }
     }
 
