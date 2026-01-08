@@ -368,46 +368,57 @@ class Plugin extends Plugin_Base {
     }
 
     /**
-     * Block blocks.
+     * Block Gutenberg blocks.
+     *
      * @filter allowed_block_types_all
-     * @param $allowed_blocks
-     * @param $editor_context
-     * @return string[]
+     *
+     * @param bool|array $allowed_blocks
+     * @param \WP_Block_Editor_Context $editor_context
+     * @return bool|array
      */
-    public function blockGutenbergBlocks($allowed_blocks, $editor_context): array
+    public function blockGutenbergBlocks(bool|array $allowed_blocks, \WP_Block_Editor_Context $editor_context): bool|array
     {
-        $allowed_blocks = is_array($allowed_blocks) ? $allowed_blocks : [];
+        // Always preserve behavior if context is missing
+        if (empty($editor_context->post)) {
+            return $allowed_blocks;
+        }
 
-        // Target only your custom post type
-        if (!empty($editor_context->post) && true === in_array($editor_context->post->post_type, ['explore-magic', 'explore-explainer', 'explore-sign'])) {
+        $post_type = $editor_context->post->post_type;
+
+        // Only target explore-* post types
+        if (!str_starts_with($post_type, 'explore-')) {
+            return $allowed_blocks;
+        }
+
+        if (in_array($post_type, ['explore-magic', 'explore-explainer', 'explore-sign'], true)) {
             return [
                 'core/paragraph',
                 'core/image',
             ];
         }
 
-        if (!empty($editor_context->post) && 'explore-weapons' === $editor_context->post->post_type) {
+        if ($post_type === 'explore-weapons') {
             return [
                 'core/paragraph',
             ];
         }
 
-        if (!empty($editor_context->post) && $editor_context->post->post_type === 'explore-minigame') {
+        if ($post_type === 'explore-minigame') {
             return [
                 'core/paragraph',
                 'core/image',
-                'core/group'
+                'core/group',
             ];
         }
 
-        if (!empty($editor_context->post) && true === in_array($editor_context->post->post_type, ['explore-cutscene', 'explore-communicate'])) {
+        if (in_array($post_type, ['explore-cutscene', 'explore-communicate'], true)) {
             return [
                 'orbem/paragraph-mp3',
-                'core/video'
+                'core/video',
             ];
         }
 
-        return $allowed_blocks; // Default for all other post types
+        return $allowed_blocks;
     }
 
     /**
