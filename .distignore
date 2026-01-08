@@ -1,16 +1,34 @@
+# Version Control
 .git/
 .github/
+.gitignore
+
+# IDE and Editor
 .idea/
+
+# WordPress.org Assets
 .wordpress-org/
+
+# Source Files (not needed in distribution)
 assets/src/js
 assets/src/sass
+
+# Documentation (developer-focused)
+docs/
+
+# Development Configuration
 .distignore
-.DS_Store
-.gitignore
 .wp-env.json
-CONTRIBUTING.md
-node_modules
-package.json
-.package-lock.json
 phpcs.xml
+
+# Package Management
+node_modules/
+package.json
+package-lock.json
+
+# System Files
+.DS_Store
+
+# Project Documentation
+CONTRIBUTING.md
 README.md
