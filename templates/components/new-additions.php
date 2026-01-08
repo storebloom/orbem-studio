@@ -1,5 +1,7 @@
 <?php
-if ( ! defined( 'ABSPATH' ) ) exit;
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
 
 /**
  * Characters panel for game.
@@ -7,21 +9,21 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 ?>
 
 <div class="add-new-form">
-    <span class="close-settings">X</span>
-    <h2>God Mode / No Touch</h2>
-    <label>
-        God Mode
-        <br>
-            <sub>Will allow you to walk through objects and walls, but your character can still interact with items/triggers.</sub>
-        <br>
-        <input type="checkbox" id="god-mode" />
-    </label>
-    <br>
-    <label>
-        No Touch
-        <br>
-            <sub>Will stop your character from interacting with items upon touch.</sub>
-        <br>
-        <input type="checkbox" id="no-touch" />
-    </label>
+	<span class="close-settings">X</span>
+	<h2>God Mode / No Touch</h2>
+	<label>
+		God Mode
+		<br>
+			<sub>Will allow you to walk through objects and walls, but your character can still interact with items/triggers.</sub>
+		<br>
+		<input type="checkbox" id="god-mode" />
+	</label>
+	<br>
+	<label>
+		No Touch
+		<br>
+			<sub>Will stop your character from interacting with items upon touch.</sub>
+		<br>
+		<input type="checkbox" id="no-touch" />
+	</label>
 </div>
