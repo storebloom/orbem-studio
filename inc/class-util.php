@@ -58,10 +58,10 @@ class Util {
 	/**
 	 * Get the list of posts by post type. Just the post names.
 	 *
-	 * @param string $post_type
-	 * @param bool   $taxo
-	 * @param string $meta_key
-	 * @param string $meta_value
+	 * @param string $post_type  The post type to query.
+	 * @param bool   $taxo       Whether to query taxonomy terms instead.
+	 * @param string $meta_key   The meta key to filter by.
+	 * @param string $meta_value The meta value to filter by.
 	 * @return array
 	 */
 	public function getOrbemArray(
@@ -99,7 +99,7 @@ class Util {
 			'no_found_rows' => true,
 		);
 
-		if ( $meta_key !== '' ) {
+		if ( '' !== $meta_key ) {
             // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 			$args['meta_query'] = array(
 				array(

@@ -308,10 +308,10 @@ class Plugin extends Plugin_Base {
 	 * Use template file if page matches option.
 	 *
 	 * @filter template_include
-	 * @param $template
+	 * @param string $template The template path.
 	 * @return string
 	 */
-	public function exploreIncludeTemplate( $template ): string {
+	public function exploreIncludeTemplate( string $template ): string {
 		$game_page = get_option( 'explore_game_page', '' );
 		$page      = get_queried_object();
 
@@ -363,10 +363,10 @@ class Plugin extends Plugin_Base {
 	 * Filter the taxo in CPT.
 	 *
 	 * @filter parse_query
-	 * @param $query
+	 * @param \WP_Query $query The query object.
 	 * @return void
 	 */
-	public function filterPostsAdminList( $query ): void {
+	public function filterPostsAdminList( \WP_Query $query ): void {
 		if ( ! is_admin() || ! $query->is_main_query() ) {
 			return;
 		}
@@ -382,7 +382,7 @@ class Plugin extends Plugin_Base {
 
 		if (
 			isset( $term_id ) &&
-			$term_id !== 0
+			0 !== $term_id
 		) {
 			$term = get_term( $term_id, $taxonomy );
 			if ( $term && ! is_wp_error( $term ) ) {
@@ -396,8 +396,8 @@ class Plugin extends Plugin_Base {
 	 *
 	 * @filter allowed_block_types_all
 	 *
-	 * @param bool|array               $allowed_blocks
-	 * @param \WP_Block_Editor_Context $editor_context
+	 * @param bool|array               $allowed_blocks The allowed blocks.
+	 * @param \WP_Block_Editor_Context $editor_context The editor context.
 	 * @return bool|array
 	 */
 	public function blockGutenbergBlocks( bool|array $allowed_blocks, \WP_Block_Editor_Context $editor_context ): bool|array {
@@ -420,13 +420,13 @@ class Plugin extends Plugin_Base {
 			);
 		}
 
-		if ( $post_type === 'explore-weapons' ) {
+		if ( 'explore-weapons' === $post_type ) {
 			return array(
 				'core/paragraph',
 			);
 		}
 
-		if ( $post_type === 'explore-minigame' ) {
+		if ( 'explore-minigame' === $post_type ) {
 			return array(
 				'core/paragraph',
 				'core/image',

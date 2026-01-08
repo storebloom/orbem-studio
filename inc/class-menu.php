@@ -104,6 +104,8 @@ class Menu {
 
 
 	/**
+	 * Organize taxonomy menu items in the admin.
+	 *
 	 * @action admin_head
 	 * @return void
 	 */
@@ -157,6 +159,8 @@ class Menu {
 	}
 
 	/**
+	 * Register game options settings.
+	 *
 	 * @action admin_init
 	 * @return void
 	 */
@@ -187,7 +191,7 @@ class Menu {
 				function ( $args ) use ( $key, $value ) {
 					$field_key = $args[0];
 					$indicator = get_option( $field_key, '' );
-					if ( isset( $value[0] ) && $value[0] === 'upload' ) : ?>
+					if ( isset( $value[0] ) && 'upload' === $value[0] ) : ?>
 						<div class="explore-image-field">
 							<?php if ( '' !== $indicator && false === str_contains( $indicator, 'webm' ) && false === str_contains( $indicator, 'mp4' ) && false === str_contains( $indicator, 'mp3' ) && false === str_contains( $indicator, '.wav' ) ) : ?>
 								<img alt="indicator icon" src="<?php echo esc_url( $indicator ); ?>" width="60"/>
@@ -202,16 +206,16 @@ class Menu {
 								<button type="button" class="remove_image_button button"><?php esc_html_e( 'Remove Image', 'orbem-studio' ); ?></button>
 							</p>
 						</div>
-					<?php elseif ( isset( $value[0] ) && $value[0] === 'text' ) : ?>
+					<?php elseif ( isset( $value[0] ) && 'text' === $value[0] ) : ?>
 						<sub><?php echo esc_html( $value[2] ?? '' ); ?></sub>
 						<input type="text" id="<?php echo esc_attr( $field_key ); ?>" name="<?php echo esc_attr( $field_key ); ?>" value="<?php echo esc_attr( $indicator ); ?>" />
-					<?php elseif ( isset( $value[0] ) && $value[0] === 'color' ) : ?>
+					<?php elseif ( isset( $value[0] ) && 'color' === $value[0] ) : ?>
 						<sub><?php echo esc_html( $value[2] ?? '' ); ?></sub>
 						<input class="explore-color-field" type="text" id="<?php echo esc_attr( $field_key ); ?>" name="<?php echo esc_attr( $field_key ); ?>" value="<?php echo esc_attr( $indicator ); ?>" />
-					<?php elseif ( isset( $value[0] ) && $value[0] === 'number' ) : ?>
+					<?php elseif ( isset( $value[0] ) && 'number' === $value[0] ) : ?>
 						<sub><?php echo esc_html( $value[2] ?? '' ); ?></sub>
 						<input type="number" id="<?php echo esc_attr( $field_key ); ?>" name="<?php echo esc_attr( $field_key ); ?>" value="<?php echo esc_attr( $indicator ); ?>" />
-					<?php elseif ( isset( $value[0] ) && $value[0] === 'select' ) : ?>
+					<?php elseif ( isset( $value[0] ) && 'select' === $value[0] ) : ?>
 						<sub><?php echo esc_html( $value[2] ?? '' ); ?></sub>
 						<select name="<?php echo esc_attr( $field_key ); ?>">
 							<option disabled selected value>Select...</option>
@@ -219,10 +223,10 @@ class Menu {
 								<option value="<?php echo esc_attr( is_object( $option ) ? $option->post_name : $option ); ?>" <?php selected( is_object( $option ) ? $option->post_name : $option, $indicator ); ?>><?php echo esc_attr( is_object( $option ) ? $option->post_title : $option ); ?></option>
 							<?php endforeach; ?>
 						</select>
-					<?php elseif ( isset( $value[0] ) && $value[0] === 'checkbox' ) : ?>
+					<?php elseif ( isset( $value[0] ) && 'checkbox' === $value[0] ) : ?>
 						<sub><?php echo esc_html( $value[2] ?? '' ); ?></sub>
 						<input type="checkbox" id="<?php echo esc_attr( $field_key ); ?>" name="<?php echo esc_attr( $field_key ); ?>" <?php checked( 'on', $indicator ); ?> />
-					<?php elseif ( isset( $value[0] ) && $value[0] === 'multiselect' ) : ?>
+					<?php elseif ( isset( $value[0] ) && 'multiselect' === $value[0] ) : ?>
 						<sub><?php echo esc_html( $value[2] ?? '' ); ?></sub>
 						<div class="multiselect-wrapper">
 							<?php foreach ( $value[3] as $option ) : ?>
@@ -325,7 +329,7 @@ class Menu {
 	/**
 	 * Sanitize function for game options.
 	 *
-	 * @param mixed $value
+	 * @param mixed $value The value to sanitize.
 	 * @return mixed
 	 */
 	public function sanitizeGameOption( mixed $value ): mixed {
@@ -353,7 +357,7 @@ class Menu {
 				return is_numeric( $value ) ? absint( $value ) : 0;
 
 			case 'checkbox':
-				return $value === 'on' ? 'on' : '';
+				return 'on' === $value ? 'on' : '';
 
 			case 'select':
 				$allowed = array_map(
@@ -376,7 +380,7 @@ class Menu {
 				foreach ( $value as $key => $checked ) {
 					$key = sanitize_key( $key );
 
-					if ( in_array( $key, $allowed, true ) && $checked === 'on' ) {
+					if ( in_array( $key, $allowed, true ) && 'on' === $checked ) {
 						$clean[ $key ] = 'on';
 					}
 				}

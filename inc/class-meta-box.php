@@ -34,11 +34,11 @@ class Meta_Box {
 	 * Adding the explore character date to rest api.
 	 *
 	 * @filter rest_prepare_explore-character
-	 * @param $response
-	 * @param $post
+	 * @param \WP_REST_Response $response The REST response object.
+	 * @param \WP_Post          $post     The post object.
 	 * @return mixed
 	 */
-	public function addMetaToRest( $response, $post ): mixed {
+	public function addMetaToRest( \WP_REST_Response $response, \WP_Post $post ): mixed {
 		$meta_value = get_post_meta( $post->ID, 'explore-voice', true );
 		if ( ! isset( $response->data['meta'] ) ) {
 			$response->data['meta'] = array();
@@ -62,8 +62,10 @@ class Meta_Box {
 
 	/**
 	 * Call back function for the metabox.
+	 *
+	 * @param \WP_Post|string $post The post object or post type string.
 	 */
-	public function explorePointBox( $post ): void {
+	public function explorePointBox( \WP_Post|string $post ): void {
 		$orbem_studio_front_end = is_string( $post );
 		$post_type              = is_string( $post ) ? $post : $post->post_type;
 		$orbem_studio_meta_data = $this->getMetaData( $post_type );
@@ -83,8 +85,9 @@ class Meta_Box {
 	 * Save meta
 	 *
 	 * @action save_post, 1
+	 * @param int $post_id The post ID.
 	 */
-	public function saveMeta( $post_id ): void {
+	public function saveMeta( int $post_id ): void {
 		// Verify nonce
 		if ( ! isset( $_POST['orbem_meta_box_nonce'] ) ||
 			! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['orbem_meta_box_nonce'] ) ), 'orbem_meta_box_save' )
@@ -113,9 +116,9 @@ class Meta_Box {
 		if ( false === in_array( $post_type, array( 'post', 'page' ), true ) ) {
 			// Compile meta data.
 			foreach ( $meta_data as $key => $value ) {
-				$type      = is_array( $value[0] ) ? key( $value[0] ) : $value[0];
-				$raw_value = $_POST[ $key ] ?? null;
-				$raw_value = wp_unslash( $raw_value );
+				$type = is_array( $value[0] ) ? key( $value[0] ) : $value[0];
+				// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified above.
+				$raw_value = isset( $_POST[ $key ] ) ? wp_unslash( $_POST[ $key ] ) : null;
 
 				if (
 					is_array( $raw_value )
@@ -136,7 +139,7 @@ class Meta_Box {
 	/**
 	 * Recursively sanitize array values.
 	 *
-	 * @param mixed $value
+	 * @param mixed $value The value to sanitize.
 	 * @return mixed
 	 */
 	private function sanitizeRecursive( mixed $value ): mixed {
@@ -163,7 +166,13 @@ class Meta_Box {
 		return null;
 	}
 
-	public function getMetaData( $post_type = '' ) {
+	/**
+	 * Get meta data configuration for a post type.
+	 *
+	 * @param string $post_type The post type to get meta data for.
+	 * @return array
+	 */
+	public function getMetaData( string $post_type = '' ): array {
 		$explore_item_array        = $this->plugin->util->getOrbemArray( 'explore-point' );
 		$explore_area_array        = $this->plugin->util->getOrbemArray( 'explore-area' );
 		$explore_communicate_array = $this->plugin->util->getOrbemArray( 'explore-communication-type', true );
@@ -1336,6 +1345,11 @@ class Meta_Box {
 		return $post_type_specific[ $post_type ] ?? array();
 	}
 
+	/**
+	 * Get available Google TTS voices.
+	 *
+	 * @return array
+	 */
 	public function getVoices(): array {
 		return array(
 			array(
@@ -4279,15 +4293,15 @@ class Meta_Box {
 	/**
 	 * Get meta html.
 	 *
-	 * @param $orbem_studio_key
-	 * @param $value
-	 * @param $orbem_studio_meta_values
-	 * @param bool|string       $orbem_studio_main_key
-	 * @param bool|string|array $orbem_studio_sub_value
-	 * @param bool|int          $orbem_studio_repeat_index
+	 * @param string            $orbem_studio_key          The meta key.
+	 * @param mixed             $value                     The field value configuration.
+	 * @param array             $orbem_studio_meta_values  The meta values array.
+	 * @param bool|string       $orbem_studio_main_key     The main key for repeater fields.
+	 * @param bool|string|array $orbem_studio_sub_value    The sub value for repeater fields.
+	 * @param bool|int          $orbem_studio_repeat_index The repeater index.
 	 * @return false|string
 	 */
-	public static function getMetaHtml( $orbem_studio_key, $value, $orbem_studio_meta_values, bool|string $orbem_studio_main_key = false, bool|string|array $orbem_studio_sub_value = false, bool|int $orbem_studio_repeat_index = false ): false|string {
+	public static function getMetaHtml( string $orbem_studio_key, mixed $value, array $orbem_studio_meta_values, bool|string $orbem_studio_main_key = false, bool|string|array $orbem_studio_sub_value = false, bool|int $orbem_studio_repeat_index = false ): false|string {
 		ob_start();
 		if ( false === is_array( $value ) ) {
 			include plugin_dir_path( __FILE__ ) . "../templates/meta/fields/$value.php";
@@ -4299,12 +4313,12 @@ class Meta_Box {
 	/**
 	 * Util to add image upload html for fields
 	 *
-	 * @param $name
-	 * @param $slug
-	 * @param $values
+	 * @param string $name   The field name.
+	 * @param string $slug   The field slug.
+	 * @param string $values The field value.
 	 * @return bool|string
 	 */
-	public static function imageUploadHTML( $name, $slug, $values ): bool|string {
+	public static function imageUploadHTML( string $name, string $slug, string $values ): bool|string {
 		ob_start();
 		?>
 		<div class="explore-image-field">
@@ -4326,11 +4340,13 @@ class Meta_Box {
 	}
 
 	/**
+	 * Add image upload field to taxonomy edit form.
+	 *
 	 * @action explore-communication-type_edit_form_fields
-	 * @param $term
+	 * @param \WP_Term $term The term object.
 	 * @return void
 	 */
-	public function addTaxonomyImageUpload( $term ): void {
+	public function addTaxonomyImageUpload( \WP_Term $term ): void {
 		$orbem_studio_meta_values           = get_term_meta( $term->term_id, 'explore-background', true );
 		$orbem_studio_allowed_tags          = wp_kses_allowed_html( 'post' );
 		$orbem_studio_allowed_tags['input'] = array(
@@ -4349,8 +4365,9 @@ class Meta_Box {
 	 * Save communication type term meta
 	 *
 	 * @action edited_explore-communication-type
+	 * @param int $term_id The term ID.
 	 */
-	public function saveCommunicationTypeMeta( $term_id ): void {
+	public function saveCommunicationTypeMeta( int $term_id ): void {
 		$background_url = filter_input( INPUT_POST, 'explore-background', FILTER_SANITIZE_URL );
 
 		if ( true === isset( $background_url ) ) {

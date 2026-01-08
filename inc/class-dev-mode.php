@@ -35,7 +35,8 @@ class Dev_Mode {
 	/**
 	 * Class constructor.
 	 *
-	 * @param object $plugin Plugin class.
+	 * @param object $plugin   Plugin class.
+	 * @param object $meta_box Meta box class.
 	 */
 	public function __construct( object $plugin, object $meta_box ) {
 		$this->plugin   = $plugin;
@@ -103,7 +104,7 @@ class Dev_Mode {
 	/**
 	 * Change position of item.
 	 *
-	 * @param \WP_REST_Request $request
+	 * @param \WP_REST_Request $request The REST request object.
 	 * @return \WP_REST_Response
 	 */
 	public function setItemPosition( \WP_REST_Request $request ): \WP_REST_Response {
@@ -194,7 +195,7 @@ class Dev_Mode {
 	/**
 	 * Set item size front end.
 	 *
-	 * @param \WP_REST_Request $request
+	 * @param \WP_REST_Request $request The REST request object.
 	 * @return \WP_REST_Response
 	 */
 	public function setItemSize( \WP_REST_Request $request ): \WP_REST_Response {
@@ -257,7 +258,7 @@ class Dev_Mode {
 	/**
 	 * Get fields.
 	 *
-	 * @param \WP_REST_Request $request
+	 * @param \WP_REST_Request $request The REST request object.
 	 * @return \WP_REST_Response
 	 */
 	public function getNewFields( \WP_REST_Request $request ): \WP_REST_Response {
@@ -291,12 +292,12 @@ class Dev_Mode {
 
 		$this->meta_box->explore_point_box( $post_type );
 
-		$newFields = ob_get_clean();
+		$new_fields = ob_get_clean();
 
 		return rest_ensure_response(
 			array(
 				'success' => true,
-				'data'    => $newFields,
+				'data'    => $new_fields,
 			)
 		);
 	}
@@ -304,7 +305,7 @@ class Dev_Mode {
 	/**
 	 * Add new item.
 	 *
-	 * @param \WP_REST_Request $request
+	 * @param \WP_REST_Request $request The REST request object.
 	 * @return \WP_REST_Response
 	 */
 	public function addNew( \WP_REST_Request $request ): \WP_REST_Response {
@@ -386,12 +387,12 @@ class Dev_Mode {
 	/**
 	 * Get dev mode triggers.
 	 *
-	 * @param $items
-	 * @param $cutscenes
-	 * @param $missions
+	 * @param array $items     The items array.
+	 * @param array $cutscenes The cutscenes array.
+	 * @param array $missions  The missions array.
 	 * @return array
 	 */
-	public static function getTriggers( $items, $cutscenes, $missions ): array {
+	public static function getTriggers( array $items, array $cutscenes, array $missions ): array {
 		$trigger = array();
 
 		if ( is_array( $items ) && is_array( $cutscenes ) && is_array( $missions ) ) {
