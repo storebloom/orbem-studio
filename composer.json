@@ -1,5 +1,21 @@
 {
+    "name": "storebloom/orbem-studio",
+    "description": "Orbem Studio plugin",
+    "type": "wordpress-plugin",
+    "license": "GPL-2.0-or-later",
+    "require": {
+        "php": "^8.1"
+    },
     "require-dev": {
-        "squizlabs/php_codesniffer": "^4.0"
+        "wp-coding-standards/wpcs": "^3.1.0"
+    },
+    "scripts": {
+        "lint": "vendor/bin/phpcs .",
+        "fix": "vendor/bin/phpcbf ."
+    },
+    "config": {
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        }
     }
 }
