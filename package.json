@@ -9,14 +9,18 @@
   },
   "scripts": {
     "build": "wp-scripts build assets/src/js/*.js --output-path=assets/build/",
+    "composer": "wp-env run cli --env-cwd=wp-content/plugins/orbem-studio composer",
     "env:build": "wp-env build",
     "env:destroy": "wp-env destroy",
     "env:shell": "wp-env run cli bash",
     "env:start": "wp-env start",
     "env:stop": "wp-env stop",
+    "logs": "wp-env logs",
     "setup": "npm ci && composer install",
     "watch:hot": "wp-scripts start assets/src/js/*.js --output-path=assets/build/ --hot",
-    "watch": "wp-scripts start assets/src/js/*.js --output-path=assets/build/"
+    "watch": "wp-scripts start assets/src/js/*.js --output-path=assets/build/",
+    "wp": "wp-env run cli wp",
+    "zip": "zip -r ../$npm_package_name.zip * -x@.distignore"
   },
   "engines": {
     "node": ">=22.4.0",
@@ -50,5 +54,8 @@
     "jsxSingleQuote": true,
     "singleQuote": true,
     "tabWidth": 4
+  },
+  "dependencies": {
+    "@wordpress/env": "^10.37.0"
   }
 }
