@@ -18,3 +18,4 @@ package.json
 phpcs.xml
 pnpm-lock.yaml
 README.md
+vendor/*
