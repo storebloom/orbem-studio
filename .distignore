@@ -1,0 +1,16 @@
+.git/
+.github/
+.idea/
+.wordpress-org/
+assets/src/js
+assets/src/sass
+.distignore
+.DS_Store
+.gitignore
+.wp-env.json
+CONTRIBUTING.md
+node_modules
+package.json
+.package-lock.json
+phpcs.xml
+README.md
