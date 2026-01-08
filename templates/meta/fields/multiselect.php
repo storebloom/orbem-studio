@@ -1,11 +1,18 @@
 <?php
+/**
+ * Multiselect field template.
+ *
+ * @package OrbemStudio
+ */
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
 /**
- * multiselect field template.
+ * Multiselect field template.
  *
+ * @var array  $orbem_studio_meta_values
  * @var array  $orbem_studio_sub_value
  * @var string $orbem_studio_key
  */

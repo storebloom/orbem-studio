@@ -1,9 +1,17 @@
 <?php
+/**
+ * Setup template.
+ *
+ * @package OrbemStudio
+ */
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
 /**
+ * Setup template.
+ *
  * @var boolean $things_made
  * @var boolean $finished_area
  * @var boolean $finished_character

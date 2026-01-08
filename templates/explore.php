@@ -1,11 +1,17 @@
 <?php
+/**
+ * Explore page template.
+ *
+ * @package OrbemStudio
+ */
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
 /**
  * Template Name: Explore
- * Register form template.
+ * Explore page template.
  */
 
 use OrbemStudio\Explore;
@@ -203,6 +209,7 @@ $orbem_studio_power_bar  = $orbem_studio_hud_bars['power'] ?? '';
 $orbem_studio_points_bar = $orbem_studio_hud_bars['points'] ?? '';
 $orbem_studio_money_bar  = $orbem_studio_hud_bars['money'] ?? '';
 
+// phpcs:ignore WordPress.PHP.DontExtract.extract_extract
 extract(
 	array(
 		'orbem_studio_userid' => $orbem_studio_userid,

@@ -1,4 +1,10 @@
 <?php
+/**
+ * Start screen template.
+ *
+ * @package OrbemStudio
+ */
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
@@ -6,6 +12,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 use OrbemStudio\Explore;
 
 /**
+ * Start screen template.
+ *
  * @var boolean $orbem_studio_is_admin
  * @var string  $orbem_studio_signin_screen
  * @var string  $orbem_studio_require_login

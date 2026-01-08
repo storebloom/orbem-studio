@@ -46,6 +46,9 @@
 
         <!-- Allow WP global modification -->
         <exclude name="WordPress.WP.GlobalVariablesOverride.Prohibited"/>
+
+        <!-- Allow camelCase method names -->
+        <exclude name="WordPress.NamingConventions.ValidFunctionName.MethodNameInvalid"/>
     </rule>
 
     <!-- Sets the minimum supported WP version to 6.6. -->

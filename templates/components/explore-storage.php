@@ -1,10 +1,16 @@
 <?php
+/**
+ * Explore storage panel for game.
+ *
+ * @package OrbemStudio
+ */
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
 /**
- * Settings panel for game.
+ * Explore storage panel for game.
  *
  * @var int $orbem_studio_userid
  */
@@ -55,7 +61,8 @@ $orbem_studio_current_explore_weapon = get_user_meta( $orbem_studio_userid, 'exp
 		<?php foreach ( $orbem_studio_storage as $orbem_studio_storage_type => $orbem_studio_storage_items ) : ?>
 			<div data-menu="<?php echo esc_attr( $orbem_studio_storage_type ); ?>" class="storage-menu <?php echo 'items' === $orbem_studio_storage_type ? 'engage' : ''; ?>">
 				<?php
-				for ( $orbem_studio_x = 0; $orbem_studio_x <= intval( $orbem_studio_storage_limit ); $orbem_studio_x++ ) :
+				$orbem_studio_storage_limit = intval( $orbem_studio_storage_limit );
+				for ( $orbem_studio_x = 0; $orbem_studio_x <= $orbem_studio_storage_limit; $orbem_studio_x++ ) :
 					$orbem_studio_item             = isset( $orbem_studio_storage_items[ $orbem_studio_x ] ) && is_array( $orbem_studio_storage_items[ $orbem_studio_x ] )
 						? $orbem_studio_storage_items[ $orbem_studio_x ]
 						: array();

@@ -1,4 +1,10 @@
 <?php
+/**
+ * Template holding <head> code.
+ *
+ * @package OrbemStudio
+ */
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }

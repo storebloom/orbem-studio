@@ -1,9 +1,17 @@
 <?php
+/**
+ * Select field template.
+ *
+ * @package OrbemStudio
+ */
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
 /**
+ * Select field template.
+ *
  * @var string         $orbem_studio_key
  * @var boolean|string $orbem_studio_main_key
  * @var array          $orbem_studio_sub_value

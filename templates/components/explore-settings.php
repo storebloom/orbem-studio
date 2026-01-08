@@ -1,4 +1,10 @@
 <?php
+/**
+ * Explore settings panel for game.
+ *
+ * @package OrbemStudio
+ */
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }

@@ -1,5 +1,18 @@
-<?php if ( ! defined( 'ABSPATH' ) ) {
-	exit;} ?>
+<?php
+/**
+ * Pinpoint template.
+ *
+ * @package OrbemStudio
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+/**
+ * Pinpoint template.
+ */
+?>
 <div class="pinpoint-container">
 	<span id="open-pinpoint">⌖</span>
 	<div class="pinpoint-output">

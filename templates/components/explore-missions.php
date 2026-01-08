@@ -1,10 +1,16 @@
 <?php
+/**
+ * Settings panel for game.
+ *
+ * @package OrbemStudio
+ */
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
 /**
- * Settings panel for game.
+ * Explore missions panel for game.
  *
  * @var int $orbem_studio_userid
  * @var array $orbem_studio_explore_missions

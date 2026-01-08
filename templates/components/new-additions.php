@@ -1,10 +1,16 @@
 <?php
+/**
+ * New additions panel for game.
+ *
+ * @package OrbemStudio
+ */
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
 /**
- * Characters panel for game.
+ * New additions panel for game.
  */
 ?>
 

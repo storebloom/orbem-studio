@@ -1,4 +1,10 @@
 <?php
+/**
+ * This is the game options menu.
+ *
+ * @package OrbemStudio
+ */
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }

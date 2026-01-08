@@ -1,10 +1,16 @@
 <?php
+/**
+ * Characters panel for game.
+ *
+ * @package OrbemStudio
+ */
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
 /**
- * Characters panel for game.
+ * Explore characters panel for game.
  *
  * @var int $orbem_studio_userid
  */
@@ -20,7 +26,7 @@ $orbem_studio_characters = get_user_meta( $orbem_studio_userid, 'explore_charact
 		<?php
 		if ( false === empty( $orbem_studio_characters ) ) :
 			foreach ( $orbem_studio_characters as $orbem_studio_character ) :
-				if ( ! is_string( $orbem_studio_character ) || $orbem_studio_character !== sanitize_title( $orbem_studio_character ) ) {
+				if ( false === is_string( $orbem_studio_character ) || sanitize_title( $orbem_studio_character ) !== $orbem_studio_character ) {
 					continue;
 				}
 
@@ -53,7 +59,7 @@ $orbem_studio_characters = get_user_meta( $orbem_studio_userid, 'explore_charact
 						<img
 							height="<?php echo esc_attr( $orbem_studio_height ); ?>"
 							width="<?php echo esc_attr( $orbem_studio_width ); ?>"
-							class="character-icon<?php echo $orbem_studio_direction_label === 'static' ? ' engage' : ''; ?>"
+							class="character-icon<?php echo 'static' === $orbem_studio_direction_label ? ' engage' : ''; ?>"
 							id="<?php echo esc_attr( $orbem_studio_character_post[0]->post_name . '-' . $orbem_studio_direction_label ); ?>"
 							src="<?php echo esc_url( $orbem_studio_non_main_direction_image ); ?>"
 						/>
