@@ -1,14 +1,12 @@
+**/.DS_Store
 .distignore
 .git/*
 .github/*
 .gitignore
 .idea/*
 .nvmrc
-.package-lock.json
-.pnpm-lock.yaml
 .wordpress-org/*
 .wp-env.json
-**/.DS_Store
 assets/src/js/*
 assets/src/sass/*
 CONTRIBUTING.md
