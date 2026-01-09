@@ -1,3 +1,5 @@
+import jQuery from 'jquery';
+
 import '../sass/admin.scss';
 
 document.addEventListener( 'DOMContentLoaded', function () {
@@ -72,12 +74,13 @@ document.addEventListener( 'DOMContentLoaded', function () {
 		} );
 	}
 
-	function removeField( removeField, repeaterContainer ) {
+	function removeField( fieldToRemove, repeaterContainer ) {
 		const fieldContainers =
 			repeaterContainer.querySelectorAll( '.field-container' );
 
-		removeField.addEventListener( 'click', () => {
-			const closestContainer = removeField.closest( '.field-container' );
+		fieldToRemove.addEventListener( 'click', () => {
+			const closestContainer =
+				fieldToRemove.closest( '.field-container' );
 
 			// Remove.
 			closestContainer.remove();
@@ -120,7 +123,7 @@ document.addEventListener( 'DOMContentLoaded', function () {
 	}
 
 	colorFields.forEach( ( field ) => {
-		const iris = jQuery( field ).iris( {
+		jQuery( field ).iris( {
 			// jQuery required one time or else I have to build a color picker.
 			defaultColor: field.dataset.defaultColor,
 			change( event, ui ) {
