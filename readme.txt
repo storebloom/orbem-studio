@@ -1,5 +1,5 @@
 === Orbem Studio ===
-Contributors: orbemorder, scottstorebloom
+Contributors: orbemorder, scottstorebloom, scottmweaver
 Donate link: https://www.patreon.com/c/OrbemOrder
 Tags: game engine, rpg, storytelling, gamification, narrative game
 Requires at least: 6.1

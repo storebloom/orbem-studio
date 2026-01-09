@@ -1,0 +1,66 @@
+<?xml version="1.0"?>
+<ruleset name="orbem-studio">
+    <description>Orbem Studio PHPCS Rules.</description>
+
+    <exclude-pattern>*/.github/*</exclude-pattern>
+    <exclude-pattern>*/.vscode/*</exclude-pattern>
+    <exclude-pattern>*/.wordpress-org/*</exclude-pattern>
+    <exclude-pattern>*/phpunit.xml*</exclude-pattern>
+    <exclude-pattern>*/assets/build/*</exclude-pattern>
+    <exclude-pattern>*/assets/dist/*</exclude-pattern>
+    <exclude-pattern>*/bin/*</exclude-pattern>
+    <exclude-pattern>*/languages/*</exclude-pattern>
+    <exclude-pattern>*/tests/*</exclude-pattern>
+
+    <!-- Third-party code -->
+    <exclude-pattern>*/node_modules/*</exclude-pattern>
+    <exclude-pattern>*/vendor/*</exclude-pattern>
+
+    <!-- Ensure certain file types aren't sniffed -->
+    <exclude-pattern>*\.(css|js)</exclude-pattern>
+
+    <!-- Don't worry about files that don't contain any code -->
+    <rule ref="Internal.NoCodeFound">
+        <severity>0</severity>
+    </rule>
+
+    <!-- Internal exceptions (often occur on minified files) -->
+    <rule ref="Internal.Tokenizer.Exception">
+        <severity>0</severity>
+    </rule>
+
+    <!-- Enforce doc standards -->
+    <rule ref="WordPress-Docs">
+        <!-- Don't worry about capitalizing long lines -->
+        <exclude name="Generic.Commenting.DocComment.LongNotCapital"/>
+
+        <!-- Don't need to capitalize first letter -->
+        <exclude name="Generic.Commenting.DocComment.ShortNotCapital"/>
+    </rule>
+
+    <rule ref="WordPress" />
+
+    <rule ref="WordPress-Extra">
+        <!-- Forget about file names -->
+        <exclude name="WordPress.Files.FileName"/>
+
+        <!-- Allow WP global modification -->
+        <exclude name="WordPress.WP.GlobalVariablesOverride.Prohibited"/>
+    </rule>
+
+    <!-- Sets the minimum supported WP version to 6.6. -->
+    <config name="minimum_supported_wp_version" value="6.6" />
+
+    <!-- Make missing translator comment a warning. -->
+    <rule ref="WordPress.WP.I18n.MissingTranslatorsComment">
+        <type>warning</type>
+    </rule>
+
+    <!-- Sometimes we need to override globals -->
+    <rule ref="WordPress.WP.GlobalVariablesOverride.OverrideProhibited">
+        <type>warning</type>
+    </rule>
+
+    <!-- PHP version check. -->
+    <config name="testVersion" value="7.4-"/>
+</ruleset>
