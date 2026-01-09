@@ -117,7 +117,7 @@ class Meta_Box {
 			// Compile meta data.
 			foreach ( $meta_data as $key => $value ) {
 				$type = is_array( $value[0] ) ? key( $value[0] ) : $value[0];
-				// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified above.
+				// phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Nonce verified above, sanitized below.
 				$raw_value = isset( $_POST[ $key ] ) ? wp_unslash( $_POST[ $key ] ) : null;
 
 				if (
@@ -4290,6 +4290,8 @@ class Meta_Box {
 		);
 	}
 
+	// phpcs:disable Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- Parameters used in included template files.
+
 	/**
 	 * Get meta html.
 	 *
@@ -4301,7 +4303,14 @@ class Meta_Box {
 	 * @param bool|int          $orbem_studio_repeat_index The repeater index.
 	 * @return false|string
 	 */
-	public static function getMetaHtml( string $orbem_studio_key, mixed $value, array $orbem_studio_meta_values, bool|string $orbem_studio_main_key = false, bool|string|array $orbem_studio_sub_value = false, bool|int $orbem_studio_repeat_index = false ): false|string {
+	public static function getMetaHtml(
+		string $orbem_studio_key,
+		mixed $value,
+		array $orbem_studio_meta_values,
+		bool|string $orbem_studio_main_key = false,
+		bool|string|array $orbem_studio_sub_value = false,
+		bool|int $orbem_studio_repeat_index = false
+	): false|string {
 		ob_start();
 		if ( false === is_array( $value ) ) {
 			include plugin_dir_path( __FILE__ ) . "../templates/meta/fields/$value.php";
@@ -4309,6 +4318,8 @@ class Meta_Box {
 
 		return ob_get_clean();
 	}
+
+	// phpcs:enable Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
 
 	/**
 	 * Util to add image upload html for fields

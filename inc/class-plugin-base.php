@@ -111,18 +111,18 @@ abstract class Plugin_Base {
 	/**
 	 * Autoload for classes that are in the same namespace as $this.
 	 *
-	 * @param string $class Class name.
+	 * @param string $class_name Class name.
 	 * @return void
 	 */
-	public function autoload( string $class ): void {
-		if ( ! isset( $this->autoload_matches_cache[ $class ] ) ) {
-			if ( ! preg_match( '/^(?P<namespace>.+)\\\\(?P<class>[^\\\\]+)$/', $class, $matches ) ) {
+	public function autoload( string $class_name ): void {
+		if ( ! isset( $this->autoload_matches_cache[ $class_name ] ) ) {
+			if ( ! preg_match( '/^(?P<namespace>.+)\\\\(?P<class>[^\\\\]+)$/', $class_name, $matches ) ) {
 				$matches = false;
 			}
 
-			$this->autoload_matches_cache[ $class ] = $matches;
+			$this->autoload_matches_cache[ $class_name ] = $matches;
 		} else {
-			$matches = $this->autoload_matches_cache[ $class ];
+			$matches = $this->autoload_matches_cache[ $class_name ];
 		}
 
 		if ( empty( $matches ) ) {
@@ -240,13 +240,13 @@ abstract class Plugin_Base {
 	/**
 	 * Add actions/filters/shortcodes from the methods of a class based on DocBlocks.
 	 *
-	 * @param object|null $object The class object.
+	 * @param object|null $instance The class instance.
 	 */
-	public function add_doc_hooks( ?object $object = null ): void {
-		if ( is_null( $object ) ) {
-			$object = $this;
+	public function add_doc_hooks( ?object $instance = null ): void {
+		if ( is_null( $instance ) ) {
+			$instance = $this;
 		}
-		$class_name = get_class( $object );
+		$class_name = get_class( $instance );
 		if ( isset( $this->called_doc_hooks[ $class_name ] ) ) {
 			$notice = sprintf( 'The add_doc_hooks method was already called on %s. Note that the Plugin_Base constructor automatically calls this method.', $class_name );
             // @codingStandardsIgnoreStart
@@ -255,7 +255,7 @@ abstract class Plugin_Base {
 			return;
 		}
 		$this->called_doc_hooks[ $class_name ] = true;
-		$reflector                             = new ReflectionObject( $object );
+		$reflector                             = new ReflectionObject( $instance );
 		foreach ( $reflector->getMethods() as $method ) {
 			$doc       = $method->getDocComment();
 			$arg_count = $method->getNumberOfParameters();
@@ -270,7 +270,7 @@ abstract class Plugin_Base {
 					$type     = $match['type'];
 					$name     = $match['name'];
 					$priority = empty( $match['priority'] ) ? 10 : intval( $match['priority'] );
-					$callback = array( $object, $method->getName() );
+					$callback = array( $instance, $method->getName() );
 					call_user_func( array( $this, "add_$type" ), $name, $callback, compact( 'priority', 'arg_count' ) );
 				}
 			}
@@ -280,15 +280,15 @@ abstract class Plugin_Base {
 	/**
 	 * Removes the added DocBlock hooks.
 	 *
-	 * @param object|null $object The class object.
+	 * @param object|null $instance The class instance.
 	 */
-	public function remove_doc_hooks( ?object $object = null ): void {
-		if ( is_null( $object ) ) {
-			$object = $this;
+	public function remove_doc_hooks( ?object $instance = null ): void {
+		if ( is_null( $instance ) ) {
+			$instance = $this;
 		}
 
-		$class_name = get_class( $object );
-		$reflector  = new ReflectionObject( $object );
+		$class_name = get_class( $instance );
+		$reflector  = new ReflectionObject( $instance );
 		foreach ( $reflector->getMethods() as $method ) {
 			$doc = $method->getDocComment();
 			if ( preg_match_all(
@@ -301,7 +301,7 @@ abstract class Plugin_Base {
 					$type     = $match['type'];
 					$name     = $match['name'];
 					$priority = empty( $match['priority'] ) ? 10 : intval( $match['priority'] );
-					$callback = array( $object, $method->getName() );
+					$callback = array( $instance, $method->getName() );
 					call_user_func( "remove_$type", $name, $callback, $priority );
 				}
 			}
