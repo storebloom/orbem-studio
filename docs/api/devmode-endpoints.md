@@ -50,7 +50,7 @@ When `walkingPath` is set to `"true"`, coordinates are added to the object's `ex
 
 ---
 
-## Object Sizing
+## Object Sizing (Pro feature)
 
 ### POST `/set-item-size/`
 
@@ -84,7 +84,7 @@ Update object dimensions.
 
 ---
 
-## Dynamic Field Loading
+## Dynamic Field Loading (Pro feature)
 
 ### POST `/get-new-fields/`
 
@@ -134,7 +134,7 @@ Retrieve configuration fields for a post type.
 
 ## Object Creation
 
-### POST `/add-new/`
+### POST `/add-new/` (Pro feature)
 
 Create a new game object from Developer Mode.
 

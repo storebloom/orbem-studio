@@ -8,7 +8,6 @@ This guide will walk you through installing Orbem Studio, completing the initial
 - [Initial Setup Wizard](#initial-setup-wizard)
 - [Creating Your First Area](#creating-your-first-area)
 - [Creating Your First Character](#creating-your-first-character)
-- [Creating Your First Weapon](#creating-your-first-weapon)
 - [Configuring Global Game Options](#configuring-global-game-options)
 - [Testing Your Game](#testing-your-game)
 - [Next Steps](#next-steps)
@@ -192,72 +191,6 @@ The "Character Name" field allows you to set a display name different from the p
 
 Click **Publish** to add your character to the game world.
 
-## Creating Your First Weapon
-
-Weapons determine how your character deals damage in combat scenarios.
-
-### Basic Weapon Setup
-
-1. Navigate to **Orbem Studio** → **Weapons**
-2. Click **Add New**
-3. Enter a weapon name (e.g., "Sword", "Laser Gun", "Fist")
-
-### Weapon Configuration
-
-#### Featured Image
-
-Upload an image representing this weapon. This appears in the inventory and when placed on the map for collection.
-
-#### Attack Values
-
-Configure three attack power levels:
-
-- **Normal:** Standard attack damage (e.g., `10`)
-- **Heavy:** Charged attack damage (e.g., `25`)
-- **Charged:** Maximum power attack (e.g., `50`)
-
-**Example attack configuration:**
-```
-Normal: 10
-Heavy: 20
-Charged: 35
-```
-
-#### Weapon Type
-
-Choose weapon behavior:
-
-- **Projectile: No** - Melee weapon (sword, fist, club)
-- **Projectile: Yes** - Ranged weapon (gun, bow, magic staff)
-
-Projectile weapons shoot when used, while melee weapons strike adjacent enemies.
-
-#### Item Type
-
-Set to `weapons` to categorize this as a weapon-type item in the inventory system.
-
-### Placing Weapons on the Map
-
-To make a weapon collectible during gameplay:
-
-1. Set the **Area** field to choose where it appears
-2. Configure **Top/Left** coordinates for placement
-3. Set **Height/Width** for the item size
-4. Optionally set **Rotation** and **Layer** for visual positioning
-
-**Example collectible weapon:**
-```
-Area: Starting Zone
-Top: 1500
-Left: 2000
-Height: 50
-Width: 80
-```
-
-### Publishing Your Weapon
-
-Click **Publish** to add the weapon to the game.
-
 ## Configuring Global Game Options
 
 Global options control game-wide settings that affect all areas, characters, and gameplay systems.
@@ -273,27 +206,27 @@ Navigate to **Orbem Studio** → **Game Options** in your WordPress admin.
 Select which WordPress page will display your game. This page will be replaced with the game interface when viewed by users.
 
 1. Create a new page (e.g., "Play Game")
-2. Publish the page (content doesn't matter - it will be replaced)
+2. Publish the page (remove any content to avoid conflicts with game assets)
 3. Select this page in the "Page For Game" option
 
 #### Starting Area
 
-Choose which area players begin in when they first load the game. This should be your tutorial or introductory level.
+Choose which area players begin in when they first load the game. This can be your tutorial or introductory level.
 
 #### Main Character
 
-Select which character the player controls at game start. This must be a character with "Crew Mate" set to "yes".
+Select which character the player controls at game start. This must be a character. This character must not have an Area, Top or Left fields filled out. Those fields are not needed for your main character.
 
 #### Default Weapon
 
-Choose the starting weapon for your main character. Many games use "fist" or "unarmed" as the default.
+Choose the starting weapon for your main character. Many games use "fist" or "unarmed" as the default. Note, weapons are not required. This is more important if you plan on having multiple types of weapons.
 
 #### Require Login
 
 Choose whether players must create an account to play:
 
 - **Checked:** Players must log in (game progress is saved)
-- **Unchecked:** Anyone can play (progress is not persisted for logged-out users)
+- **Unchecked:** Anyone can play (progress is not persisted for logged-out users. Note: GAMES WITH MULTIPLE AREAS REQUIRE LOGIN)
 
 ### HUD Customization
 
@@ -347,7 +280,7 @@ Click **Save Changes** at the bottom of the page to apply your configuration.
 
 ## Testing Your Game
 
-Once you've created an area, character, and weapon, and configured global options, you're ready to test your game.
+Once you've created an area, and character, and configured global options, you're ready to test your game.
 
 ### Accessing Your Game
 
@@ -360,7 +293,7 @@ Once you've created an area, character, and weapon, and configured global option
 Default game controls:
 
 - **Arrow Keys or WASD** - Move your character
-- **Space or E** - Interact with objects, NPCs, and triggers
+- **Space Bar** - Interact with objects, NPCs, and triggers
 - **Mouse Click** - UI interactions (inventory, menus)
 
 ### What to Test
@@ -368,18 +301,17 @@ Default game controls:
 1. **Movement** - Can your character walk around the area?
 2. **Boundaries** - Does your character stay within the map?
 3. **Starting Position** - Does your character appear in the correct location?
-4. **Default Weapon** - Is your character holding the correct weapon?
 
 ### Troubleshooting
 
 **Character doesn't appear:**
-- Verify the character's "Area" field matches your starting area
-- Check that "Crew Mate" is set to "yes"
-- Ensure the character's position coordinates are within the map bounds
+- Verify the character's "Area" field is empty
+- Check that the character's "Left" and "Top" fields are empty
+- Ensure the starting area's starting position coordinates are within the map bounds
 
 **Game page is blank:**
 - Check browser console for JavaScript errors
-- Verify the page is published
+- Verify the page is the correct page you selected in the game options
 - Confirm the character has all required directional images uploaded
 
 **Character falls through the map:**
@@ -401,7 +333,6 @@ Congratulations! You've created the foundation of your game. Here's what to expl
 
 - **[Enable Developer Mode](developer-mode.md)** - Visually position objects in-game
 - Learn to use the wall builder for collision boundaries
-- Create objects directly from the game interface
 
 ### Customize Your Game
 

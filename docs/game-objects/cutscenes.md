@@ -21,8 +21,7 @@ Cutscenes provide storytelling through text/voice dialogue, character interactio
 ### Content
 
 **Post Content**: Use the WordPress block editor to add dialogue:
-- **Paragraph blocks**: Text dialogue
-- **Orbem Paragraph MP3 block**: Dialogue with text-to-speech
+- **Orbem Paragraph MP3 block**: Dialogue with text-to-speech or uploaded soundbite
 - **Video blocks**: Video cutscenes
 
 ### Audio

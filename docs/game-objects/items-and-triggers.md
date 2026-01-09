@@ -4,19 +4,18 @@ Orbem Studio includes several interactive object types for collectibles, informa
 
 ## Table of Contents
 
-- [Collectible Items (Points)](#collectible-items-points)
+- [Items (Points)](#collectible-items-points)
 - [Signs and Focus View](#signs-and-focus-view)
 - [Explainer Popups](#explainer-popups)
 - [Walls](#walls)
 - [Minigames](#minigames)
-- [Magic and Abilities](#magic-and-abilities)
 - [Communication Items](#communication-items)
 
-## Collectible Items (Points)
+## Items (Points)
 
 **Post Type:** `explore-point`
 
-Items players can collect throughout the game world, providing rewards or triggering events.
+Items players can collect/break/get damaged by/drag throughout the game world, providing rewards or triggering events.
 
 ### Configuration
 
@@ -29,7 +28,9 @@ Items players can collect throughout the game world, providing rewards or trigge
 ### Interaction Types
 
 **Interaction Type** (`explore-interaction-type`):
-- `item` - Standard collectible (default)
+- `collectable` - Collects when touched
+- `breakable` - Breaks when interacted with
+- `draggable` - Can be dragged
 - `hazard` - Damages player on touch
 
 ### Rewards
@@ -54,7 +55,7 @@ Left: 2200
 Height: 50
 Width: 50
 
-Interaction Type: item
+Interaction Type: collectable
 Value: 25
 Value Type: health
 ```
@@ -113,9 +114,9 @@ Tutorial popups that provide information and instructions to players.
 - **Post Content**: Explanation text (supports blocks)
 - **Featured Image**: Optional illustration
 
-### Text-to-Speech
+### Voice over
 
-Use Orbem Paragraph MP3 blocks for voiced explanations.
+Use the MP3 field to upload a voice over or other sound when explainer is triggered
 
 ### Use Cases
 
@@ -229,33 +230,6 @@ Value Type: point
 
 Content: [Custom lock-picking interface]
 ```
-
-## Magic and Abilities
-
-**Post Type:** `explore-magic`
-
-Special powers unlocked through character progression.
-
-### Configuration
-
-- **Unlock Level** (`explore-unlock-level`): Player level required to unlock
-- **Post Content**: Ability description
-- **Featured Image**: Ability icon
-
-### Current Abilities
-
-- `transportation` - (Implementation defined in game code)
-- Additional abilities can be added through character configuration
-
-### Example
-
-```
-Title: Teleportation
-Unlock Level: 10
-
-Content: "Instantly travel between discovered waypoints"
-```
-
 ## Communication Items
 
 **Post Type:** `explore-communicate`

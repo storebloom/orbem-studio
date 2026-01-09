@@ -10,7 +10,6 @@ Developer Mode is an admin-only feature that provides in-game visual editing too
 - [Visual Object Positioning](#visual-object-positioning)
 - [Trigger Visualization](#trigger-visualization)
 - [Wall Builder](#wall-builder)
-- [Creating Objects In-Game](#creating-objects-in-game)
 - [Best Practices](#best-practices)
 
 ## Overview
@@ -23,7 +22,9 @@ Developer Mode activates when an administrator user plays the game, adding power
 - Visual trigger overlays
 - Real-time coordinate updates
 - Wall builder for collision boundaries
-- In-game object creation
+- Pin-point coordinate display tool
+- God / No touch modes for main character
+- In-game object creation (Pro feature)
 - Instant updates without page reloads
 
 ### Access Requirements
@@ -37,7 +38,8 @@ Developer Mode is automatically available to administrators. To access it:
 
 1. Log in as an administrator
 2. Navigate to your game page (configured in Global Options)
-3. The Developer Mode interface appears automatically
+3. Item/Character/Trigger click and drag works automatically
+4. Additional Developer tools appear when "DEVMODE" link in bottom right corner of the interface is clicked
 
 **Note:** Regular players and non-admin users never see Developer Mode tools.
 
@@ -54,14 +56,13 @@ A "DEVMODE" button appears in the bottom-right corner:
 ### Visual Indicators
 
 - **Trigger Overlays**: Semi-transparent colored boxes show trigger zones
-- **Object Borders**: Selected objects show resize handles
-- **Coordinate Display**: Real-time position coordinates while dragging
+- **Coordinate Display**: Pin-point tool allows for instant coordinate display on click map point
 
 ## Visual Object Positioning
 
 ### Dragging Objects
 
-1. Enable Developer Mode
+1. Enable Developer Mode (if object/trigger is transparent)
 2. Click and hold any game object (character, enemy, item, weapon)
 3. Drag to new position
 4. Release to save new coordinates
@@ -71,23 +72,12 @@ A "DEVMODE" button appears in the bottom-right corner:
 - New coordinates saved to post meta immediately
 - Changes persist without page reload
 
-### Resizing Objects
-
-1. Select an object
-2. Resize handles appear at corners
-3. Drag handles to adjust width/height
-4. Release to save new dimensions
-
-**REST Endpoint:** `/set-item-size/`
-
 ### Trigger Positioning
 
 Triggers (cutscene triggers, mission triggers, etc.) can be positioned visually:
 
 1. Triggers appear as colored overlay boxes
 2. Click and drag to reposition
-3. Resize using corner handles
-4. Different trigger types use different colors for identification
 
 ## Trigger Visualization
 
@@ -97,12 +87,9 @@ Developer Mode shows all trigger zones as colored overlays:
 
 **Cutscene Triggers:**
 - Visual indicator shows trigger zone
-- Label displays cutscene name
-- Color-coded for quick identification
 
 **Mission Triggers:**
 - Shows completion trigger zones
-- Displays mission name
 - Indicates blockade areas
 
 **Item Triggers:**
@@ -114,8 +101,7 @@ Developer Mode shows all trigger zones as colored overlays:
 1. Open Developer Mode menu
 2. Enable trigger visualization
 3. All triggers appear as colored boxes
-4. Click to select and edit
-5. Drag or resize as needed
+4. Drag as needed
 
 ## Wall Builder
 
@@ -124,8 +110,8 @@ The wall builder creates invisible collision boundaries directly in-game.
 ### Accessing Wall Builder
 
 1. Open Developer Mode menu
-2. Select "Wall Builder"
-3. Wall creation tools appear
+2. Select "Wall Builder" Icon
+3. Wall creation is now enabled as icon glows
 
 ### Creating Walls
 
@@ -142,10 +128,9 @@ The wall builder creates invisible collision boundaries directly in-game.
 
 ### Editing Walls
 
-1. Existing walls appear as red overlay boxes in Developer Mode
+1. Existing walls appear as blue overlay boxes in Developer Mode
 2. Click to select
 3. Drag to reposition
-4. Resize using handles
 
 ### Best Practices
 
@@ -153,8 +138,9 @@ The wall builder creates invisible collision boundaries directly in-game.
 - Test player movement after placing walls
 - Use multiple smaller walls rather than one large complex shape
 - Leave clear pathways for player navigation
+- Use walls on items in part of the map image instead of defining stationary item posts
 
-## Creating Objects In-Game
+## Creating Objects In-Game (Pro feature)
 
 Developer Mode allows creating new game objects without leaving the game.
 
@@ -164,15 +150,16 @@ Developer Mode allows creating new game objects without leaving the game.
 2. Select "New Addition"
 3. Choose object type from dropdown
 4. Fill in configuration fields
-5. Click to place on map
+5. Submit and page will refresh
+6. Continue game to see your new object
 
 ### Supported Object Types
 
 - Characters
 - Enemies
 - Weapons
-- Items/Points
-- Signs
+- Items
+- Focus view items
 - Explainers
 - Walls
 - Cutscenes
@@ -187,23 +174,12 @@ graph LR
     Fill --> Place[Click Map to Place]
     Place --> Save[Object Created]
 ```
-
-### Dynamic Field Loading
-
-When you select an object type, Developer Mode:
-
-1. Makes REST API call to `/get-new-fields/`
-2. Loads appropriate meta fields for that type
-3. Displays configuration form
-4. Pre-fills current area
-
 ### Creating the Object
 
 1. Fill in required fields (title, images, etc.)
-2. Click on the map where you want the object
-3. Object is created with clicked coordinates
-4. REST endpoint: `/add-new/`
-5. Object appears immediately in-game
+2. Use pin-point tool to get top/left coordinates
+3. REST endpoint: `/add-new/`
+4. Object appears immediately in-game upon refresh
 
 ## Best Practices
 
@@ -267,7 +243,7 @@ Updates object coordinates.
 - `left` - X coordinate
 - `meta` - Meta key (for trigger positioning)
 
-### Set Item Size
+### Set Item Size (Pro feature)
 
 **Endpoint:** `POST /wp-json/orbemorder/v1/set-item-size/`
 
@@ -279,7 +255,7 @@ Updates object dimensions.
 - `width` - Object width
 - `meta` - Meta key (for trigger sizing)
 
-### Get New Fields
+### Get New Fields (Pro feature)
 
 **Endpoint:** `POST /wp-json/orbemorder/v1/get-new-fields/`
 
@@ -290,7 +266,7 @@ Retrieves configuration fields for object type.
 
 **Returns:** HTML form fields for that object type
 
-### Add New
+### Add New (Pro feature)
 
 **Endpoint:** `POST /wp-json/orbemorder/v1/add-new/`
 

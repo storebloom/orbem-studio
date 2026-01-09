@@ -17,11 +17,11 @@ Characters are the actors in your game world. They can be player-controlled prot
 
 **Post Type:** `explore-character`
 
-Characters bring life to your game world. The system supports sophisticated character configuration including directional sprites, weapon-specific animations, special abilities, and complex AI behaviors for NPCs.
+Characters bring life to your game world. The system supports sophisticated character configuration including directional character images, weapon-specific character images, special abilities, and complex AI behaviors for NPCs.
 
 ### Key Features
 
-- Full directional sprite support (up, down, left, right)
+- Full directional character image support (up, down, left, right)
 - Weapon-specific character images for each direction
 - Playable characters and crew mate system
 - NPC autonomous behaviors (wandering, pathing)
@@ -187,7 +187,7 @@ The field automatically generates upload slots for each weapon (except the defau
 
 Determines if this character can be controlled by the player.
 
-- **Yes:** Character is playable (can be main character or crew mate)
+- **Yes:** Character is playable (can collected as crew mate upon first appearance. Is usable after that.)
 - **No:** Character is an NPC with autonomous behavior
 
 **Example:**
@@ -204,8 +204,8 @@ Assign a special ability to playable characters.
 
 **Available Abilities:**
 - `speed` - Increased movement speed
-- `strength` - Increased attack power
-- `hazard` - Can walk through hazardous areas
+- `strength` - Can drag/break/collect heavy items
+- `hazard` - Can walk through hazardous areas (for a limited time)
 - `programming` - Can interact with technical objects
 
 **Example:**
@@ -262,13 +262,13 @@ These settings control autonomous NPC behavior.
 **Field:** `explore-speed`  
 **Type:** Number
 
-How fast the NPC moves. Higher values = faster movement.
+How fast the NPC moves. Lower values = faster movement.
 
 **Example:**
 ```
-Speed: 2 (Moderate pace)
-Speed: 5 (Fast movement)
-Speed: 1 (Slow movement)
+Speed: 20 (Moderate pace)
+Speed: 10 (Fast movement)
+Speed: 40 (Slow movement)
 ```
 
 **Tips:**
@@ -300,7 +300,7 @@ Enable intelligent autonomous movement throughout the area.
 **Example:**
 ```
 Wanderer: yes
-Speed: 2
+Speed: 20
 ```
 
 #### Walking Path
@@ -465,7 +465,9 @@ The primary player-controlled character.
 
 **Configuration:**
 ```
-Crew Mate: yes
+Crew Mate: no
+Top: 0
+Left: 0
 Ability: (choose primary ability)
 Weapon Choice: (starting weapon)
 Voice: (for cutscene dialogue)
@@ -704,13 +706,13 @@ hero-attack-left-sword.png
 Title: Main Hero
 Slug: main-hero
 
-Area: starting-village
-Top: 2500
-Left: 2750
+Area: none
+Top: 0
+Left: 0
 Height: 100
 Width: 80
 
-Crew Mate: yes
+Crew Mate: no
 Ability: strength
 Weapon Choice: starter-sword
 Voice: en-US-Wavenet-A

@@ -43,8 +43,8 @@ The area where players begin when first loading the game.
 The character players control at game start.
 
 **Requirements:**
-- Must be a character with "Crew Mate" set to "yes"
-- Should have all directional sprites uploaded
+- Must be a character without a selected Area or Top and Left coordinate fields filled out
+- Should have all directional images uploaded
 
 ### Default Weapon
 

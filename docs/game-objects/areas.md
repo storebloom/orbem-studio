@@ -181,7 +181,7 @@ Convert this area into a non-interactive cutscene background.
 **When set to "yes":**
 - Player cannot move in this area
 - Area serves as a static background for story scenes
-- Typically used with cutscene objects for dialogue
+- Requires complimentary cutscene for dialogue
 
 **Use Cases:**
 - Story flashbacks that don't require movement

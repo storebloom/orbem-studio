@@ -205,9 +205,9 @@ How fast the enemy moves.
 
 **Example:**
 ```
-Speed: 1 (Slow, heavily armored)
-Speed: 3 (Medium speed)
-Speed: 5 (Fast, aggressive)
+Speed: 50 (Slow, heavily armored)
+Speed: 30 (Medium speed)
+Speed: 20 (Fast, aggressive)
 ```
 
 **Gameplay Impact:**
@@ -348,10 +348,8 @@ Remove After Cutscene: peace-treaty
 Static or patrolling enemies with no special abilities. Engage in melee combat when player approaches.
 
 **Behavior:**
-- Follows path or wanders (based on configuration)
-- Attacks when player is in range
-- Basic combat AI
-- No projectile attacks
+- Static item/enemy or can follow path / wanders (based on configuration)
+- Does not attack
 
 **Best For:**
 - Guard enemies
@@ -363,7 +361,7 @@ Static or patrolling enemies with no special abilities. Engage in melee combat w
 Enemy Type: blocker
 Value: 10
 Health: 75
-Speed: 2
+Speed: 20
 Wanderer: no
 Path: [Guard post patrol pattern]
 ```
@@ -395,7 +393,7 @@ Ranged enemies that fire projectiles at the player.
 Enemy Type: shooter
 Value: 15
 Health: 60
-Speed: 1
+Speed: 20
 Wanderer: no
 (Shooter AI automatically handles projectile firing)
 ```
@@ -427,7 +425,7 @@ Aggressive enemies that chase the player and deal damage on collision.
 Enemy Type: runner
 Value: 20
 Health: 40
-Speed: 5
+Speed: 10
 Wanderer: yes
 (Runner AI automatically chases player when in range)
 ```
@@ -460,7 +458,7 @@ Special enemies with boss fight mechanics, typically triggered by cutscenes.
 Enemy Type: boss
 Value: 30
 Health: 500
-Speed: 3
+Speed: 30
 Voice: en-US-Wavenet-B
 
 (Triggered by cutscene: "boss-intro")
@@ -499,7 +497,7 @@ Title: Shadow Lord
 Enemy Type: boss
 Value: 35
 Health: 800
-Speed: 3
+Speed: 30
 Voice: en-US-Wavenet-B (for boss dialogue)
 
 Area: throne-room
@@ -575,7 +573,7 @@ Follow defined paths.
 Wanderer: no
 Path: [multiple points]
 Repeat: yes
-Speed: 2
+Speed: 20
 ```
 
 **Strategy:**
@@ -591,7 +589,7 @@ Wander freely throughout the area.
 ```
 Wanderer: yes
 Path: (empty)
-Speed: 2
+Speed: 20
 ```
 
 **Gameplay:**
@@ -607,7 +605,7 @@ For runner-type enemies that actively pursue the player.
 ```
 Enemy Type: runner
 Wanderer: yes
-Speed: 5
+Speed: 50
 ```
 
 **Behavior:**
@@ -693,7 +691,7 @@ Width: 90
 
 Value: 15
 Health: 100
-Speed: 2
+Speed: 20
 
 Path:
   Point 1: Top: 2000, Left: 2500
@@ -717,7 +715,7 @@ Width: 110
 
 Value: 25
 Health: 80
-Speed: 5
+Speed: 10
 
 Wanderer: yes
 ```
