@@ -5,6 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
  * @var string         $orbem_studio_key
  * @var boolean|string $orbem_studio_main_key
  * @var boolean|int    $orbem_studio_repeat_index
+ * @var boolean        $orbem_studio_required
  */
 $orbem_studio_final_value = $orbem_studio_meta_values[$orbem_studio_key] ?? '';
 // Start with the simple case.
@@ -39,6 +40,7 @@ if (false !== $orbem_studio_main_key) {
        name="<?php echo esc_attr($orbem_studio_final_key); ?>"
        id="<?php echo esc_attr($orbem_studio_key); ?>"
        value="<?php echo floatval($orbem_studio_final_value); ?>"
+       <?php echo $orbem_studio_required ? 'required ' : ''; ?>
 />
 </label>
 </p>

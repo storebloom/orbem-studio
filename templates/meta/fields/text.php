@@ -5,6 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
  * @var string         $orbem_studio_key
  * @var boolean|string $orbem_studio_main_key
  * @var boolean|int    $orbem_studio_repeat_index
+ * @var boolean        $orbem_studio_required
  */
 
 $orbem_studio_final_value = false === empty($orbem_studio_meta_values[$orbem_studio_key]) ? $orbem_studio_meta_values[$orbem_studio_key] : '';
@@ -38,6 +39,7 @@ if (false !== $orbem_studio_main_key) {
        name="<?php echo esc_attr($orbem_studio_final_key); ?>"
        id="<?php echo esc_attr($orbem_studio_key); ?>"
        value="<?php echo false === $orbem_studio_main_key ? esc_html($orbem_studio_final_value) : esc_html($orbem_studio_meta_values[$orbem_studio_main_key][$orbem_studio_key] ?? ''); ?>"
+       <?php echo $orbem_studio_required ? 'required' : ''; ?>
 />
 </label>
 </p>

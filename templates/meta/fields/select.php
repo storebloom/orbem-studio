@@ -5,6 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
  * @var string         $orbem_studio_key
  * @var boolean|string $orbem_studio_main_key
  * @var array          $orbem_studio_sub_value
+ * @var boolean        $orbem_studio_required
  */
 
 $orbem_studio_final_value = false === empty($orbem_studio_meta_values[$orbem_studio_key]) ? $orbem_studio_meta_values[$orbem_studio_key] : '';
@@ -14,7 +15,11 @@ $orbem_studio_final_value = false === empty($orbem_studio_meta_values[$orbem_stu
     <?php echo esc_html(ucfirst(str_replace(['explore-', '-'],['', ' '],$orbem_studio_key))); ?>
     <br>
 <?php endif; ?>
-<select name="<?php echo false === $orbem_studio_main_key ? esc_attr($orbem_studio_key) : esc_attr($orbem_studio_main_key . '[' . $orbem_studio_key. ']'); ?>" id="<?php echo false === $orbem_studio_main_key ? esc_attr($orbem_studio_key) : esc_attr($orbem_studio_main_key . '[' . $orbem_studio_key. ']'); ?>">
+<select
+    name="<?php echo false === $orbem_studio_main_key ? esc_attr($orbem_studio_key) : esc_attr($orbem_studio_main_key . '[' . $orbem_studio_key. ']'); ?>"
+    id="<?php echo false === $orbem_studio_main_key ? esc_attr($orbem_studio_key) : esc_attr($orbem_studio_main_key . '[' . $orbem_studio_key. ']'); ?>"
+    <?php echo $orbem_studio_required ? ' required ' : ''; ?>
+>
     <option value="" selected="selected">None</option>
     <?php if (true === is_array($orbem_studio_sub_value)): ?>
         <?php foreach($orbem_studio_sub_value as $orbem_studio_option): ?>

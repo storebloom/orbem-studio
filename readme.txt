@@ -165,6 +165,9 @@ This is configurable. You can require login or allow guest gameplay depending on
 = Is Orbem Studio extensible? =
 Yes. All systems are designed to be extended using WordPress hooks, filters, and custom metadata.
 
+= Where can I find documentation for Orbem Studio? =
+We have extensive documentation at https://orbemorder.com/orbem-studio/docs/readme. Tutorials can be found on our channel at https://youtube.com/@orbemorder.
+
 == Changelog ==
 
 = 1.0.2 =

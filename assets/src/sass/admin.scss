@@ -127,50 +127,82 @@
   padding-left: 2rem;
 }
 
-#explore-meta-box {
-  .repeater-container {
-    .field-container {
-      border: 1px solid lightgray;
+#explore-point {
+  background: #f0f0f1;
+
+  #explore-meta-box {
+    .grouped-meta-data {
+      background: white;
+      border: 1px solid #c2c3c6;
       border-radius: 4px;
-      margin-top: 1rem;
+      margin-top: 2rem;
       padding: .5rem 1rem;
+
+      input, select {
+        &.orbem-studio-error {
+          border: 1px solid red;
+        }
+      }
     }
 
-    .container-index {
-      border: 1px solid lightgray;
-      border-radius: 4px;
+    .repeater-container {
+      .field-container {
+        border: 1px solid lightgray;
+        border-radius: 4px;
+        margin-top: 1rem;
+        padding: .5rem 1rem;
+      }
+
+      .container-index {
+        border: 1px solid lightgray;
+        border-radius: 4px;
+        font-weight: bold;
+        padding: 0.25rem .5rem;
+      }
+
+      .remove-field {
+        color: red;
+        cursor: pointer;
+        font-size: 24px;
+      }
+
+      .add-field {
+        background: #2271b1;
+        border-radius: 4px;
+        color: white;
+        cursor: pointer;
+        margin-top: 1rem;
+        padding: .5rem;
+        text-align: center;
+        width: 20px;
+      }
+    }
+
+    h2 {
       font-weight: bold;
-      padding: 0.25rem .5rem;
+      font-size: 18px;
+      padding-left: 0;
     }
 
-    .remove-field {
-      color: red;
-      cursor: pointer;
-      font-size: 24px;
+    h3 {
+      sup {
+        color: red;
+      }
     }
 
-    .add-field {
-      background: #2271b1;
-      border-radius: 4px;
-      color: white;
-      cursor: pointer;
-      margin-top: 1rem;
-      padding: .5rem;
-      text-align: center;
-      width: 20px;
+    h4 {
+      margin: 0;
     }
-  }
 
-  h2 {
-    font-weight: bold;
-    font-size: 18px;
-    padding-left: 0;
-  }
-  h4 {
-    margin: 0;
-  }
-  hr {
-    margin-top: 1.5rem;
+    hr {
+      margin-top: 1.5rem;
+    }
+
+    .explore-image-field {
+      sup {
+        color: red;
+      }
+    }
   }
 }
 

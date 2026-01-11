@@ -115,4 +115,84 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
     });
+
+    // Required field check.
+    const publishButtons = document.querySelectorAll(
+        '#publish, .editor-post-publish-button, .editor-post-update-button'
+    );
+
+    if (!publishButtons.length) {
+        return;
+    }
+
+    function isFieldInvalid(field) {
+        if (field.disabled || field.offsetParent === null) {
+            return false;
+        }
+
+        const tag = field.tagName.toLowerCase();
+        const value = field.value;
+
+        if (tag === 'select') {
+            return !value || value === 'none';
+        }
+
+        if (tag === 'input' || tag === 'textarea') {
+            return !value || value === 0 || value === '' || value === '0';
+        }
+
+        return false;
+    }
+
+    function validateRequiredFields(event) {
+        let requiredFields = document.querySelectorAll('[required]');
+        let firstInvalid = null;
+        let hasErrors = false;
+
+        // Clear previous errors
+        if (requiredFields) {
+            requiredFields.forEach( requiredField => {
+                requiredField.classList.remove('orbem-studio-error');
+            } );
+        }
+
+        if (requiredFields) {
+            requiredFields.forEach( requiredField => {
+                const field = requiredField;
+
+                if (isFieldInvalid(field)) {
+                    field.classList.add('orbem-studio-error');
+
+                    if (!firstInvalid) {
+                        firstInvalid = field;
+                    }
+
+                    hasErrors = true;
+                }
+            } )
+        }
+
+        if (hasErrors) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            alert('There is one or more required fields that need attending to.');
+
+            if (firstInvalid) {
+                firstInvalid.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center'
+                });
+                firstInvalid.focus();
+            }
+
+            return false;
+        }
+
+        return true;
+    }
+
+    for (let k = 0; k < publishButtons.length; k++) {
+        publishButtons[k].addEventListener('click', validateRequiredFields);
+    }
 });
