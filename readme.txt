@@ -174,6 +174,7 @@ We have extensive documentation at https://orbemorder.com/orbem-studio/docs/read
 * Add required field logic.
 * Add field groups in post types.
 * Update label messages for clarity.
+* Limit admin assets
 
 = 1.0.2 =
 * Fix activation tutorial.
