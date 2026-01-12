@@ -1,41 +1,38 @@
 import '../sass/admin.scss';
 
-document.addEventListener( 'DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', function () {
 	'use strict';
-	// Repeater field functionality.
-	const repeaterContainers = document.querySelectorAll(
-		'.repeater-container'
-	);
 
-	if ( repeaterContainers ) {
-		repeaterContainers.forEach( ( repeaterContainer ) => {
+	// Repeater field functionality.
+	const repeaterContainers = document.querySelectorAll('.repeater-container');
+
+	if (repeaterContainers) {
+		repeaterContainers.forEach((repeaterContainer) => {
 			const containerWrap = repeaterContainer.querySelector(
 				'.field-container-wrap'
 			);
-			const addField = repeaterContainer.querySelector( '.add-field' );
+			const addField = repeaterContainer.querySelector('.add-field');
 			const removeFields =
-				containerWrap.querySelectorAll( '.remove-field' );
+				containerWrap.querySelectorAll('.remove-field');
 
 			// Remove field.
-			if ( removeFields ) {
-				removeFields.forEach( ( removingField ) => {
-					removeField( removingField, repeaterContainer );
-				} );
+			if (removeFields) {
+				removeFields.forEach((removingField) => {
+					removeField(removingField, repeaterContainer);
+				});
 			}
 
 			// Add new field.
-			if ( addField ) {
-				addField.addEventListener( 'click', () => {
+			if (addField) {
+				addField.addEventListener('click', () => {
 					const fieldContainers =
-						repeaterContainer.querySelectorAll(
-							'.field-container'
-						);
-					const newField = fieldContainers[ 0 ].cloneNode( true );
-					const newFields = newField.querySelectorAll( '[name]' );
+						repeaterContainer.querySelectorAll('.field-container');
+					const newField = fieldContainers[0].cloneNode(true);
+					const newFields = newField.querySelectorAll('[name]');
 					const fieldIndex = fieldContainers.length;
 
-					if ( newFields ) {
-						newFields.forEach( ( newFielder ) => {
+					if (newFields) {
+						newFields.forEach((newFielder) => {
 							newFielder.name = newFielder.name.replaceAll(
 								'0',
 								fieldIndex
@@ -44,14 +41,14 @@ document.addEventListener( 'DOMContentLoaded', function () {
 								'0',
 								fieldIndex
 							);
-						} );
+						});
 					}
 
-					newField.querySelector( '.container-index' ).textContent =
+					newField.querySelector('.container-index').textContent =
 						fieldIndex;
-					containerWrap.appendChild( newField );
+					containerWrap.appendChild(newField);
 					const newestRemove =
-						newField.querySelector( '.remove-field' );
+						newField.querySelector('.remove-field');
 
 					// For upload fields.
 					const uploadImageButton = newField.querySelector(
@@ -61,168 +58,108 @@ document.addEventListener( 'DOMContentLoaded', function () {
 						'.remove_image_button'
 					);
 
-					if ( uploadImageButton && removeImageButton ) {
-						window.initExploreUploadButton( uploadImageButton );
-						window.initExploreRemoveButton( removeImageButton );
+					if (uploadImageButton && removeImageButton) {
+						window.initExploreUploadButton(uploadImageButton);
+						window.initExploreRemoveButton(removeImageButton);
 					}
 
-					removeField( newestRemove, repeaterContainer );
-				} );
+					removeField(newestRemove, repeaterContainer);
+				});
 			}
-		} );
+		});
 	}
 
-	function removeField( removeField, repeaterContainer ) {
+	function removeField(removeField, repeaterContainer) {
 		const fieldContainers =
-			repeaterContainer.querySelectorAll( '.field-container' );
+			repeaterContainer.querySelectorAll('.field-container');
 
-		removeField.addEventListener( 'click', () => {
-			const closestContainer = removeField.closest( '.field-container' );
+		removeField.addEventListener('click', () => {
+			const closestContainer = removeField.closest('.field-container');
 
 			// Remove.
 			closestContainer.remove();
 
-			if ( closestContainer ) {
+			if (closestContainer) {
 				// Reset Indexes.
 				const fieldContainersNew =
-					repeaterContainer.querySelectorAll( '.field-container' );
+					repeaterContainer.querySelectorAll('.field-container');
 
-				if ( fieldContainers ) {
-					fieldContainersNew.forEach( ( fieldContainer, index ) => {
+				if (fieldContainers) {
+					fieldContainersNew.forEach((fieldContainer, index) => {
 						const fcInputs =
-							fieldContainer.querySelectorAll( 'input' );
+							fieldContainer.querySelectorAll('input');
 						const containerIndex =
-							fieldContainer.querySelector( '.container-index' );
+							fieldContainer.querySelector('.container-index');
 						const oldIndex = containerIndex.textContent;
 
-						if ( containerIndex ) {
+						if (containerIndex) {
 							containerIndex.textContent = index;
 						}
 
-						fcInputs.forEach( ( fcInput ) => {
+						fcInputs.forEach((fcInput) => {
 							const firstInputName = fcInput.id.replace(
 								oldIndex,
 								index
 							);
-							fcInput.setAttribute( 'data-index', index );
+							fcInput.setAttribute('data-index', index);
 							fcInput.id = firstInputName;
-							fcInput.setAttribute( 'name', firstInputName );
-						} );
-					} );
+							fcInput.setAttribute('name', firstInputName);
+						});
+					});
 				}
 			}
-		} );
+		});
 	}
 
-	const colorFields = document.querySelectorAll( '.explore-color-field' );
-	if ( ! colorFields ) {
-		return;
-	}
+	const colorFields = document.querySelectorAll('.explore-color-field');
 
-	colorFields.forEach( ( field ) => {
-		jQuery( field ).iris( {
-			// jQuery required one time or else I have to build a color picker.
-			defaultColor: field.dataset.defaultColor,
-			change( event, ui ) {
-				field.value = ui.color.toString();
-			},
-		} );
+	if (colorFields) {
+		colorFields.forEach((field) => {
+			jQuery(field).iris({
+				// jQuery required one time or else I have to build a color picker.
+				defaultColor: field.dataset.defaultColor,
+				change(event, ui) {
+					field.value = ui.color.toString();
+				},
+			});
 
-		// Hide Iris UI until user clicks the input
-		const irisContainer = field.parentNode.querySelector( '.iris-picker' );
-		irisContainer.style.display = 'none';
+			// Hide Iris UI until user clicks the input
+			const irisContainer =
+				field.parentNode.querySelector('.iris-picker');
+			irisContainer.style.display = 'none';
 
-		field.addEventListener( 'focus', () => {
-			irisContainer.style.display = 'block';
-		} );
+			field.addEventListener('focus', () => {
+				irisContainer.style.display = 'block';
+			});
 
-		document.addEventListener( 'click', ( e ) => {
-			if (
-				! field.contains( e.target ) &&
-				! irisContainer.contains( e.target )
-			) {
-				irisContainer.style.display = 'none';
-			}
-		} );
-	} );
-
-	// Required field check.
-	const publishButtons = document.querySelectorAll(
-		'#publish, .editor-post-publish-button, .editor-post-update-button'
-	);
-
-	if ( ! publishButtons.length ) {
-		return;
-	}
-
-	function isFieldInvalid( field ) {
-		if ( field.disabled || field.offsetParent === null ) {
-			return false;
-		}
-
-		const tag = field.tagName.toLowerCase();
-		const value = field.value;
-
-		if ( tag === 'select' ) {
-			return ! value || value === 'none';
-		}
-
-		if ( tag === 'input' || tag === 'textarea' ) {
-			return ! value || value === 0 || value === '' || value === '0';
-		}
-
-		return false;
-	}
-
-	function validateRequiredFields( event ) {
-		const requiredFields = document.querySelectorAll( '[required]' );
-		let firstInvalid = null;
-		let hasErrors = false;
-
-		// Clear previous errors
-		if ( requiredFields ) {
-			requiredFields.forEach( ( requiredField ) => {
-				requiredField.classList.remove( 'orbem-studio-error' );
-			} );
-		
-			requiredFields.forEach( ( requiredField ) => {
-				const field = requiredField;
-
-				if ( isFieldInvalid( field ) ) {
-					field.classList.add( 'orbem-studio-error' );
-
-					if ( ! firstInvalid ) {
-						firstInvalid = field;
-					}
-
-					hasErrors = true;
+			document.addEventListener('click', (e) => {
+				if (
+					!field.contains(e.target) &&
+					!irisContainer.contains(e.target)
+				) {
+					irisContainer.style.display = 'none';
 				}
-			} );
-		}
+			});
+		});
+	}
 
-		if ( hasErrors ) {
-			event.preventDefault();
-			event.stopPropagation();
+	// Collapse logic for extra fields.
+	const metaGroups = document.querySelectorAll('.grouped-meta-data');
 
-			alert(
-				'There is one or more required fields that need attending to.'
-			);
+	if (0 < metaGroups.length) {
+		metaGroups.forEach((metaGroup) => {
+			const isRequired = metaGroup.querySelector('[required]');
 
-			if ( firstInvalid ) {
-				firstInvalid.scrollIntoView( {
-					behavior: 'smooth',
-					block: 'center',
-				} );
-				firstInvalid.focus();
+			if (!isRequired) {
+				metaGroup.classList.add('not-required-group');
+				const accordionButton = metaGroup.querySelector('h2');
+
+				if (accordionButton) {
+					accordionButton.addEventListener('click', () => {
+						metaGroup.classList.toggle('engage');
+					});
+				}
 			}
-
-			return false;
-		}
-
-		return true;
+		});
 	}
-
-	for ( let k = 0; k < publishButtons.length; k++ ) {
-		publishButtons[ k ].addEventListener( 'click', validateRequiredFields );
-	}
-} );
+});

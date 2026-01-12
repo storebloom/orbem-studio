@@ -138,6 +138,36 @@
       margin-top: 2rem;
       padding: .5rem 1rem;
 
+      &.not-required-group {
+        max-height: 40px;
+        overflow: hidden;
+        transition: all .3s;
+
+        &.engage {
+          max-height: 9000px;
+
+          h2 {
+            &:after {
+              transform: translateY(-50%) rotate(180deg);
+            }
+          }
+        }
+
+        h2 {
+          cursor: pointer;
+          position: relative;
+
+          &:after {
+            content: '▼';
+            font-size: 16px;
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+          }
+        }
+      }
+
       input, select {
         &.orbem-studio-error {
           border: 1px solid red;
