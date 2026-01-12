@@ -39,20 +39,23 @@ window.noTouch = false;
 window.isDragging = '';
 window.hazardTime = 600;
 
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener( 'DOMContentLoaded', function () {
 	'use strict';
 
-	currentLocation = document.querySelector('.game-container');
+	currentLocation = document.querySelector( '.game-container' );
 	window.mainCharacter = currentLocation.dataset?.main;
-	currentLocation = currentLocation.className.replace('game-container ', '');
+	currentLocation = currentLocation.className.replace(
+		'game-container ',
+		''
+	);
 
 	// Explore page functions.
-	window.history.pushState({}, document.title, window.location.pathname);
+	window.history.pushState( {}, document.title, window.location.pathname );
 
 	// Detect and close intro video if finished.
-	const introVideo = document.getElementById('intro-video');
+	const introVideo = document.getElementById( 'intro-video' );
 
-	if (introVideo) {
+	if ( introVideo ) {
 		const introVideoContainer = document.querySelector(
 			'.intro-video.engage'
 		);
@@ -60,66 +63,66 @@ document.addEventListener('DOMContentLoaded', function () {
 		introVideo.play();
 
 		// Unmute introvideo.
-		const unmute = document.getElementById('unmute');
+		const unmute = document.getElementById( 'unmute' );
 
-		if (unmute) {
-			unmute.addEventListener('click', () => {
-				introVideo.muted = !introVideo.muted;
+		if ( unmute ) {
+			unmute.addEventListener( 'click', () => {
+				introVideo.muted = ! introVideo.muted;
 				unmute.textContent = introVideo.muted ? '🔇' : '🔉';
-			});
+			} );
 		}
 
-		introVideo.addEventListener('ended', () => {
-			if (introVideoContainer) {
+		introVideo.addEventListener( 'ended', () => {
+			if ( introVideoContainer ) {
 				introVideoContainer.remove();
-				playStartScreenMusic(true);
+				playStartScreenMusic( true );
 			}
-		});
+		} );
 
-		const skipButton = document.getElementById('skip-intro-video');
+		const skipButton = document.getElementById( 'skip-intro-video' );
 
-		if (skipButton) {
-			skipButton.addEventListener('click', () => {
+		if ( skipButton ) {
+			skipButton.addEventListener( 'click', () => {
 				introVideo.pause();
 
-				if (introVideoContainer) {
+				if ( introVideoContainer ) {
 					introVideoContainer.remove();
 				}
 
-				playStartScreenMusic(true);
-			});
+				playStartScreenMusic( true );
+			} );
 		}
 	} else {
-		playStartScreenMusic(true);
+		playStartScreenMusic( true );
 	}
 
 	// Create account / login swap.
-	const createAccount = document.getElementById('explore-create-account');
-	const loginAccount = document.getElementById('explore-login-account');
-	const loginForm = document.querySelector('.login-form');
-	const registerForm = document.querySelector('.register-form');
+	const createAccount = document.getElementById( 'explore-create-account' );
+	const loginAccount = document.getElementById( 'explore-login-account' );
+	const loginForm = document.querySelector( '.login-form' );
+	const registerForm = document.querySelector( '.register-form' );
 
-	if (createAccount && loginForm && loginAccount) {
-		createAccount.addEventListener('click', () => {
+	if ( createAccount && loginForm && loginAccount ) {
+		createAccount.addEventListener( 'click', () => {
 			loginForm.style.display = 'none';
 			registerForm.style.display = 'block';
 			createAccount.style.display = 'none';
 			loginAccount.style.display = 'block';
-		});
+		} );
 
-		loginAccount.addEventListener('click', () => {
+		loginAccount.addEventListener( 'click', () => {
 			loginForm.style.display = 'block';
 			registerForm.style.display = 'none';
 			loginAccount.style.display = 'none';
 			createAccount.style.display = 'block';
-		});
+		} );
 	}
 
 	// Engage transport function.
 	if (
 		'undefined' !== typeof OrbemOrder.exploreAbilities &&
 		0 < OrbemOrder.exploreAbilities.length &&
-		OrbemOrder.exploreAbilities.includes('transportation')
+		OrbemOrder.exploreAbilities.includes( 'transportation' )
 	) {
 		engageTransportFunction();
 	}
@@ -128,9 +131,9 @@ document.addEventListener('DOMContentLoaded', function () {
 	engageDraggableFunction();
 
 	// Spell clicks.
-	const spells = document.querySelectorAll('.spell');
-	const weapon = document.getElementById('weapon');
-	const theWeapon = document.querySelector('.map-weapon');
+	const spells = document.querySelectorAll( '.spell' );
+	const weapon = document.getElementById( 'weapon' );
+	const theWeapon = document.querySelector( '.map-weapon' );
 
 	// Define current weapon for images.
 	window.currentWeapon =
@@ -138,117 +141,117 @@ document.addEventListener('DOMContentLoaded', function () {
 			? '-' + theWeapon.dataset.weapon
 			: '';
 
-	if (spells && weapon) {
-		spells.forEach((spell) => {
-			spell.addEventListener('click', () => {
-				const currentSpell = document.querySelector('.spell.engage');
-				const currentWeapon = document.querySelector('#weapon');
-				const theWeapon = document.querySelector('.map-weapon');
-				const spellType = spell.getAttribute('data-type');
-				const spellName = spell.getAttribute('title');
-				const spellAmount = spell.getAttribute('data-value');
+	if ( spells && weapon ) {
+		spells.forEach( ( spell ) => {
+			spell.addEventListener( 'click', () => {
+				const currentSpell = document.querySelector( '.spell.engage' );
+				const currentWeapon = document.querySelector( '#weapon' );
+				const theWeapon = document.querySelector( '.map-weapon' );
+				const spellType = spell.getAttribute( 'data-type' );
+				const spellName = spell.getAttribute( 'title' );
+				const spellAmount = spell.getAttribute( 'data-value' );
 
 				// Remove engage from weapon.
-				currentWeapon.classList.remove('engage');
+				currentWeapon.classList.remove( 'engage' );
 
-				if (currentSpell) {
-					currentSpell.classList.remove('engage');
+				if ( currentSpell ) {
+					currentSpell.classList.remove( 'engage' );
 				}
 
-				spell.classList.add('engage');
+				spell.classList.add( 'engage' );
 				theWeapon.className = 'map-weapon';
-				theWeapon.classList.add(spellType);
-				theWeapon.classList.add(spellName);
-				theWeapon.classList.add('spell');
-				theWeapon.setAttribute('data-value', spellAmount);
+				theWeapon.classList.add( spellType );
+				theWeapon.classList.add( spellName );
+				theWeapon.classList.add( 'spell' );
+				theWeapon.setAttribute( 'data-value', spellAmount );
 				window.weaponTime = spellAmount;
-			});
-		});
+			} );
+		} );
 
 		// Use weapon instead of magic.
-		weapon.addEventListener('click', () => {
-			const currentSpell = document.querySelector('.spell.engage');
-			const theWeapon = document.querySelector('.map-weapon');
+		weapon.addEventListener( 'click', () => {
+			const currentSpell = document.querySelector( '.spell.engage' );
+			const theWeapon = document.querySelector( '.map-weapon' );
 
-			if (currentSpell) {
-				currentSpell.classList.remove('engage');
+			if ( currentSpell ) {
+				currentSpell.classList.remove( 'engage' );
 				theWeapon.className = 'map-weapon';
 				window.weaponTime = 400;
 			}
 
-			weapon.classList.add('engage');
-		});
+			weapon.classList.add( 'engage' );
+		} );
 	}
 
 	// Set up character choice.
-	const characterChoice = document.querySelector('.character-item > img');
-	if (characterChoice) {
+	const characterChoice = document.querySelector( '.character-item > img' );
+	if ( characterChoice ) {
 		addNoPoints();
-		characterChoice.classList.remove('engage');
+		characterChoice.classList.remove( 'engage' );
 	} else {
 		addNoPoints();
 	}
 
 	// Set points.
-	const thePoints = document.querySelectorAll('#explore-points .point-bar');
+	const thePoints = document.querySelectorAll( '#explore-points .point-bar' );
 
-	if (thePoints) {
-		thePoints.forEach((point) => {
-			const amount = point.getAttribute('data-amount');
-			const gauge = point.querySelector('.gauge');
+	if ( thePoints ) {
+		thePoints.forEach( ( point ) => {
+			const amount = point.getAttribute( 'data-amount' );
+			const gauge = point.querySelector( '.gauge' );
 
 			if (
 				gauge &&
-				false === point.classList.contains('point-amount') &&
-				false === point.classList.contains('money-amount')
+				false === point.classList.contains( 'point-amount' ) &&
+				false === point.classList.contains( 'money-amount' )
 			) {
-				point.setAttribute('data-amount', amount);
+				point.setAttribute( 'data-amount', amount );
 				gauge.style.width = amount + 'px';
-			} else if (true === point.classList.contains('point-amount')) {
-				const newLevel = getCurrentLevel(amount);
-				if (OrbemOrder.levelMaps) {
+			} else if ( true === point.classList.contains( 'point-amount' ) ) {
+				const newLevel = getCurrentLevel( amount );
+				if ( OrbemOrder.levelMaps ) {
 					window.nextLevelPointAmount = JSON.parse(
 						OrbemOrder.levelMaps
-					)[newLevel];
+					)[ newLevel ];
 
-					point.setAttribute('data-amount', amount);
-					gauge.style.width = getPointsGaugeAmount(amount);
+					point.setAttribute( 'data-amount', amount );
+					gauge.style.width = getPointsGaugeAmount( amount );
 				}
-			} else if (true === point.classList.contains('money-amount')) {
+			} else if ( true === point.classList.contains( 'money-amount' ) ) {
 				point.dataset.amount = amount;
-				point.querySelector('.money-text').textContent = amount;
+				point.querySelector( '.money-text' ).textContent = amount;
 			}
-		});
+		} );
 	}
 
 	document.body.style.position = 'fixed';
-	const engageExplore = document.getElementById('engage-explore');
-	const tryEngageExplore = document.getElementById('try-engage-explore');
-	const loginRegisters = document.querySelectorAll('#login-register');
-	const nonLoginWarning = document.querySelector('.non-login-warning');
+	const engageExplore = document.getElementById( 'engage-explore' );
+	const tryEngageExplore = document.getElementById( 'try-engage-explore' );
+	const loginRegisters = document.querySelectorAll( '#login-register' );
+	const nonLoginWarning = document.querySelector( '.non-login-warning' );
 	const loginRegisterCont = document.querySelector(
 		'.game-login-create-container'
 	);
 
-	if (engageExplore) {
-		engageExplore.addEventListener('click', function () {
+	if ( engageExplore ) {
+		engageExplore.addEventListener( 'click', function () {
 			engageExploreGame();
-		});
+		} );
 	}
 
-	if (tryEngageExplore) {
-		tryEngageExplore.addEventListener('click', function () {
-			nonLoginWarning.classList.add('engage');
-		});
+	if ( tryEngageExplore ) {
+		tryEngageExplore.addEventListener( 'click', function () {
+			nonLoginWarning.classList.add( 'engage' );
+		} );
 	}
 
-	if (loginRegisters) {
-		loginRegisters.forEach((loginRegister) => {
-			loginRegister.addEventListener('click', function () {
-				loginRegisterCont.classList.add('engage');
-				nonLoginWarning.classList.remove('engage');
-			});
-		});
+	if ( loginRegisters ) {
+		loginRegisters.forEach( ( loginRegister ) => {
+			loginRegister.addEventListener( 'click', function () {
+				loginRegisterCont.classList.add( 'engage' );
+				nonLoginWarning.classList.remove( 'engage' );
+			} );
+		} );
 	}
 
 	engageSettingsMenus();
@@ -256,63 +259,63 @@ document.addEventListener('DOMContentLoaded', function () {
 	engageStorageMenus();
 
 	// New game reset.
-	const newGame = document.getElementById('new-explore');
+	const newGame = document.getElementById( 'new-explore' );
 
-	if (newGame) {
-		newGame.addEventListener('click', async () => {
+	if ( newGame ) {
+		newGame.addEventListener( 'click', async () => {
 			window.confirm(
 				'Are you sure you want to start a new game? All your previously saved data will be lost.'
 			);
 			await resetExplore();
 
-			setTimeout(() => {
+			setTimeout( () => {
 				window.location.href = OrbemOrder.gameURL;
-			}, 1000);
-		});
+			}, 1000 );
+		} );
 	}
-});
+} );
 
-function unlockAbilities(pointAmount) {
+function unlockAbilities( pointAmount ) {
 	'use strict';
 
-	const unlockables = document.querySelectorAll('[data-unlockable]');
+	const unlockables = document.querySelectorAll( '[data-unlockable]' );
 
-	if (unlockables) {
-		unlockables.forEach((unlockable) => {
+	if ( unlockables ) {
+		unlockables.forEach( ( unlockable ) => {
 			const whenToUnlock = unlockable.dataset.unlockable;
 
-			if (parseInt(pointAmount) >= parseInt(whenToUnlock)) {
+			if ( parseInt( pointAmount ) >= parseInt( whenToUnlock ) ) {
 				// If spell, give spell ability.
-				if ('explore-magic' === unlockable.dataset.genre) {
-					navigator.vibrate(1000);
+				if ( 'explore-magic' === unlockable.dataset.genre ) {
+					navigator.vibrate( 1000 );
 
-					addNewSpell(unlockable.id);
+					addNewSpell( unlockable.id );
 
 					// Remove if unlocked.
 					unlockable.remove();
 				}
 			}
-		});
+		} );
 	}
 }
 
 function engageCharacterSelection() {
 	'use strict';
 
-	const charactersMenu = document.getElementById('characters');
+	const charactersMenu = document.getElementById( 'characters' );
 	// Add crew select click event.
 	const crewMates = charactersMenu
-		? charactersMenu.querySelectorAll('.character-list .character-item')
+		? charactersMenu.querySelectorAll( '.character-list .character-item' )
 		: false;
 
-	if (crewMates) {
-		crewMates.forEach((crewMate) => {
-			crewMate.addEventListener('click', () => {
-				selectNewCharacter(crewMate);
+	if ( crewMates ) {
+		crewMates.forEach( ( crewMate ) => {
+			crewMate.addEventListener( 'click', () => {
+				selectNewCharacter( crewMate );
 
-				charactersMenu.classList.remove('engage');
-			});
-		});
+				charactersMenu.classList.remove( 'engage' );
+			} );
+		} );
 	}
 }
 
@@ -322,15 +325,15 @@ function engageCharacterSelection() {
  * @param npc
  * @param cutscene
  */
-function moveNPC(npc, cutscene) {
+function moveNPC( npc, cutscene ) {
 	'use strict';
 
 	let walkingInterval;
 
-	if (npc) {
+	if ( npc ) {
 		let oldNpc = false;
 
-		if (false !== cutscene) {
+		if ( false !== cutscene ) {
 			oldNpc = npc;
 			npc = cutscene;
 		}
@@ -344,18 +347,18 @@ function moveNPC(npc, cutscene) {
 		const repeatPath = npc.dataset?.repeat;
 		const wanderer = 'yes' === npc.dataset?.wanderer;
 
-		if (false !== cutscene && oldNpc) {
+		if ( false !== cutscene && oldNpc ) {
 			npc = oldNpc;
 		}
 
 		// Check if walking path exists.
-		if (walkingPath && false === wanderer) {
-			const pathArray = JSON.parse(walkingPath);
+		if ( walkingPath && false === wanderer ) {
+			const pathArray = JSON.parse( walkingPath );
 
-			pathArray.unshift({
-				top: npc.style.top.replace('px', ''),
-				left: npc.style.left.replace('px', ''),
-			});
+			pathArray.unshift( {
+				top: npc.style.top.replace( 'px', '' ),
+				left: npc.style.left.replace( 'px', '' ),
+			} );
 			const pathCount = pathArray.length - 1;
 			let position = 0;
 			let nextPosition = 1;
@@ -365,17 +368,17 @@ function moveNPC(npc, cutscene) {
 			let moveDirection;
 			let newImage;
 			let npcIsStopped = false;
-			const npcName = cleanClassName(npc.className);
+			const npcName = cleanClassName( npc.className );
 
-			if (pathArray && 1 !== pathArray.length) {
-				let currentWorldX = pathArray[position].left;
-				let currentWorldY = pathArray[position].top;
+			if ( pathArray && 1 !== pathArray.length ) {
+				let currentWorldX = pathArray[ position ].left;
+				let currentWorldY = pathArray[ position ].top;
 				let previousWorldX;
 				let previousWorldY;
 				let didPauseNPC = false;
 
-				walkingInterval = setInterval(() => {
-					if ('false' !== npc.dataset?.canmove) {
+				walkingInterval = setInterval( () => {
+					if ( 'false' !== npc.dataset?.canmove ) {
 						const currentImage = npc.querySelector(
 							'.character-icon.engage'
 						);
@@ -386,73 +389,73 @@ function moveNPC(npc, cutscene) {
 
 						// Get loop amount for how many times to loop interval before switching to next position.
 						loopAmount = getLoopAmount(
-							pathArray[position].left,
-							pathArray[position].top,
-							pathArray[nextPosition].left,
-							pathArray[nextPosition].top,
+							pathArray[ position ].left,
+							pathArray[ position ].top,
+							pathArray[ nextPosition ].left,
+							pathArray[ nextPosition ].top,
 							walkingSpeed,
 							timeBetween
 						);
 
 						// If loopAmount equals loop count, transition to next walking path.
-						if (loopCount === loopAmount - 1 || firstRun) {
+						if ( loopCount === loopAmount - 1 || firstRun ) {
 							// Check that current position is not the last position. And move npc if it is not.
 							if (
 								pathCount > position ||
-								(firstRun && pathCount === position)
+								( firstRun && pathCount === position )
 							) {
-								if (currentImage) {
-									currentImage.classList.remove('engage');
+								if ( currentImage ) {
+									currentImage.classList.remove( 'engage' );
 								}
 
 								// Get user direction of movement path.
 								moveDirection = regulateTransitionSpeed(
-									pathArray[position].left,
-									pathArray[position].top,
-									pathArray[nextPosition].left,
-									pathArray[nextPosition].top,
+									pathArray[ position ].left,
+									pathArray[ position ].top,
+									pathArray[ nextPosition ].left,
+									pathArray[ nextPosition ].top,
 									npc,
 									walkingSpeed
 								);
 
 								npc.style.left =
-									pathArray[nextPosition].left + 'px';
+									pathArray[ nextPosition ].left + 'px';
 								npc.style.top =
-									pathArray[nextPosition].top + 'px';
+									pathArray[ nextPosition ].top + 'px';
 
 								// Update NPC direction image.
 								newImage = npc.querySelector(
 									'#' + npcName + moveDirection
 								);
 
-								if (newImage) {
-									newImage.classList.add('engage');
+								if ( newImage ) {
+									newImage.classList.add( 'engage' );
 									npcIsStopped = false;
 								}
 							}
 
 							// If it is not the first run do this.
-							if (false === firstRun) {
+							if ( false === firstRun ) {
 								// If the current position is not the last position, iterate on position count and reset loop count to 0.
-								if (pathCount > nextPosition) {
+								if ( pathCount > nextPosition ) {
 									loopCount = 0;
 									firstRun = true;
 
-									if (0 !== nextPosition) {
+									if ( 0 !== nextPosition ) {
 										position++;
 									} else {
 										position = 0;
 									}
 
 									// If it is the last position, and repeat is set to true, then reset position to 0.
-								} else if ('true' === repeatPath) {
+								} else if ( 'true' === repeatPath ) {
 									firstRun = true;
 									position = pathCount;
 									loopCount = 0;
 
 									// If not repeat and position is at end, clear interval.
-								} else if (pathCount === nextPosition) {
-									clearInterval(walkingInterval);
+								} else if ( pathCount === nextPosition ) {
+									clearInterval( walkingInterval );
 								}
 
 								// if it is the first run, set to false and iterate on position and loopcount.
@@ -467,13 +470,13 @@ function moveNPC(npc, cutscene) {
 						// Live track NPC movement.
 						const trackNPC = () => {
 							if (
-								parseInt(pathArray[nextPosition].left) ===
+								parseInt( pathArray[ nextPosition ].left ) ===
 									npc.offsetLeft &&
-								parseInt(pathArray[nextPosition].top) ===
+								parseInt( pathArray[ nextPosition ].top ) ===
 									npc.offsetTop &&
 								true !== npcIsStopped
 							) {
-								setStaticNPCImage(moveDirection, npc);
+								setStaticNPCImage( moveDirection, npc );
 								npcIsStopped = true;
 							}
 
@@ -481,40 +484,40 @@ function moveNPC(npc, cutscene) {
 							currentWorldY = npc.offsetTop;
 							previousWorldX = npc.offsetLeft;
 							previousWorldY = npc.offsetTop;
-							requestAnimationFrame(trackNPC);
+							requestAnimationFrame( trackNPC );
 						};
 
 						trackNPC();
 
 						didPauseNPC = false;
-					} else if (false === didPauseNPC) {
+					} else if ( false === didPauseNPC ) {
 						// Set current position so paused movement can restart at point of pause.
 						loopAmount = loopAmount + 1;
 						position = 0 < position ? position - 1 : pathCount;
 
-						setStaticNPCImage(moveDirection, npc);
+						setStaticNPCImage( moveDirection, npc );
 
 						npc.style.left = currentWorldX + 'px';
 						npc.style.top = currentWorldY + 'px';
 
 						didPauseNPC = true;
 					}
-				}, 250);
+				}, 250 );
 			} else {
 				regulateTransitionSpeed(
-					npc.style.left.replace('px', ''),
-					npc.style.top.replace('px', ''),
-					pathArray[position].left,
-					pathArray[position].top,
+					npc.style.left.replace( 'px', '' ),
+					npc.style.top.replace( 'px', '' ),
+					pathArray[ position ].left,
+					pathArray[ position ].top,
 					npc,
 					walkingSpeed
 				);
 
-				npc.style.left = pathArray[nextPosition].left + 'px';
-				npc.style.top = pathArray[nextPosition].top + 'px';
+				npc.style.left = pathArray[ nextPosition ].left + 'px';
+				npc.style.top = pathArray[ nextPosition ].top + 'px';
 			}
-		} else if (true === wanderer) {
-			makeNPCWander(npc, walkingSpeed, timeBetween);
+		} else if ( true === wanderer ) {
+			makeNPCWander( npc, walkingSpeed, timeBetween );
 		}
 	}
 }
@@ -524,45 +527,46 @@ function engageStorageMenus() {
 	'use strict';
 
 	// Tab logic.
-	const storageTabs = document.querySelectorAll('.menu-tabs > div');
+	const storageTabs = document.querySelectorAll( '.menu-tabs > div' );
 
-	if (storageTabs) {
-		storageTabs.forEach((storageTab, storageIndex) => {
-			storageTab.addEventListener('click', () => {
-				const currentTab = document.querySelector('.menu-tabs .engage');
+	if ( storageTabs ) {
+		storageTabs.forEach( ( storageTab, storageIndex ) => {
+			storageTab.addEventListener( 'click', () => {
+				const currentTab =
+					document.querySelector( '.menu-tabs .engage' );
 
 				const itemDescription =
-					document.getElementById('item-description');
-				if (itemDescription) {
+					document.getElementById( 'item-description' );
+				if ( itemDescription ) {
 					itemDescription.innerHTML = '';
 				}
 
-				if (currentTab) {
-					currentTab.classList.remove('engage');
+				if ( currentTab ) {
+					currentTab.classList.remove( 'engage' );
 				}
 
 				const selectedTabContent = document.querySelector(
 					'.retrieval-points [data-menu="' +
-						storageTab.className.replace('-tab', '') +
+						storageTab.className.replace( '-tab', '' ) +
 						'"]'
 				);
 
 				// Select new tab.
-				storageTab.classList.add('engage');
+				storageTab.classList.add( 'engage' );
 
 				const currentTabContent = document.querySelector(
 					'.storage-menu.engage'
 				);
 
-				if (currentTabContent) {
-					currentTabContent.classList.remove('engage');
+				if ( currentTabContent ) {
+					currentTabContent.classList.remove( 'engage' );
 				}
 
-				if (selectedTabContent) {
-					selectedTabContent.classList.add('engage');
+				if ( selectedTabContent ) {
+					selectedTabContent.classList.add( 'engage' );
 				}
-			});
-		});
+			} );
+		} );
 	}
 }
 
@@ -574,111 +578,111 @@ function engageSettingsMenus() {
 		'#settings, #storage, #characters'
 	);
 
-	if (settingCogs) {
-		settingCogs.forEach((settingCog) => {
-			if ('storage' === settingCog.id) {
+	if ( settingCogs ) {
+		settingCogs.forEach( ( settingCog ) => {
+			if ( 'storage' === settingCog.id ) {
 				// Show item description in storage menu.
 				const menuItems = document.querySelectorAll(
 					'.retrieval-points .storage-item'
 				);
 
-				if (menuItems) {
-					menuItems.forEach((menuItem) => {
-						menuItem.addEventListener('click', () => {
-							if ('true' !== menuItem.dataset.empty) {
-								showItemDescription(menuItem);
+				if ( menuItems ) {
+					menuItems.forEach( ( menuItem ) => {
+						menuItem.addEventListener( 'click', () => {
+							if ( 'true' !== menuItem.dataset.empty ) {
+								showItemDescription( menuItem );
 							}
-						});
-					});
+						} );
+					} );
 				}
 			}
 
-			settingCog.addEventListener('click', (e) => {
+			settingCog.addEventListener( 'click', ( e ) => {
 				if (
-					false === e.target.classList.contains('close-settings') &&
-					!e.target.closest('.character-item')
+					false === e.target.classList.contains( 'close-settings' ) &&
+					! e.target.closest( '.character-item' )
 				) {
-					settingCog.classList.add('engage');
+					settingCog.classList.add( 'engage' );
 				}
-			});
+			} );
 
 			settingCog
-				.querySelector('.close-settings')
-				.addEventListener('click', () => {
+				.querySelector( '.close-settings' )
+				.addEventListener( 'click', () => {
 					const description = document.querySelector(
 						'.retrieval-points #item-description'
 					);
-					settingCog.classList.remove('engage');
+					settingCog.classList.remove( 'engage' );
 
-					if (description) {
+					if ( description ) {
 						description.innerHTML = '';
 					}
-				});
-		});
+				} );
+		} );
 	}
 
-	const updateSettings = document.getElementById('update-settings');
+	const updateSettings = document.getElementById( 'update-settings' );
 
 	// Save settings.
-	const musicSettings = document.getElementById('music-volume');
-	const sfxSettings = document.getElementById('sfx-volume');
-	const talkingSettings = document.getElementById('talking-volume');
+	const musicSettings = document.getElementById( 'music-volume' );
+	const sfxSettings = document.getElementById( 'sfx-volume' );
+	const talkingSettings = document.getElementById( 'talking-volume' );
 
-	if (updateSettings) {
-		if (sfxSettings && musicSettings && talkingSettings) {
+	if ( updateSettings ) {
+		if ( sfxSettings && musicSettings && talkingSettings ) {
 			window.sfxVolume = sfxSettings.value / 100;
 			window.talkingVolume = talkingSettings.value;
 
 			// Volume listeners.
-			musicSettings.addEventListener('input', (event) => {
+			musicSettings.addEventListener( 'input', ( event ) => {
 				window.currentMusic.volume = event.target.value / 100;
-			});
+			} );
 
 			// Volume listeners.
-			talkingSettings.addEventListener('input', (event) => {
+			talkingSettings.addEventListener( 'input', ( event ) => {
 				window.talkingVolume = event.target.value;
-			});
+			} );
 
 			// Volume listeners.
-			sfxSettings.addEventListener('input', (event) => {
+			sfxSettings.addEventListener( 'input', ( event ) => {
 				window.sfxVolume = event.target.value / 100;
-			});
+			} );
 		}
 
-		updateSettings.addEventListener('click', () => {
-			if (musicSettings && sfxSettings && talkingSettings) {
+		updateSettings.addEventListener( 'click', () => {
+			if ( musicSettings && sfxSettings && talkingSettings ) {
 				saveSettings(
 					musicSettings.value,
 					sfxSettings.value,
 					talkingSettings.value
 				);
 			}
-		});
+		} );
 	}
 }
 
-function setStaticNPCImage(moveDirection, npc) {
+function setStaticNPCImage( moveDirection, npc ) {
 	'use strict';
 
-	const currentImage = npc.querySelector('.character-icon.engage');
-	const npcName = cleanClassName(npc.className);
+	const currentImage = npc.querySelector( '.character-icon.engage' );
+	const npcName = cleanClassName( npc.className );
 
-	if (currentImage) {
-		currentImage.classList.remove('engage');
+	if ( currentImage ) {
+		currentImage.classList.remove( 'engage' );
 	}
 
 	const newImage = document.getElementById(
 		npcName + 'static-' + moveDirection
 	);
-	if (newImage) {
-		newImage.classList.add('engage');
+	if ( newImage ) {
+		newImage.classList.add( 'engage' );
 	}
 }
 
-function makeNPCWander(npc, walkingSpeed, timeBetween) {
+function makeNPCWander( npc, walkingSpeed, timeBetween ) {
 	'use strict';
 
-	let startDir = getRandomDir([]);
+	let startDir = getRandomDir( [] );
 	let moveDir = '';
 	let triedDown = false;
 	let triedLeft = false;
@@ -691,28 +695,28 @@ function makeNPCWander(npc, walkingSpeed, timeBetween) {
 
 	function startRandomNpcPause() {
 		const pauseTime =
-			Math.floor(Math.random() * (25000 - 15000 + 1)) + 15000;
+			Math.floor( Math.random() * ( 25000 - 15000 + 1 ) ) + 15000;
 
-		setTimeout(() => {
-			pauseNpc(timeBetween, npc);
+		setTimeout( () => {
+			pauseNpc( timeBetween, npc );
 
 			// Schedule the next pause with a new random time
 			startRandomNpcPause();
-		}, pauseTime);
+		}, pauseTime );
 	}
 
 	startRandomNpcPause();
 
-	setInterval(() => {
+	setInterval( () => {
 		if (
 			'true' !== npc.dataset?.break &&
 			'true' !== npc.dataset?.cutscenebreak
 		) {
-			const currentLeft = npc.style.left.replace('px', '');
-			const currentTop = npc.style.top.replace('px', '');
-			const finalPos = blockMovement(currentTop, currentLeft, npc);
+			const currentLeft = npc.style.left.replace( 'px', '' );
+			const currentTop = npc.style.top.replace( 'px', '' );
+			const finalPos = blockMovement( currentTop, currentLeft, npc );
 
-			switch (startDir) {
+			switch ( startDir ) {
 				case 'down':
 					npc.style.top = finalPos.top + 1 + 'px';
 
@@ -734,21 +738,22 @@ function makeNPCWander(npc, walkingSpeed, timeBetween) {
 			preMoveDir = moveDir;
 
 			if (
-				((finalPos.left > currentLeft || finalPos.left < currentLeft) &&
+				( ( finalPos.left > currentLeft ||
+					finalPos.left < currentLeft ) &&
 					true === finalPos.collide &&
 					false === triedDown &&
-					(startDir === 'left' || startDir === 'right')) ||
-				(true === finalPos.collide && finalPos.top > currentTop)
+					( startDir === 'left' || startDir === 'right' ) ) ||
+				( true === finalPos.collide && finalPos.top > currentTop )
 			) {
 				moveDir = swap % 2 === 0 ? 'down' : 'up';
 			}
 
 			if (
-				((('down' === moveDir && finalPos.top < currentTop) ||
-					('up' === moveDir && finalPos.top > currentTop)) &&
+				( ( ( 'down' === moveDir && finalPos.top < currentTop ) ||
+					( 'up' === moveDir && finalPos.top > currentTop ) ) &&
 					true === finalPos.collide &&
-					(startDir === 'left' || startDir === 'right')) ||
-				(finalPos.left > currentLeft && true === triedDown)
+					( startDir === 'left' || startDir === 'right' ) ) ||
+				( finalPos.left > currentLeft && true === triedDown )
 			) {
 				moveDir = 'down' === moveDir ? 'up' : 'down';
 				triedDown = true;
@@ -758,27 +763,27 @@ function makeNPCWander(npc, walkingSpeed, timeBetween) {
 				finalPos.top > currentTop &&
 				true === finalPos.collide &&
 				true === triedDown &&
-				(startDir === 'left' || startDir === 'right')
+				( startDir === 'left' || startDir === 'right' )
 			) {
 				triedUp = true;
 			}
 
 			// Up / down checks.
 			if (
-				(finalPos.top > currentTop || finalPos.top < currentTop) &&
+				( finalPos.top > currentTop || finalPos.top < currentTop ) &&
 				true === finalPos.collide &&
 				false === triedLeft &&
-				(startDir === 'up' || startDir === 'down')
+				( startDir === 'up' || startDir === 'down' )
 			) {
 				moveDir = swap % 2 === 0 ? 'left' : 'right';
 			}
 
 			if (
-				((('left' === moveDir && finalPos.left > currentLeft) ||
-					('right' === moveDir && finalPos.left < currentLeft)) &&
+				( ( ( 'left' === moveDir && finalPos.left > currentLeft ) ||
+					( 'right' === moveDir && finalPos.left < currentLeft ) ) &&
 					true === finalPos.collide &&
-					(startDir === 'up' || startDir === 'down')) ||
-				(finalPos.top > currentTop && true === triedLeft)
+					( startDir === 'up' || startDir === 'down' ) ) ||
+				( finalPos.top > currentTop && true === triedLeft )
 			) {
 				moveDir =
 					'left' === moveDir || 'down' === moveDir ? 'right' : 'left';
@@ -794,11 +799,11 @@ function makeNPCWander(npc, walkingSpeed, timeBetween) {
 			}
 
 			if (
-				(true === triedLeft && true === triedRight) ||
-				(true === triedUp && true === triedDown)
+				( true === triedLeft && true === triedRight ) ||
+				( true === triedUp && true === triedDown )
 			) {
 				moveDir = '';
-				startDir = getRandomDir(startDir);
+				startDir = getRandomDir( startDir );
 				triedLeft = false;
 				triedRight = false;
 				triedUp = false;
@@ -806,30 +811,30 @@ function makeNPCWander(npc, walkingSpeed, timeBetween) {
 				swap++;
 			}
 
-			switch (moveDir) {
+			switch ( moveDir ) {
 				case 'down':
-					if ('up' !== startDir) {
+					if ( 'up' !== startDir ) {
 						npc.style.top = finalPos.top + 1 + 'px';
 					} else {
 						moveDir = '';
 					}
 					break;
 				case 'up':
-					if ('down' !== startDir) {
+					if ( 'down' !== startDir ) {
 						npc.style.top = finalPos.top - 1 + 'px';
 					} else {
 						moveDir = '';
 					}
 					break;
 				case 'left':
-					if ('right' !== startDir) {
+					if ( 'right' !== startDir ) {
 						npc.style.left = finalPos.left - 1 + 'px';
 					} else {
 						moveDir = '';
 					}
 					break;
 				case 'right':
-					if ('left' !== startDir) {
+					if ( 'left' !== startDir ) {
 						npc.style.left = finalPos.left + 1 + 'px';
 					} else {
 						moveDir = '';
@@ -837,22 +842,22 @@ function makeNPCWander(npc, walkingSpeed, timeBetween) {
 					break;
 			}
 
-			if (false === finalPos.collide) {
+			if ( false === finalPos.collide ) {
 				noCollideCount++;
 			} else {
 				noCollideCount = 0;
 
-				if (preMoveDir !== moveDir) {
+				if ( preMoveDir !== moveDir ) {
 					collisionCount++;
 				}
 			}
 
-			if (collisionCount > 100) {
-				pauseNpc(timeBetween, npc);
+			if ( collisionCount > 100 ) {
+				pauseNpc( timeBetween, npc );
 				moveDir = '';
 			}
 
-			if (noCollideCount > 20) {
+			if ( noCollideCount > 20 ) {
 				collisionCount = 0;
 				triedDown = false;
 				triedUp = false;
@@ -862,39 +867,43 @@ function makeNPCWander(npc, walkingSpeed, timeBetween) {
 				swap++;
 			}
 		} else {
-			startDir = getRandomDir(startDir);
+			startDir = getRandomDir( startDir );
 		}
-	}, walkingSpeed);
+	}, walkingSpeed );
 }
 
-function pauseNpc(timeBetween, npc) {
+function pauseNpc( timeBetween, npc ) {
 	'use strict';
 
 	npc.dataset.break = 'true';
-	setTimeout(() => {
+	setTimeout( () => {
 		npc.dataset.break = 'false';
-	}, timeBetween);
+	}, timeBetween );
 }
 
-function getRandomDir(currentDir) {
+function getRandomDir( currentDir ) {
 	'use strict';
 
-	const dirs = ['up', 'down', 'left', 'right'];
+	const dirs = [ 'up', 'down', 'left', 'right' ];
 
 	// Normalize currentDir to an array if it's not already
-	const excludeDirs = Array.isArray(currentDir) ? currentDir : [currentDir];
+	const excludeDirs = Array.isArray( currentDir )
+		? currentDir
+		: [ currentDir ];
 
 	// Filter out any directions in excludeDirs
-	const filteredDirs = dirs.filter((dir) => !excludeDirs.includes(dir));
+	const filteredDirs = dirs.filter(
+		( dir ) => ! excludeDirs.includes( dir )
+	);
 
 	// If no directions left, return null or handle gracefully
-	if (filteredDirs.length === 0) {
+	if ( filteredDirs.length === 0 ) {
 		return null;
 	}
 
 	// Pick a random direction from the remaining ones
-	const randomIndex = Math.floor(Math.random() * filteredDirs.length);
-	return filteredDirs[randomIndex];
+	const randomIndex = Math.floor( Math.random() * filteredDirs.length );
+	return filteredDirs[ randomIndex ];
 }
 
 /**
@@ -906,77 +915,79 @@ function getRandomDir(currentDir) {
  * @param collectable
  * @param missionName
  */
-function addUserPoints(amount, type, position, collectable, missionName) {
+function addUserPoints( amount, type, position, collectable, missionName ) {
 	'use strict';
 
 	// If collectable, remove from menu.
-	if (true === collectable) {
-		removeItemFromStorage(position, type);
+	if ( true === collectable ) {
+		removeItemFromStorage( position, type );
 	}
 
 	// Make sure amount is always 100 or less. Not for points or money.
-	if (amount > 100 && 'point' !== type && 'money' !== type) {
+	if ( amount > 100 && 'point' !== type && 'money' !== type ) {
 		amount = 100;
 	}
 
 	// Make sure amount is 0 if less than 0 for health
-	if (amount < 0 && 'health' === type) {
+	if ( amount < 0 && 'health' === type ) {
 		amount = 0;
 	}
 
-	const bar = document.querySelector(`.${type}-amount`);
+	const bar = document.querySelector( `.${ type }-amount` );
 	let gauge = false;
 
-	if (bar) {
-		gauge = bar.querySelector('.gauge');
+	if ( bar ) {
+		gauge = bar.querySelector( '.gauge' );
 	}
 
 	// Add to explorePoints.
 	if (
 		OrbemOrder.explorePoints &&
-		OrbemOrder.explorePoints[type] &&
-		false === OrbemOrder.explorePoints[type].positions.includes(position) &&
-		false === Array.isArray(position)
+		OrbemOrder.explorePoints[ type ] &&
+		false ===
+			OrbemOrder.explorePoints[ type ].positions.includes( position ) &&
+		false === Array.isArray( position )
 	) {
-		OrbemOrder.explorePoints[type].positions.push(position);
+		OrbemOrder.explorePoints[ type ].positions.push( position );
 	} else if (
 		OrbemOrder.explorePoints &&
-		OrbemOrder.explorePoints[type] &&
-		false === OrbemOrder.explorePoints[type].positions.includes(position) &&
-		true === Array.isArray(position)
+		OrbemOrder.explorePoints[ type ] &&
+		false ===
+			OrbemOrder.explorePoints[ type ].positions.includes( position ) &&
+		true === Array.isArray( position )
 	) {
-		position.forEach((positionName) => {
-			OrbemOrder.explorePoints[type].positions.push(positionName);
-		});
+		position.forEach( ( positionName ) => {
+			OrbemOrder.explorePoints[ type ].positions.push( positionName );
+		} );
 	}
 
-	if (gauge && 'point' !== type && 'money' !== type) {
-		bar.setAttribute('data-amount', amount);
+	if ( gauge && 'point' !== type && 'money' !== type ) {
+		bar.setAttribute( 'data-amount', amount );
 		gauge.style.width = amount + 'px';
-	} else if ('point' === type) {
-		bar.setAttribute('data-amount', amount);
+	} else if ( 'point' === type ) {
+		bar.setAttribute( 'data-amount', amount );
 
-		gauge.style.width = getPointsGaugeAmount(amount);
+		gauge.style.width = getPointsGaugeAmount( amount );
 
 		// Unlock abilities as points grow.
-		unlockAbilities(amount);
-	} else if ('money' === type) {
-		bar.setAttribute('data-amount', amount);
+		unlockAbilities( amount );
+	} else if ( 'money' === type ) {
+		bar.setAttribute( 'data-amount', amount );
 
-		const moneyText = bar.querySelector('.money-text');
+		const moneyText = bar.querySelector( '.money-text' );
 		moneyText.textContent = amount;
 	}
 
-	if ('health' === type && 0 === amount) {
+	if ( 'health' === type && 0 === amount ) {
 		triggerGameOver();
 	}
 
 	if (
 		'' !== position &&
-		true === ['money', 'point', 'health', 'mana'].includes(type) &&
+		true === [ 'money', 'point', 'health', 'mana' ].includes( type ) &&
 		position !== missionName
 	) {
-		persistItemRemoval(position, type, amount, 2000, '', false);
+		persistItemRemoval( position, type, amount, 2000, '', false );
 	}
 }
 
@@ -986,14 +997,14 @@ function addUserPoints(amount, type, position, collectable, missionName) {
 function triggerGameOver() {
 	'use strict';
 
-	const gameOver = document.querySelector('.game-over-notice');
+	const gameOver = document.querySelector( '.game-over-notice' );
 
-	if (gameOver) {
+	if ( gameOver ) {
 		// Clear shooter interval.
-		clearInterval(shooterInterval);
+		clearInterval( shooterInterval );
 
-		const tryAgain = document.querySelector('.try-again');
-		const defaultMap = document.querySelector('.default-map');
+		const tryAgain = document.querySelector( '.try-again' );
+		const defaultMap = document.querySelector( '.default-map' );
 
 		gameOver.style.display = 'block';
 
@@ -1001,9 +1012,9 @@ function triggerGameOver() {
 		inHazard = false;
 		hazardItem = false;
 
-		persistItemRemoval('projectile', 'health', 100, 0, 'true', false);
+		persistItemRemoval( 'projectile', 'health', 100, 0, 'true', false );
 
-		if (defaultMap) {
+		if ( defaultMap ) {
 			// Reset user position.
 			addUserCoordianate(
 				defaultMap.dataset.startleft,
@@ -1011,10 +1022,10 @@ function triggerGameOver() {
 			);
 		}
 
-		if (tryAgain) {
-			tryAgain.addEventListener('click', () => {
+		if ( tryAgain ) {
+			tryAgain.addEventListener( 'click', () => {
 				window.location.reload();
-			});
+			} );
 		}
 	}
 }
@@ -1028,40 +1039,40 @@ function triggerGameOver() {
  * @param reset
  * @param direct
  */
-function persistItemRemoval(item, type, amount, timeoutTime, reset, direct) {
+function persistItemRemoval( item, type, amount, timeoutTime, reset, direct ) {
 	'use strict';
 
-	const filehref = `${OrbemOrder.siteRESTURL}/add-explore-points/`;
+	const filehref = `${ OrbemOrder.siteRESTURL }/add-explore-points/`;
 
 	// Don't allow health to be 0.
-	if ('health' === type && 0 === amount) {
+	if ( 'health' === type && 0 === amount ) {
 		return;
 	}
 
-	if ('' !== item) {
-		clearTimeout(persistTimeout);
+	if ( '' !== item ) {
+		clearTimeout( persistTimeout );
 
-		if (false === Array.isArray(item)) {
-			persistItems.push(item);
+		if ( false === Array.isArray( item ) ) {
+			persistItems.push( item );
 		} else {
-			persistItems = item.concat(persistItems);
+			persistItems = item.concat( persistItems );
 		}
 
 		// Always use projectile if health update.
-		if ('health' === type) {
-			persistItems = ['projectile'];
+		if ( 'health' === type ) {
+			persistItems = [ 'projectile' ];
 		}
 
-		persistItems = Array.from(new Set(persistItems));
+		persistItems = Array.from( new Set( persistItems ) );
 
-		if (true === direct) {
+		if ( true === direct ) {
 			amount =
 				'health' !== type
-					? getCurrentPoints(type) + amount
-					: getPointsGaugeAmount(type) - amount;
+					? getCurrentPoints( type ) + amount
+					: getPointsGaugeAmount( type ) - amount;
 		}
 
-		persistTimeout = setTimeout(() => {
+		persistTimeout = setTimeout( () => {
 			const jsonString = {
 				type,
 				item: persistItems,
@@ -1070,43 +1081,46 @@ function persistItemRemoval(item, type, amount, timeoutTime, reset, direct) {
 			};
 
 			// Save position of item.
-			fetch(filehref, {
+			fetch( filehref, {
 				method: 'POST', // Specify the HTTP method
 				headers: {
 					'Content-Type': 'application/json', // Set the content type to JSON
 					'X-WP-Nonce': OrbemOrder.orbemNonce,
 				},
-				body: JSON.stringify(jsonString), // The JSON stringified payload
-			}).then((response) => {
+				body: JSON.stringify( jsonString ), // The JSON stringified payload
+			} ).then( ( response ) => {
 				// Check if the response status is in the range 200-299
-				if (!response.ok) {
+				if ( ! response.ok ) {
 					throw new Error(
 						'Network response was not ok ' + response.statusText
 					);
 				}
 
-				if (type === 'communicate') {
+				if ( type === 'communicate' ) {
 					type = 'point';
 				}
 
 				// Add to explore points var.
-				if (OrbemOrder.explorePoints && type) {
+				if ( OrbemOrder.explorePoints && type ) {
 					if (
-						OrbemOrder.explorePoints[type].positions &&
-						Array.isArray(OrbemOrder.explorePoints[type].positions)
+						OrbemOrder.explorePoints[ type ].positions &&
+						Array.isArray(
+							OrbemOrder.explorePoints[ type ].positions
+						)
 					) {
-						OrbemOrder.explorePoints[type].positions =
-							OrbemOrder.explorePoints[type].positions.concat(
+						OrbemOrder.explorePoints[ type ].positions =
+							OrbemOrder.explorePoints[ type ].positions.concat(
 								persistItems
 							);
 					} else {
-						OrbemOrder.explorePoints[type].positions = persistItems;
+						OrbemOrder.explorePoints[ type ].positions =
+							persistItems;
 					}
 				}
 
 				persistItems = [];
-			});
-		}, timeoutTime);
+			} );
+		}, timeoutTime );
 	}
 }
 
@@ -1115,10 +1129,10 @@ function persistItemRemoval(item, type, amount, timeoutTime, reset, direct) {
  * @param  amount
  * @return {string}
  */
-function getPointsGaugeAmount(amount) {
+function getPointsGaugeAmount( amount ) {
 	'use strict';
 
-	return (amount / window.nextLevelPointAmount) * 100 + '%';
+	return ( amount / window.nextLevelPointAmount ) * 100 + '%';
 }
 
 /**
@@ -1127,12 +1141,12 @@ function getPointsGaugeAmount(amount) {
  * @param value
  * @param position
  */
-function saveMission(mission, value, position) {
+function saveMission( mission, value, position ) {
 	'use strict';
 
-	clearTimeout(saveMissionTimeout);
+	clearTimeout( saveMissionTimeout );
 
-	saveMissionTimeout = setTimeout(() => {
+	saveMissionTimeout = setTimeout( () => {
 		// Cross off mission.
 		const theMission = document.querySelector(
 			'.' + mission + '-mission-item'
@@ -1143,34 +1157,34 @@ function saveMission(mission, value, position) {
 			'[data-materializemission="' + mission + '"]'
 		);
 
-		if (materializes) {
-			materializes.forEach((materialize) => {
+		if ( materializes ) {
+			materializes.forEach( ( materialize ) => {
 				materialize.style.display = 'block';
-			});
+			} );
 		}
 
-		if (theMission) {
-			const missionPoints = parseInt(theMission.dataset.points);
+		if ( theMission ) {
+			const missionPoints = parseInt( theMission.dataset.points );
 			const hazardRemoveText = theMission.dataset.hazardremove;
 			const missionAbility = theMission.dataset.ability;
 
-			showNextMission(theMission);
+			showNextMission( theMission );
 
 			const missionBlockade = theMission.dataset.blockade;
 
 			// Remove blockade if exists.
 			if (
 				'' !== missionBlockade &&
-				'0' !== JSON.parse(missionBlockade).top
+				'0' !== JSON.parse( missionBlockade ).top
 			) {
 				document
 					.querySelector(
 						'.' +
 							theMission.className
-								.replace('engage', '')
-								.replace('next-mission', '')
-								.replace('mission-item', '')
-								.replace(/\s+/g, '') +
+								.replace( 'engage', '' )
+								.replace( 'next-mission', '' )
+								.replace( 'mission-item', '' )
+								.replace( /\s+/g, '' ) +
 							'-blockade'
 					)
 					.remove();
@@ -1184,26 +1198,26 @@ function saveMission(mission, value, position) {
 				hazardRemoveText &&
 				'none' !== hazardRemoveText
 			) {
-				const hazardRemoveArray = hazardRemoveText.split(',');
+				const hazardRemoveArray = hazardRemoveText.split( ',' );
 
-				if (hazardRemoveArray) {
-					hazardRemoveArray.forEach((hazardRemove) => {
+				if ( hazardRemoveArray ) {
+					hazardRemoveArray.forEach( ( hazardRemove ) => {
 						const dragDest = document.querySelector(
 							'.' + hazardRemove + '-drag-dest-map-item'
 						);
 						document
-							.querySelector('.' + hazardRemove + '-map-item')
+							.querySelector( '.' + hazardRemove + '-map-item' )
 							.remove();
 
-						if (dragDest) {
+						if ( dragDest ) {
 							dragDest.remove();
 						}
 
 						if (
-							(true === Array.isArray(position) &&
-								false === position.includes(hazardRemove)) ||
-							(false === Array.isArray(position) &&
-								position !== hazardRemove)
+							( true === Array.isArray( position ) &&
+								false === position.includes( hazardRemove ) ) ||
+							( false === Array.isArray( position ) &&
+								position !== hazardRemove )
 						) {
 							// Make sure it doesn't come back.
 							persistItemRemoval(
@@ -1215,31 +1229,33 @@ function saveMission(mission, value, position) {
 								true
 							);
 						}
-					});
+					} );
 				}
 			}
 
-			setTimeout(() => {
+			setTimeout( () => {
 				theMission.remove();
 
 				// Enable transportation if mission complete.
-				if (missionAbility && 'transportation' === missionAbility) {
+				if ( missionAbility && 'transportation' === missionAbility ) {
 					engageTransportFunction();
 
 					// Enable transportation in DB.
-					enableAbility('transportation');
+					enableAbility( 'transportation' );
 				}
-			}, 500);
+			}, 500 );
 
-			if (value && missionPoints > 0) {
+			if ( value && missionPoints > 0 ) {
 				// Trigger cutscene if mission is attached.
 				const theCutscene = document.querySelector(
-					`.map-cutscene[data-mission="${mission}"]`
+					`.map-cutscene[data-mission="${ mission }"]`
 				);
 
-				if (theCutscene) {
-					const cutsceneName = cleanClassName(theCutscene.className);
-					engageCutscene(cutsceneName, false);
+				if ( theCutscene ) {
+					const cutsceneName = cleanClassName(
+						theCutscene.className
+					);
+					engageCutscene( cutsceneName, false );
 				}
 
 				// Give points.
@@ -1250,104 +1266,104 @@ function saveMission(mission, value, position) {
 					missionPoints,
 					mission
 				);
-			} else if (value && 0 === missionPoints) {
-				persistItemRemoval(position, 'point', 0, 2000, '', true);
+			} else if ( value && 0 === missionPoints ) {
+				persistItemRemoval( position, 'point', 0, 2000, '', true );
 			}
 		}
 
-		const filehref = `${OrbemOrder.siteRESTURL}/mission/`;
+		const filehref = `${ OrbemOrder.siteRESTURL }/mission/`;
 
 		const jsonString = {
 			mission,
 		};
 
 		// Save position of item.
-		fetch(filehref, {
+		fetch( filehref, {
 			method: 'POST', // Specify the HTTP method
 			headers: {
 				'Content-Type': 'application/json', // Set the content type to JSON
 				'X-WP-Nonce': OrbemOrder.orbemNonce,
 			},
-			body: JSON.stringify(jsonString), // The JSON stringified payload
-		}).then((response) => {
+			body: JSON.stringify( jsonString ), // The JSON stringified payload
+		} ).then( ( response ) => {
 			// Check if the response status is in the range 200-299
-			if (!response.ok) {
+			if ( ! response.ok ) {
 				throw new Error(
 					'Network response was not ok ' + response.statusText
 				);
 			}
-		});
-	}, 500);
+		} );
+	}, 500 );
 }
 
-function showNextMission(theMission) {
+function showNextMission( theMission ) {
 	'use strict';
 
 	const nextMissions =
 		'' !== theMission.dataset.nextmission
-			? theMission.dataset.nextmission.split(',')
+			? theMission.dataset.nextmission.split( ',' )
 			: false;
 
-	if (false !== nextMissions) {
-		nextMissions.forEach((nextMission) => {
+	if ( false !== nextMissions ) {
+		nextMissions.forEach( ( nextMission ) => {
 			const allMissionsNext = document.querySelectorAll(
 				'[data-nextmission*="' + nextMission + '"]'
 			);
 
-			if (1 === allMissionsNext.length) {
+			if ( 1 === allMissionsNext.length ) {
 				const nextMissionEl = document.querySelector(
 					'.' + nextMission + '-mission-item'
 				);
 
-				if (nextMissionEl) {
+				if ( nextMissionEl ) {
 					const nextMissionBlockade = nextMissionEl.dataset.blockade;
 
 					// If next mission exists then show it after previous is completed.
 					if (
 						'' !== nextMissionBlockade &&
-						'0' !== JSON.parse(nextMissionBlockade).top
+						'0' !== JSON.parse( nextMissionBlockade ).top
 					) {
 						document.querySelector(
 							'.' +
 								nextMissionEl.className
-									.replace('mission-item ', '')
-									.replace('next-mission ', '') +
+									.replace( 'mission-item ', '' )
+									.replace( 'next-mission ', '' ) +
 								'-blockade'
 						).style.display = 'block';
 					}
 
-					nextMissionEl.classList.add('engage');
+					nextMissionEl.classList.add( 'engage' );
 				}
 			}
-		});
+		} );
 	}
 }
 
-function addCharacter(character) {
+function addCharacter( character ) {
 	'use strict';
 
-	const filehref = `${OrbemOrder.siteRESTURL}/add-character/`;
+	const filehref = `${ OrbemOrder.siteRESTURL }/add-character/`;
 
 	const jsonString = {
 		slug: character,
 	};
 
 	// Save position of item.
-	fetch(filehref, {
+	fetch( filehref, {
 		method: 'POST', // Specify the HTTP method
 		headers: {
 			'Content-Type': 'application/json', // Set the content type to JSON
 			'X-WP-Nonce': OrbemOrder.orbemNonce,
 		},
-		body: JSON.stringify(jsonString), // The JSON stringified payload
-	}).then((response) => {
+		body: JSON.stringify( jsonString ), // The JSON stringified payload
+	} ).then( ( response ) => {
 		// Check if the response status is in the range 200-299
-		if (!response.ok) {
+		if ( ! response.ok ) {
 			throw new Error(
 				'Network response was not ok ' + response.statusText
 			);
 		}
-	});
+	} );
 }
 
 /**
@@ -1359,7 +1375,7 @@ function addCharacter(character) {
  * @param unequip
  * @param name
  */
-function equipNewItem(type, id, amount, unequip, name) {
+function equipNewItem( type, id, amount, unequip, name ) {
 	'use strict';
 
 	const jsonString = {
@@ -1369,37 +1385,37 @@ function equipNewItem(type, id, amount, unequip, name) {
 		unequip,
 	};
 
-	if ('weapons' === type) {
+	if ( 'weapons' === type ) {
 		window.currentWeapon = defaultWeapon !== name ? '-' + name : '';
 	}
 
 	// Save position of item.
-	fetch(`${OrbemOrder.siteRESTURL}/equip-explore-item/`, {
+	fetch( `${ OrbemOrder.siteRESTURL }/equip-explore-item/`, {
 		method: 'POST', // Specify the HTTP method
 		headers: {
 			'Content-Type': 'application/json', // Set the content type to JSON
 			'X-WP-Nonce': OrbemOrder.orbemNonce,
 		},
-		body: JSON.stringify(jsonString), // The JSON stringified payload
-	}).then((response) => {
+		body: JSON.stringify( jsonString ), // The JSON stringified payload
+	} ).then( ( response ) => {
 		// Check if the response status is in the range 200-299
-		if (!response.ok) {
+		if ( ! response.ok ) {
 			throw new Error(
 				'Network response was not ok ' + response.statusText
 			);
 		}
 
-		const itemDescription = document.getElementById('item-description');
-		if (itemDescription) {
+		const itemDescription = document.getElementById( 'item-description' );
+		if ( itemDescription ) {
 			itemDescription.innerHTML = '';
 		}
 
 		setStaticMCImage(
-			document.getElementById('map-character'),
+			document.getElementById( 'map-character' ),
 			'down',
 			true
 		);
-	});
+	} );
 }
 
 /**
@@ -1407,31 +1423,31 @@ function equipNewItem(type, id, amount, unequip, name) {
  *
  * @param id The spell id.
  */
-function addNewSpell(id) {
+function addNewSpell( id ) {
 	'use strict';
 
-	const filehref = `${OrbemOrder.siteRESTURL}/addspell/`;
+	const filehref = `${ OrbemOrder.siteRESTURL }/addspell/`;
 
 	const jsonString = {
 		spellid: id,
 	};
 
 	// Save position of item.
-	fetch(filehref, {
+	fetch( filehref, {
 		method: 'POST', // Specify the HTTP method
 		headers: {
 			'Content-Type': 'application/json', // Set the content type to JSON
 			'X-WP-Nonce': OrbemOrder.orbemNonce,
 		},
-		body: JSON.stringify(jsonString), // The JSON stringified payload
-	}).then((response) => {
+		body: JSON.stringify( jsonString ), // The JSON stringified payload
+	} ).then( ( response ) => {
 		// Check if the response status is in the range 200-299
-		if (!response.ok) {
+		if ( ! response.ok ) {
 			throw new Error(
 				'Network response was not ok ' + response.statusText
 			);
 		}
-	});
+	} );
 }
 
 /**
@@ -1440,28 +1456,28 @@ function addNewSpell(id) {
  * @param position
  * @param type
  */
-function removeItemFromStorage(position, type) {
+function removeItemFromStorage( position, type ) {
 	'use strict';
 
 	const menuItem = document.querySelector(
 		'.retrieval-points span[title="' + position + '"]'
 	);
-	const itemCount = menuItem.getAttribute('data-count');
+	const itemCount = menuItem.getAttribute( 'data-count' );
 
-	if (menuItem) {
+	if ( menuItem ) {
 		// if item count is above 1 then reduce count by 1 instead of removing.
-		if (itemCount && 1 < itemCount) {
-			menuItem.setAttribute('data-count', itemCount - 1);
+		if ( itemCount && 1 < itemCount ) {
+			menuItem.setAttribute( 'data-count', itemCount - 1 );
 		} else {
-			menuItem.setAttribute('data-type', '');
-			menuItem.setAttribute('data-id', '');
-			menuItem.setAttribute('data-value', '');
-			menuItem.setAttribute('title', '');
-			menuItem.setAttribute('data-empty', 'true');
-			menuItem.setAttribute('data-count', '');
+			menuItem.setAttribute( 'data-type', '' );
+			menuItem.setAttribute( 'data-id', '' );
+			menuItem.setAttribute( 'data-value', '' );
+			menuItem.setAttribute( 'title', '' );
+			menuItem.setAttribute( 'data-empty', 'true' );
+			menuItem.setAttribute( 'data-count', '' );
 		}
 
-		saveStorageItem(0, position, type, 0, true);
+		saveStorageItem( 0, position, type, 0, true );
 	}
 }
 
@@ -1472,7 +1488,7 @@ function removeItemFromStorage(position, type) {
  * @param sfx
  * @param talking
  */
-function saveSettings(music, sfx, talking) {
+function saveSettings( music, sfx, talking ) {
 	'use strict';
 
 	const jsonString = {
@@ -1482,21 +1498,21 @@ function saveSettings(music, sfx, talking) {
 	};
 
 	// Save position of item.
-	fetch(`${OrbemOrder.siteRESTURL}/save-settings/`, {
+	fetch( `${ OrbemOrder.siteRESTURL }/save-settings/`, {
 		method: 'POST', // Specify the HTTP method
 		headers: {
 			'Content-Type': 'application/json', // Set the content type to JSON
 			'X-WP-Nonce': OrbemOrder.orbemNonce,
 		},
-		body: JSON.stringify(jsonString), // The JSON stringified payload
-	}).then((response) => {
+		body: JSON.stringify( jsonString ), // The JSON stringified payload
+	} ).then( ( response ) => {
 		// Check if the response status is in the range 200-299
-		if (!response.ok) {
+		if ( ! response.ok ) {
 			throw new Error(
 				'Network response was not ok ' + response.statusText
 			);
 		}
-	});
+	} );
 }
 
 /**
@@ -1508,10 +1524,10 @@ function saveSettings(music, sfx, talking) {
  * @param value
  * @param remove
  */
-function saveStorageItem(id, name, type, value, remove) {
+function saveStorageItem( id, name, type, value, remove ) {
 	'use strict';
 
-	const filehref = `${OrbemOrder.siteRESTURL}/save-storage-item/`;
+	const filehref = `${ OrbemOrder.siteRESTURL }/save-storage-item/`;
 
 	const jsonString = {
 		id,
@@ -1522,21 +1538,21 @@ function saveStorageItem(id, name, type, value, remove) {
 	};
 
 	// Save position of item.
-	fetch(filehref, {
+	fetch( filehref, {
 		method: 'POST', // Specify the HTTP method
 		headers: {
 			'Content-Type': 'application/json', // Set the content type to JSON
 			'X-WP-Nonce': OrbemOrder.orbemNonce,
 		},
-		body: JSON.stringify(jsonString), // The JSON stringified payload
-	}).then((response) => {
+		body: JSON.stringify( jsonString ), // The JSON stringified payload
+	} ).then( ( response ) => {
 		// Check if the response status is in the range 200-299
-		if (!response.ok) {
+		if ( ! response.ok ) {
 			throw new Error(
 				'Network response was not ok ' + response.statusText
 			);
 		}
-	});
+	} );
 }
 
 /**
@@ -1546,26 +1562,26 @@ function saveStorageItem(id, name, type, value, remove) {
 async function resetExplore() {
 	'use strict';
 
-	const filehref = `${OrbemOrder.siteRESTURL}/resetexplore/`;
+	const filehref = `${ OrbemOrder.siteRESTURL }/resetexplore/`;
 
 	const jsonString = {};
 
 	// Save position of item.
-	fetch(filehref, {
+	fetch( filehref, {
 		method: 'POST', // Specify the HTTP method
 		headers: {
 			'Content-Type': 'application/json', // Set the content type to JSON
 			'X-WP-Nonce': OrbemOrder.orbemNonce,
 		},
-		body: JSON.stringify(jsonString), // The JSON stringified payload
-	}).then((response) => {
+		body: JSON.stringify( jsonString ), // The JSON stringified payload
+	} ).then( ( response ) => {
 		// Check if the response status is in the range 200-299
-		if (!response.ok) {
+		if ( ! response.ok ) {
 			throw new Error(
 				'Network response was not ok ' + response.statusText
 			);
 		}
-	});
+	} );
 }
 
 /**
@@ -1574,49 +1590,49 @@ async function resetExplore() {
  * @param left
  * @param top
  */
-function addUserCoordianate(left, top) {
+function addUserCoordianate( left, top ) {
 	'use strict';
 
-	const filehref = `${OrbemOrder.siteRESTURL}/coordinates/`;
+	const filehref = `${ OrbemOrder.siteRESTURL }/coordinates/`;
 
 	const jsonString = {
-		left: left.replace('px', ''),
-		top: top.replace('px', ''),
+		left: left.replace( 'px', '' ),
+		top: top.replace( 'px', '' ),
 	};
 
 	// Save position of item.
-	fetch(filehref, {
+	fetch( filehref, {
 		method: 'POST', // Specify the HTTP method
 		credentials: 'same-origin',
 		headers: {
 			'Content-Type': 'application/json', // Set the content type to JSON
 			'X-WP-Nonce': OrbemOrder.orbemNonce,
 		},
-		body: JSON.stringify(jsonString), // The JSON stringified payload
-	}).then((response) => {
+		body: JSON.stringify( jsonString ), // The JSON stringified payload
+	} ).then( ( response ) => {
 		// Check if the response status is in the range 200-299
-		if (!response.ok) {
+		if ( ! response.ok ) {
 			throw new Error(
 				'Network response was not ok ' + response.statusText
 			);
 		}
-	});
+	} );
 }
 
 /**
  * Take health away from enemy.
  */
-const hurtTheEnemy = (function () {
+const hurtTheEnemy = ( function () {
 	'use strict';
 
 	let called = false;
 
-	return function (theWeapon, value) {
-		if (value && theWeapon && elementsOverlap(theWeapon, value, 0)) {
-			if (called === false) {
+	return function ( theWeapon, value ) {
+		if ( value && theWeapon && elementsOverlap( theWeapon, value, 0 ) ) {
+			if ( called === false ) {
 				if (
 					'explore-enemy' === value.dataset.genre &&
-					false === theWeapon.classList.contains('protection')
+					false === theWeapon.classList.contains( 'protection' )
 				) {
 					const enemyHealth = value.dataset.health;
 					const enemyFullHealth = value.dataset.healthamount;
@@ -1624,17 +1640,19 @@ const hurtTheEnemy = (function () {
 
 					// Kill enemy or lower health.
 					let attackType =
-						true === theWeapon.classList.contains('heavy-engage')
+						true === theWeapon.classList.contains( 'heavy-engage' )
 							? 'heavy'
 							: 'normal';
 					attackType =
 						true ===
-						theWeapon.classList.contains('charge-attack-engage')
+						theWeapon.classList.contains( 'charge-attack-engage' )
 							? 'charged'
 							: attackType;
 					const attackStrength =
 						parseInt(
-							JSON.parse(theWeapon.dataset.strength)[attackType]
+							JSON.parse( theWeapon.dataset.strength )[
+								attackType
+							]
 						) + window.attackMultiplier;
 					const newHealth =
 						0 <= enemyHealth - attackStrength
@@ -1644,43 +1662,43 @@ const hurtTheEnemy = (function () {
 
 					// If weapon type is defined and matches the current weapon or it's not defined, then hurt the enemy.
 					if (
-						('' !== weaponType &&
-							theWeapon.dataset.weapon === weaponType) ||
+						( '' !== weaponType &&
+							theWeapon.dataset.weapon === weaponType ) ||
 						'' === weaponType
 					) {
-						value.setAttribute('data-health', newHealth);
+						value.setAttribute( 'data-health', newHealth );
 					}
 
-					if ('boss' === value.getAttribute('data-enemy-type')) {
+					if ( 'boss' === value.getAttribute( 'data-enemy-type' ) ) {
 						if (
 							newHealth <= enemyFullHealth * 0.75 &&
 							false === secondWaveHit
 						) {
 							secondWaveHit = true;
-							updateBossWave(value);
+							updateBossWave( value );
 						} else if (
 							newHealth <= enemyFullHealth * 0.5 &&
 							false === thirdWaveHit
 						) {
 							thirdWaveHit = true;
-							updateBossWave(value);
+							updateBossWave( value );
 						} else if (
 							newHealth <= enemyFullHealth * 0.25 &&
 							false === fourthWaveHit
 						) {
 							fourthWaveHit = true;
-							updateBossWave(value);
+							updateBossWave( value );
 						}
 					}
 
-					if (0 === newHealth) {
-						clearInterval(window.shooterInt);
-						clearInterval(window.runnerInt);
+					if ( 0 === newHealth ) {
+						clearInterval( window.shooterInt );
+						clearInterval( window.runnerInt );
 						value.remove();
 
 						// Save new health.
-						const position = cleanClassName(value.className);
-						const filehref = `${OrbemOrder.siteRESTURL}/enemy/`;
+						const position = cleanClassName( value.className );
+						const filehref = `${ OrbemOrder.siteRESTURL }/enemy/`;
 
 						const jsonString = {
 							health: 0,
@@ -1688,28 +1706,28 @@ const hurtTheEnemy = (function () {
 						};
 
 						// Save position of item.
-						fetch(filehref, {
+						fetch( filehref, {
 							method: 'POST', // Specify the HTTP method
 							headers: {
 								'Content-Type': 'application/json', // Set the content type to JSON
 								'X-WP-Nonce': OrbemOrder.orbemNonce,
 							},
-							body: JSON.stringify(jsonString), // The JSON stringified payload
-						}).then((response) => {
+							body: JSON.stringify( jsonString ), // The JSON stringified payload
+						} ).then( ( response ) => {
 							// Check if the response status is in the range 200-299
-							if (!response.ok) {
+							if ( ! response.ok ) {
 								throw new Error(
 									'Network response was not ok ' +
 										response.statusText
 								);
 							}
-						});
+						} );
 
 						if (
 							enemyMission &&
-							noOtherItemAttachedToMission(enemyMission)
+							noOtherItemAttachedToMission( enemyMission )
 						) {
-							saveMission(enemyMission, value, enemyMission);
+							saveMission( enemyMission, value, enemyMission );
 						}
 					}
 				}
@@ -1717,81 +1735,81 @@ const hurtTheEnemy = (function () {
 				called = true;
 
 				// Reset called var.
-				setTimeout(() => {
+				setTimeout( () => {
 					called = false;
-				}, 1000);
+				}, 1000 );
 			}
 		}
 	};
-})();
+} )();
 
 /**
  * Pull new area html.
  *
  */
-const enterNewArea = (function () {
+const enterNewArea = ( function () {
 	'use strict';
 
 	window.runningPointFunction = false;
 	let called = false;
 
-	return function (position, weapon, mapUrl, nextAreaPosition) {
+	return function ( position, weapon, mapUrl, nextAreaPosition ) {
 		fadeOutScene();
 
 		window.previousCutsceneArea =
 			'' === window.previousCutsceneArea
-				? (OrbemOrder.previousCutsceneArea ?? '')
+				? OrbemOrder.previousCutsceneArea ?? ''
 				: window.previousCutsceneArea;
 
 		// Incase using level selector.
-		playStartScreenMusic(false);
+		playStartScreenMusic( false );
 
 		window.allowMovement = false;
 		// Clear enemy interval.
-		clearInterval(window.shooterInt);
-		clearInterval(window.runnerInt);
+		clearInterval( window.shooterInt );
+		clearInterval( window.runnerInt );
 
 		// Remove menu explainers.
 		const menuExplainers = document.querySelectorAll(
 			'.game-container > .explainer-container, .game-container > .explainer-trigger'
 		);
 
-		if (menuExplainers) {
-			menuExplainers.forEach((explainer) => {
+		if ( menuExplainers ) {
+			menuExplainers.forEach( ( explainer ) => {
 				explainer.remove();
-			});
+			} );
 		}
 
 		// Remove old devmmode.
-		const devModeButton = document.querySelector('.right-bottom-devmode');
-		const devModeMenu = document.querySelector('.dev-mode-menu');
+		const devModeButton = document.querySelector( '.right-bottom-devmode' );
+		const devModeMenu = document.querySelector( '.dev-mode-menu' );
 
-		if (devModeMenu && devModeButton) {
+		if ( devModeMenu && devModeButton ) {
 			devModeMenu.remove();
 			devModeButton.remove();
 		}
 
 		// Remove current explore finder list items. DEVMODE
-		const finderItems = document.querySelector('.explore-item-list');
+		const finderItems = document.querySelector( '.explore-item-list' );
 
-		if (finderItems) {
+		if ( finderItems ) {
 			finderItems.innerHTML = '';
 		}
 
 		// Remove old items.
-		const defaultMap = document.querySelector('.default-map');
+		const defaultMap = document.querySelector( '.default-map' );
 
-		if (defaultMap) {
+		if ( defaultMap ) {
 			defaultMap.remove();
 		}
 
 		// Don't repeat enter.
-		if (false === called) {
-			const filehref = `${OrbemOrder.siteRESTURL}/area/`;
+		if ( false === called ) {
+			const filehref = `${ OrbemOrder.siteRESTURL }/area/`;
 			let newMusic = '';
 
-			if (OrbemOrder.musicNames) {
-				newMusic = JSON.parse(OrbemOrder.musicNames)[position];
+			if ( OrbemOrder.musicNames ) {
+				newMusic = JSON.parse( OrbemOrder.musicNames )[ position ];
 			}
 
 			const jsonString = {
@@ -1799,114 +1817,115 @@ const enterNewArea = (function () {
 			};
 
 			// Save position of item.
-			fetch(filehref, {
+			fetch( filehref, {
 				method: 'POST', // Specify the HTTP method
 				headers: {
 					'Content-Type': 'application/json',
 					'X-WP-Nonce': OrbemOrder.orbemNonce,
 				},
-				body: JSON.stringify(jsonString),
-			})
-				.then((response) => {
+				body: JSON.stringify( jsonString ),
+			} )
+				.then( ( response ) => {
 					// Check if the response status is in the range 200-299
-					if (!response.ok) {
+					if ( ! response.ok ) {
 						throw new Error(
 							'Network response was not ok ' + response.statusText
 						);
 					}
 					return response.json();
-				})
-				.then((data) => {
+				} )
+				.then( ( data ) => {
 					let newMapItems = data;
 
 					newMapItems = newMapItems.data;
 					const mapItemStyles =
-						document.getElementById('map-item-styles');
-					const mainCont = document.querySelector('.site-main');
-					const head = document.querySelector('head');
+						document.getElementById( 'map-item-styles' );
+					const mainCont = document.querySelector( '.site-main' );
+					const head = document.querySelector( 'head' );
 					let devMode = '';
 
 					if (
-						newMapItems['dev-mode'] &&
-						'' !== newMapItems['dev-mode']
+						newMapItems[ 'dev-mode' ] &&
+						'' !== newMapItems[ 'dev-mode' ]
 					) {
-						devMode = newMapItems['dev-mode'];
+						devMode = newMapItems[ 'dev-mode' ];
 					}
 
-					if ('' !== devMode) {
+					if ( '' !== devMode ) {
 						mainCont.innerHTML = devMode + mainCont.innerHTML;
 					}
 
 					// Delete old area styles/maps.
-					if (mapItemStyles) {
+					if ( mapItemStyles ) {
 						mapItemStyles.remove();
 					}
 
-					const newStyles = document.createElement('style');
+					const newStyles = document.createElement( 'style' );
 					newStyles.id = 'map-item-styles';
 					newStyles.innerHTML =
-						newMapItems['map-item-styles-scripts'];
+						newMapItems[ 'map-item-styles-scripts' ];
 
 					// Add area missions.
 					const missionList =
-						document.querySelector('.missions-content');
+						document.querySelector( '.missions-content' );
 
-					if (missionList) {
-						missionList.innerHTML = newMapItems['map-missions'];
+					if ( missionList ) {
+						missionList.innerHTML = newMapItems[ 'map-missions' ];
 
-						if ('' !== window.nextAreaMissionComplete) {
+						if ( '' !== window.nextAreaMissionComplete ) {
 							const completeMission = document.querySelector(
 								'.' +
 									window.nextAreaMissionComplete +
 									'-mission-item'
 							);
 
-							if (completeMission) {
+							if ( completeMission ) {
 								completeMission.style.textDecoration =
 									'line-through';
 
-								setTimeout(() => {
-									showNextMission(completeMission);
+								setTimeout( () => {
+									showNextMission( completeMission );
 									completeMission.remove();
-								}, 500);
+								}, 500 );
 							}
 						}
 					}
 
 					// Add new map styles and map urls.
-					if (head) {
-						head.append(newStyles);
+					if ( head ) {
+						head.append( newStyles );
 					}
 
 					// Replace items.
-					if (defaultMap) {
-						setTimeout(() => {
+					if ( defaultMap ) {
+						setTimeout( () => {
 							const container =
-								document.querySelector('.game-container');
+								document.querySelector( '.game-container' );
 							// Create new default map.
-							const newDefaultMap = document.createElement('div');
+							const newDefaultMap =
+								document.createElement( 'div' );
 							newDefaultMap.className = 'default-map';
 
 							// Set starting position in case you die.
 							newDefaultMap.dataset.starttop =
-								newMapItems['start-top'];
+								newMapItems[ 'start-top' ];
 							newDefaultMap.dataset.startleft =
-								newMapItems['start-left'];
+								newMapItems[ 'start-left' ];
 							newDefaultMap.innerHTML =
-								newMapItems['map-explainers'] +
-								newMapItems['map-items'] +
-								newMapItems['map-cutscenes'] +
+								newMapItems[ 'map-explainers' ] +
+								newMapItems[ 'map-items' ] +
+								newMapItems[ 'map-cutscenes' ] +
 								newMapItems.minigames +
-								newMapItems['map-svg'] +
-								newMapItems['map-communicate'];
+								newMapItems[ 'map-svg' ] +
+								newMapItems[ 'map-communicate' ];
 
-							if ('yes' === newMapItems['is-cutscene']) {
+							if ( 'yes' === newMapItems[ 'is-cutscene' ] ) {
 								newDefaultMap.dataset.iscutscene = 'yes';
 							}
 
 							container.innerHTML =
-								newMapItems['menu-explainers'] +
-								newMapItems['fullscreen-explainers'] +
+								newMapItems[ 'menu-explainers' ] +
+								newMapItems[ 'fullscreen-explainers' ] +
 								container.innerHTML +
 								newDefaultMap.outerHTML;
 
@@ -1921,16 +1940,16 @@ const enterNewArea = (function () {
 								'.characters-content'
 							);
 
-							if (characterList) {
+							if ( characterList ) {
 								characterList.innerHTML =
-									newMapItems['map-characters'];
+									newMapItems[ 'map-characters' ];
 
 								const characterItems =
 									characterList.querySelectorAll(
 										'.character-item'
 									);
 
-								if (0 < characterItems.length) {
+								if ( 0 < characterItems.length ) {
 									document.getElementById(
 										'characters'
 									).style.display = 'block';
@@ -1947,13 +1966,13 @@ const enterNewArea = (function () {
 
 								// Add close menu event.
 								const characterMenu =
-									document.getElementById('characters');
+									document.getElementById( 'characters' );
 								const closeCharacter =
 									characterMenu.querySelector(
 										'.close-settings'
 									);
 
-								if (closeCharacter) {
+								if ( closeCharacter ) {
 									closeCharacter.addEventListener(
 										'click',
 										() => {
@@ -1971,10 +1990,10 @@ const enterNewArea = (function () {
 									'.path-onload[data-path]:not([data-path=""]), [data-wanderer="yes"]'
 								);
 
-							if (moveableCharacters) {
+							if ( moveableCharacters ) {
 								moveableCharacters.forEach(
-									(moveableCharacter) => {
-										moveNPC(moveableCharacter, false);
+									( moveableCharacter ) => {
+										moveNPC( moveableCharacter, false );
 									}
 								);
 							}
@@ -1993,14 +2012,16 @@ const enterNewArea = (function () {
 								'.map-cutscene .wp-block-orbem-paragraph-mp3:first-of-type, .map-communicate .message-wrapper .wp-block-orbem-paragraph-mp3'
 							);
 
-							if (allFirstDialogues) {
-								allFirstDialogues.forEach((firstDialogue) => {
-									firstDialogue.classList.add('engage');
-								});
+							if ( allFirstDialogues ) {
+								allFirstDialogues.forEach(
+									( firstDialogue ) => {
+										firstDialogue.classList.add( 'engage' );
+									}
+								);
 							}
 
 							// If the previous area was a cutscene, remove items set to be removed after that cutscene area.
-							if ('' !== window.previousCutsceneArea) {
+							if ( '' !== window.previousCutsceneArea ) {
 								removeItems(
 									document.querySelectorAll(
 										'[data-removeaftercutscene]'
@@ -2014,13 +2035,13 @@ const enterNewArea = (function () {
 										']'
 								);
 
-								if (showItems) {
-									showItems.forEach((showItem) => {
+								if ( showItems ) {
+									showItems.forEach( ( showItem ) => {
 										materializedItemsArray.push(
-											cleanClassName(showItem.className)
+											cleanClassName( showItem.className )
 										);
-										showItem.classList.add('no-point');
-									});
+										showItem.classList.add( 'no-point' );
+									} );
 
 									saveMaterializedItem(
 										currentLocation,
@@ -2030,12 +2051,12 @@ const enterNewArea = (function () {
 							}
 
 							// engage cutscene.
-							if ('yes' === newMapItems['is-cutscene']) {
+							if ( 'yes' === newMapItems[ 'is-cutscene' ] ) {
 								const cutsceneName = cleanClassName(
-									document.querySelector('.map-cutscene')
+									document.querySelector( '.map-cutscene' )
 										.className
 								);
-								engageCutscene(cutsceneName, true);
+								engageCutscene( cutsceneName, true );
 								window.previousCutsceneArea = cutsceneName;
 								setPreviousCutsceneArea(
 									window.previousCutsceneArea
@@ -2049,59 +2070,60 @@ const enterNewArea = (function () {
 							);
 
 							// Add crewmates if there are any on the map.
-							if (0 < crewMates.length) {
+							if ( 0 < crewMates.length ) {
 								let characterCount = 0;
-								const addCharactersInt = setInterval(() => {
+								const addCharactersInt = setInterval( () => {
 									if (
 										characterCount ===
 										crewMates.length - 1
 									) {
-										clearInterval(addCharactersInt);
+										clearInterval( addCharactersInt );
 									}
 
 									const characterName = cleanClassName(
-										crewMates[characterCount].className
+										crewMates[ characterCount ].className
 									);
 
-									addCharacter(characterName);
+									addCharacter( characterName );
 
 									characterCount++;
-								}, 1000);
+								}, 1000 );
 							}
 
 							// Run no point class adder again
 							addNoPoints();
-						}, 700);
+						}, 700 );
 					}
 
-					setTimeout(() => {
+					setTimeout( () => {
 						const container =
-							document.querySelector('.game-container');
+							document.querySelector( '.game-container' );
 						const characterItem =
-							document.getElementById('map-character');
-						const theWeapon = document.querySelector('.map-weapon');
+							document.getElementById( 'map-character' );
+						const theWeapon =
+							document.querySelector( '.map-weapon' );
 
-						if (nextAreaPosition) {
-							newMapItems['start-top'] =
-								JSON.parse(nextAreaPosition).top;
-							newMapItems['start-left'] =
-								JSON.parse(nextAreaPosition).left;
+						if ( nextAreaPosition ) {
+							newMapItems[ 'start-top' ] =
+								JSON.parse( nextAreaPosition ).top;
+							newMapItems[ 'start-left' ] =
+								JSON.parse( nextAreaPosition ).left;
 						}
 
 						characterItem.style.top =
-							newMapItems['start-top'] + 'px';
+							newMapItems[ 'start-top' ] + 'px';
 						characterItem.style.left =
-							newMapItems['start-left'] + 'px';
+							newMapItems[ 'start-left' ] + 'px';
 						characterItem.className =
-							newMapItems['start-direction'] + '-dir';
-						characterItem.scrollIntoView({
+							newMapItems[ 'start-direction' ] + '-dir';
+						characterItem.scrollIntoView( {
 							behavior: 'instant',
 							block: 'center',
 							inline: 'center',
-						});
+						} );
 						setStaticMCImage(
 							characterItem,
-							newMapItems['start-direction'],
+							newMapItems[ 'start-direction' ],
 							false
 						);
 
@@ -2109,89 +2131,89 @@ const enterNewArea = (function () {
 						container.style.backgroundImage = 'url(' + mapUrl + ')';
 						currentLocation = position;
 
-						playSong(newMusic, position);
+						playSong( newMusic, position );
 						window.allowMovement = true;
 						theWeapon.style.display = 'block';
 
 						if (
-							('undefined' !==
+							( 'undefined' !==
 								typeof OrbemOrder.exploreAbilities &&
 								0 < OrbemOrder.exploreAbilities.length &&
 								OrbemOrder.exploreAbilities.includes(
 									'transportation'
-								)) ||
-							newMapItems['explore-ability'].includes(
+								) ) ||
+							newMapItems[ 'explore-ability' ].includes(
 								'transportation'
 							)
 						) {
 							engageTransportFunction();
 						}
-					}, 100);
-				});
+					}, 100 );
+				} );
 
 			called = true;
 
 			// Reset called var.
-			setTimeout(() => {
+			setTimeout( () => {
 				called = false;
-			}, 1000);
+			}, 1000 );
 		}
 	};
-})();
+} )();
 
 /**
  * Pull item description content.
  *
  */
-const showItemDescription = (function () {
+const showItemDescription = ( function () {
 	'use strict';
 
 	let called = false;
 
-	return function (item) {
-		const id = item.getAttribute('data-id');
+	return function ( item ) {
+		const id = item.getAttribute( 'data-id' );
 
 		// Remove engage from current.
 		const currentSelectedItem = document.querySelector(
 			'.storage-item.engage'
 		);
 
-		if (currentSelectedItem) {
-			currentSelectedItem.classList.remove('engage');
+		if ( currentSelectedItem ) {
+			currentSelectedItem.classList.remove( 'engage' );
 		}
 
 		// Add engage to selected item.
-		item.classList.add('engage');
+		item.classList.add( 'engage' );
 
 		// Don't repeat item get.
-		if (false === called) {
-			const filehref = `${OrbemOrder.siteRESTURL}/get-item-description/`;
+		if ( false === called ) {
+			const filehref = `${ OrbemOrder.siteRESTURL }/get-item-description/`;
 			const jsonString = {
 				id,
 			};
 
-			fetch(filehref, {
+			fetch( filehref, {
 				method: 'POST', // Specify the HTTP method
 				headers: {
 					'Content-Type': 'application/json', // Set the content type to JSON
 					'X-WP-Nonce': OrbemOrder.orbemNonce,
 				},
-				body: JSON.stringify(jsonString), // The JSON stringified payload
-			})
-				.then((response) => {
+				body: JSON.stringify( jsonString ), // The JSON stringified payload
+			} )
+				.then( ( response ) => {
 					// Check if the response status is in the range 200-299
-					if (!response.ok) {
+					if ( ! response.ok ) {
 						throw new Error(
 							'Network response was not ok ' + response.statusText
 						);
 					}
 
 					return response.json();
-				})
-				.then((data) => {
+				} )
+				.then( ( data ) => {
 					const itemDescription =
-						document.getElementById('item-description');
-					if (itemDescription) {
+						document.getElementById( 'item-description' );
+					if ( itemDescription ) {
 						itemDescription.innerHTML = '';
 					}
 
@@ -2203,56 +2225,58 @@ const showItemDescription = (function () {
 					const selectedItem = document.querySelector(
 						'.storage-item.engage'
 					);
-					const equipButton = document.createElement('button');
-					equipButton.classList.add('storage-item-button');
+					const equipButton = document.createElement( 'button' );
+					equipButton.classList.add( 'storage-item-button' );
 					equipButton.textContent = 'Equip';
-					const unequipButton = document.createElement('button');
+					const unequipButton = document.createElement( 'button' );
 					unequipButton.textContent = 'Unequip';
-					unequipButton.classList.add('storage-item-button');
-					const dropButton = document.createElement('button');
+					unequipButton.classList.add( 'storage-item-button' );
+					const dropButton = document.createElement( 'button' );
 					dropButton.textContent = 'Drop';
-					dropButton.classList.add('storage-item-button');
+					dropButton.classList.add( 'storage-item-button' );
 
 					// Replace current description content.
 					description.innerHTML = newItemDescription;
-					description.appendChild(dropButton);
-					description.appendChild(unequipButton);
-					description.appendChild(equipButton);
+					description.appendChild( dropButton );
+					description.appendChild( unequipButton );
+					description.appendChild( equipButton );
 
 					// Add use and drop features.
-					const useButton = description.querySelector('.use-button');
-					const itemId = selectedItem.getAttribute('data-id');
-					const name = selectedItem.getAttribute('title');
-					const amount = selectedItem.getAttribute('data-value');
-					const selectedType = selectedItem.getAttribute('data-type');
+					const useButton =
+						description.querySelector( '.use-button' );
+					const itemId = selectedItem.getAttribute( 'data-id' );
+					const name = selectedItem.getAttribute( 'title' );
+					const amount = selectedItem.getAttribute( 'data-value' );
+					const selectedType =
+						selectedItem.getAttribute( 'data-type' );
 
 					// Add points.
-					if (useButton && selectedItem) {
-						if (100 > getCurrentPoints(selectedType)) {
-							useButton.addEventListener('click', () => {
-								runPointAnimation(selectedItem, name);
+					if ( useButton && selectedItem ) {
+						if ( 100 > getCurrentPoints( selectedType ) ) {
+							useButton.addEventListener( 'click', () => {
+								runPointAnimation( selectedItem, name );
 								description.innerHTML = '';
-							});
+							} );
 						}
 					}
 
 					// Drop item.
-					if (dropButton) {
-						dropButton.addEventListener('click', () => {
-							removeItemFromStorage(name, selectedType);
+					if ( dropButton ) {
+						dropButton.addEventListener( 'click', () => {
+							removeItemFromStorage( name, selectedType );
 							description.innerHTML = '';
 
 							const itemDescription =
-								document.getElementById('item-description');
-							if (itemDescription) {
+								document.getElementById( 'item-description' );
+							if ( itemDescription ) {
 								itemDescription.innerHTML = '';
 							}
-						});
+						} );
 					}
 
 					// Equip button.
-					if (equipButton) {
-						equipButton.addEventListener('click', () => {
+					if ( equipButton ) {
+						equipButton.addEventListener( 'click', () => {
 							const currentCharacter = document.querySelector(
 								'.map-character-icon.engage'
 							).dataset.currentchar;
@@ -2262,26 +2286,26 @@ const showItemDescription = (function () {
 
 							// Update item class.
 							if (
-								(selectedItem &&
+								( selectedItem &&
 									selectedItem.dataset.character ===
-										currentCharacter) ||
-								(selectedItem &&
-									('' === selectedItem.dataset.character ||
+										currentCharacter ) ||
+								( selectedItem &&
+									( '' === selectedItem.dataset.character ||
 										undefined ===
 											selectedItem.dataset.character ||
 										null ===
-											selectedItem.dataset.character))
+											selectedItem.dataset.character ) )
 							) {
 								const itemImage =
-									selectedItem.querySelector('img');
+									selectedItem.querySelector( 'img' );
 								const currentWeapon =
-									document.querySelector('.map-weapon');
+									document.querySelector( '.map-weapon' );
 								const currentWeaponButton =
 									document.querySelector(
 										'.weapon-content img'
 									);
 
-								if (currentWeapon && currentWeaponButton) {
+								if ( currentWeapon && currentWeaponButton ) {
 									currentWeaponButton.src = itemImage.src;
 									currentWeapon.dataset.weapon =
 										selectedItem.title;
@@ -2289,12 +2313,12 @@ const showItemDescription = (function () {
 										selectedItem.dataset.strength;
 								}
 
-								selectedItem.classList.add('equipped');
-								selectedItem.classList.add('being-equipped');
+								selectedItem.classList.add( 'equipped' );
+								selectedItem.classList.add( 'being-equipped' );
 							}
 
 							// Reset point calculations.
-							updatePointBars(false);
+							updatePointBars( false );
 
 							description.innerHTML = '';
 							equipNewItem(
@@ -2304,24 +2328,24 @@ const showItemDescription = (function () {
 								false,
 								selectedItem.title
 							);
-						});
+						} );
 					}
 
 					// Unequip.
-					if (unequipButton) {
-						unequipButton.addEventListener('click', () => {
+					if ( unequipButton ) {
+						unequipButton.addEventListener( 'click', () => {
 							const selectedItem = document.querySelector(
 								'.storage-item.engage'
 							);
 
 							// Update item class.
-							if (selectedItem) {
-								selectedItem.classList.remove('equipped');
-								selectedItem.classList.add('unequip');
+							if ( selectedItem ) {
+								selectedItem.classList.remove( 'equipped' );
+								selectedItem.classList.add( 'unequip' );
 							}
 
 							// Reset point calculations.
-							updatePointBars(true);
+							updatePointBars( true );
 
 							description.innerHTML = '';
 							equipNewItem(
@@ -2331,36 +2355,36 @@ const showItemDescription = (function () {
 								true,
 								selectedItem.title
 							);
-						});
+						} );
 					}
-				});
+				} );
 
 			called = true;
 
 			// Reset called var.
-			setTimeout(() => {
+			setTimeout( () => {
 				called = false;
-			}, 1000);
+			}, 1000 );
 		}
 	};
-})();
+} )();
 
 /**
  * Temporarily change weapon player is using. Previously equipped weapon will still be noted as equipped to allow for change back.
  * @param selectedItem
  */
-function changeWeapon(selectedItem) {
+function changeWeapon( selectedItem ) {
 	'use strict';
 
-	if (selectedItem) {
-		const itemImage = selectedItem.querySelector('img');
-		const currentWeapon = document.querySelector('.map-weapon');
+	if ( selectedItem ) {
+		const itemImage = selectedItem.querySelector( 'img' );
+		const currentWeapon = document.querySelector( '.map-weapon' );
 		const currentWeaponButton = document.querySelector(
 			'.weapon-content img'
 		);
-		const currentWeaponImg = currentWeapon.querySelector('img');
+		const currentWeaponImg = currentWeapon.querySelector( 'img' );
 
-		if (currentWeapon && currentWeaponButton) {
+		if ( currentWeapon && currentWeaponButton ) {
 			currentWeaponImg.src = itemImage.src;
 			currentWeaponButton.src = itemImage.src;
 			currentWeapon.dataset.weapon = selectedItem.title;
@@ -2377,72 +2401,74 @@ function changeWeapon(selectedItem) {
 	}
 }
 
-function updatePointBars(unequip) {
+function updatePointBars( unequip ) {
 	'use strict';
 
 	const gear = document.querySelector(
 		'.storage-item.being-equipped[data-type="gear"]'
 	);
-	const healthBar = document.querySelector(`#explore-points .health-amount`);
-	const manaBar = document.querySelector(`#explore-points .mana-amount`);
-	let manaAmount = parseInt(manaBar.dataset.amount);
-	let healthAmount = parseInt(healthBar.dataset.amount);
-	let manaWidth = parseInt(manaBar.style.width.replace('px', ''));
-	let healthWidth = parseInt(healthBar.style.width.replace('px', ''));
+	const healthBar = document.querySelector(
+		`#explore-points .health-amount`
+	);
+	const manaBar = document.querySelector( `#explore-points .mana-amount` );
+	let manaAmount = parseInt( manaBar.dataset.amount );
+	let healthAmount = parseInt( healthBar.dataset.amount );
+	let manaWidth = parseInt( manaBar.style.width.replace( 'px', '' ) );
+	let healthWidth = parseInt( healthBar.style.width.replace( 'px', '' ) );
 
 	// Calculate the gear modifiers.
-	if (gear && false === unequip) {
-		const gearAmount = gear.getAttribute('data-value');
-		const gearSubtype = gear.getAttribute('data-subtype');
+	if ( gear && false === unequip ) {
+		const gearAmount = gear.getAttribute( 'data-value' );
+		const gearSubtype = gear.getAttribute( 'data-subtype' );
 
-		if ('health' === gearSubtype) {
-			healthAmount += parseInt(gearAmount);
-			healthWidth += parseInt(gearAmount);
+		if ( 'health' === gearSubtype ) {
+			healthAmount += parseInt( gearAmount );
+			healthWidth += parseInt( gearAmount );
 		}
 
-		if ('mana' === gearSubtype) {
-			manaAmount += parseInt(gearAmount);
-			manaWidth += parseInt(gearAmount);
+		if ( 'mana' === gearSubtype ) {
+			manaAmount += parseInt( gearAmount );
+			manaWidth += parseInt( gearAmount );
 		}
-	} else if (gear && false !== unequip) {
+	} else if ( gear && false !== unequip ) {
 		const gearUnequip = document.querySelector(
 			'.storage-item.unequip[data-type="gear"]'
 		);
-		const gearAmount = gearUnequip.getAttribute('data-value');
-		const gearSubtype = gearUnequip.getAttribute('data-subtype');
+		const gearAmount = gearUnequip.getAttribute( 'data-value' );
+		const gearSubtype = gearUnequip.getAttribute( 'data-subtype' );
 
-		if ('health' === gearSubtype) {
-			healthAmount -= parseInt(gearAmount);
-			healthWidth -= parseInt(gearAmount);
+		if ( 'health' === gearSubtype ) {
+			healthAmount -= parseInt( gearAmount );
+			healthWidth -= parseInt( gearAmount );
 		}
 
-		if ('mana' === gearSubtype) {
-			manaAmount -= parseInt(gearAmount);
-			manaWidth -= parseInt(gearAmount);
+		if ( 'mana' === gearSubtype ) {
+			manaAmount -= parseInt( gearAmount );
+			manaWidth -= parseInt( gearAmount );
 		}
 	}
 
-	if (gear) {
+	if ( gear ) {
 		// update the points bars to new width.
 		healthBar.style.width = healthWidth + 'px';
-		healthBar.setAttribute('data-amount', healthAmount);
-		healthBar.querySelector('.gauge').style.width = healthAmount + 'px';
+		healthBar.setAttribute( 'data-amount', healthAmount );
+		healthBar.querySelector( '.gauge' ).style.width = healthAmount + 'px';
 
 		manaBar.style.width = manaWidth + 'px';
-		manaBar.setAttribute('data-amount', manaAmount);
-		manaBar.querySelector('.gauge').style.width = manaAmount + 'px';
+		manaBar.setAttribute( 'data-amount', manaAmount );
+		manaBar.querySelector( '.gauge' ).style.width = manaAmount + 'px';
 	}
 
 	// Remove extra classes:
-	const beingEquipped = document.querySelector('.being-equipped');
-	const beingUnequipped = document.querySelector('.unequip');
+	const beingEquipped = document.querySelector( '.being-equipped' );
+	const beingUnequipped = document.querySelector( '.unequip' );
 
-	if (beingEquipped) {
-		beingEquipped.classList.remove('being-equipped');
+	if ( beingEquipped ) {
+		beingEquipped.classList.remove( 'being-equipped' );
 	}
 
-	if (beingUnequipped) {
-		beingUnequipped.classList.remove('unequip');
+	if ( beingUnequipped ) {
+		beingUnequipped.classList.remove( 'unequip' );
 	}
 }
 
@@ -2450,40 +2476,42 @@ function updatePointBars(unequip) {
  * get current points.
  * @param type the type of point bar.
  */
-function getCurrentPoints(type) {
+function getCurrentPoints( type ) {
 	'use strict';
 
-	const thePoints = document.querySelector(`#explore-points .${type}-amount`);
+	const thePoints = document.querySelector(
+		`#explore-points .${ type }-amount`
+	);
 
-	return parseInt(thePoints.getAttribute('data-amount'));
+	return parseInt( thePoints.getAttribute( 'data-amount' ) );
 }
 
-function playSong(path, name) {
+function playSong( path, name ) {
 	'use strict';
 
-	if (!path || '' === path) {
+	if ( ! path || '' === path ) {
 		return;
 	}
 
-	const audio = document.createElement('audio');
-	audio.setAttribute('loop', '');
+	const audio = document.createElement( 'audio' );
+	audio.setAttribute( 'loop', '' );
 	audio.src = path;
 	audio.id = name;
 
-	document.body.appendChild(audio);
+	document.body.appendChild( audio );
 
-	const volume = document.getElementById('music-volume');
+	const volume = document.getElementById( 'music-volume' );
 
-	if (volume && audio) {
+	if ( volume && audio ) {
 		audio.volume = volume.value / 100;
 	}
 
 	// Pause current song.
-	if (window.currentMusic) {
+	if ( window.currentMusic ) {
 		window.currentMusic.pause();
 	}
 
-	if (audio) {
+	if ( audio ) {
 		audio.play();
 
 		// Set for volume control
@@ -2495,14 +2523,14 @@ function playSong(path, name) {
  * Function to change the current playable character from your crew list.
  * @param character
  */
-function selectNewCharacter(character) {
+function selectNewCharacter( character ) {
 	'use strict';
 
-	const charImage = character.querySelector('img');
-	charImage.removeAttribute('srcset');
-	const currentCharacter = document.querySelector('#map-character');
+	const charImage = character.querySelector( 'img' );
+	charImage.removeAttribute( 'srcset' );
+	const currentCharacter = document.querySelector( '#map-character' );
 
-	if (charImage && currentCharacter) {
+	if ( charImage && currentCharacter ) {
 		const oldCurrentCharName =
 			undefined === currentCharacter.dataset.currentchar
 				? window.mainCharacter
@@ -2514,14 +2542,14 @@ function selectNewCharacter(character) {
 			'.character-images .character-icon'
 		);
 
-		if (mc) {
-			mc.forEach((mcImage, index) => {
-				if (newCharacter[index]) {
+		if ( mc ) {
+			mc.forEach( ( mcImage, index ) => {
+				if ( newCharacter[ index ] ) {
 					const mcImageUrl = mcImage.src;
-					mcImage.src = newCharacter[index].src;
-					newCharacter[index].src = mcImageUrl;
+					mcImage.src = newCharacter[ index ].src;
+					newCharacter[ index ].src = mcImageUrl;
 				}
-			});
+			} );
 
 			const mcAbility = currentCharacter.dataset.ability;
 			const mcName = currentCharacter.dataset.name;
@@ -2531,12 +2559,12 @@ function selectNewCharacter(character) {
 				character.dataset.charactername;
 			currentCharacter.dataset.ability = character.dataset.ability;
 			currentCharacter.dataset.name =
-				character.querySelector('.character-name').textContent;
+				character.querySelector( '.character-name' ).textContent;
 			character.dataset.ability = mcAbility;
-			character.querySelector('.character-name').textContent = mcName;
+			character.querySelector( '.character-name' ).textContent = mcName;
 		}
 
-		switch (currentCharacter.dataset?.ability) {
+		switch ( currentCharacter.dataset?.ability ) {
 			case 'speed':
 				window.moveSpeed = 5;
 				window.attackMultiplier = 5;
@@ -2555,7 +2583,7 @@ function selectNewCharacter(character) {
 				const equipped = document.querySelector(
 					'.storage-item[data-type="weapons"].equipped'
 				);
-				changeWeapon(equipped);
+				changeWeapon( equipped );
 
 				window.moveSpeed = 3;
 				window.attackMultiplier = 0;
@@ -2615,51 +2643,51 @@ function selectNewCharacter(character) {
  * @param enemy
  * @param trigger
  */
-function engageEnemy(enemy, trigger) {
+function engageEnemy( enemy, trigger ) {
 	'use strict';
 
-	const enemyType = enemy.getAttribute('data-enemy-type');
+	const enemyType = enemy.getAttribute( 'data-enemy-type' );
 
-	if (trigger) {
+	if ( trigger ) {
 		trigger.remove();
 	}
 
-	if ('shooter' === enemyType) {
-		engageShooter(enemy);
+	if ( 'shooter' === enemyType ) {
+		engageShooter( enemy );
 	}
 
 	// Runner Type.
-	if ('runner' === enemyType) {
-		window.runnerInt = setInterval(() => {
-			const enemyName = cleanClassName(enemy.className);
+	if ( 'runner' === enemyType ) {
+		window.runnerInt = setInterval( () => {
+			const enemyName = cleanClassName( enemy.className );
 			const newEnemy = document.querySelector(
 				'.' + enemyName + '-map-item'
 			);
 			const collisionWalls = document.querySelectorAll(
 				'.default-map svg rect, .protection'
 			);
-			let leftValInt = parseInt(newEnemy.style.left, 10);
-			let topValInt = parseInt(newEnemy.style.top, 10);
-			const mapCharacter = document.getElementById('map-character');
+			let leftValInt = parseInt( newEnemy.style.left, 10 );
+			let topValInt = parseInt( newEnemy.style.top, 10 );
+			const mapCharacter = document.getElementById( 'map-character' );
 			const mapCharacterLeft =
-				parseInt(mapCharacter.style.left.replace('px', '')) + 400;
+				parseInt( mapCharacter.style.left.replace( 'px', '' ) ) + 400;
 			const mapCharacterTop =
-				parseInt(mapCharacter.style.top.replace('px', '')) + 400;
+				parseInt( mapCharacter.style.top.replace( 'px', '' ) ) + 400;
 
 			// Move enemy left.
-			if (leftValInt < mapCharacterLeft) {
+			if ( leftValInt < mapCharacterLeft ) {
 				leftValInt = leftValInt + 1;
 			} else {
 				leftValInt = leftValInt - 1;
 			}
 
-			if (topValInt < mapCharacterTop) {
+			if ( topValInt < mapCharacterTop ) {
 				topValInt = topValInt + 1;
 			} else {
 				topValInt = topValInt - 1;
 			}
 
-			if (collisionWalls && newEnemy) {
+			if ( collisionWalls && newEnemy ) {
 				const newBlockedPosition = getBlockDirection(
 					collisionWalls,
 					newEnemy.getBoundingClientRect(),
@@ -2672,14 +2700,14 @@ function engageEnemy(enemy, trigger) {
 				newEnemy.style.left = newBlockedPosition.left + 'px';
 				newEnemy.style.top = newBlockedPosition.top + 'px';
 			}
-		}, 20);
+		}, 20 );
 	}
 
-	if ('boss' === enemyType) {
-		updateBossWave(enemy);
+	if ( 'boss' === enemyType ) {
+		updateBossWave( enemy );
 
-		pulsewaveTrackInterval = setInterval(() => {
-			const pulseWave = document.querySelector('.pulse-wave-container');
+		pulsewaveTrackInterval = setInterval( () => {
+			const pulseWave = document.querySelector( '.pulse-wave-container' );
 			const mainChar = document.querySelector(
 				'.map-character-icon.engage'
 			);
@@ -2688,7 +2716,7 @@ function engageEnemy(enemy, trigger) {
 				enemyOverlap(
 					pulseWave,
 					mainChar,
-					document.querySelector('.game-container')
+					document.querySelector( '.game-container' )
 				)
 			) {
 				inHazard = true;
@@ -2696,7 +2724,7 @@ function engageEnemy(enemy, trigger) {
 			} else {
 				inHazard = false;
 			}
-		}, 20);
+		}, 20 );
 	}
 }
 
@@ -2704,43 +2732,43 @@ function engageEnemy(enemy, trigger) {
  * Switch boss wave type.
  * @param enemy
  */
-function updateBossWave(enemy) {
+function updateBossWave( enemy ) {
 	'use strict';
 
-	const bossWaves = enemy.dataset.waves.split(',');
+	const bossWaves = enemy.dataset.waves.split( ',' );
 
 	// Remove current wave classes.
-	if (bossWaves) {
-		bossWaves.forEach((bossWave) => {
-			enemy.classList.remove(bossWave + '-wave-engage');
-		});
+	if ( bossWaves ) {
+		bossWaves.forEach( ( bossWave ) => {
+			enemy.classList.remove( bossWave + '-wave-engage' );
+		} );
 
-		enemy.classList.add(bossWaves[bossWaveCount] + '-wave-engage');
+		enemy.classList.add( bossWaves[ bossWaveCount ] + '-wave-engage' );
 
-		if ('pulse-wave' === bossWaves[bossWaveCount]) {
-			pulsewaveInterval = setInterval(() => {
-				enemy.classList.toggle('pulse-in');
-			}, 13000);
-		} else if (pulsewaveInterval) {
-			clearInterval(pulsewaveInterval);
-			enemy.classList.remove('pulse-in');
+		if ( 'pulse-wave' === bossWaves[ bossWaveCount ] ) {
+			pulsewaveInterval = setInterval( () => {
+				enemy.classList.toggle( 'pulse-in' );
+			}, 13000 );
+		} else if ( pulsewaveInterval ) {
+			clearInterval( pulsewaveInterval );
+			enemy.classList.remove( 'pulse-in' );
 		}
 
-		if ('projectile' === bossWaves[bossWaveCount]) {
-			engageShooter(enemy);
+		if ( 'projectile' === bossWaves[ bossWaveCount ] ) {
+			engageShooter( enemy );
 		} else {
-			clearInterval(shooterInterval);
+			clearInterval( shooterInterval );
 		}
 	}
 
 	bossWaveCount++;
 }
 
-function engageShooter(enemy) {
+function engageShooter( enemy ) {
 	'use strict';
 
 	const projSpeed = enemy.dataset.enemyspeed;
-	shooterInterval = window.shooterInt = setInterval(() => {
+	shooterInterval = window.shooterInt = setInterval( () => {
 		const mapCharacter = document.querySelector(
 			'.map-character-icon.engage'
 		);
@@ -2748,9 +2776,9 @@ function engageShooter(enemy) {
 			mapCharacter.getBoundingClientRect().left + mapCharacter.width / 2;
 		const mapCharacterTop =
 			mapCharacter.getBoundingClientRect().top + mapCharacter.width / 2;
-		const projectile = enemy.querySelector('.projectile');
+		const projectile = enemy.querySelector( '.projectile' );
 
-		if (projectile) {
+		if ( projectile ) {
 			shootProjectile(
 				projectile,
 				mapCharacterLeft,
@@ -2762,7 +2790,7 @@ function engageShooter(enemy) {
 				'no'
 			);
 		}
-	}, 5000);
+	}, 5000 );
 }
 
 /**
@@ -2788,14 +2816,14 @@ function shootProjectile(
 ) {
 	'use strict';
 
-	const newProjectile = projectile.cloneNode(true);
+	const newProjectile = projectile.cloneNode( true );
 
 	// Remove engage class and transition style before using new projectile.
-	newProjectile.classList.remove('engage');
+	newProjectile.classList.remove( 'engage' );
 	newProjectile.style.transition = '';
 
 	// Move projectile.
-	if (true !== spell && 'no' === isProjectile) {
+	if ( true !== spell && 'no' === isProjectile ) {
 		moveEnemy(
 			projectile,
 			mapCharacterLeft,
@@ -2803,80 +2831,80 @@ function shootProjectile(
 			projSpeed,
 			enemy
 		);
-	} else if (true === spell) {
-		projectile.classList.remove('map-weapon');
-		projectile.classList.add('magic-weapon');
+	} else if ( true === spell ) {
+		projectile.classList.remove( 'map-weapon' );
+		projectile.classList.add( 'magic-weapon' );
 
-		moveSpell(projectile, mapCharacterLeft, mapCharacterTop);
-		enemy = document.querySelector('.game-container');
-	} else if ('yes' === isProjectile) {
-		moveSpell(projectile, mapCharacterLeft, mapCharacterTop);
-		enemy = document.querySelector('.game-container');
+		moveSpell( projectile, mapCharacterLeft, mapCharacterTop );
+		enemy = document.querySelector( '.game-container' );
+	} else if ( 'yes' === isProjectile ) {
+		moveSpell( projectile, mapCharacterLeft, mapCharacterTop );
+		enemy = document.querySelector( '.game-container' );
 	}
 
 	// check projectile position and remove if its wall.
-	const projMovement = setInterval(function () {
-		const projectile = enemy.querySelector(projectileClass);
+	const projMovement = setInterval( function () {
+		const projectile = enemy.querySelector( projectileClass );
 		let collisionWalls = document.querySelectorAll(
 			'.default-map svg rect, .protection, .map-character-icon.engage, #map-weapon img'
 		);
 
-		if (true === spell || 'yes' === isProjectile) {
+		if ( true === spell || 'yes' === isProjectile ) {
 			collisionWalls = document.querySelectorAll(
 				'.default-map svg rect, .enemy-item, .map-item'
 			);
 		}
 
-		if (collisionWalls && projectile) {
-			trackProjectile(projectile, collisionWalls, true);
+		if ( collisionWalls && projectile ) {
+			trackProjectile( projectile, collisionWalls, true );
 		}
-	}, 20);
+	}, 20 );
 
-	setTimeout(() => {
-		if (true === spell || 'true' === isProjectile) {
+	setTimeout( () => {
+		if ( true === spell || 'true' === isProjectile ) {
 			const mapCharPos = document
-				.getElementById('map-character')
-				.className.replace('-dir', '');
-			newProjectile.setAttribute('data-direction', mapCharPos);
+				.getElementById( 'map-character' )
+				.className.replace( '-dir', '' );
+			newProjectile.setAttribute( 'data-direction', mapCharPos );
 		}
 
-		enemy.appendChild(newProjectile);
+		enemy.appendChild( newProjectile );
 		projectile.remove();
 		// Link weapon back to player.
 		window.weaponConnection = true;
 
-		clearInterval(projMovement);
-	}, 4500);
+		clearInterval( projMovement );
+	}, 4500 );
 }
 
-function trackProjectile(projectile, collisionWalls, isProjectile) {
+function trackProjectile( projectile, collisionWalls, isProjectile ) {
 	'use strict';
 
-	const container = document.querySelector('.game-container');
+	const container = document.querySelector( '.game-container' );
 
 	function tick() {
-		if (!document.body.contains(projectile)) {
+		if ( ! document.body.contains( projectile ) ) {
 			return;
 		} // stop if removed
 
-		for (const wall of collisionWalls) {
-			if (enemyOverlap(projectile, wall, container)) {
+		for ( const wall of collisionWalls ) {
+			if ( enemyOverlap( projectile, wall, container ) ) {
 				// If projectile collides with player than take health of player.
 				if (
-					true === wall.classList.contains('map-character-icon') &&
-					false === projectile.classList.contains('map-weapon')
+					true === wall.classList.contains( 'map-character-icon' ) &&
+					false === projectile.classList.contains( 'map-weapon' )
 				) {
-					const enemyValue = parseInt(projectile.dataset.value);
+					const enemyValue = parseInt( projectile.dataset.value );
 
 					// Immediately remove the projectile when hits.
 					const currentHealth = document.querySelector(
 						'#explore-points .health-amount'
 					);
 					const healthAmount = parseInt(
-						currentHealth.getAttribute('data-amount')
+						currentHealth.getAttribute( 'data-amount' )
 					);
 
-					if (currentHealth && 0 <= healthAmount) {
+					if ( currentHealth && 0 <= healthAmount ) {
 						const currentHealthLevel = healthAmount;
 						const newAmount =
 							currentHealthLevel >= enemyValue
@@ -2895,7 +2923,7 @@ function trackProjectile(projectile, collisionWalls, isProjectile) {
 					}
 				}
 
-				if (true === isProjectile) {
+				if ( true === isProjectile ) {
 					projectile.remove();
 				}
 
@@ -2904,19 +2932,19 @@ function trackProjectile(projectile, collisionWalls, isProjectile) {
 			}
 		}
 
-		requestAnimationFrame(tick);
+		requestAnimationFrame( tick );
 	}
 
-	requestAnimationFrame(tick);
+	requestAnimationFrame( tick );
 }
 
-function enemyOverlap(a, b, container) {
+function enemyOverlap( a, b, container ) {
 	'use strict';
 
-	const ar = getRelativeRect(a, container);
-	const br = getRelativeRect(b, container);
+	const ar = getRelativeRect( a, container );
+	const br = getRelativeRect( b, container );
 
-	return !(
+	return ! (
 		ar.right < br.left ||
 		ar.left > br.right ||
 		ar.bottom < br.top ||
@@ -2924,7 +2952,7 @@ function enemyOverlap(a, b, container) {
 	);
 }
 
-function getRelativeRect(el, container) {
+function getRelativeRect( el, container ) {
 	'use strict';
 
 	const elRect = el.getBoundingClientRect();
@@ -2962,9 +2990,9 @@ function moveEnemy(
 	let topDifference;
 	const projectilePosition = projectile.getBoundingClientRect();
 
-	const mapCharacter = document.getElementById('map-character');
-	const bPosition = getPositionAtCenter(newEnemy);
-	const aPosition = getPositionAtCenter(mapCharacter);
+	const mapCharacter = document.getElementById( 'map-character' );
+	const bPosition = getPositionAtCenter( newEnemy );
+	const aPosition = getPositionAtCenter( mapCharacter );
 
 	// Set the transition speed dynamically.
 	regulateTransitionSpeed(
@@ -2981,8 +3009,8 @@ function moveEnemy(
 		mapCharacterLeft - projectilePosition.left
 	);
 
-	const targetX = mapCharacterLeft + Math.cos(angle) * 800;
-	const targetY = mapCharacterTop + Math.sin(angle) * 800;
+	const targetX = mapCharacterLeft + Math.cos( angle ) * 800;
+	const targetY = mapCharacterTop + Math.sin( angle ) * 800;
 
 	// Calculate the required translation
 	leftDifference = targetX - projectilePosition.left;
@@ -2998,7 +3026,7 @@ function moveEnemy(
  * @param mapCharacterLeft
  * @param mapCharacterTop
  */
-function moveSpell(projectile, mapCharacterLeft, mapCharacterTop) {
+function moveSpell( projectile, mapCharacterLeft, mapCharacterTop ) {
 	'use strict';
 
 	window.weaponConnection = false;
@@ -3035,18 +3063,18 @@ function regulateTransitionSpeed(
 	);
 	const transitionDist = diffDist * 0.075 * multiple;
 	let moveDirection = 'down';
-	const ydiff = Math.abs(aPositiony - bPositiony);
-	const xdiff = Math.abs(aPositionx - bPositionx);
+	const ydiff = Math.abs( aPositiony - bPositiony );
+	const xdiff = Math.abs( aPositionx - bPositionx );
 
 	projectile.style.transition = 'all ' + transitionDist + 'ms linear 0s';
 
-	if (aPositiony > bPositiony && ydiff > xdiff) {
+	if ( aPositiony > bPositiony && ydiff > xdiff ) {
 		moveDirection = 'up';
-	} else if (aPositiony < bPositiony && ydiff > xdiff) {
+	} else if ( aPositiony < bPositiony && ydiff > xdiff ) {
 		moveDirection = 'down';
-	} else if (aPositionx < bPositionx && xdiff > ydiff) {
+	} else if ( aPositionx < bPositionx && xdiff > ydiff ) {
 		moveDirection = 'right';
-	} else if (aPositionx > bPositionx && xdiff > ydiff) {
+	} else if ( aPositionx > bPositionx && xdiff > ydiff ) {
 		moveDirection = 'left';
 	}
 
@@ -3079,9 +3107,9 @@ function getLoopAmount(
 		aPositionx - bPositionx,
 		aPositiony - bPositiony
 	);
-	const transitionDist = diffDist * parseFloat(timeBetween) * multiple;
+	const transitionDist = diffDist * parseFloat( timeBetween ) * multiple;
 
-	return Math.ceil(transitionDist / 250);
+	return Math.ceil( transitionDist / 250 );
 }
 
 /**
@@ -3089,7 +3117,7 @@ function getLoopAmount(
  * @param  element
  * @return {{x: *, y: *}}
  */
-function getPositionAtCenter(element) {
+function getPositionAtCenter( element ) {
 	'use strict';
 
 	const { top, left, width, height } = element.getBoundingClientRect();
@@ -3105,49 +3133,49 @@ function getPositionAtCenter(element) {
 function addNoPoints() {
 	'use strict';
 
-	const types = ['health', 'mana', 'point', 'gear', 'weapons', 'money'];
+	const types = [ 'health', 'mana', 'point', 'gear', 'weapons', 'money' ];
 
-	types.forEach((type) => {
+	types.forEach( ( type ) => {
 		const selectedCharacterPositions =
-			undefined !== OrbemOrder.explorePoints[type]
-				? OrbemOrder.explorePoints[type].positions
+			undefined !== OrbemOrder.explorePoints[ type ]
+				? OrbemOrder.explorePoints[ type ].positions
 				: [];
 
 		// Add no point class to positions already gotten.
-		if (selectedCharacterPositions) {
-			selectedCharacterPositions.forEach((value) => {
-				const valNum = parseInt(value) > 0;
+		if ( selectedCharacterPositions ) {
+			selectedCharacterPositions.forEach( ( value ) => {
+				const valNum = parseInt( value ) > 0;
 				const mapItem = valNum
 					? null
-					: document.querySelector('.' + value + '-map-item');
+					: document.querySelector( '.' + value + '-map-item' );
 				const cutSceneItem = valNum
 					? null
-					: document.querySelector('.' + value + '-map-cutscene');
+					: document.querySelector( '.' + value + '-map-cutscene' );
 				const explainerItem = valNum
 					? null
 					: document.querySelector(
 							'.' + value + '-explainer-trigger-map-item'
-						);
+					  );
 				const materializeMapItem = valNum
 					? null
 					: document.querySelector(
 							'.' + value + '-materialize-item-map-item'
-						);
+					  );
 				const dragDestMapItem = valNum
 					? null
 					: document.querySelector(
 							'.' + value + '-drag-dest-map-item'
-						);
+					  );
 				const communicateTrigger = document.getElementById(
 					value + '-t'
 				);
 
-				if (communicateTrigger) {
-					const communicateMessage = document.getElementById(value);
+				if ( communicateTrigger ) {
+					const communicateMessage = document.getElementById( value );
 					const communicateParent = communicateMessage.parentNode;
 
-					if (communicateMessage) {
-						communicateMessage.classList.add('engage');
+					if ( communicateMessage ) {
+						communicateMessage.classList.add( 'engage' );
 
 						communicateTrigger.remove();
 					}
@@ -3155,28 +3183,28 @@ function addNoPoints() {
 					if (
 						communicateParent &&
 						false ===
-							communicateParent.classList.contains('dependent')
+							communicateParent.classList.contains( 'dependent' )
 					) {
-						communicateParent.classList.add('dependent');
+						communicateParent.classList.add( 'dependent' );
 					}
 				}
 
 				// Add special class for cutscenes.
-				if (cutSceneItem) {
-					cutSceneItem.classList.add('been-viewed');
+				if ( cutSceneItem ) {
+					cutSceneItem.classList.add( 'been-viewed' );
 				}
 
 				// Add for explainers.
-				if (explainerItem) {
-					explainerItem.classList.add('already-hit');
+				if ( explainerItem ) {
+					explainerItem.classList.add( 'already-hit' );
 				}
 
-				if (mapItem) {
+				if ( mapItem ) {
 					// If collected already don't show item.
-					if (shouldRemoveItemOnload(mapItem)) {
+					if ( shouldRemoveItemOnload( mapItem ) ) {
 						mapItem.remove();
 
-						if (materializeMapItem) {
+						if ( materializeMapItem ) {
 							materializeMapItem.remove();
 						}
 					}
@@ -3189,51 +3217,51 @@ function addNoPoints() {
 						dragDestMapItem.remove();
 					}
 
-					if ('no' === mapItem.dataset?.disappear) {
-						swapInteractedImage(mapItem);
+					if ( 'no' === mapItem.dataset?.disappear ) {
+						swapInteractedImage( mapItem );
 					}
 
-					mapItem.classList.add('no-point');
+					mapItem.classList.add( 'no-point' );
 				}
-			});
+			} );
 		}
 
 		// Clear all bubbles.
 		const characterSlugs = document.querySelectorAll(
 			'.map-item-modal.graeme'
 		);
-		const allBubble = document.querySelectorAll('.map-item-modal');
+		const allBubble = document.querySelectorAll( '.map-item-modal' );
 
-		if (allBubble) {
-			allBubble.forEach((bubble) => {
-				bubble.classList.remove('engage');
-			});
+		if ( allBubble ) {
+			allBubble.forEach( ( bubble ) => {
+				bubble.classList.remove( 'engage' );
+			} );
 		}
 
 		// Show all character bubbles.
-		if (characterSlugs) {
-			characterSlugs.forEach((characterSlug) => {
-				characterSlug.classList.add('engage');
-			});
+		if ( characterSlugs ) {
+			characterSlugs.forEach( ( characterSlug ) => {
+				characterSlug.classList.add( 'engage' );
+			} );
 		}
-	});
+	} );
 }
 
-function shouldRemoveItemOnload(mapItem) {
+function shouldRemoveItemOnload( mapItem ) {
 	'use strict';
 
 	if (
-		(undefined !== mapItem.dataset.timer &&
-			null !== mapItem.dataset.timer) ||
+		( undefined !== mapItem.dataset.timer &&
+			null !== mapItem.dataset.timer ) ||
 		'explore-character' === mapItem.dataset.genre ||
 		'true' === mapItem.dataset.hazard ||
 		'true' === mapItem.dataset.collectable ||
-		('true' === mapItem.dataset.breakable &&
-			'no' !== mapItem.dataset?.disappear) ||
-		('true' === mapItem.dataset.removable &&
-			'no' !== mapItem.dataset?.disappear) ||
-		('true' === mapItem.dataset.draggable &&
-			'yes' === mapItem.dataset?.disappear) ||
+		( 'true' === mapItem.dataset.breakable &&
+			'no' !== mapItem.dataset?.disappear ) ||
+		( 'true' === mapItem.dataset.removable &&
+			'no' !== mapItem.dataset?.disappear ) ||
+		( 'true' === mapItem.dataset.draggable &&
+			'yes' === mapItem.dataset?.disappear ) ||
 		undefined !== mapItem.dataset?.removeaftercutscene
 	) {
 		return true;
@@ -3248,8 +3276,8 @@ function shouldRemoveItemOnload(mapItem) {
 export function engageExploreGame() {
 	'use strict';
 
-	const container = document.querySelector('.game-container');
-	const touchButtons = document.querySelector('.touch-buttons');
+	const container = document.querySelector( '.game-container' );
+	const touchButtons = document.querySelector( '.touch-buttons' );
 	window.previousCutsceneArea = OrbemOrder.previousCutsceneArea ?? '';
 
 	// Set all first cutscene dialogues to engage.
@@ -3257,14 +3285,14 @@ export function engageExploreGame() {
 		'.map-cutscene .wp-block-orbem-paragraph-mp3:first-of-type, .map-communicate .wp-block-orbem-paragraph-mp3'
 	);
 
-	if (allFirstDialogues) {
-		allFirstDialogues.forEach((firstDialogue) => {
-			firstDialogue.classList.add('engage');
-		});
+	if ( allFirstDialogues ) {
+		allFirstDialogues.forEach( ( firstDialogue ) => {
+			firstDialogue.classList.add( 'engage' );
+		} );
 	}
 
 	// Stop start music.
-	playStartScreenMusic(false);
+	playStartScreenMusic( false );
 
 	// Engage communicate click.
 	communicateParentClick();
@@ -3297,68 +3325,68 @@ export function engageExploreGame() {
 	materializeItemLogic();
 
 	// Show crew menu.
-	const crewMenu = document.getElementById('characters');
+	const crewMenu = document.getElementById( 'characters' );
 	const crewMates = crewMenu
-		? crewMenu.querySelectorAll('.character-item')
+		? crewMenu.querySelectorAll( '.character-item' )
 		: false;
 
-	if (crewMenu && 0 < crewMates.length) {
+	if ( crewMenu && 0 < crewMates.length ) {
 		crewMenu.style.display = 'block';
 	}
 
 	// Hide start screen.
-	if (document.querySelector('.explore-overlay')) {
-		document.querySelector('.explore-overlay').remove();
+	if ( document.querySelector( '.explore-overlay' ) ) {
+		document.querySelector( '.explore-overlay' ).remove();
 	}
 	document.body.style.position = 'unset';
 
-	if (touchButtons) {
-		touchButtons.classList.add('do-mobile');
+	if ( touchButtons ) {
+		touchButtons.classList.add( 'do-mobile' );
 	}
 
 	let newMusic = '';
 
-	if (OrbemOrder.musicNames && currentLocation) {
-		newMusic = JSON.parse(OrbemOrder.musicNames)[currentLocation];
+	if ( OrbemOrder.musicNames && currentLocation ) {
+		newMusic = JSON.parse( OrbemOrder.musicNames )[ currentLocation ];
 	}
 
 	// Start music.
-	playSong(newMusic, currentLocation);
+	playSong( newMusic, currentLocation );
 
 	// Show leave map link and keys guide.
-	const explorePoints = document.getElementById('explore-points');
-	const missions = document.getElementById('missions');
+	const explorePoints = document.getElementById( 'explore-points' );
+	const missions = document.getElementById( 'missions' );
 
-	if (explorePoints) {
+	if ( explorePoints ) {
 		explorePoints.style.opacity = '1';
 	}
 
-	if (missions) {
+	if ( missions ) {
 		missions.style.opacity = '1';
 	}
 
 	// Flash key-guide.
-	const keyGuide = document.getElementById('key-guide');
-	spinMiroLogo(keyGuide, 'engage');
+	const keyGuide = document.getElementById( 'key-guide' );
+	spinMiroLogo( keyGuide, 'engage' );
 
 	// Bring touch buttons forward and flash arrows.
-	spinMiroLogo(touchButtons, 'engage');
+	spinMiroLogo( touchButtons, 'engage' );
 
 	// Run arrow flash intermittently.
-	window.buttonShow = setInterval(function () {
-		spinMiroLogo(touchButtons, 'engage');
-		spinMiroLogo(keyGuide, 'engage');
-	}, 10000);
+	window.buttonShow = setInterval( function () {
+		spinMiroLogo( touchButtons, 'engage' );
+		spinMiroLogo( keyGuide, 'engage' );
+	}, 10000 );
 
 	// Move npcs
 	const moveableCharacters = document.querySelectorAll(
 		'.path-onload[data-path]:not([data-path=""]), [data-wanderer="yes"]'
 	);
 
-	if (moveableCharacters) {
-		moveableCharacters.forEach((moveableCharacter) => {
-			moveNPC(moveableCharacter, false);
-		});
+	if ( moveableCharacters ) {
+		moveableCharacters.forEach( ( moveableCharacter ) => {
+			moveNPC( moveableCharacter, false );
+		} );
 	}
 
 	// Load blockades.
@@ -3372,20 +3400,20 @@ export function engageExploreGame() {
 
 	// Trigger cutscene if area is cutscene.
 	const isAreaCutscene =
-		'yes' === document.querySelector('.default-map').dataset.iscutscene;
+		'yes' === document.querySelector( '.default-map' ).dataset.iscutscene;
 
-	if (isAreaCutscene && currentLocation) {
+	if ( isAreaCutscene && currentLocation ) {
 		const cutSceneName = cleanClassName(
-			document.querySelector('.map-cutscene').className
+			document.querySelector( '.map-cutscene' ).className
 		);
 		window.previousCutsceneArea = cutSceneName;
-		setPreviousCutsceneArea(window.previousCutsceneArea);
-		engageCutscene(cutSceneName, true);
+		setPreviousCutsceneArea( window.previousCutsceneArea );
+		engageCutscene( cutSceneName, true );
 	}
 
-	if ('' !== window.previousCutsceneArea) {
+	if ( '' !== window.previousCutsceneArea ) {
 		removeItems(
-			document.querySelectorAll('[data-removeaftercutscene]'),
+			document.querySelectorAll( '[data-removeaftercutscene]' ),
 			window.previousCutsceneArea
 		);
 
@@ -3393,13 +3421,15 @@ export function engageExploreGame() {
 			'[data-showaftercutscene=' + window.previousCutsceneArea + ']'
 		);
 
-		if (showItems) {
-			showItems.forEach((showItem) => {
-				materializedItemsArray.push(cleanClassName(showItem.className));
-				showItem.classList.add('no-point');
-			});
+		if ( showItems ) {
+			showItems.forEach( ( showItem ) => {
+				materializedItemsArray.push(
+					cleanClassName( showItem.className )
+				);
+				showItem.classList.add( 'no-point' );
+			} );
 
-			saveMaterializedItem(currentLocation, materializedItemsArray);
+			saveMaterializedItem( currentLocation, materializedItemsArray );
 		}
 	}
 
@@ -3407,24 +3437,24 @@ export function engageExploreGame() {
 	checkIfHazardHurts();
 
 	// Show the game container.
-	if (container) {
+	if ( container ) {
 		container.style.display = 'block';
 	}
 
 	// Scroll to center.
-	const mapChar = document.getElementById('map-character');
+	const mapChar = document.getElementById( 'map-character' );
 
-	if (mapChar) {
-		mapChar.scrollIntoView({
+	if ( mapChar ) {
+		mapChar.scrollIntoView( {
 			behavior: 'instant',
 			block: 'center',
 			inline: 'center',
-		});
+		} );
 	}
 
-	setTimeout(() => {
+	setTimeout( () => {
 		fadeInScene();
-	}, 1000);
+	}, 1000 );
 }
 
 /**
@@ -3437,22 +3467,24 @@ function materializeItemLogic() {
 		'.materialize-item-trigger'
 	);
 
-	if (materialItems) {
-		materialItems.forEach((mItem) => {
-			const itemName = cleanClassName(mItem.className);
-			const itemEl = document.querySelector('.' + itemName + '-map-item');
+	if ( materialItems ) {
+		materialItems.forEach( ( mItem ) => {
+			const itemName = cleanClassName( mItem.className );
+			const itemEl = document.querySelector(
+				'.' + itemName + '-map-item'
+			);
 			const dragDest = document.querySelector(
 				'.' + itemName + '-drag-dest-map-item'
 			);
 
-			if (itemEl) {
+			if ( itemEl ) {
 				itemEl.style.display = 'none';
 			}
 
-			if (dragDest) {
+			if ( dragDest ) {
 				dragDest.style.display = 'none';
 			}
-		});
+		} );
 	}
 }
 
@@ -3463,32 +3495,32 @@ function loadMissionBlockades() {
 	'use strict';
 
 	// Add mission blockade.
-	const missions = document.querySelectorAll('.mission-list .mission-item');
+	const missions = document.querySelectorAll( '.mission-list .mission-item' );
 
-	if (missions) {
-		missions.forEach((mission) => {
+	if ( missions ) {
+		missions.forEach( ( mission ) => {
 			const blockade = mission.dataset.blockade;
-			const missionName = cleanClassName(mission.className);
+			const missionName = cleanClassName( mission.className );
 			const materializes = document.querySelectorAll(
 				'[data-materializemission="' + missionName + '"]'
 			);
 
-			if (materializes) {
-				materializes.forEach((materialize) => {
+			if ( materializes ) {
+				materializes.forEach( ( materialize ) => {
 					materialize.style.display = 'none';
-				});
+				} );
 			}
 
-			if (blockade && '' !== blockade) {
-				const blockadeSpecs = JSON.parse(blockade);
+			if ( blockade && '' !== blockade ) {
+				const blockadeSpecs = JSON.parse( blockade );
 
-				if ('0' !== blockadeSpecs.height) {
-					const missionBlockadeEl = document.createElement('div');
+				if ( '0' !== blockadeSpecs.height ) {
+					const missionBlockadeEl = document.createElement( 'div' );
 					const blockadeClasses = mission.className.replace(
 						'mission-item ',
 						''
 					);
-					const defaultMap = document.querySelector('.default-map');
+					const defaultMap = document.querySelector( '.default-map' );
 
 					missionBlockadeEl.className =
 						'wp-block-group map-item is-layout-flow wp-block-group-is-layout-flow ' +
@@ -3504,19 +3536,19 @@ function loadMissionBlockades() {
 					missionBlockadeEl.draggable = true;
 
 					if (
-						false === mission.classList.contains('engage') &&
-						true === mission.classList.contains('next-mission')
+						false === mission.classList.contains( 'engage' ) &&
+						true === mission.classList.contains( 'next-mission' )
 					) {
 						missionBlockadeEl.style.display = 'none';
 					}
 
 					// Add blockade to map.
-					if (defaultMap) {
-						defaultMap.append(missionBlockadeEl);
+					if ( defaultMap ) {
+						defaultMap.append( missionBlockadeEl );
 					}
 				}
 			}
-		});
+		} );
 	}
 }
 
@@ -3531,35 +3563,35 @@ function loadMissionBlockades() {
  * @param  $newest
  * @return {number}
  */
-function miroExplorePosition(v, a, b, d, x, $newest) {
+function miroExplorePosition( v, a, b, d, x, $newest ) {
 	'use strict';
 
-	const pane = document.querySelector('.game-container');
-	const mapChar = document.querySelector('#map-character');
-	const box = mapChar.querySelector('.map-character-icon.engage');
+	const pane = document.querySelector( '.game-container' );
+	const mapChar = document.querySelector( '#map-character' );
+	const box = mapChar.querySelector( '.map-character-icon.engage' );
 	const modal = document.querySelectorAll(
 		'.map-item:not(.drag-dest), .projectile, .enemy-item, [data-hazard="true"]'
 	);
-	let weaponEl = document.querySelector('.map-weapon');
-	const magicEl = document.querySelector('.magic-weapon');
+	let weaponEl = document.querySelector( '.map-weapon' );
+	const magicEl = document.querySelector( '.magic-weapon' );
 	const area = document
-		.querySelector('.game-container')
-		.className.replace('game-container ', '');
-	const hazardGauge = mapChar.querySelector('.misc-gauge-wrap');
+		.querySelector( '.game-container' )
+		.className.replace( 'game-container ', '' );
+	const hazardGauge = mapChar.querySelector( '.misc-gauge-wrap' );
 
 	// Reset weapon element as magic element.
-	if (magicEl) {
+	if ( magicEl ) {
 		weaponEl = magicEl;
 	}
 
-	if (0 < modal.length && false === window.noTouch) {
+	if ( 0 < modal.length && false === window.noTouch ) {
 		// Overlap check for map item.
-		modal.forEach((value) => {
-			let position = cleanClassName(value.className);
+		modal.forEach( ( value ) => {
+			let position = cleanClassName( value.className );
 
-			if (value.classList.contains('enemy-item')) {
+			if ( value.classList.contains( 'enemy-item' ) ) {
 				// Hurt enemy save enemy health.
-				hurtTheEnemy(weaponEl, value);
+				hurtTheEnemy( weaponEl, value );
 			}
 
 			// No points for draggables.
@@ -3568,30 +3600,33 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 			);
 			let dragMission = false;
 
-			if (dragDest && false === value.classList.contains('no-point')) {
+			if (
+				dragDest &&
+				false === value.classList.contains( 'no-point' )
+			) {
 				dragMission = document.querySelector(
 					'.' + dragDest.dataset.mission + '-mission-item'
 				);
 
-				if (null === dragMission) {
-					value.classList.add('no-point');
+				if ( null === dragMission ) {
+					value.classList.add( 'no-point' );
 				}
 			}
 
-			const indicator = document.querySelector('.indicator-icon');
-			const characterName = cleanClassName(value.className);
+			const indicator = document.querySelector( '.indicator-icon' );
+			const characterName = cleanClassName( value.className );
 			const cutsceneEl = document.querySelector(
-				`.map-cutscene[data-character="${characterName}"]`
+				`.map-cutscene[data-character="${ characterName }"]`
 			);
 			const finalCharPos = {
-				offsetLeft: mapChar.offsetLeft + (400 - box.offsetWidth / 2),
+				offsetLeft: mapChar.offsetLeft + ( 400 - box.offsetWidth / 2 ),
 				offsetWidth: box.offsetWidth,
-				offsetTop: mapChar.offsetTop + (400 - box.offsetHeight / 2),
+				offsetTop: mapChar.offsetTop + ( 400 - box.offsetHeight / 2 ),
 				offsetHeight: box.offsetHeight,
 			};
 
 			// Touching with buffer.
-			if (value && box && elementsOverlap(finalCharPos, value, 5)) {
+			if ( value && box && elementsOverlap( finalCharPos, value, 5 ) ) {
 				// Pause NPC from moving if touching MC.
 				if (
 					'explore-character' === value.dataset.genre &&
@@ -3604,47 +3639,49 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 					);
 
 					if (
-						!cutsceneTrigger &&
+						! cutsceneTrigger &&
 						cutsceneEl &&
 						false ===
-							cutsceneEl.classList.contains('been-viewed') &&
+							cutsceneEl.classList.contains( 'been-viewed' ) &&
 						'engagement' !== cutsceneEl.dataset.triggertype
 					) {
-						engageCutscene(cutsceneEl, false);
+						engageCutscene( cutsceneEl, false );
 					}
 				}
 
-				if (true === value.classList.contains('communicate-trigger')) {
-					engageCommunicate(value?.dataset.triggee, value);
+				if (
+					true === value.classList.contains( 'communicate-trigger' )
+				) {
+					engageCommunicate( value?.dataset.triggee, value );
 				}
-			} else if ('false' === value.dataset?.canmove) {
+			} else if ( 'false' === value.dataset?.canmove ) {
 				// Reset NPC to allow movement.
 				value.dataset.canmove = 'true';
 			}
 
-			if (value && box && elementsOverlap(finalCharPos, value, 0)) {
+			if ( value && box && elementsOverlap( finalCharPos, value, 0 ) ) {
 				// Add indicator if touching sign.
 				if (
 					'explore-sign' === value.dataset.genre &&
-					false === value.classList.contains('engage')
+					false === value.classList.contains( 'engage' )
 				) {
-					triggerIndicator(value, false, false, false);
-					value.classList.add('engage');
+					triggerIndicator( value, false, false, false );
+					value.classList.add( 'engage' );
 					window.allowHit = false;
 				}
 
 				// Indicate if you touch minigame item trigger.
 				if (
-					true === value.classList.contains('no-point') &&
+					true === value.classList.contains( 'no-point' ) &&
 					undefined !== value.dataset?.minigame
 				) {
-					triggerIndicator(value, false, false, true);
-					value.classList.add('engage');
+					triggerIndicator( value, false, false, true );
+					value.classList.add( 'engage' );
 				}
 
 				// Check if collided point is enterable.
-				if ('explore-area' === value.getAttribute('data-genre')) {
-					enterExplorePoint(value, 'false');
+				if ( 'explore-area' === value.getAttribute( 'data-genre' ) ) {
+					enterExplorePoint( value, 'false' );
 
 					return;
 				}
@@ -3652,21 +3689,28 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 				// If in hazard set to true.
 				if (
 					'true' === value.dataset.hazard &&
-					false === canCharacterInteract(value, mapChar, 'hazard')
+					false === canCharacterInteract( value, mapChar, 'hazard' )
 				) {
-					if (100 <= hazardCounter || 0 === hazardCounter) {
+					if ( 100 <= hazardCounter || 0 === hazardCounter ) {
 						const hurtAmount = value.dataset.value;
-						const currentHealth = getCurrentPoints('health');
-						const newAmount = currentHealth - parseInt(hurtAmount);
+						const currentHealth = getCurrentPoints( 'health' );
+						const newAmount =
+							currentHealth - parseInt( hurtAmount );
 
 						hurtAnimation();
 
-						addUserPoints(newAmount, 'health', 'hazard', false, '');
+						addUserPoints(
+							newAmount,
+							'health',
+							'hazard',
+							false,
+							''
+						);
 
 						// Push character away from hazard center.
 						pushCharacter(
 							25,
-							value.closest('.enemy-item') ?? value,
+							value.closest( '.enemy-item' ) ?? value,
 							mapChar
 						);
 
@@ -3676,25 +3720,25 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 					hazardCounter++;
 				} else if (
 					'true' === value.dataset.hazard &&
-					true === canCharacterInteract(value, mapChar, 'hazard')
+					true === canCharacterInteract( value, mapChar, 'hazard' )
 				) {
-					if (hazardGauge) {
-						hazardGauge.classList.add('engage');
+					if ( hazardGauge ) {
+						hazardGauge.classList.add( 'engage' );
 					}
 
 					const hazardGaugeBar =
-						hazardGauge.querySelector('.misc-gauge');
+						hazardGauge.querySelector( '.misc-gauge' );
 
-					if (window.hazardTime <= hazardCounter) {
+					if ( window.hazardTime <= hazardCounter ) {
 						inHazard = true;
 						window.theHazardValue = value.dataset.value;
-						hazardItem = value.closest('.enemy-item') ?? value;
+						hazardItem = value.closest( '.enemy-item' ) ?? value;
 						hazardGaugeBar.style.width = '100%';
-						hazardGauge.classList.remove('engage');
+						hazardGauge.classList.remove( 'engage' );
 					} else {
 						hazardGaugeBar.style.width =
-							((window.hazardTime - hazardCounter) /
-								window.hazardTime) *
+							( ( window.hazardTime - hazardCounter ) /
+								window.hazardTime ) *
 								100 +
 							'%';
 					}
@@ -3702,7 +3746,7 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 					hazardCounter++;
 				}
 
-				if (dragDest) {
+				if ( dragDest ) {
 					dragMission = document.querySelector(
 						'.' + dragDest.dataset.mission + '-mission-item'
 					);
@@ -3711,46 +3755,46 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 				// Draggable logic.
 				if (
 					'true' === value.dataset.draggable &&
-					false === value.classList.contains('dragme') &&
-					!document.querySelector('.dragme') &&
-					canCharacterInteract(value, mapChar, 'strength') &&
+					false === value.classList.contains( 'dragme' ) &&
+					! document.querySelector( '.dragme' ) &&
+					canCharacterInteract( value, mapChar, 'strength' ) &&
 					dragMission
 				) {
-					value.classList.add('dragme');
+					value.classList.add( 'dragme' );
 				}
 
 				// If trigger. Trigger the triggee.
 				if (
 					'true' === value.dataset.trigger &&
-					false === value.classList.contains('cutscene-trigger')
+					false === value.classList.contains( 'cutscene-trigger' )
 				) {
 					const triggee = document.querySelector(
 						'.' + value.dataset.triggee
 					);
 					// Start enemy attacks.
 
-					if (triggee && 'explore-enemy' === value.dataset.genre) {
-						engageEnemy(triggee, value);
+					if ( triggee && 'explore-enemy' === value.dataset.genre ) {
+						engageEnemy( triggee, value );
 					}
 				}
 
 				// If explainer trigger. Trigger the triggee.
 				if (
-					true === value.classList.contains('explainer-trigger') &&
-					false === value.classList.contains('already-hit')
+					true === value.classList.contains( 'explainer-trigger' ) &&
+					false === value.classList.contains( 'already-hit' )
 				) {
 					const triggee = document.querySelector(
 						'.' + value.dataset.triggee + '-explainer-item'
 					);
-					const closeExplainer = (event) => {
+					const closeExplainer = ( event ) => {
 						if (
-							('keydown' === event.type &&
-								'Space' === event.code) ||
+							( 'keydown' === event.type &&
+								'Space' === event.code ) ||
 							'click' === event.type
 						) {
 							window.allowMovement = true;
 							window.allowHit = true;
-							triggee.classList.remove('show-explainer');
+							triggee.classList.remove( 'show-explainer' );
 							document.removeEventListener(
 								'keydown',
 								closeExplainer
@@ -3758,60 +3802,63 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 						}
 					};
 
-					if (triggee) {
-						triggee.classList.add('show-explainer');
+					if ( triggee ) {
+						triggee.classList.add( 'show-explainer' );
 						triggee.style.zIndex = '10';
-						value.classList.add('already-hit');
+						value.classList.add( 'already-hit' );
 						window.allowMovement = false;
 						window.allowHit = false;
 
 						const text = Array.from(
-							triggee.querySelector('p').childNodes
+							triggee.querySelector( 'p' ).childNodes
 						)
-							.filter((node) => node.nodeType === Node.TEXT_NODE)
-							.map((node) => node.textContent)
-							.join('');
+							.filter(
+								( node ) => node.nodeType === Node.TEXT_NODE
+							)
+							.map( ( node ) => node.textContent )
+							.join( '' );
 						const mcVoice = mapChar.dataset.voice;
 						const providedAudio =
-							document.getElementById(triggee.id + '-s') ?? false;
+							document.getElementById( triggee.id + '-s' ) ??
+							false;
 
 						// Do text to speech.
-						makeTalk(text, mcVoice, providedAudio);
+						makeTalk( text, mcVoice, providedAudio );
 
-						const arrow = triggee.querySelector('img');
+						const arrow = triggee.querySelector( 'img' );
 
-						if (arrow) {
-							const rotate = parseInt(arrow.dataset.rotate);
+						if ( arrow ) {
+							const rotate = parseInt( arrow.dataset.rotate );
 							let animate1 = false;
 							let animate2 = false;
 							let animate3 = false;
 
-							if (arrow && rotate && 0 < rotate) {
-								if (0 < rotate && 90 >= rotate) {
-									animate1 = `rotate(${rotate}deg) translate( 10px, -10px )`;
-									animate2 = `rotate(${rotate}deg) translate( 10px, 10px )`;
-									animate3 = `rotate(${rotate}deg) translate( 10px, -10px )`;
+							if ( arrow && rotate && 0 < rotate ) {
+								if ( 0 < rotate && 90 >= rotate ) {
+									animate1 = `rotate(${ rotate }deg) translate( 10px, -10px )`;
+									animate2 = `rotate(${ rotate }deg) translate( 10px, 10px )`;
+									animate3 = `rotate(${ rotate }deg) translate( 10px, -10px )`;
 								}
 
-								if (91 < rotate && 180 >= rotate) {
-									animate1 = `rotate(${rotate}deg) translate( 0, 10px )`;
-									animate2 = `rotate(${rotate}deg) translate( -10px, -10px )`;
-									animate3 = `rotate(${rotate}deg) translate( 0, 10px )`;
+								if ( 91 < rotate && 180 >= rotate ) {
+									animate1 = `rotate(${ rotate }deg) translate( 0, 10px )`;
+									animate2 = `rotate(${ rotate }deg) translate( -10px, -10px )`;
+									animate3 = `rotate(${ rotate }deg) translate( 0, 10px )`;
 								}
 
-								if (181 < rotate && 270 >= rotate) {
-									animate1 = `rotate(${rotate}deg) translate( -10px, 10px )`;
-									animate2 = `rotate(${rotate}deg) translate( -10px, -10px )`;
-									animate3 = `rotate(${rotate}deg) translate( -10px, 10px )`;
+								if ( 181 < rotate && 270 >= rotate ) {
+									animate1 = `rotate(${ rotate }deg) translate( -10px, 10px )`;
+									animate2 = `rotate(${ rotate }deg) translate( -10px, -10px )`;
+									animate3 = `rotate(${ rotate }deg) translate( -10px, 10px )`;
 								}
 
-								if (271 < rotate && 360 >= rotate) {
-									animate1 = `rotate(${rotate}deg) translate( -10px, 0 )`;
-									animate2 = `rotate(${rotate}deg) translate( -10px, -10px )`;
-									animate3 = `rotate(${rotate}deg) translate( -10px, 0 )`;
+								if ( 271 < rotate && 360 >= rotate ) {
+									animate1 = `rotate(${ rotate }deg) translate( -10px, 0 )`;
+									animate2 = `rotate(${ rotate }deg) translate( -10px, -10px )`;
+									animate3 = `rotate(${ rotate }deg) translate( -10px, 0 )`;
 								}
 
-								if (false !== animate1) {
+								if ( false !== animate1 ) {
 									const moveArrow = [
 										{ transform: animate1 },
 										{ transform: animate2 },
@@ -3823,16 +3870,16 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 										iterations: Infinity,
 									};
 
-									arrow.animate(moveArrow, arrowTiming);
+									arrow.animate( moveArrow, arrowTiming );
 								}
 							}
 						}
 
 						// Close explainer on click.
-						document.addEventListener('click', closeExplainer);
+						document.addEventListener( 'click', closeExplainer );
 
 						// Close on action key
-						document.addEventListener('keydown', closeExplainer);
+						document.addEventListener( 'keydown', closeExplainer );
 
 						// Persist to avoid showing again on refresh.
 						persistItemRemoval(
@@ -3848,27 +3895,30 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 
 				// NPC Walking Path Trigger.
 				if (
-					true === value.classList.contains('path-trigger') &&
-					false === value.classList.contains('already-hit')
+					true === value.classList.contains( 'path-trigger' ) &&
+					false === value.classList.contains( 'already-hit' )
 				) {
 					const triggee = document.querySelector(
-						'.' + value.getAttribute('data-triggee')
+						'.' + value.getAttribute( 'data-triggee' )
 					);
 
 					// Move triggered NPC.
-					moveNPC(triggee, false);
+					moveNPC( triggee, false );
 
 					value.remove();
 				}
 
 				// For collectables.
-				if ('true' === value.dataset?.collectable) {
-					if (value.dataset.mission && '' !== value.dataset.mission) {
-						saveMission(value.dataset.mission, value, position);
+				if ( 'true' === value.dataset?.collectable ) {
+					if (
+						value.dataset.mission &&
+						'' !== value.dataset.mission
+					) {
+						saveMission( value.dataset.mission, value, position );
 					}
 
 					// Add item to storage menu.
-					storeExploreItem(value);
+					storeExploreItem( value );
 
 					// If just points. store it.
 					if (
@@ -3878,7 +3928,7 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 					) {
 						runPointAnimation(
 							value,
-							cleanClassName(value.className),
+							cleanClassName( value.className ),
 							false,
 							value.dataset.value,
 							''
@@ -3887,9 +3937,12 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 				}
 
 				// Trigger mission complete if mission trigger overlapped with.
-				if (true === value.classList.contains('mission-trigger')) {
-					if (value.dataset.triggee && '' !== value.dataset.triggee) {
-						saveMission(value.dataset.triggee, value, position);
+				if ( true === value.classList.contains( 'mission-trigger' ) ) {
+					if (
+						value.dataset.triggee &&
+						'' !== value.dataset.triggee
+					) {
+						saveMission( value.dataset.triggee, value, position );
 					}
 
 					value.remove();
@@ -3900,46 +3953,52 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 				// Change position to triggee if cutscene trigger hit.
 				position =
 					cutsceneTriggee && '' !== cutsceneTriggee
-						? cleanClassName(cutsceneTriggee)
+						? cleanClassName( cutsceneTriggee )
 						: position;
 
 				const theCutScene =
 					cutsceneTriggee && '' !== cutsceneTriggee
-						? document.getElementById(value.id.replace('-t', ''))
+						? document.getElementById(
+								value.id.replace( '-t', '' )
+						  )
 						: document.querySelector(
 								'.' + position + '-map-cutscene'
-							);
+						  );
 
 				// Trigger cutscene if overlapping cutscene trigger item.
 				if (
-					false === value.classList.contains('engage') &&
+					false === value.classList.contains( 'engage' ) &&
 					theCutScene &&
-					false === theCutScene.classList.contains('been-viewed') &&
-					true === value.classList.contains('cutscene-trigger')
+					false === theCutScene.classList.contains( 'been-viewed' ) &&
+					true === value.classList.contains( 'cutscene-trigger' )
 				) {
 					const triggerType = value.dataset.triggertype;
 
-					if ('engagement' !== triggerType) {
+					if ( 'engagement' !== triggerType ) {
 						if (
 							value.dataset.mission &&
 							'' !== value.dataset.mission
 						) {
-							saveMission(value.dataset.mission, value, position);
+							saveMission(
+								value.dataset.mission,
+								value,
+								position
+							);
 						}
 
-						engageCutscene(position, false);
+						engageCutscene( position, false );
 
 						// Persist trigger so it isn't triggerable again.
-						if ('' === position) {
-							saveMaterializedItem(area, [
-								cleanClassName(value.className),
-							]);
+						if ( '' === position ) {
+							saveMaterializedItem( area, [
+								cleanClassName( value.className ),
+							] );
 						}
 
 						// Remove trigger.
 						value.remove();
 					} else {
-						value.classList.add('engage');
+						value.classList.add( 'engage' );
 						triggerIndicator(
 							document.querySelector(
 								'.' +
@@ -3956,10 +4015,10 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 				// Trigger item creation if you walk on this trigger.
 				if (
 					true ===
-					value.classList.contains('materialize-item-trigger')
+					value.classList.contains( 'materialize-item-trigger' )
 				) {
-					clearTimeout(saveMaterializedItemTimeout);
-					const itemName = cleanClassName(value.className);
+					clearTimeout( saveMaterializedItemTimeout );
+					const itemName = cleanClassName( value.className );
 
 					const itemEl = document.querySelector(
 						'.' + itemName + '-map-item'
@@ -3968,56 +4027,56 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 						'.' + itemName + '-drag-dest-map-item'
 					);
 
-					if (itemEl) {
+					if ( itemEl ) {
 						itemEl.style.display = 'block';
 					}
 
-					if (dragDest) {
+					if ( dragDest ) {
 						dragDest.style.display = 'block';
 					}
 
-					materializedItemsArray.push(itemName);
+					materializedItemsArray.push( itemName );
 
-					saveMaterializedItemTimeout = setTimeout(() => {
-						saveMaterializedItem(area, materializedItemsArray);
-					}, 1000);
+					saveMaterializedItemTimeout = setTimeout( () => {
+						saveMaterializedItem( area, materializedItemsArray );
+					}, 1000 );
 
 					// remove trigger.
 					value.remove();
 				}
 
 				// remove item on collision if collectable.
-				if ('true' === value.getAttribute('data-collectable')) {
+				if ( 'true' === value.getAttribute( 'data-collectable' ) ) {
 					value.remove();
 				}
 
 				// Clear this so it doesn't set hazard to false even when I'm in it.
-				clearTimeout(getOutOfHazard);
+				clearTimeout( getOutOfHazard );
 
-				getOutOfHazard = setTimeout(() => {
+				getOutOfHazard = setTimeout( () => {
 					inHazard = false;
 					hazardItem = false;
 					hazardCounter = 0;
-					hazardGauge.classList.remove('engage');
-				}, 100);
+					hazardGauge.classList.remove( 'engage' );
+				}, 100 );
 			} else if (
-				true === value.classList.contains('engage') ||
-				true === value.classList.contains('dragme')
+				true === value.classList.contains( 'engage' ) ||
+				true === value.classList.contains( 'dragme' )
 			) {
-				value.classList.remove('engage');
-				value.classList.remove('dragme');
+				value.classList.remove( 'engage' );
+				value.classList.remove( 'dragme' );
 
-				if (indicator) {
-					indicator.classList.remove('engage');
+				if ( indicator ) {
+					indicator.classList.remove( 'engage' );
 					window.allowHit = true;
 				}
 			}
 
 			// For breakables and other interactions.
-			if (weaponEl && 'none' !== weaponEl.style.display) {
-				if (elementsOverlap(weaponEl, value, 0)) {
+			if ( weaponEl && 'none' !== weaponEl.style.display ) {
+				if ( elementsOverlap( weaponEl, value, 0 ) ) {
 					// Timer trigger logic.
-					const triggeeName = cleanClassName(value.className);
+					const triggeeName = cleanClassName( value.className );
 					const triggee = document.querySelector(
 						'[data-timertriggee="' + triggeeName + '"]'
 					);
@@ -4025,12 +4084,12 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 
 					// Timer scenario.
 					const startTimerItem =
-						document.querySelector('.start-timer');
+						document.querySelector( '.start-timer' );
 
 					if (
-						(triggee || undefined !== hasTrigger) &&
+						( triggee || undefined !== hasTrigger ) &&
 						startTimerItem &&
-						false === value.classList.contains('start-timer')
+						false === value.classList.contains( 'start-timer' )
 					) {
 						const timerPosition =
 							'true' === startTimerItem.dataset.removable
@@ -4040,7 +4099,7 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 										cleanClassName(
 											startTimerItem.className
 										),
-									];
+								  ];
 						saveMission(
 							value.dataset.mission,
 							value,
@@ -4048,69 +4107,70 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 						);
 						startTimerItem.style.display = 'none';
 						value.style.display = 'none';
-					} else if (triggee || undefined !== hasTrigger) {
-						value.classList.add('start-timer');
+					} else if ( triggee || undefined !== hasTrigger ) {
+						value.classList.add( 'start-timer' );
 
 						const triggeeTimer =
 							undefined !== hasTrigger
-								? parseInt(value.dataset.timer)
-								: parseInt(triggee.dataset.timer);
+								? parseInt( value.dataset.timer )
+								: parseInt( triggee.dataset.timer );
 
-						if (0 < triggeeTimer) {
-							setTimeout(() => {
-								value.classList.remove('start-timer');
-							}, 1000 * triggeeTimer);
+						if ( 0 < triggeeTimer ) {
+							setTimeout( () => {
+								value.classList.remove( 'start-timer' );
+							}, 1000 * triggeeTimer );
 
-							startTheTimer(1000 * triggeeTimer);
+							startTheTimer( 1000 * triggeeTimer );
 						}
 					} else if (
-						('true' === value.dataset.breakable ||
-							'true' === value.dataset.collectable) &&
+						( 'true' === value.dataset.breakable ||
+							'true' === value.dataset.collectable ) &&
 						value.dataset.mission &&
 						'' !== value.dataset.mission &&
-						canCharacterInteract(value, mapChar, 'strength') &&
+						canCharacterInteract( value, mapChar, 'strength' ) &&
 						null === triggee &&
 						undefined === hasTrigger &&
-						noOtherItemAttachedToMission(value.dataset.mission)
+						noOtherItemAttachedToMission( value.dataset.mission )
 					) {
 						const multiItem = document.querySelectorAll(
-							`.map-item[data-mission="${value.dataset.mission}"]`
+							`.map-item[data-mission="${ value.dataset.mission }"]`
 						);
 
-						if (multiItem) {
+						if ( multiItem ) {
 							position = [];
 
-							multiItem.forEach((theMultiItem) => {
+							multiItem.forEach( ( theMultiItem ) => {
 								position.push(
-									cleanClassName(theMultiItem.className)
+									cleanClassName( theMultiItem.className )
 								);
-							});
+							} );
 						}
 
-						saveMission(value.dataset.mission, value, position);
+						saveMission( value.dataset.mission, value, position );
 					}
 
 					// For collectables.
 					if (
-						'true' === value.getAttribute('data-breakable') &&
-						false === value.classList.contains('interacted-with') &&
-						false === value.classList.contains('no-point')
+						'true' === value.getAttribute( 'data-breakable' ) &&
+						false ===
+							value.classList.contains( 'interacted-with' ) &&
+						false === value.classList.contains( 'no-point' )
 					) {
 						// Add item to storage menu.
-						storeExploreItem(value);
+						storeExploreItem( value );
 
 						// If just points. store it.
-						if ('point' === value.dataset.type) {
+						if ( 'point' === value.dataset.type ) {
 							runPointAnimation(
 								value,
-								cleanClassName(value.className),
+								cleanClassName( value.className ),
 								false,
 								value.dataset.value,
 								''
 							);
 						}
 
-						value.classList.add('interacted-with');
+						value.classList.add( 'interacted-with' );
 					}
 
 					// Don't remove item if it's a sign.
@@ -4121,37 +4181,48 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 							) &&
 						'true' === value.dataset.breakable &&
 						'explore-sign' !== value.dataset.genre &&
-						canCharacterInteract(value, mapChar, 'strength') &&
-						(null === value.dataset.minigame ||
-							undefined === value.dataset.minigame) &&
-						(null === value.dataset.disappear ||
-							undefined === value.dataset.disappear) &&
+						canCharacterInteract( value, mapChar, 'strength' ) &&
+						( null === value.dataset.minigame ||
+							undefined === value.dataset.minigame ) &&
+						( null === value.dataset.disappear ||
+							undefined === value.dataset.disappear ) &&
 						'no' !== value.dataset?.disappear
 					) {
 						value.remove();
-					} else if (value) {
-						interactWithItem(value, mapChar);
+					} else if ( value ) {
+						interactWithItem( value, mapChar );
 					}
 				}
 			}
-		});
+		} );
 	}
 
 	// Engage/disengage walking class.
-	if (d[37] || d[38] || d[39] || d[40] || d[87] || d[65] || d[68] || d[83]) {
+	if (
+		d[ 37 ] ||
+		d[ 38 ] ||
+		d[ 39 ] ||
+		d[ 40 ] ||
+		d[ 87 ] ||
+		d[ 65 ] ||
+		d[ 68 ] ||
+		d[ 83 ]
+	) {
 		const goThisWay =
-			true === d[$newest] ? $newest : parseInt(getKeyByValue(d, true));
+			true === d[ $newest ]
+				? $newest
+				: parseInt( getKeyByValue( d, true ) );
 		const isDragging = window.isDragging;
 		let direction;
 		let newCharacterImage;
 
 		if (
-			false === box.classList.contains('fight-image') &&
+			false === box.classList.contains( 'fight-image' ) &&
 			true === window.allowMovement
 		) {
-			switch (goThisWay) {
+			switch ( goThisWay ) {
 				case 38:
-					box.classList.remove('engage');
+					box.classList.remove( 'engage' );
 					direction =
 						'' !== isDragging ? window.draggingDirection : 'up';
 					newCharacterImage = document.getElementById(
@@ -4161,18 +4232,18 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 							isDragging +
 							window.currentWeapon
 					);
-					if (newCharacterImage) {
-						newCharacterImage.classList.add('engage');
+					if ( newCharacterImage ) {
+						newCharacterImage.classList.add( 'engage' );
 					}
 
 					mapChar.className = '';
-					mapChar.classList.add('top-dir');
-					if (weaponEl) {
-						weaponEl.setAttribute('data-direction', 'top');
+					mapChar.classList.add( 'top-dir' );
+					if ( weaponEl ) {
+						weaponEl.setAttribute( 'data-direction', 'top' );
 					}
 					break;
 				case 37:
-					box.classList.remove('engage');
+					box.classList.remove( 'engage' );
 					direction =
 						'' !== isDragging ? window.draggingDirection : 'left';
 					newCharacterImage = document.getElementById(
@@ -4182,17 +4253,17 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 							isDragging +
 							window.currentWeapon
 					);
-					if (newCharacterImage) {
-						newCharacterImage.classList.add('engage');
+					if ( newCharacterImage ) {
+						newCharacterImage.classList.add( 'engage' );
 					}
 					mapChar.className = '';
-					mapChar.classList.add('left-dir');
-					if (weaponEl) {
-						weaponEl.setAttribute('data-direction', 'left');
+					mapChar.classList.add( 'left-dir' );
+					if ( weaponEl ) {
+						weaponEl.setAttribute( 'data-direction', 'left' );
 					}
 					break;
 				case 39:
-					box.classList.remove('engage');
+					box.classList.remove( 'engage' );
 					direction =
 						'' !== isDragging ? window.draggingDirection : 'right';
 					newCharacterImage = document.getElementById(
@@ -4202,17 +4273,17 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 							isDragging +
 							window.currentWeapon
 					);
-					if (newCharacterImage) {
-						newCharacterImage.classList.add('engage');
+					if ( newCharacterImage ) {
+						newCharacterImage.classList.add( 'engage' );
 					}
 					mapChar.className = '';
-					mapChar.classList.add('right-dir');
-					if (weaponEl) {
-						weaponEl.setAttribute('data-direction', 'right');
+					mapChar.classList.add( 'right-dir' );
+					if ( weaponEl ) {
+						weaponEl.setAttribute( 'data-direction', 'right' );
 					}
 					break;
 				case 40:
-					box.classList.remove('engage');
+					box.classList.remove( 'engage' );
 					direction =
 						'' !== isDragging ? window.draggingDirection : 'down';
 					newCharacterImage = document.getElementById(
@@ -4222,17 +4293,17 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 							isDragging +
 							window.currentWeapon
 					);
-					if (newCharacterImage) {
-						newCharacterImage.classList.add('engage');
+					if ( newCharacterImage ) {
+						newCharacterImage.classList.add( 'engage' );
 					}
 					mapChar.className = '';
-					mapChar.classList.add('down-dir');
-					if (weaponEl) {
-						weaponEl.setAttribute('data-direction', 'down');
+					mapChar.classList.add( 'down-dir' );
+					if ( weaponEl ) {
+						weaponEl.setAttribute( 'data-direction', 'down' );
 					}
 					break;
 				case 87:
-					box.classList.remove('engage');
+					box.classList.remove( 'engage' );
 					direction =
 						'' !== isDragging ? window.draggingDirection : 'up';
 					newCharacterImage = document.getElementById(
@@ -4242,18 +4313,18 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 							isDragging +
 							window.currentWeapon
 					);
-					if (newCharacterImage) {
-						newCharacterImage.classList.add('engage');
+					if ( newCharacterImage ) {
+						newCharacterImage.classList.add( 'engage' );
 					}
 
 					mapChar.className = '';
-					mapChar.classList.add('top-dir');
-					if (weaponEl) {
-						weaponEl.setAttribute('data-direction', 'top');
+					mapChar.classList.add( 'top-dir' );
+					if ( weaponEl ) {
+						weaponEl.setAttribute( 'data-direction', 'top' );
 					}
 					break;
 				case 65:
-					box.classList.remove('engage');
+					box.classList.remove( 'engage' );
 					direction =
 						'' !== isDragging ? window.draggingDirection : 'left';
 					newCharacterImage = document.getElementById(
@@ -4263,17 +4334,17 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 							isDragging +
 							window.currentWeapon
 					);
-					if (newCharacterImage) {
-						newCharacterImage.classList.add('engage');
+					if ( newCharacterImage ) {
+						newCharacterImage.classList.add( 'engage' );
 					}
 					mapChar.className = '';
-					mapChar.classList.add('left-dir');
-					if (weaponEl) {
-						weaponEl.setAttribute('data-direction', 'left');
+					mapChar.classList.add( 'left-dir' );
+					if ( weaponEl ) {
+						weaponEl.setAttribute( 'data-direction', 'left' );
 					}
 					break;
 				case 68:
-					box.classList.remove('engage');
+					box.classList.remove( 'engage' );
 					direction =
 						'' !== isDragging ? window.draggingDirection : 'right';
 					newCharacterImage = document.getElementById(
@@ -4283,17 +4354,17 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 							isDragging +
 							window.currentWeapon
 					);
-					if (newCharacterImage) {
-						newCharacterImage.classList.add('engage');
+					if ( newCharacterImage ) {
+						newCharacterImage.classList.add( 'engage' );
 					}
 					mapChar.className = '';
-					mapChar.classList.add('right-dir');
-					if (weaponEl) {
-						weaponEl.setAttribute('data-direction', 'right');
+					mapChar.classList.add( 'right-dir' );
+					if ( weaponEl ) {
+						weaponEl.setAttribute( 'data-direction', 'right' );
 					}
 					break;
 				case 83:
-					box.classList.remove('engage');
+					box.classList.remove( 'engage' );
 					direction =
 						'' !== isDragging ? window.draggingDirection : 'down';
 					newCharacterImage = document.getElementById(
@@ -4303,13 +4374,13 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 							isDragging +
 							window.currentWeapon
 					);
-					if (newCharacterImage) {
-						newCharacterImage.classList.add('engage');
+					if ( newCharacterImage ) {
+						newCharacterImage.classList.add( 'engage' );
 					}
 					mapChar.className = '';
-					mapChar.classList.add('down-dir');
-					if (weaponEl) {
-						weaponEl.setAttribute('data-direction', 'down');
+					mapChar.classList.add( 'down-dir' );
+					if ( weaponEl ) {
+						weaponEl.setAttribute( 'data-direction', 'down' );
 					}
 					break;
 			}
@@ -4321,13 +4392,13 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 	}
 
 	const w = pane.offsetWidth - box.offsetWidth;
-	const n = parseInt(v, 10) - (d[a] ? x : 0) + (d[b] ? x : 0);
+	const n = parseInt( v, 10 ) - ( d[ a ] ? x : 0 ) + ( d[ b ] ? x : 0 );
 
 	return n < 0 ? 0 : n > w ? w : n;
 
-	function getKeyByValue(array, value) {
-		for (const key in array) {
-			if (array.hasOwnProperty(key) && array[key] === value) {
+	function getKeyByValue( array, value ) {
+		for ( const key in array ) {
+			if ( array.hasOwnProperty( key ) && array[ key ] === value ) {
 				return key;
 			}
 		}
@@ -4342,16 +4413,16 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
  * @param pushElement
  * @param pushee
  */
-function pushCharacter(distanceMult, pushElement, pushee) {
+function pushCharacter( distanceMult, pushElement, pushee ) {
 	'use strict';
 
 	// Push user away from hazard center.
-	let targetX = parseInt(pushee.style.left.replace('px', ''));
-	let targetY = parseInt(pushee.style.top.replace('px', ''));
+	let targetX = parseInt( pushee.style.left.replace( 'px', '' ) );
+	let targetY = parseInt( pushee.style.top.replace( 'px', '' ) );
 
-	if (pushElement) {
-		const enemyLeft = parseInt(pushElement.style.left.replace('px'));
-		const enemyTop = parseInt(pushElement.style.top.replace('px'));
+	if ( pushElement ) {
+		const enemyLeft = parseInt( pushElement.style.left.replace( 'px' ) );
+		const enemyTop = parseInt( pushElement.style.top.replace( 'px' ) );
 
 		targetX =
 			targetX + 400 < enemyLeft
@@ -4372,14 +4443,14 @@ function pushCharacter(distanceMult, pushElement, pushee) {
  * @param  mission
  * @return {boolean}
  */
-function noOtherItemAttachedToMission(mission) {
+function noOtherItemAttachedToMission( mission ) {
 	'use strict';
 
 	const itemMissions = document.querySelectorAll(
-		`.map-item[data-mission="${mission}"]`
+		`.map-item[data-mission="${ mission }"]`
 	);
 	const enemyItems = document.querySelectorAll(
-		`.enemy-item[data-mission="${mission}"]`
+		`.enemy-item[data-mission="${ mission }"]`
 	);
 
 	return 1 >= itemMissions.length && 0 === enemyItems.length;
@@ -4392,13 +4463,13 @@ function noOtherItemAttachedToMission(mission) {
  * @param  type
  * @return {boolean}
  */
-function canCharacterInteract(item, character, type) {
+function canCharacterInteract( item, character, type ) {
 	'use strict';
 
-	if (type === 'strength') {
+	if ( type === 'strength' ) {
 		return (
-			('yes' === item.dataset.isstrong &&
-				'strength' === character.dataset.ability) ||
+			( 'yes' === item.dataset.isstrong &&
+				'strength' === character.dataset.ability ) ||
 			undefined === item.dataset.isstrong ||
 			'no' === item.dataset.isstrong
 		);
@@ -4415,7 +4486,7 @@ function canCharacterInteract(item, character, type) {
  * When user hits an item with weapon
  * @param item
  */
-function interactWithItem(item) {
+function interactWithItem( item ) {
 	'use strict';
 
 	// If item is breakable.
@@ -4428,8 +4499,8 @@ function interactWithItem(item) {
 	}
 
 	// If disappear set to false change image.
-	if ('no' === item.dataset?.disappear) {
-		swapInteractedImage(item);
+	if ( 'no' === item.dataset?.disappear ) {
+		swapInteractedImage( item );
 	}
 }
 
@@ -4437,22 +4508,22 @@ function interactWithItem(item) {
  * Swatch alt image for interacted items like breakables that don't disappear.
  * @param item
  */
-function swapInteractedImage(item) {
+function swapInteractedImage( item ) {
 	'use strict';
 
 	const altImage = item.dataset?.interacted;
 
-	if (altImage && '' !== altImage) {
-		item.style.background = `url(${altImage}) no-repeat`;
+	if ( altImage && '' !== altImage ) {
+		item.style.background = `url(${ altImage }) no-repeat`;
 		item.style.backgroundSize = 'cover';
 
-		if ('true' === item.dataset.passable) {
-			item.classList.add('passable');
+		if ( 'true' === item.dataset.passable ) {
+			item.classList.add( 'passable' );
 		}
 	}
 }
 
-function saveMaterializedItem(area, materializedItemsArray) {
+function saveMaterializedItem( area, materializedItemsArray ) {
 	'use strict';
 
 	const jsonString = {
@@ -4460,24 +4531,24 @@ function saveMaterializedItem(area, materializedItemsArray) {
 		item: materializedItemsArray,
 	};
 	// Save position of item.
-	fetch(`${OrbemOrder.siteRESTURL}/save-materialized-item/`, {
+	fetch( `${ OrbemOrder.siteRESTURL }/save-materialized-item/`, {
 		method: 'POST', // Specify the HTTP method
 		headers: {
 			'Content-Type': 'application/json', // Set the content type to JSON
 			'X-WP-Nonce': OrbemOrder.orbemNonce,
 		},
-		body: JSON.stringify(jsonString), // The JSON stringified payload
-	}).then((response) => {
+		body: JSON.stringify( jsonString ), // The JSON stringified payload
+	} ).then( ( response ) => {
 		// Check if the response status is in the range 200-299
-		if (!response.ok) {
+		if ( ! response.ok ) {
 			throw new Error(
 				'Network response was not ok ' + response.statusText
 			);
 		}
-	});
+	} );
 }
 
-function enableAbility(ability) {
+function enableAbility( ability ) {
 	'use strict';
 
 	const jsonString = {
@@ -4485,20 +4556,20 @@ function enableAbility(ability) {
 	};
 
 	// Save position of item.
-	fetch(`${OrbemOrder.siteRESTURL}/enable-ability/`, {
+	fetch( `${ OrbemOrder.siteRESTURL }/enable-ability/`, {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json',
 			'X-WP-Nonce': OrbemOrder.orbemNonce,
 		},
-		body: JSON.stringify(jsonString),
-	}).then((response) => {
-		if (!response.ok) {
+		body: JSON.stringify( jsonString ),
+	} ).then( ( response ) => {
+		if ( ! response.ok ) {
 			throw new Error(
 				'Network response was not ok ' + response.statusText
 			);
 		}
-	});
+	} );
 }
 
 /**
@@ -4508,41 +4579,41 @@ function enableAbility(ability) {
  * @param trigger
  * @param isMinigame
  */
-function triggerIndicator(indicateMe, isCutscene, trigger, isMinigame) {
+function triggerIndicator( indicateMe, isCutscene, trigger, isMinigame ) {
 	'use strict';
 
 	window.allowHit = false;
-	const indicator = document.querySelector('.indicator-icon');
+	const indicator = document.querySelector( '.indicator-icon' );
 
 	if (
 		window.allowIndicate &&
 		indicateMe &&
 		indicator &&
-		false === indicator.classList.contains('engage')
+		false === indicator.classList.contains( 'engage' )
 	) {
-		const leftPosition = indicateMe.style.left.replace('px', '');
-		const topPosition = indicateMe.style.top.replace('px', '');
+		const leftPosition = indicateMe.style.left.replace( 'px', '' );
+		const topPosition = indicateMe.style.top.replace( 'px', '' );
 		const width = indicateMe.getBoundingClientRect().width / 2 - 7.5;
-		const positionName = cleanClassName(indicateMe.className);
+		const positionName = cleanClassName( indicateMe.className );
 
-		if (indicator) {
-			indicator.classList.add('engage');
-			indicator.style.left = width + parseInt(leftPosition) + 'px';
-			indicator.style.top = parseInt(topPosition) - 25 + 'px';
+		if ( indicator ) {
+			indicator.classList.add( 'engage' );
+			indicator.style.left = width + parseInt( leftPosition ) + 'px';
+			indicator.style.top = parseInt( topPosition ) - 25 + 'px';
 
-			if (true === isCutscene) {
+			if ( true === isCutscene ) {
 				indicator.dataset.sign = '';
 				indicator.dataset.minigame = '';
 				indicator.dataset.cutscene = trigger.dataset.triggee;
 			}
 
-			if (false === isCutscene) {
+			if ( false === isCutscene ) {
 				indicator.dataset.cutscene = '';
 				indicator.dataset.minigame = '';
 				indicator.dataset.sign = positionName;
 			}
 
-			if (true === isMinigame) {
+			if ( true === isMinigame ) {
 				indicator.dataset.cutscene = '';
 				indicator.dataset.sign = '';
 				indicator.dataset.minigame = indicateMe.dataset.minigame;
@@ -4556,60 +4627,65 @@ function triggerIndicator(indicateMe, isCutscene, trigger, isMinigame) {
  *
  * @param item
  */
-function storeExploreItem(item) {
+function storeExploreItem( item ) {
 	'use strict';
 
-	const type = item.getAttribute('data-type');
-	const value = item.getAttribute('data-value');
+	const type = item.getAttribute( 'data-type' );
+	const value = item.getAttribute( 'data-value' );
 	const id = item.id;
-	const name = cleanClassName(item.className);
-	const menuItem = document.createElement('span');
-	const menuType = getMenuType(type);
-	const menu = document.querySelector('[data-menu="' + menuType + '"]');
-	const thePoints = document.querySelector(`#explore-points .${type}-amount`);
+	const name = cleanClassName( item.className );
+	const menuItem = document.createElement( 'span' );
+	const menuType = getMenuType( type );
+	const menu = document.querySelector( '[data-menu="' + menuType + '"]' );
+	const thePoints = document.querySelector(
+		`#explore-points .${ type }-amount`
+	);
 	let currentPoints = 100;
 
-	if (thePoints) {
-		currentPoints = thePoints.getAttribute('data-amount');
+	if ( thePoints ) {
+		currentPoints = thePoints.getAttribute( 'data-amount' );
 	}
 
 	if (
 		'gear' !== type &&
-		('health' === type || 'mana' === type) &&
+		( 'health' === type || 'mana' === type ) &&
 		100 > currentPoints
 	) {
 		return;
 	}
 
 	// Add menu attributes.
-	menuItem.setAttribute('data-type', type);
-	menuItem.setAttribute('data-id', id);
-	menuItem.setAttribute('data-value', value);
-	menuItem.setAttribute('title', name);
-	menuItem.setAttribute('data-empty', 'false');
+	menuItem.setAttribute( 'data-type', type );
+	menuItem.setAttribute( 'data-id', id );
+	menuItem.setAttribute( 'data-value', value );
+	menuItem.setAttribute( 'title', name );
+	menuItem.setAttribute( 'data-empty', 'false' );
 
 	// Item image.
-	if ('gear' === type || 'weapons' === type) {
+	if ( 'gear' === type || 'weapons' === type ) {
 		// Assign width/height on collect.
-		const itemStyle = getComputedStyle(item);
-		menuItem.setAttribute('data-width', itemStyle.width.replace('px', ''));
+		const itemStyle = getComputedStyle( item );
+		menuItem.setAttribute(
+			'data-width',
+			itemStyle.width.replace( 'px', '' )
+		);
 		menuItem.setAttribute(
 			'data-height',
-			itemStyle.height.replace('px', '')
+			itemStyle.height.replace( 'px', '' )
 		);
-		menuItem.setAttribute('data-strength', item.dataset.strength);
+		menuItem.setAttribute( 'data-strength', item.dataset.strength );
 
-		const itemImage = document.createElement('img');
+		const itemImage = document.createElement( 'img' );
 
-		itemImage.setAttribute('src', item.dataset.image);
-		itemImage.setAttribute('width', '80px');
+		itemImage.setAttribute( 'src', item.dataset.image );
+		itemImage.setAttribute( 'width', '80px' );
 		itemImage.style.objectFit = 'contain';
-		menuItem.append(itemImage);
+		menuItem.append( itemImage );
 	}
 	menuItem.className = 'storage-item';
 
 	// Add to menu.
-	if (menu) {
+	if ( menu ) {
 		const emptyStorageItem = menu.querySelector(
 			'.storage-item[data-empty="true"]'
 		);
@@ -4619,23 +4695,23 @@ function storeExploreItem(item) {
 		let isNewItem = true;
 
 		// If empty slot exists then add new item to menu.
-		if (emptyStorageItem) {
+		if ( emptyStorageItem ) {
 			emptyStorageItem.remove();
 
 			// Check if item already exists and iterate if does. Add a number to it.
-			if (nonEmptyStorageItems) {
-				nonEmptyStorageItems.forEach((nonEmptyStorageItem) => {
+			if ( nonEmptyStorageItems ) {
+				nonEmptyStorageItems.forEach( ( nonEmptyStorageItem ) => {
 					const menuItemName =
-						nonEmptyStorageItem.getAttribute('title');
+						nonEmptyStorageItem.getAttribute( 'title' );
 
 					// If name is same, add count to item.
-					if (menuItemName === name) {
+					if ( menuItemName === name ) {
 						let currentCount =
-							nonEmptyStorageItem.getAttribute('data-count');
+							nonEmptyStorageItem.getAttribute( 'data-count' );
 
 						currentCount =
 							null !== currentCount
-								? parseInt(currentCount) + 1
+								? parseInt( currentCount ) + 1
 								: 2;
 						nonEmptyStorageItem.setAttribute(
 							'data-count',
@@ -4643,25 +4719,25 @@ function storeExploreItem(item) {
 						);
 						isNewItem = false;
 					}
-				});
+				} );
 			}
 
-			if (true === isNewItem) {
-				menu.prepend(menuItem);
-				menuItem.addEventListener('click', () => {
-					if ('true' !== menuItem.dataset.empty) {
-						showItemDescription(menuItem);
+			if ( true === isNewItem ) {
+				menu.prepend( menuItem );
+				menuItem.addEventListener( 'click', () => {
+					if ( 'true' !== menuItem.dataset.empty ) {
+						showItemDescription( menuItem );
 					}
-				});
+				} );
 			}
 
 			// Add item to database.
-			saveStorageItem(id, name, type, value, false);
+			saveStorageItem( id, name, type, value, false );
 		}
 	}
 }
 
-function setPreviousCutsceneArea(cutsceneName) {
+function setPreviousCutsceneArea( cutsceneName ) {
 	'use strict';
 
 	const jsonString = {
@@ -4669,21 +4745,21 @@ function setPreviousCutsceneArea(cutsceneName) {
 	};
 
 	// Set the cutscene area previously viewed.
-	fetch(`${OrbemOrder.siteRESTURL}/set-previous-cutscene-area/`, {
+	fetch( `${ OrbemOrder.siteRESTURL }/set-previous-cutscene-area/`, {
 		method: 'POST', // Specify the HTTP method
 		headers: {
 			'Content-Type': 'application/json', // Set the content type to JSON
 			'X-WP-Nonce': OrbemOrder.orbemNonce,
 		},
-		body: JSON.stringify(jsonString), // The JSON stringified payload
-	}).then((response) => {
+		body: JSON.stringify( jsonString ), // The JSON stringified payload
+	} ).then( ( response ) => {
 		// Check if the response status is in the range 200-299
-		if (!response.ok) {
+		if ( ! response.ok ) {
 			throw new Error(
 				'Network response was not ok ' + response.statusText
 			);
 		}
-	});
+	} );
 }
 
 /**
@@ -4691,27 +4767,27 @@ function setPreviousCutsceneArea(cutsceneName) {
  * @param position
  * @param areaCutscene
  */
-function engageCutscene(position, areaCutscene) {
+function engageCutscene( position, areaCutscene ) {
 	'use strict';
 
 	const cutscene =
 		undefined === position?.className
-			? document.querySelector('.' + position + '-map-cutscene')
+			? document.querySelector( '.' + position + '-map-cutscene' )
 			: position;
 	position =
 		undefined === position?.className
 			? position
-			: cleanClassName(position.className);
+			: cleanClassName( position.className );
 
 	if (
 		cutscene &&
-		(undefined === cutscene.dataset?.video ||
-			'false' === cutscene.dataset?.video)
+		( undefined === cutscene.dataset?.video ||
+			'false' === cutscene.dataset?.video )
 	) {
 		const dialogues = cutscene.querySelectorAll(
 			'p, .wp-block-orbem-paragraph-mp3'
 		);
-		const mc = document.getElementById('map-character');
+		const mc = document.getElementById( 'map-character' );
 		const character = cleanClassName(
 			cutscene.querySelector(
 				'.wp-block-orbem-paragraph-mp3:not(.explore-character-' +
@@ -4719,47 +4795,52 @@ function engageCutscene(position, areaCutscene) {
 					')'
 			)?.className
 		);
-		const npc = document.getElementById(character);
+		const npc = document.getElementById( character );
 
-		if (false === cutscene.classList.contains('been-viewed')) {
+		if ( false === cutscene.classList.contains( 'been-viewed' ) ) {
 			// Stop movement.
 			window.allowMovement = false;
 			window.allowHit = false;
 
 			// Before Cutscene.
-			beforeCutscene(cutscene);
+			beforeCutscene( cutscene );
 
-			if (npc) {
-				setTimeout(() => {
-					npc.scrollIntoView({
+			if ( npc ) {
+				setTimeout( () => {
+					npc.scrollIntoView( {
 						behavior: 'smooth',
 						block: 'nearest',
-					});
-				}, 500);
+					} );
+				}, 500 );
 
 				npc.dataset.cutscenebreak = 'true';
 			}
 
-			cutscene.classList.add('engage');
+			cutscene.classList.add( 'engage' );
 
 			// start music if exists.
-			if (cutscene.dataset.music && '' !== cutscene.dataset.music) {
-				playSong(cutscene.dataset.music, position);
+			if ( cutscene.dataset.music && '' !== cutscene.dataset.music ) {
+				playSong( cutscene.dataset.music, position );
 			}
 
 			// Mute current if mute is flagged.
-			if ('yes' === cutscene.dataset?.mutemusic && window.currentMusic) {
+			if (
+				'yes' === cutscene.dataset?.mutemusic &&
+				window.currentMusic
+			) {
 				window.currentMusic.pause();
 			}
 
-			let textContainer = dialogues[0];
+			let textContainer = dialogues[ 0 ];
 
 			// on load.
 			if (
-				dialogues[0] &&
-				dialogues[0].classList.contains('wp-block-orbem-paragraph-mp3')
+				dialogues[ 0 ] &&
+				dialogues[ 0 ].classList.contains(
+					'wp-block-orbem-paragraph-mp3'
+				)
 			) {
-				textContainer = dialogues[0].querySelector('p');
+				textContainer = dialogues[ 0 ].querySelector( 'p' );
 			}
 
 			const text = textContainer.innerText;
@@ -4767,117 +4848,117 @@ function engageCutscene(position, areaCutscene) {
 
 			let wordCount = 0;
 
-			const typeWriter = (element, text, i) => {
-				clearTimeout(typeWriterTimeout);
+			const typeWriter = ( element, text, i ) => {
+				clearTimeout( typeWriterTimeout );
 
-				if (i < text.length) {
-					element.innerHTML += text.charAt(i);
+				if ( i < text.length ) {
+					element.innerHTML += text.charAt( i );
 					i++;
-					typeWriterTimeout = setTimeout(function () {
+					typeWriterTimeout = setTimeout( function () {
 						wordCount++;
 
 						const regex = /^[a-zA-Z]+$/;
 
-						if (false === regex.test(text.charAt(i))) {
+						if ( false === regex.test( text.charAt( i ) ) ) {
 							wordCount = 0;
 						}
 
-						typeWriter(element, text, i);
-					}, 50); // Adjust the delay here
+						typeWriter( element, text, i );
+					}, 50 ); // Adjust the delay here
 				} else {
-					window.nextDialogueTimeout = setInterval(() => {
-						if (true === window.nextDialogue) {
+					window.nextDialogueTimeout = setInterval( () => {
+						if ( true === window.nextDialogue ) {
 							nextDialogue();
 
-							clearInterval(window.nextDialogueTimeout);
+							clearInterval( window.nextDialogueTimeout );
 							window.nextDialogue = false;
 						}
-					}, 500);
+					}, 500 );
 				}
 			};
 
-			typeWriter(textContainer, text, 0);
+			typeWriter( textContainer, text, 0 );
 
 			const nextDialogue = () => {
-				if ('' !== source) {
+				if ( '' !== source ) {
 					source.stop();
 				}
 
-				if ('' !== talkAudio) {
+				if ( '' !== talkAudio ) {
 					talkAudio.pause();
 					talkAudio.currentTime = 0;
 				}
 
 				// Clear timeout incase manually triggered.
-				clearInterval(window.nextDialogueTimeout);
+				clearInterval( window.nextDialogueTimeout );
 
 				const currentDialogue = cutscene.querySelector(
 					'p.engage, .wp-block-orbem-paragraph-mp3.engage'
 				);
 				const nextDialogue = currentDialogue.nextElementSibling;
 
-				dialogues.forEach((dialogue) => {
-					dialogue.classList.remove('engage');
-				});
+				dialogues.forEach( ( dialogue ) => {
+					dialogue.classList.remove( 'engage' );
+				} );
 
-				if (nextDialogue) {
-					nextDialogue.classList.add('engage');
+				if ( nextDialogue ) {
+					nextDialogue.classList.add( 'engage' );
 
-					let providedAudio = nextDialogue.querySelector('audio');
+					let providedAudio = nextDialogue.querySelector( 'audio' );
 					providedAudio = providedAudio ?? false;
 
-					const nextP = nextDialogue.querySelector('p');
+					const nextP = nextDialogue.querySelector( 'p' );
 					const text = nextP.innerText;
 
 					nextP.innerText = '';
-					typeWriter(nextP, text, 0);
+					typeWriter( nextP, text, 0 );
 
 					moveDialogueBox();
-					makeTalk(text, nextDialogue.dataset.voice, providedAudio);
+					makeTalk( text, nextDialogue.dataset.voice, providedAudio );
 				} else {
-					clearTimeout(typeWriterTimeout);
-					clearInterval(window.nextDialogueTimeout);
+					clearTimeout( typeWriterTimeout );
+					clearInterval( window.nextDialogueTimeout );
 
 					// At end of dialogue. Close cutscene and make walking available.
-					cutscene.classList.remove('engage');
-					cutscene.removeEventListener('click', cutsceneKeys);
-					document.removeEventListener('keydown', cutsceneKeys);
+					cutscene.classList.remove( 'engage' );
+					cutscene.removeEventListener( 'click', cutsceneKeys );
+					document.removeEventListener( 'keydown', cutsceneKeys );
 
 					// If not area cutscene reset MC cutscene character.
 					if (
 						'yes' !==
-						document.querySelector('.default-map').dataset
+						document.querySelector( '.default-map' ).dataset
 							.iscutscene
 					) {
 						const mapMainCharacter =
-							document.getElementById('map-character');
+							document.getElementById( 'map-character' );
 						document
 							.querySelector(
 								'div[data-character="' +
 									mapMainCharacter.dataset?.mainid +
 									'"].cut-character'
 							)
-							.classList.remove('engage');
+							.classList.remove( 'engage' );
 					}
 
 					// Reengage movement.
 					window.allowMovement = true;
 
 					// reset dialogue.
-					dialogues[0].classList.add('engage');
+					dialogues[ 0 ].classList.add( 'engage' );
 
 					// After cutscene.
-					afterCutscene(cutscene, areaCutscene, character);
+					afterCutscene( cutscene, areaCutscene, character );
 
 					// If cutscene area remove stuff.
-					cutscene.style.removeProperty('position');
-					cutscene.style.removeProperty('display');
-					cutscene.style.removeProperty('width');
-					cutscene.style.removeProperty('max-height');
-					cutscene.style.removeProperty('height');
-					cutscene.style.removeProperty('transform');
-					cutscene.style.removeProperty('left');
-					cutscene.style.removeProperty('top');
+					cutscene.style.removeProperty( 'position' );
+					cutscene.style.removeProperty( 'display' );
+					cutscene.style.removeProperty( 'width' );
+					cutscene.style.removeProperty( 'max-height' );
+					cutscene.style.removeProperty( 'height' );
+					cutscene.style.removeProperty( 'transform' );
+					cutscene.style.removeProperty( 'left' );
+					cutscene.style.removeProperty( 'top' );
 				}
 			};
 
@@ -4885,37 +4966,39 @@ function engageCutscene(position, areaCutscene) {
 			 * Handles key events during a cutscene, allowing progression through dialogue and ending the cutscene.
 			 * @param {KeyboardEvent} event - The keyboard event object.
 			 */
-			const cutsceneKeys = (event) => {
-				if (true === window.allowCutscene) {
+			const cutsceneKeys = ( event ) => {
+				if ( true === window.allowCutscene ) {
 					if (
 						event.code === 'Space' &&
 						dialogues &&
-						cutscene.classList.contains('engage')
+						cutscene.classList.contains( 'engage' )
 					) {
 						nextDialogue();
 					}
 				}
 			};
 
-			cutscene.classList.add('been-viewed');
+			cutscene.classList.add( 'been-viewed' );
 
 			// Set allow by default.
 			window.allowCutscene = true;
 
-			const moveDialogueBox = (firstText = '') => {
+			const moveDialogueBox = ( firstText = '' ) => {
 				const currentDialogue = cutscene.querySelector(
 					'.wp-block-orbem-paragraph-mp3.engage'
 				);
-				let providedAudio = currentDialogue.querySelector('audio');
+				let providedAudio = currentDialogue.querySelector( 'audio' );
 				providedAudio = providedAudio ?? false;
-				const dialogueChar = cleanClassName(currentDialogue.className);
+				const dialogueChar = cleanClassName(
+					currentDialogue.className
+				);
 				const currentDialogueChar =
 					mc.dataset?.mainid !== dialogueChar
-						? document.getElementById(dialogueChar)
+						? document.getElementById( dialogueChar )
 						: mc;
 				const voice = currentDialogue.dataset.voice;
 				const pathTrigger = currentDialogue.dataset?.triggerpath;
-				let theCharacterEl = document.getElementById(dialogueChar);
+				let theCharacterEl = document.getElementById( dialogueChar );
 				const theCharacterImage = cutscene.querySelector(
 					'.cut-character[data-character="' + dialogueChar + '"]'
 				);
@@ -4923,7 +5006,7 @@ function engageCutscene(position, areaCutscene) {
 					'.character-name[data-character="' + dialogueChar + '"]'
 				);
 
-				if (mc) {
+				if ( mc ) {
 					theCharacterEl =
 						mc.dataset.mainid === dialogueChar
 							? mc
@@ -4931,20 +5014,26 @@ function engageCutscene(position, areaCutscene) {
 				}
 
 				// Move dialogue box to talker.
-				if (true === areaCutscene) {
-					if (currentDialogueChar && cutscene) {
+				if ( true === areaCutscene ) {
+					if ( currentDialogueChar && cutscene ) {
 						let currentDialogueCharLeft =
 							parseInt(
-								currentDialogueChar.style.left.replace('px', '')
+								currentDialogueChar.style.left.replace(
+									'px',
+									''
+								)
 							) -
 							cutscene.offsetWidth / 2;
 						const currentDialogueCharTop =
 							parseInt(
-								currentDialogueChar.style.top.replace('px', '')
+								currentDialogueChar.style.top.replace(
+									'px',
+									''
+								)
 							) +
 							currentDialogueChar.offsetHeight / 2;
 
-						if (mc.dataset?.mainid === dialogueChar) {
+						if ( mc.dataset?.mainid === dialogueChar ) {
 							currentDialogueCharLeft =
 								currentDialogueCharLeft + mc.offsetWidth / 2;
 						}
@@ -4955,12 +5044,12 @@ function engageCutscene(position, areaCutscene) {
 						const currentCharName = document.querySelector(
 							'.engage.character-name'
 						);
-						if (currentCharName) {
-							currentCharName.classList.remove('engage');
-							theCharacterName.classList.add('engage');
+						if ( currentCharName ) {
+							currentCharName.classList.remove( 'engage' );
+							theCharacterName.classList.add( 'engage' );
 						}
 					}
-				} else if (mc) {
+				} else if ( mc ) {
 					const currentCharImage = cutscene.querySelector(
 						'.engage.cut-character'
 					);
@@ -4968,50 +5057,50 @@ function engageCutscene(position, areaCutscene) {
 						'.engage.character-name'
 					);
 
-					if (currentCharImage && currentCharName) {
-						currentCharName.classList.remove('engage');
-						currentCharImage.classList.remove('engage');
-						theCharacterImage.classList.add('engage');
-						theCharacterName.classList.add('engage');
+					if ( currentCharImage && currentCharName ) {
+						currentCharName.classList.remove( 'engage' );
+						currentCharImage.classList.remove( 'engage' );
+						theCharacterImage.classList.add( 'engage' );
+						theCharacterName.classList.add( 'engage' );
 					}
 				}
 
 				// If triggerable, trigger the move path for character.
-				if (pathTrigger && theCharacterEl) {
-					moveNPC(theCharacterEl, false);
+				if ( pathTrigger && theCharacterEl ) {
+					moveNPC( theCharacterEl, false );
 				}
 
-				if ('' !== firstText) {
-					makeTalk(firstText, voice, providedAudio);
+				if ( '' !== firstText ) {
+					makeTalk( firstText, voice, providedAudio );
 
-					if (mc && theCharacterImage) {
-						theCharacterImage.classList.add('engage');
+					if ( mc && theCharacterImage ) {
+						theCharacterImage.classList.add( 'engage' );
 					}
 
-					if (mc && theCharacterName) {
-						theCharacterName.classList.add('engage');
+					if ( mc && theCharacterName ) {
+						theCharacterName.classList.add( 'engage' );
 					}
 				}
 			};
 
-			moveDialogueBox(text);
+			moveDialogueBox( text );
 
 			// Add a keydown event listener to the document to detect spacebar press
-			document.addEventListener('keydown', cutsceneKeys);
+			document.addEventListener( 'keydown', cutsceneKeys );
 
 			// Fade in if area cutscene.
-			if (true === areaCutscene) {
+			if ( true === areaCutscene ) {
 				fadeInScene();
 			}
 		}
-	} else if (cutscene && 'true' === cutscene.dataset?.video) {
-		if (false === cutscene.classList.contains('been-viewed')) {
-			const cutsceneVideo = cutscene.querySelector('video');
+	} else if ( cutscene && 'true' === cutscene.dataset?.video ) {
+		if ( false === cutscene.classList.contains( 'been-viewed' ) ) {
+			const cutsceneVideo = cutscene.querySelector( 'video' );
 			// stop movement.
 			window.allowMovement = false;
-			cutscene.classList.add('engage');
+			cutscene.classList.add( 'engage' );
 
-			if (cutsceneVideo) {
+			if ( cutsceneVideo ) {
 				// Mute current if mute is flagged.
 				if (
 					'yes' === cutscene.dataset?.mutemusic &&
@@ -5023,27 +5112,27 @@ function engageCutscene(position, areaCutscene) {
 				cutsceneVideo.play();
 				cutsceneVideo.muted = false;
 
-				cutsceneVideo.addEventListener('ended', () => {
+				cutsceneVideo.addEventListener( 'ended', () => {
 					// Reengage movement.
 					window.allowMovement = true;
 
 					// After cutscene.
-					afterCutscene(cutscene, areaCutscene, false);
-				});
+					afterCutscene( cutscene, areaCutscene, false );
+				} );
 
 				// Skip cutscene video.
 				const skipButton = document.getElementById(
 					'skip-cutscene-video'
 				);
 
-				if (skipButton) {
-					skipButton.addEventListener('click', () => {
+				if ( skipButton ) {
+					skipButton.addEventListener( 'click', () => {
 						// Reengage movement.
 						window.allowMovement = true;
 						cutsceneVideo.pause();
 
-						afterCutscene(cutscene, areaCutscene, false);
-					});
+						afterCutscene( cutscene, areaCutscene, false );
+					} );
 				}
 			}
 		}
@@ -5060,70 +5149,73 @@ function communicateParentClick() {
 		'.communication-wrapper'
 	);
 
-	if (communicateParents) {
-		communicateParents.forEach((communicateParent) => {
-			communicateParent.addEventListener('click', (e) => {
-				const isCommunicate = e.target.closest('.map-communicate');
+	if ( communicateParents ) {
+		communicateParents.forEach( ( communicateParent ) => {
+			communicateParent.addEventListener( 'click', ( e ) => {
+				const isCommunicate = e.target.closest( '.map-communicate' );
 				if (
-					(!isCommunicate &&
+					( ! isCommunicate &&
 						false ===
-							e.target.classList.contains('map-communicate')) ||
-					false === communicateParent.classList.contains('engage')
+							e.target.classList.contains(
+								'map-communicate'
+							) ) ||
+					false === communicateParent.classList.contains( 'engage' )
 				) {
 					if (
-						false === communicateParent.classList.contains('engage')
+						false ===
+						communicateParent.classList.contains( 'engage' )
 					) {
-						communicateParent.classList.add('engage');
-						communicateParent.classList.remove('notify');
+						communicateParent.classList.add( 'engage' );
+						communicateParent.classList.remove( 'notify' );
 					} else {
-						communicateParent.classList.remove('engage');
+						communicateParent.classList.remove( 'engage' );
 					}
 				}
-			});
+			} );
 
 			const communicates =
-				communicateParent.querySelectorAll('.map-communicate');
+				communicateParent.querySelectorAll( '.map-communicate' );
 
-			if (communicates) {
-				communicates.forEach((communicateEl) => {
+			if ( communicates ) {
+				communicates.forEach( ( communicateEl ) => {
 					const dialogues = communicateEl.querySelectorAll(
 						'p, .wp-block-orbem-paragraph-mp3'
 					);
 					const communicateType = communicateEl.dataset.type;
 
-					communicateEl.addEventListener('click', () => {
+					communicateEl.addEventListener( 'click', () => {
 						if (
 							'voicemail' === communicateType &&
 							true ===
-								communicateParent.classList.contains('engage')
+								communicateParent.classList.contains( 'engage' )
 						) {
-							const textContainer = dialogues[0];
+							const textContainer = dialogues[ 0 ];
 
 							const text = textContainer.innerText;
 
-							const moveDialogueBox = (firstText = '') => {
+							const moveDialogueBox = ( firstText = '' ) => {
 								const currentDialogue =
 									communicateEl.querySelector(
 										'.wp-block-orbem-paragraph-mp3.engage'
 									);
 								let providedAudio =
-									currentDialogue.querySelector('audio');
+									currentDialogue.querySelector( 'audio' );
 								providedAudio = providedAudio ?? false;
 								const voice = currentDialogue.dataset.voice;
 
-								if ('' !== firstText) {
-									makeTalk(firstText, voice, providedAudio);
+								if ( '' !== firstText ) {
+									makeTalk( firstText, voice, providedAudio );
 								}
 							};
 
-							moveDialogueBox(text);
+							moveDialogueBox( text );
 						} else if (
 							true ===
-							communicateParent.classList.contains('engage')
+							communicateParent.classList.contains( 'engage' )
 						) {
-							communicateEl.classList.toggle('show');
+							communicateEl.classList.toggle( 'show' );
 						}
-					});
+					} );
 
 					// start music if exists.
 					if (
@@ -5132,7 +5224,7 @@ function communicateParentClick() {
 					) {
 						playSong(
 							communicateEl.dataset.music,
-							cleanClassName(communicateEl.className)
+							cleanClassName( communicateEl.className )
 						);
 					}
 
@@ -5143,9 +5235,9 @@ function communicateParentClick() {
 					) {
 						window.currentMusic.pause();
 					}
-				});
+				} );
 			}
-		});
+		} );
 	}
 }
 
@@ -5154,7 +5246,7 @@ function communicateParentClick() {
  * @param communicate
  * @param communicateTrigger
  */
-function engageCommunicate(communicate, communicateTrigger) {
+function engageCommunicate( communicate, communicateTrigger ) {
 	'use strict';
 
 	const communicateEl = document.querySelector(
@@ -5162,9 +5254,9 @@ function engageCommunicate(communicate, communicateTrigger) {
 	);
 	const communicateParent = communicateEl.parentNode;
 
-	communicateParent.classList.add('notify');
+	communicateParent.classList.add( 'notify' );
 
-	if (communicateTrigger) {
+	if ( communicateTrigger ) {
 		communicateTrigger.remove();
 		persistItemRemoval(
 			communicateEl.id,
@@ -5177,7 +5269,7 @@ function engageCommunicate(communicate, communicateTrigger) {
 	}
 
 	// Show communicate.
-	communicateEl.classList.add('engage');
+	communicateEl.classList.add( 'engage' );
 }
 
 /**
@@ -5185,31 +5277,31 @@ function engageCommunicate(communicate, communicateTrigger) {
  *
  * @param signname
  */
-function engageSign(signname) {
+function engageSign( signname ) {
 	'use strict';
 
-	const item = document.querySelector('.' + signname + '-map-item');
-	item.classList.add('open-up');
+	const item = document.querySelector( '.' + signname + '-map-item' );
+	item.classList.add( 'open-up' );
 
 	document.addEventListener(
 		'click',
 		() => {
-			item.classList.remove('open-up');
+			item.classList.remove( 'open-up' );
 		},
 		{ once: true }
 	);
 
 	// Close on action key
-	document.addEventListener('keydown', closeSign);
+	document.addEventListener( 'keydown', closeSign );
 
 	/**
 	 * Close event using spacebar for focus view.
 	 * @param event
 	 */
-	function closeSign(event) {
-		if ('Space' === event.code) {
-			item.classList.remove('open-up');
-			document.removeEventListener('keydown', closeSign);
+	function closeSign( event ) {
+		if ( 'Space' === event.code ) {
+			item.classList.remove( 'open-up' );
+			document.removeEventListener( 'keydown', closeSign );
 		}
 	}
 }
@@ -5218,50 +5310,54 @@ function engageSign(signname) {
  * Stuff that happens before a cutscene.
  * @param cutscene
  */
-function beforeCutscene(cutscene) {
+function beforeCutscene( cutscene ) {
 	'use strict';
 
 	const characterPosition = JSON.parse(
-		cutscene.getAttribute('data-character-position')
+		cutscene.getAttribute( 'data-character-position' )
 	);
-	const mapCharacter = document.getElementById('map-character');
+	const mapCharacter = document.getElementById( 'map-character' );
 
 	// Face NPC before talking to them. Good manners.
-	faceNPC(mapCharacter, cutscene.dataset.character, cutscene);
+	faceNPC( mapCharacter, cutscene.dataset.character, cutscene );
 
 	if (
 		characterPosition &&
 		0 < characterPosition.length &&
-		undefined !== characterPosition[0]
+		undefined !== characterPosition[ 0 ]
 	) {
 		window.allowCutscene = false;
 		// Trigger character move before cutscene starts.
 		moveCharacter(
 			mapCharacter,
-			characterPosition[0].top,
-			characterPosition[0].left,
+			characterPosition[ 0 ].top,
+			characterPosition[ 0 ].left,
 			true,
 			cutscene
 		);
 	}
 }
 
-function faceNPC(mapCharacter, npc, cutscene) {
+function faceNPC( mapCharacter, npc, cutscene ) {
 	'use strict';
 
-	const npcEl = document.querySelector('.' + npc + '-map-item');
-	const mcImage = mapCharacter.querySelector('.map-character-icon.engage');
+	const npcEl = document.querySelector( '.' + npc + '-map-item' );
+	const mcImage = mapCharacter.querySelector( '.map-character-icon.engage' );
 
-	if (npcEl) {
-		const npcLeft = parseInt(npcEl.style.left.replace('px', '')) + 25;
-		const npcTop = parseInt(npcEl.style.top.replace('px', '')) + 25;
+	if ( npcEl ) {
+		const npcLeft = parseInt( npcEl.style.left.replace( 'px', '' ) ) + 25;
+		const npcTop = parseInt( npcEl.style.top.replace( 'px', '' ) ) + 25;
 		const npcRight = npcLeft + npcEl.offsetWidth - 50;
 		const npcBottom = npcTop + npcEl.offsetHeight - 50;
-		const mcLeftCont = parseInt(mapCharacter.style.left.replace('px', ''));
-		const mcTopCont = parseInt(mapCharacter.style.top.replace('px', ''));
-		const mcLeft = mcLeftCont + (400 - mcImage.offsetWidth / 2);
+		const mcLeftCont = parseInt(
+			mapCharacter.style.left.replace( 'px', '' )
+		);
+		const mcTopCont = parseInt(
+			mapCharacter.style.top.replace( 'px', '' )
+		);
+		const mcLeft = mcLeftCont + ( 400 - mcImage.offsetWidth / 2 );
 		const mcRight = mcLeft + mcImage.offsetWidth;
-		const mcTop = mcTopCont + (400 - mcImage.offsetHeight / 2);
+		const mcTop = mcTopCont + ( 400 - mcImage.offsetHeight / 2 );
 		const mcBottom = mcTop + mcImage.offsetHeight;
 
 		let direction;
@@ -5272,7 +5368,7 @@ function faceNPC(mapCharacter, npc, cutscene) {
 		direction = mcTop > npcBottom ? 'up' : direction;
 		direction = mcBottom < npcTop ? 'down' : direction;
 
-		switch (direction) {
+		switch ( direction ) {
 			case 'left':
 				npcDirection = 'right';
 				break;
@@ -5287,11 +5383,11 @@ function faceNPC(mapCharacter, npc, cutscene) {
 				break;
 		}
 
-		if (false !== direction) {
-			setStaticMCImage(mapCharacter, direction, false);
+		if ( false !== direction ) {
+			setStaticMCImage( mapCharacter, direction, false );
 
-			if ('no' !== cutscene.dataset?.npcfaceme) {
-				setStaticNPCImage(npcDirection, npcEl);
+			if ( 'no' !== cutscene.dataset?.npcfaceme ) {
+				setStaticNPCImage( npcDirection, npcEl );
 			}
 		}
 	}
@@ -5303,18 +5399,21 @@ function faceNPC(mapCharacter, npc, cutscene) {
  * @param areaCutscene
  * @param character
  */
-function afterCutscene(cutscene, areaCutscene, character) {
+function afterCutscene( cutscene, areaCutscene, character ) {
 	'use strict';
 
-	cutscene.classList.remove('engage');
+	cutscene.classList.remove( 'engage' );
 
 	window.nextAreaMissionComplete = '';
-	const cutsceneName = cleanClassName(cutscene.className).replace(' ', '');
+	const cutsceneName = cleanClassName( cutscene.className ).replace(
+		' ',
+		''
+	);
 	const bossFight = cutscene.dataset.boss;
 	const cutsceneCharacter = character
-		? document.getElementById(character)
+		? document.getElementById( character )
 		: false;
-	const indicator = document.querySelector('.indicator-icon');
+	const indicator = document.querySelector( '.indicator-icon' );
 	const communicateDevice = cutscene.dataset?.communicate;
 	const materializeCutscene = document.querySelector(
 		'[data-materializecutscene="' + cutsceneName + '"]'
@@ -5322,29 +5421,32 @@ function afterCutscene(cutscene, areaCutscene, character) {
 
 	if (
 		materializeCutscene &&
-		false === materializeCutscene.classList.contains('enable')
+		false === materializeCutscene.classList.contains( 'enable' )
 	) {
-		materializeCutscene.classList.add('enable');
+		materializeCutscene.classList.add( 'enable' );
 	}
 
 	// Show dependent communication devices.
-	if (communicateDevice && '' !== communicateDevice) {
+	if ( communicateDevice && '' !== communicateDevice ) {
 		const communicateDeviceEl = document.querySelector(
 			'.' + communicateDevice + '-map-item'
 		);
 
-		if (communicateDeviceEl) {
-			communicateDeviceEl.classList.add('dependent');
+		if ( communicateDeviceEl ) {
+			communicateDeviceEl.classList.add( 'dependent' );
 		}
 	}
 
 	// Hide indicator.
-	if (indicator) {
-		indicator.classList.remove('engage');
+	if ( indicator ) {
+		indicator.classList.remove( 'engage' );
 	}
 
 	// Give points if value type is specified.
-	if ('' !== cutscene.dataset?.type && undefined !== cutscene.dataset?.type) {
+	if (
+		'' !== cutscene.dataset?.type &&
+		undefined !== cutscene.dataset?.type
+	) {
 		runPointAnimation(
 			cutscene,
 			cutsceneName,
@@ -5359,27 +5461,27 @@ function afterCutscene(cutscene, areaCutscene, character) {
 		'[data-character="' + window.mainCharacter + '"]'
 	);
 
-	if (mcImage) {
-		mcImage.classList.remove('engage');
+	if ( mcImage ) {
+		mcImage.classList.remove( 'engage' );
 	}
 
 	let newMusic = '';
 
-	if (OrbemOrder.musicNames) {
-		newMusic = JSON.parse(OrbemOrder.musicNames)[currentLocation];
+	if ( OrbemOrder.musicNames ) {
+		newMusic = JSON.parse( OrbemOrder.musicNames )[ currentLocation ];
 	}
 
 	// restart music if it changed.
 	if (
-		('yes' === cutscene.dataset.mutemusic ||
-			(cutscene.dataset.music && '' !== cutscene.dataset.music)) &&
+		( 'yes' === cutscene.dataset.mutemusic ||
+			( cutscene.dataset.music && '' !== cutscene.dataset.music ) ) &&
 		newMusic
 	) {
-		playSong(newMusic, currentLocation);
+		playSong( newMusic, currentLocation );
 	}
 
 	// Stop talking.
-	if ('' !== talkAudio) {
+	if ( '' !== talkAudio ) {
 		talkAudio.pause();
 		talkAudio.currentTime = 0;
 	}
@@ -5391,18 +5493,18 @@ function afterCutscene(cutscene, areaCutscene, character) {
 	const cutsceneHasPath = undefined !== cutscene.dataset?.path;
 
 	// Push MC if NPC needs to walk after cutscene.
-	if (pathTriggerPosition || cutsceneHasPath) {
+	if ( pathTriggerPosition || cutsceneHasPath ) {
 		// Push MC away from character.
-		pushMC(30);
+		pushMC( 30 );
 	}
 
-	if (pathTriggerPosition) {
-		moveNPC(pathTriggerPosition, false);
+	if ( pathTriggerPosition ) {
+		moveNPC( pathTriggerPosition, false );
 	}
 
 	// If cutscene has walking path. Move NPC after cutscene.
-	if (cutsceneHasPath) {
-		moveNPC(cutsceneCharacter, cutscene);
+	if ( cutsceneHasPath ) {
+		moveNPC( cutsceneCharacter, cutscene );
 	}
 
 	// Remove after cutscene.
@@ -5410,8 +5512,8 @@ function afterCutscene(cutscene, areaCutscene, character) {
 		'[data-removeaftercutscene]'
 	);
 
-	if (removeThings) {
-		removeItems(removeThings, cutsceneName);
+	if ( removeThings ) {
+		removeItems( removeThings, cutsceneName );
 	}
 
 	// Materialize item after cutscene.
@@ -5419,40 +5521,40 @@ function afterCutscene(cutscene, areaCutscene, character) {
 		'[data-showaftercutscene="' + cutsceneName + '"]'
 	);
 
-	if (showItems) {
-		showItems.forEach((showItem) => {
-			showItem.classList.add('no-point');
-			materializedItemsArray.push(cleanClassName(showItem.className));
-		});
+	if ( showItems ) {
+		showItems.forEach( ( showItem ) => {
+			showItem.classList.add( 'no-point' );
+			materializedItemsArray.push( cleanClassName( showItem.className ) );
+		} );
 
-		saveMaterializedItem(currentLocation, materializedItemsArray);
+		saveMaterializedItem( currentLocation, materializedItemsArray );
 	}
 
 	// Go to new area after cutscene if next area exists.
 	const nextArea = cutscene.dataset.nextarea;
-	const nextAreaPosition = cutscene.getAttribute('data-nextarea-position');
+	const nextAreaPosition = cutscene.getAttribute( 'data-nextarea-position' );
 	const areaMap = cutscene.dataset.mapurl;
-	const weapon = document.querySelector('.map-weapon');
+	const weapon = document.querySelector( '.map-weapon' );
 
 	// Complete mission if cutscene has one.
 	const missionComplete = cutscene.dataset.missioncomplete;
 
-	if (missionComplete) {
+	if ( missionComplete ) {
 		const missionCompleteMission = document.querySelector(
 			'.' + missionComplete + '-mission-item'
 		);
 
-		saveMission(missionComplete, missionCompleteMission, missionComplete);
+		saveMission( missionComplete, missionCompleteMission, missionComplete );
 		window.nextAreaMissionComplete = missionComplete;
 	}
 
 	// If nextArea exists then trigger new area change.
-	if (nextArea) {
-		enterNewArea(nextArea, weapon, areaMap, nextAreaPosition);
+	if ( nextArea ) {
+		enterNewArea( nextArea, weapon, areaMap, nextAreaPosition );
 	}
 
 	// Reengage hit.
-	setTimeout(() => {
+	setTimeout( () => {
 		window.allowHit = true;
 
 		// Reset after cutscene for face npc logic:
@@ -5472,27 +5574,27 @@ function afterCutscene(cutscene, areaCutscene, character) {
 			cutsceneCharacter.dataset.cutscenebreak = 'false';
 		}
 
-		if (bossFight && '' !== bossFight) {
+		if ( bossFight && '' !== bossFight ) {
 			const daBoss = document.querySelector(
 				'.' + bossFight + '-map-item'
 			);
 
-			if (daBoss) {
-				engageEnemy(daBoss);
+			if ( daBoss ) {
+				engageEnemy( daBoss );
 			}
 		}
-	}, 100);
+	}, 100 );
 }
 
-function removeItems(removeThings, cutsceneName) {
+function removeItems( removeThings, cutsceneName ) {
 	'use strict';
 
-	removeThings.forEach((removeThing) => {
-		if (cutsceneName === removeThing.dataset.removeaftercutscene) {
+	removeThings.forEach( ( removeThing ) => {
+		if ( cutsceneName === removeThing.dataset.removeaftercutscene ) {
 			removeThing.remove();
 
 			persistItemRemoval(
-				cleanClassName(removeThing.className),
+				cleanClassName( removeThing.className ),
 				'point',
 				0,
 				2000,
@@ -5500,13 +5602,13 @@ function removeItems(removeThings, cutsceneName) {
 				true
 			);
 		}
-	});
+	} );
 }
 
 function playWalkSound() {
 	'use strict';
 
-	const walkingSound = document.getElementById('walking');
+	const walkingSound = document.getElementById( 'walking' );
 
 	if (
 		walkingSound &&
@@ -5515,7 +5617,7 @@ function playWalkSound() {
 	) {
 		walkingSound.loop = true;
 
-		if (window.sfxVolume) {
+		if ( window.sfxVolume ) {
 			walkingSound.volume = window.sfxVolume;
 		}
 
@@ -5528,23 +5630,23 @@ function playWalkSound() {
 function fadeInScene() {
 	'use strict';
 
-	const container = document.querySelector('.game-container');
+	const container = document.querySelector( '.game-container' );
 
-	if (container) {
+	if ( container ) {
 		container.dataset.fadeout = '';
 
-		setTimeout(() => {
+		setTimeout( () => {
 			container.dataset.fadeout = 'false';
-		}, 1000);
+		}, 1000 );
 	}
 }
 
 function fadeOutScene() {
 	'use strict';
 
-	const container = document.querySelector('.game-container');
+	const container = document.querySelector( '.game-container' );
 
-	if (container) {
+	if ( container ) {
 		container.dataset.fadeout = 'true';
 	}
 }
@@ -5552,9 +5654,9 @@ function fadeOutScene() {
 function stopWalkSound() {
 	'use strict';
 
-	const walkingSound = document.getElementById('walking');
+	const walkingSound = document.getElementById( 'walking' );
 
-	if (walkingSound) {
+	if ( walkingSound ) {
 		walkingSound.pause();
 		walkingSound.currentTime = 0;
 	}
@@ -5567,22 +5669,24 @@ function stopWalkSound() {
  * @param value
  * @param mapUrl
  */
-export function enterExplorePoint(value, mapUrl) {
+export function enterExplorePoint( value, mapUrl ) {
 	'use strict';
 
 	// Add enter buttons to map items.
 	const position =
-		undefined !== value.className ? cleanClassName(value.className) : value;
-	mapUrl = 'false' !== mapUrl ? mapUrl : value.getAttribute('data-map-url');
+		undefined !== value.className
+			? cleanClassName( value.className )
+			: value;
+	mapUrl = 'false' !== mapUrl ? mapUrl : value.getAttribute( 'data-map-url' );
 
 	// Add data point to button.
-	const weaponEl = document.querySelector('.map-weapon');
+	const weaponEl = document.querySelector( '.map-weapon' );
 
-	if (weaponEl) {
+	if ( weaponEl ) {
 		weaponEl.style.display = 'none';
 	}
 
-	enterNewArea(position, weaponEl, mapUrl);
+	enterNewArea( position, weaponEl, mapUrl );
 }
 
 /**
@@ -5599,251 +5703,251 @@ function movementIntFunc() {
 	window.allowMovement = true;
 	window.keyDown = false;
 
-	clearInterval(window.movementInt);
+	clearInterval( window.movementInt );
 
 	// Add listeners for explore keyboard movement.
-	document.addEventListener('keydown', function (e) {
-		d[e.which] = true;
+	document.addEventListener( 'keydown', function ( e ) {
+		d[ e.which ] = true;
 
 		$newest = e.which;
 
 		// Turn off arrow flash if character moved.
-		clearInterval(window.buttonShow);
-		clearTimeout(window.coordinateTimeout);
-	});
+		clearInterval( window.buttonShow );
+		clearTimeout( window.coordinateTimeout );
+	} );
 
-	document.addEventListener('keyup', function (e) {
-		stopWalkingFunction(e, false);
-	});
+	document.addEventListener( 'keyup', function ( e ) {
+		stopWalkingFunction( e, false );
+	} );
 
-	document.addEventListener('touchend', function (e) {
-		stopWalkingFunction(e, true);
-	});
+	document.addEventListener( 'touchend', function ( e ) {
+		stopWalkingFunction( e, true );
+	} );
 
-	function stopWalkingFunction(e, touchEvent) {
-		const keys = [37, 38, 39, 40, 87, 65, 83, 68];
-		const mapChar = document.querySelector('#map-character');
+	function stopWalkingFunction( e, touchEvent ) {
+		const keys = [ 37, 38, 39, 40, 87, 65, 83, 68 ];
+		const mapChar = document.querySelector( '#map-character' );
 
-		d[e.which] = false;
+		d[ e.which ] = false;
 
 		window.keyDown = false;
 
 		// Turn off arrow flash if character moved.
-		clearInterval(window.buttonShow);
+		clearInterval( window.buttonShow );
 
 		// Set Coordinates.
-		if (true === keys.includes(e.which) || true === touchEvent) {
-			window.coordinateTimeout = setTimeout(() => {
-				const mapChar = document.querySelector('#map-character');
+		if ( true === keys.includes( e.which ) || true === touchEvent ) {
+			window.coordinateTimeout = setTimeout( () => {
+				const mapChar = document.querySelector( '#map-character' );
 				const userLeft = mapChar.style.left;
 				const userTop = mapChar.style.top;
 
 				if (
 					false === window.keyDown &&
-					(userLeft !== window.charCurrentLeft ||
-						userTop !== window.charCurrentTop)
+					( userLeft !== window.charCurrentLeft ||
+						userTop !== window.charCurrentTop )
 				) {
-					addUserCoordianate(userLeft, userTop);
+					addUserCoordianate( userLeft, userTop );
 					window.charCurrentLeft = userLeft;
 					window.charCurrentTop = userTop;
 
-					clearInterval(window.coordinateTimeout);
+					clearInterval( window.coordinateTimeout );
 				}
-			}, 1000);
+			}, 1000 );
 
-			setStaticMCImage(mapChar, '', false);
+			setStaticMCImage( mapChar, '', false );
 		}
 	}
 
 	document
-		.querySelector('.top-left')
-		.addEventListener('touchstart', function (e) {
+		.querySelector( '.top-left' )
+		.addEventListener( 'touchstart', function ( e ) {
 			e.preventDefault();
-			d[37] = true;
-			d[38] = true;
+			d[ 37 ] = true;
+			d[ 38 ] = true;
 
 			// Turn off arrow flash if character moved.
-			clearInterval(window.buttonShow);
-			clearTimeout(window.coordinateTimeout);
-		});
+			clearInterval( window.buttonShow );
+			clearTimeout( window.coordinateTimeout );
+		} );
 	document
-		.querySelector('.top-left')
-		.addEventListener('touchend', function (e) {
+		.querySelector( '.top-left' )
+		.addEventListener( 'touchend', function ( e ) {
 			e.preventDefault();
-			d[37] = false;
-			d[38] = false;
+			d[ 37 ] = false;
+			d[ 38 ] = false;
 
 			// Turn off arrow flash if character moved.
-			clearInterval(window.buttonShow);
+			clearInterval( window.buttonShow );
 			// Set Coordinates.
-			window.coordinateTimeout = setTimeout(() => {
-				const mapChar = document.querySelector('#map-character');
+			window.coordinateTimeout = setTimeout( () => {
+				const mapChar = document.querySelector( '#map-character' );
 				const userLeft = mapChar.style.left;
 				const userTop = mapChar.style.top;
 
-				addUserCoordianate(userLeft, userTop);
-			}, 1000);
-		});
+				addUserCoordianate( userLeft, userTop );
+			}, 1000 );
+		} );
 	document
-		.querySelector('.top-middle')
-		.addEventListener('touchstart', function (e) {
+		.querySelector( '.top-middle' )
+		.addEventListener( 'touchstart', function ( e ) {
 			e.preventDefault();
-			d[38] = true;
+			d[ 38 ] = true;
 
 			// Turn off arrow flash if character moved.
-			clearInterval(window.buttonShow);
-		});
+			clearInterval( window.buttonShow );
+		} );
 	document
-		.querySelector('.top-middle')
-		.addEventListener('touchend', function (e) {
+		.querySelector( '.top-middle' )
+		.addEventListener( 'touchend', function ( e ) {
 			e.preventDefault();
-			d[38] = false;
+			d[ 38 ] = false;
 
 			// Turn off arrow flash if character moved.
-			clearInterval(window.buttonShow);
-		});
+			clearInterval( window.buttonShow );
+		} );
 	document
-		.querySelector('.top-right')
-		.addEventListener('touchstart', function (e) {
+		.querySelector( '.top-right' )
+		.addEventListener( 'touchstart', function ( e ) {
 			e.preventDefault();
-			d[38] = true;
-			d[39] = true;
+			d[ 38 ] = true;
+			d[ 39 ] = true;
 
 			// Turn off arrow flash if character moved.
-			clearInterval(window.buttonShow);
-		});
+			clearInterval( window.buttonShow );
+		} );
 	document
-		.querySelector('.top-right')
-		.addEventListener('touchend', function (e) {
+		.querySelector( '.top-right' )
+		.addEventListener( 'touchend', function ( e ) {
 			e.preventDefault();
-			d[38] = false;
-			d[39] = false;
+			d[ 38 ] = false;
+			d[ 39 ] = false;
 
 			// Turn off arrow flash if character moved.
-			clearInterval(window.buttonShow);
-		});
+			clearInterval( window.buttonShow );
+		} );
 	document
-		.querySelector('.middle-left')
-		.addEventListener('touchstart', function (e) {
+		.querySelector( '.middle-left' )
+		.addEventListener( 'touchstart', function ( e ) {
 			e.preventDefault();
-			d[37] = true;
+			d[ 37 ] = true;
 
 			// Turn off arrow flash if character moved.
-			clearInterval(window.buttonShow);
-		});
+			clearInterval( window.buttonShow );
+		} );
 	document
-		.querySelector('.middle-left')
-		.addEventListener('touchend', function (e) {
+		.querySelector( '.middle-left' )
+		.addEventListener( 'touchend', function ( e ) {
 			e.preventDefault();
-			d[37] = false;
+			d[ 37 ] = false;
 
 			// Turn off arrow flash if character moved.
-			clearInterval(window.buttonShow);
-		});
+			clearInterval( window.buttonShow );
+		} );
 	document
-		.querySelector('.middle-right')
-		.addEventListener('touchstart', function (e) {
+		.querySelector( '.middle-right' )
+		.addEventListener( 'touchstart', function ( e ) {
 			e.preventDefault();
-			d[39] = true;
+			d[ 39 ] = true;
 
 			// Turn off arrow flash if character moved.
-			clearInterval(window.buttonShow);
-		});
+			clearInterval( window.buttonShow );
+		} );
 	document
-		.querySelector('.middle-right')
-		.addEventListener('touchend', function (e) {
+		.querySelector( '.middle-right' )
+		.addEventListener( 'touchend', function ( e ) {
 			e.preventDefault();
-			d[39] = false;
+			d[ 39 ] = false;
 
 			// Turn off arrow flash if character moved.
-			clearInterval(window.buttonShow);
-		});
+			clearInterval( window.buttonShow );
+		} );
 	document
-		.querySelector('.bottom-left')
-		.addEventListener('touchstart', function (e) {
+		.querySelector( '.bottom-left' )
+		.addEventListener( 'touchstart', function ( e ) {
 			e.preventDefault();
-			d[37] = true;
-			d[40] = true;
+			d[ 37 ] = true;
+			d[ 40 ] = true;
 
 			// Turn off arrow flash if character moved.
-			clearInterval(window.buttonShow);
-		});
+			clearInterval( window.buttonShow );
+		} );
 	document
-		.querySelector('.bottom-left')
-		.addEventListener('touchend', function (e) {
+		.querySelector( '.bottom-left' )
+		.addEventListener( 'touchend', function ( e ) {
 			e.preventDefault();
-			d[37] = false;
-			d[40] = false;
+			d[ 37 ] = false;
+			d[ 40 ] = false;
 
 			// Turn off arrow flash if character moved.
-			clearInterval(window.buttonShow);
-		});
+			clearInterval( window.buttonShow );
+		} );
 	document
-		.querySelector('.bottom-middle')
-		.addEventListener('touchstart', function (e) {
+		.querySelector( '.bottom-middle' )
+		.addEventListener( 'touchstart', function ( e ) {
 			e.preventDefault();
-			d[40] = true;
+			d[ 40 ] = true;
 
 			// Turn off arrow flash if character moved.
-			clearInterval(window.buttonShow);
-		});
+			clearInterval( window.buttonShow );
+		} );
 	document
-		.querySelector('.bottom-middle')
-		.addEventListener('touchend', function (e) {
+		.querySelector( '.bottom-middle' )
+		.addEventListener( 'touchend', function ( e ) {
 			e.preventDefault();
-			d[40] = false;
+			d[ 40 ] = false;
 
 			// Turn off arrow flash if character moved.
-			clearInterval(window.buttonShow);
-		});
+			clearInterval( window.buttonShow );
+		} );
 	document
-		.querySelector('.bottom-right')
-		.addEventListener('touchstart', function (e) {
+		.querySelector( '.bottom-right' )
+		.addEventListener( 'touchstart', function ( e ) {
 			e.preventDefault();
-			d[39] = true;
-			d[40] = true;
+			d[ 39 ] = true;
+			d[ 40 ] = true;
 
 			// Turn off arrow flash if character moved.
-			clearInterval(window.buttonShow);
-		});
+			clearInterval( window.buttonShow );
+		} );
 	document
-		.querySelector('.bottom-right')
-		.addEventListener('touchend', function (e) {
+		.querySelector( '.bottom-right' )
+		.addEventListener( 'touchend', function ( e ) {
 			e.preventDefault();
-			d[39] = false;
-			d[40] = false;
+			d[ 39 ] = false;
+			d[ 40 ] = false;
 
 			// Turn off arrow flash if character moved.
-			clearInterval(window.buttonShow);
-		});
+			clearInterval( window.buttonShow );
+		} );
 
-	window.movementInt = setInterval(function () {
-		const box = document.getElementById('map-character');
-		const weapon = document.querySelector('.map-weapon');
+	window.movementInt = setInterval( function () {
+		const box = document.getElementById( 'map-character' );
+		const weapon = document.querySelector( '.map-weapon' );
 		const leftVal = box.style.left;
 		const topVal = box.style.top;
-		const leftValInt = parseInt(leftVal, 10);
-		const topValInt = parseInt(topVal, 10);
-		const finalPos = blockMovement(topValInt, leftValInt, false);
-		const draggableItem = document.querySelector('.dragme');
+		const leftValInt = parseInt( leftVal, 10 );
+		const topValInt = parseInt( topVal, 10 );
+		const finalPos = blockMovement( topValInt, leftValInt, false );
+		const draggableItem = document.querySelector( '.dragme' );
 
-		if (window.allowMovement) {
-			if (Object.values(d).includes(true)) {
+		if ( window.allowMovement ) {
+			if ( Object.values( d ).includes( true ) ) {
 				window.keyDown = true;
 			}
 
 			const myTop = miroExplorePosition(
 				finalPos.top,
-				d[87] ? 87 : 38,
-				d[83] ? 83 : 40,
+				d[ 87 ] ? 87 : 38,
+				d[ 83 ] ? 83 : 40,
 				d,
 				window.moveSpeed,
 				$newest
 			);
 			const myLeft = miroExplorePosition(
 				finalPos.left,
-				d[65] ? 65 : 37,
-				d[68] ? 68 : 39,
+				d[ 65 ] ? 65 : 37,
+				d[ 68 ] ? 68 : 39,
 				d,
 				window.moveSpeed,
 				$newest
@@ -5851,73 +5955,73 @@ function movementIntFunc() {
 			box.style.top = myTop + 'px';
 			box.style.left = myLeft + 'px';
 
-			if (weapon && true === window.weaponConnection) {
+			if ( weapon && true === window.weaponConnection ) {
 				weapon.style.top = myTop + weaponPosTop + 'px';
 				weapon.style.left = myLeft + weaponPosLeft + 'px';
 			}
 
-			if (draggableItem) {
-				if (window.dragTop && false !== window.dragTop) {
+			if ( draggableItem ) {
+				if ( window.dragTop && false !== window.dragTop ) {
 					draggableItem.style.top = window.dragTop.higher
 						? myTop + 450 - window.dragTop.offset + 'px'
 						: myTop + 450 + window.dragTop.offset + 'px';
 				}
 
-				if (window.dragLeft && false !== window.dragLeft) {
+				if ( window.dragLeft && false !== window.dragLeft ) {
 					draggableItem.style.left = window.dragLeft.left
 						? myLeft + 450 - window.dragLeft.offset + 'px'
 						: myLeft + 450 + window.dragLeft.offset + 'px';
 				}
 			}
 
-			box.scrollIntoView({ block: 'nearest' });
+			box.scrollIntoView( { block: 'nearest' } );
 		}
-	}, 16);
+	}, 16 );
 }
 
 /**
  * clean class name
  * @param classes
  */
-function cleanClassName(classes) {
+function cleanClassName( classes ) {
 	'use strict';
 
-	if ('string' === typeof classes) {
+	if ( 'string' === typeof classes ) {
 		return classes
-			.replace('wp-block-group map-item ', '')
-			.replace('-map-item', '')
-			.replace('drag-dest ', '')
-			.replace(' completed-mission', '')
-			.replace('wp-block-group enemy-item ', '')
-			.replace(' no-point', '')
-			.replace(' is-layout-flow', '')
-			.replace(' wp-block-group-is-layout-flow', '')
-			.replace(' engage', '')
-			.replace('wp-block-group map-cutscene ', '')
-			.replace('-map-cutscene', '')
-			.replace('been-viewed', '')
-			.replace(' path-onload', '')
-			.replace(' start-timer', '')
-			.replace('materialize-item-trigger ', '')
-			.replace('-materialize-item', '')
-			.replace('mission-trigger ', '')
-			.replace(' hit', '')
-			.replace('-minigame-item', '')
-			.replace('minigame ', '')
-			.replace(' pulse-wave-engage', '')
-			.replace(' barage-wave-engage', '')
-			.replace(' selected', '')
-			.replace('-cutscene-trigger', '')
-			.replace('cutscene-trigger ', '')
-			.replace('next-mission ', '')
-			.replace('-mission-item', '')
-			.replace('mission-item ', '')
-			.replace('wp-block-orbem-paragraph-mp3 ', '')
-			.replace('explore-character-', '');
+			.replace( 'wp-block-group map-item ', '' )
+			.replace( '-map-item', '' )
+			.replace( 'drag-dest ', '' )
+			.replace( ' completed-mission', '' )
+			.replace( 'wp-block-group enemy-item ', '' )
+			.replace( ' no-point', '' )
+			.replace( ' is-layout-flow', '' )
+			.replace( ' wp-block-group-is-layout-flow', '' )
+			.replace( ' engage', '' )
+			.replace( 'wp-block-group map-cutscene ', '' )
+			.replace( '-map-cutscene', '' )
+			.replace( 'been-viewed', '' )
+			.replace( ' path-onload', '' )
+			.replace( ' start-timer', '' )
+			.replace( 'materialize-item-trigger ', '' )
+			.replace( '-materialize-item', '' )
+			.replace( 'mission-trigger ', '' )
+			.replace( ' hit', '' )
+			.replace( '-minigame-item', '' )
+			.replace( 'minigame ', '' )
+			.replace( ' pulse-wave-engage', '' )
+			.replace( ' barage-wave-engage', '' )
+			.replace( ' selected', '' )
+			.replace( '-cutscene-trigger', '' )
+			.replace( 'cutscene-trigger ', '' )
+			.replace( 'next-mission ', '' )
+			.replace( '-mission-item', '' )
+			.replace( 'mission-item ', '' )
+			.replace( 'wp-block-orbem-paragraph-mp3 ', '' )
+			.replace( 'explore-character-', '' );
 	}
 }
 
-function setStaticMCImage(mapChar, direction, weaponChange) {
+function setStaticMCImage( mapChar, direction, weaponChange ) {
 	'use strict';
 
 	// Change to static image.
@@ -5926,15 +6030,15 @@ function setStaticMCImage(mapChar, direction, weaponChange) {
 	);
 
 	if (
-		(currentCharacterImage &&
-			'' === window.currentCharacterAutoDirection) ||
-		(currentCharacterImage && '' !== direction)
+		( currentCharacterImage &&
+			'' === window.currentCharacterAutoDirection ) ||
+		( currentCharacterImage && '' !== direction )
 	) {
 		let staticId = currentCharacterImage.id
-			.replace('left-punch', 'left')
-			.replace('right-punch', 'right')
-			.replace('up-punch', 'up')
-			.replace('down-punch', 'down')
+			.replace( 'left-punch', 'left' )
+			.replace( 'right-punch', 'right' )
+			.replace( 'up-punch', 'up' )
+			.replace( 'down-punch', 'down' )
 			.replace(
 				window.mainCharacter + '-',
 				window.mainCharacter + '-static-'
@@ -5943,7 +6047,7 @@ function setStaticMCImage(mapChar, direction, weaponChange) {
 		direction =
 			'' !== window.isDragging ? window.draggingDirection : direction;
 
-		if ('' !== direction) {
+		if ( '' !== direction ) {
 			staticId =
 				window.mainCharacter +
 				'-static-' +
@@ -5955,11 +6059,13 @@ function setStaticMCImage(mapChar, direction, weaponChange) {
 			weaponChange && defaultWeapon !== window.currentWeapon
 				? window.currentWeapon
 				: '';
-		const staticVersion = document.getElementById(staticId + thisIsWeapon);
+		const staticVersion = document.getElementById(
+			staticId + thisIsWeapon
+		);
 
-		if (staticVersion) {
-			currentCharacterImage.classList.remove('engage');
-			staticVersion.classList.add('engage');
+		if ( staticVersion ) {
+			currentCharacterImage.classList.remove( 'engage' );
+			staticVersion.classList.add( 'engage' );
 
 			mapChar.dataset.static = 'true';
 		}
@@ -5977,29 +6083,31 @@ function addCharacterHit() {
 	let chargeAttackInProgress = false;
 
 	// Reset shiftispressed if you let go of it.
-	document.addEventListener('keydown', (event) => {
-		const weapon = document.querySelector('.map-weapon');
+	document.addEventListener( 'keydown', ( event ) => {
+		const weapon = document.querySelector( '.map-weapon' );
 
-		if (false !== window.allowHit) {
-			if (true === ['ShiftLeft', 'ShiftRight'].includes(event.code)) {
+		if ( false !== window.allowHit ) {
+			if (
+				true === [ 'ShiftLeft', 'ShiftRight' ].includes( event.code )
+			) {
 				shiftIsPressed = true;
 			}
 
-			if ('Space' === event.code) {
+			if ( 'Space' === event.code ) {
 				spaceIsPressed = true;
 
-				chargeAttackTimeout = setTimeout(() => {
-					if (true === spaceIsPressed) {
-						weapon.classList.add('charge-engage');
+				chargeAttackTimeout = setTimeout( () => {
+					if ( true === spaceIsPressed ) {
+						weapon.classList.add( 'charge-engage' );
 						chargeAttackInProgress = true;
 					}
-				}, 1000);
+				}, 1000 );
 			}
 		}
-	});
+	} );
 
-	document.addEventListener('keyup', (event) => {
-		const weapon = document.querySelector('.map-weapon');
+	document.addEventListener( 'keyup', ( event ) => {
+		const weapon = document.querySelector( '.map-weapon' );
 		const weaponType =
 			defaultWeapon === weapon.dataset.weapon
 				? ''
@@ -6008,45 +6116,48 @@ function addCharacterHit() {
 			'top' === weapon.dataset.direction
 				? 'up'
 				: weapon.dataset.direction;
-		const mapChar = document.querySelector('#map-character');
+		const mapChar = document.querySelector( '#map-character' );
 		const currentImageMapCharacter = mapChar.querySelector(
 			'.map-character-icon.engage'
 		);
 		const weaponAnimation = mapChar.querySelector(
-			`#${window.mainCharacter}-${direction}-punch${weaponType}`
+			`#${ window.mainCharacter }-${ direction }-punch${ weaponType }`
 		);
 
-		if (false !== window.allowHit) {
+		if ( false !== window.allowHit ) {
 			const manaPoints = document.querySelector(
 				`#explore-points .mana-amount`
 			);
 			const currentPoints = manaPoints ? manaPoints.dataset.amount : 0;
 
-			if (true === ['ShiftLeft', 'ShiftRight'].includes(event.code)) {
+			if (
+				true === [ 'ShiftLeft', 'ShiftRight' ].includes( event.code )
+			) {
 				shiftIsPressed = false;
 			}
 
-			if ('Space' === event.code) {
+			if ( 'Space' === event.code ) {
 				// Trigger charge attack if started.
 				spaceIsPressed = false;
-				clearTimeout(chargeAttackTimeout);
+				clearTimeout( chargeAttackTimeout );
 
-				if (weapon && false === heavyAttackInProgress) {
-					const isSpell = weapon.classList.contains('spell');
-					weaponTime = weapon.classList.contains('protection')
+				if ( weapon && false === heavyAttackInProgress ) {
+					const isSpell = weapon.classList.contains( 'spell' );
+					weaponTime = weapon.classList.contains( 'protection' )
 						? 8000
 						: 100;
 
 					// Only engage if not a spell or mana is not 0.
 					if (
 						'true' === weapon.dataset.projectile ||
-						(true === isSpell && 0 < currentPoints) ||
-						(false === isSpell && false === chargeAttackInProgress)
+						( true === isSpell && 0 < currentPoints ) ||
+						( false === isSpell &&
+							false === chargeAttackInProgress )
 					) {
-						weapon.classList.add('engage');
+						weapon.classList.add( 'engage' );
 
 						// Move weapon based on direction
-						switch (direction) {
+						switch ( direction ) {
 							case 'up':
 								weaponPosTop = 310;
 								break;
@@ -6061,64 +6172,66 @@ function addCharacterHit() {
 								break;
 						}
 
-						if (currentImageMapCharacter) {
-							currentImageMapCharacter.classList.add('punched');
+						if ( currentImageMapCharacter ) {
+							currentImageMapCharacter.classList.add( 'punched' );
 
-							weaponAnimation.classList.add('engage');
+							weaponAnimation.classList.add( 'engage' );
 						}
 					}
 
 					// If spell, take manna away if above 0.
-					if (0 < currentPoints && true === isSpell) {
+					if ( 0 < currentPoints && true === isSpell ) {
 						// Use mana.
-						const objectAmount = weapon.getAttribute('data-value');
+						const objectAmount =
+							weapon.getAttribute( 'data-value' );
 
 						// Remove amount to current points.
 						manaPoints.setAttribute(
 							'data-amount',
-							parseInt(currentPoints) - parseInt(objectAmount)
+							parseInt( currentPoints ) - parseInt( objectAmount )
 						);
 
 						// Add class for notification of point gain.
-						manaPoints.classList.add('engage');
+						manaPoints.classList.add( 'engage' );
 
 						// Get new amount.
 						let newAmount =
-							parseInt(currentPoints) - parseInt(objectAmount);
+							parseInt( currentPoints ) -
+							parseInt( objectAmount );
 						newAmount = 0 > newAmount ? 0 : newAmount;
 
 						// Add new point count to DB.
-						addUserPoints(newAmount, 'mana', 'magic', false, '');
+						addUserPoints( newAmount, 'mana', 'magic', false, '' );
 
 						// Remove highlight on point bar.
-						setTimeout(() => {
-							manaPoints.classList.remove('engage');
-						}, 500);
+						setTimeout( () => {
+							manaPoints.classList.remove( 'engage' );
+						}, 500 );
 					}
 
 					// If spell or user has not hit weapon 3 time consecutively then reset weapon or is projectile.
 					if (
 						'true' === weapon.dataset.projectile ||
 						true === isSpell ||
-						(false === isSpell &&
+						( false === isSpell &&
 							false === heavyAttackInProgress &&
-							false === shiftIsPressed)
+							false === shiftIsPressed )
 					) {
-						setTimeout(() => {
+						setTimeout( () => {
 							// If heavy attack is not happening then you reset weapon.
 							if (
 								false ===
-								weapon.classList.contains('heavy-engage')
+								weapon.classList.contains( 'heavy-engage' )
 							) {
-								weapon.classList.remove('engage');
+								weapon.classList.remove( 'engage' );
 								currentImageMapCharacter.classList.remove(
 									'punched'
 								);
 
-								weaponAnimation.classList.remove('engage');
+								weaponAnimation.classList.remove( 'engage' );
 
 								// Reset weapon based on direction
-								switch (direction) {
+								switch ( direction ) {
 									case 'up':
 										weaponPosTop = 400;
 										break;
@@ -6133,26 +6246,26 @@ function addCharacterHit() {
 										break;
 								}
 							}
-						}, weaponTime);
-					} else if (true === shiftIsPressed) {
+						}, weaponTime );
+					} else if ( true === shiftIsPressed ) {
 						const weaponAnimation = mapChar.querySelector(
-							`#${window.mainCharacter}-${direction}-punch${weaponType}`
+							`#${ window.mainCharacter }-${ direction }-punch${ weaponType }`
 						);
 
-						weapon.classList.add('heavy-engage');
+						weapon.classList.add( 'heavy-engage' );
 						heavyAttackInProgress = true;
 
-						setTimeout(() => {
+						setTimeout( () => {
 							heavyAttackInProgress = false;
-							weapon.classList.remove('heavy-engage');
-							weapon.classList.remove('engage');
+							weapon.classList.remove( 'heavy-engage' );
+							weapon.classList.remove( 'engage' );
 							currentImageMapCharacter.classList.remove(
 								'punched'
 							);
-							weaponAnimation.classList.remove('engage');
+							weaponAnimation.classList.remove( 'engage' );
 
 							// Reset weapon based on direction
-							switch (direction) {
+							switch ( direction ) {
 								case 'up':
 									weaponPosTop = 400;
 									break;
@@ -6168,28 +6281,28 @@ function addCharacterHit() {
 							}
 
 							shiftIsPressed = false;
-						}, 500);
+						}, 500 );
 					}
 
 					// For shooting.
 					if (
 						0 < currentPoints &&
 						weapon &&
-						('yes' === weapon.dataset.projectile ||
-							true === isSpell)
+						( 'yes' === weapon.dataset.projectile ||
+							true === isSpell )
 					) {
 						let weaponLeft = parseInt(
-							weapon.style.left.replace('px', '')
+							weapon.style.left.replace( 'px', '' )
 						);
 						let weaponTop = parseInt(
-							weapon.style.top.replace('px', '')
+							weapon.style.top.replace( 'px', '' )
 						);
 						const weaponClass =
 							true === isSpell ? '.magic-weapon' : '.map-weapon';
 						const playerDirection =
-							weapon.getAttribute('data-direction');
+							weapon.getAttribute( 'data-direction' );
 
-						switch (playerDirection) {
+						switch ( playerDirection ) {
 							case 'down':
 								weaponTop = weaponTop + 10000;
 								break;
@@ -6216,50 +6329,55 @@ function addCharacterHit() {
 						);
 					}
 
-					if (true === chargeAttackInProgress) {
+					if ( true === chargeAttackInProgress ) {
 						chargeAttackInProgress = false;
-						weapon.classList.remove('charge-engage');
-						weapon.classList.add('charge-attack-engage');
+						weapon.classList.remove( 'charge-engage' );
+						weapon.classList.add( 'charge-attack-engage' );
 
 						// Remove highlight on point bar.
-						setTimeout(() => {
-							weapon.classList.remove('charge-attack-engage');
+						setTimeout( () => {
+							weapon.classList.remove( 'charge-attack-engage' );
 							currentImageMapCharacter.classList.remove(
 								'punched'
 							);
-							weaponAnimation.classList.remove('engage');
-						}, 700);
+							weaponAnimation.classList.remove( 'engage' );
+						}, 700 );
 					}
 				}
 			}
-		} else if ('Space' === event.code) {
-			const indicator = document.querySelector('.indicator-icon');
+		} else if ( 'Space' === event.code ) {
+			const indicator = document.querySelector( '.indicator-icon' );
 
-			if (indicator && true === indicator.classList.contains('engage')) {
+			if (
+				indicator &&
+				true === indicator.classList.contains( 'engage' )
+			) {
 				const cutscene = indicator.dataset?.cutscene;
 				const sign = indicator.dataset?.sign;
 				const minigame = indicator.dataset?.minigame;
 				const minigameEl = minigame
-					? document.querySelector('[data-minigame=' + minigame + ']')
+					? document.querySelector(
+							'[data-minigame=' + minigame + ']'
+					  )
 					: false;
 
-				if (cutscene && '' !== cutscene) {
-					engageCutscene(cutscene, false);
+				if ( cutscene && '' !== cutscene ) {
+					engageCutscene( cutscene, false );
 					indicator.dataset.cutscene = '';
 				}
 
-				if (sign && '' !== sign) {
-					engageSign(sign);
+				if ( sign && '' !== sign ) {
+					engageSign( sign );
 					indicator.dataset.sign = '';
 				}
 
-				if (minigame && minigameEl && '' !== minigame) {
-					engageMinigameLogic(minigameEl);
+				if ( minigame && minigameEl && '' !== minigame ) {
+					engageMinigameLogic( minigameEl );
 					indicator.dataset.minigame = '';
 				}
 			}
 		}
-	});
+	} );
 }
 
 /**
@@ -6269,14 +6387,14 @@ function addCharacterHit() {
  * @param  box
  * @return {{top, left}}
  */
-function blockMovement(top, left, box) {
+function blockMovement( top, left, box ) {
 	'use strict';
 
 	const finalTop = top;
 	const finalLeft = left;
 	const mainChar = box !== false ? '.map-character-icon.engage, ' : '';
-	const mainCharEl = document.getElementById('map-character');
-	box = box ? box : document.querySelector('.map-character-icon.engage');
+	const mainCharEl = document.getElementById( 'map-character' );
+	box = box ? box : document.querySelector( '.map-character-icon.engage' );
 	const hazardClass =
 		false !== box && 'hazard' === mainCharEl.dataset.ability
 			? ':not([data-hazard="true"])'
@@ -6292,8 +6410,8 @@ function blockMovement(top, left, box) {
 	return getBlockDirection(
 		collisionWalls,
 		box,
-		parseInt(finalTop),
-		parseInt(finalLeft),
+		parseInt( finalTop ),
+		parseInt( finalLeft ),
 		false,
 		'' !== mainChar
 	);
@@ -6323,11 +6441,11 @@ function getBlockDirection(
 	const left = finalLeft;
 	const top = finalTop;
 	const final = { top: finalTop, left: finalLeft, collide: false };
-	const mapChar = document.getElementById('map-character');
+	const mapChar = document.getElementById( 'map-character' );
 	const mainCharPos = {
-		offsetLeft: mapChar.offsetLeft + (400 - box.offsetWidth / 2),
+		offsetLeft: mapChar.offsetLeft + ( 400 - box.offsetWidth / 2 ),
 		offsetWidth: box.offsetWidth,
-		offsetTop: mapChar.offsetTop + (400 - box.offsetHeight / 2),
+		offsetTop: mapChar.offsetTop + ( 400 - box.offsetHeight / 2 ),
 		offsetHeight: box.offsetHeight,
 	};
 
@@ -6335,18 +6453,18 @@ function getBlockDirection(
 
 	if (
 		collisionWalls &&
-		((false === window.godMode && true !== npc) || true === npc)
+		( ( false === window.godMode && true !== npc ) || true === npc )
 	) {
-		collisionWalls.forEach((collisionWallEle) => {
+		collisionWalls.forEach( ( collisionWallEle ) => {
 			let collisionWall = collisionWallEle;
 
-			if (true === collisionWall.id.includes('mc-')) {
+			if ( true === collisionWall.id.includes( 'mc-' ) ) {
 				collisionWall = mainCharPos;
 			}
 
 			if (
 				box !== collisionWallEle &&
-				elementsOverlap(finalCharPos, collisionWall, 0)
+				elementsOverlap( finalCharPos, collisionWall, 0 )
 			) {
 				const collisionWallRight =
 					collisionWall.offsetLeft + collisionWall.offsetWidth;
@@ -6383,9 +6501,9 @@ function getBlockDirection(
 
 				if (
 					leftCollision &&
-					!rightCollision &&
-					!topCollision &&
-					!bottomCollision
+					! rightCollision &&
+					! topCollision &&
+					! bottomCollision
 				) {
 					final.left = left + adjust;
 					final.collide = true;
@@ -6393,25 +6511,25 @@ function getBlockDirection(
 
 				if (
 					rightCollision &&
-					!leftCollision &&
-					!topCollision &&
-					!bottomCollision
+					! leftCollision &&
+					! topCollision &&
+					! bottomCollision
 				) {
 					final.left = left - adjust;
 					final.collide = true;
 				}
 
-				if (topCollision && !bottomCollision) {
+				if ( topCollision && ! bottomCollision ) {
 					final.top = top + adjust;
 					final.collide = true;
 				}
 
-				if (bottomCollision && !topCollision) {
+				if ( bottomCollision && ! topCollision ) {
 					final.top = top - adjust;
 					final.collide = true;
 				}
 			}
-		});
+		} );
 	}
 
 	return final;
@@ -6425,7 +6543,7 @@ function getBlockDirection(
  * @param  buffer
  * @return {boolean}
  */
-function elementsOverlap(rect1, rect2, buffer) {
+function elementsOverlap( rect1, rect2, buffer ) {
 	'use strict';
 
 	const rect1Right = rect1.offsetLeft + rect1.offsetWidth;
@@ -6439,10 +6557,10 @@ function elementsOverlap(rect1, rect2, buffer) {
 
 	return (
 		false ===
-		(rect1Right + buffer < rect2Left - buffer ||
+		( rect1Right + buffer < rect2Left - buffer ||
 			rect1Left + buffer > rect2Right - buffer ||
 			rect1Bottom + buffer < rect2Top - buffer ||
-			rect1Top - buffer > rect2Bottom + buffer)
+			rect1Top - buffer > rect2Bottom + buffer )
 	);
 }
 
@@ -6451,7 +6569,7 @@ function elementsOverlap(rect1, rect2, buffer) {
  *
  * @param type type.
  */
-function getMenuType(type) {
+function getMenuType( type ) {
 	'use strict';
 
 	const menuTypes = {
@@ -6461,7 +6579,7 @@ function getMenuType(type) {
 		weapons: 'weapons',
 	};
 
-	return menuTypes[type];
+	return menuTypes[ type ];
 }
 
 /**
@@ -6485,74 +6603,75 @@ function runPointAnimation(
 	let positionType = value.dataset.type;
 	positionType = positionType && '' !== positionType ? positionType : 'point';
 
-	if (false === value.classList.contains('map-cutscene')) {
-		value.classList.add('engage');
+	if ( false === value.classList.contains( 'map-cutscene' ) ) {
+		value.classList.add( 'engage' );
 	}
 
 	const thePoints = document.querySelector(
-		`#explore-points .${positionType}-amount`
+		`#explore-points .${ positionType }-amount`
 	);
 	let currentPoints = 100;
 
 	const objectAmount =
 		true === isMission
-			? parseInt(missionPoints)
-			: parseInt(value.dataset?.value);
+			? parseInt( missionPoints )
+			: parseInt( value.dataset?.value );
 
-	if (thePoints && 0 < objectAmount) {
+	if ( thePoints && 0 < objectAmount ) {
 		currentPoints = thePoints.dataset.amount;
-		if ('point' === positionType) {
+		if ( 'point' === positionType ) {
 			const newPoints =
-				parseInt(currentPoints) + parseInt(objectAmount ?? '0');
+				parseInt( currentPoints ) + parseInt( objectAmount ?? '0' );
 
 			// Add amount to current points.
-			thePoints.setAttribute('data-amount', newPoints);
+			thePoints.setAttribute( 'data-amount', newPoints );
 
 			// Add level check.
-			const oldLevel = getCurrentLevel(currentPoints);
-			const newLevel = getCurrentLevel(newPoints);
-			window.nextLevelPointAmount = JSON.parse(OrbemOrder.levelMaps)[
+			const oldLevel = getCurrentLevel( currentPoints );
+			const newLevel = getCurrentLevel( newPoints );
+			window.nextLevelPointAmount = JSON.parse( OrbemOrder.levelMaps )[
 				newLevel
 			];
 
 			// If new level is different from the old, then set UI to new.
-			if (oldLevel !== newLevel) {
-				const currentLevelEl = document.querySelector('.current-level');
+			if ( oldLevel !== newLevel ) {
+				const currentLevelEl =
+					document.querySelector( '.current-level' );
 
-				if (currentLevelEl) {
+				if ( currentLevelEl ) {
 					currentLevelEl.textContent = 'lvl. ' + newLevel;
 
 					const nextLevelPoints =
-						document.querySelector('.next-level-points');
+						document.querySelector( '.next-level-points' );
 
 					nextLevelPoints.textContent = window.nextLevelPointAmount;
 				}
 			}
 
 			// Update point count.
-			const myPoints = document.querySelector('.my-points');
+			const myPoints = document.querySelector( '.my-points' );
 
-			if (myPoints) {
+			if ( myPoints ) {
 				myPoints.textContent = newPoints;
 			}
 		}
 
 		// Add class for notification of point gain.
-		thePoints.classList.add('engage');
+		thePoints.classList.add( 'engage' );
 
-		setTimeout(function () {
-			thePoints.classList.remove('engage');
-		}, 2000);
+		setTimeout( function () {
+			thePoints.classList.remove( 'engage' );
+		}, 2000 );
 
 		// Check if it's a storage item.
-		const collectable = value.classList.contains('storage-item');
+		const collectable = value.classList.contains( 'storage-item' );
 
 		// Play sound effect for points.
-		playPointSound(positionType);
+		playPointSound( positionType );
 
 		// Add new point count to DB.
 		addUserPoints(
-			parseInt(currentPoints) + parseInt(objectAmount),
+			parseInt( currentPoints ) + parseInt( objectAmount ),
 			positionType,
 			position,
 			collectable,
@@ -6561,36 +6680,36 @@ function runPointAnimation(
 	}
 }
 
-function playPointSound(pointType) {
+function playPointSound( pointType ) {
 	'use strict';
 
-	const character = document.getElementById('map-character');
+	const character = document.getElementById( 'map-character' );
 
 	// Show point graphic.
-	character.classList.add('point');
+	character.classList.add( 'point' );
 
 	// Add point type
-	if ('' !== pointType) {
-		character.classList.add(pointType);
+	if ( '' !== pointType ) {
+		character.classList.add( pointType );
 	}
 
-	setTimeout(function () {
-		character.classList.add('over');
+	setTimeout( function () {
+		character.classList.add( 'over' );
 
-		setTimeout(function () {
+		setTimeout( function () {
 			// Add point type
-			if ('' !== pointType) {
-				character.classList.remove(pointType);
+			if ( '' !== pointType ) {
+				character.classList.remove( pointType );
 			}
 
-			character.classList.remove('point');
-			character.classList.remove('over');
-		}, 500);
-	}, 1000);
+			character.classList.remove( 'point' );
+			character.classList.remove( 'over' );
+		}, 500 );
+	}, 1000 );
 
-	const pointSound = document.getElementById('ching');
+	const pointSound = document.getElementById( 'ching' );
 
-	if (pointSound) {
+	if ( pointSound ) {
 		pointSound.volume = window.sfxVolume;
 		pointSound.play();
 	}
@@ -6604,27 +6723,27 @@ function playPointSound(pointType) {
 function engageTransportFunction() {
 	'use strict';
 
-	const container = document.querySelector('.game-container');
-	const character = document.querySelector('#map-character');
+	const container = document.querySelector( '.game-container' );
+	const character = document.querySelector( '#map-character' );
 
-	document.addEventListener('keydown', (e) => {
+	document.addEventListener( 'keydown', ( e ) => {
 		// If Shift is pressed start transport sequence.
 		if (
 			16 === e.keyCode &&
-			canCharacterInteract('', character, 'programming')
+			canCharacterInteract( '', character, 'programming' )
 		) {
-			container.addEventListener('click', clickTransport);
+			container.addEventListener( 'click', clickTransport );
 		}
-	});
+	} );
 
-	document.addEventListener('keyup', (e) => {
+	document.addEventListener( 'keyup', ( e ) => {
 		if (
 			16 === e.keyCode &&
-			canCharacterInteract('', character, 'programming')
+			canCharacterInteract( '', character, 'programming' )
 		) {
-			container.removeEventListener('click', clickTransport);
+			container.removeEventListener( 'click', clickTransport );
 		}
-	});
+	} );
 }
 
 /**
@@ -6633,33 +6752,33 @@ function engageTransportFunction() {
 function engageDraggableFunction() {
 	'use strict';
 
-	document.addEventListener('keydown', (e) => {
-		const dragmeitem = document.querySelector('.dragme');
+	document.addEventListener( 'keydown', ( e ) => {
+		const dragmeitem = document.querySelector( '.dragme' );
 		// If Shift is pressed start transport sequence.
-		if ('Space' === e.code) {
+		if ( 'Space' === e.code ) {
 			if (
 				dragmeitem &&
-				true === dragmeitem.classList.contains('currently-dragging')
+				true === dragmeitem.classList.contains( 'currently-dragging' )
 			) {
 				// Reengage hit.
-				setTimeout(() => {
+				setTimeout( () => {
 					window.allowHit = true;
-				}, 100);
+				}, 100 );
 
 				const dragmeitemTop = parseInt(
-					dragmeitem.style.top.replace('px', '')
+					dragmeitem.style.top.replace( 'px', '' )
 				);
 
-				dragmeitem.classList.remove('currently-dragging');
-				dragmeitem.classList.remove('dragme');
+				dragmeitem.classList.remove( 'currently-dragging' );
+				dragmeitem.classList.remove( 'dragme' );
 
 				dragmeitem.style.left = window.dragLeft.left
-					? parseInt(dragmeitem.style.left.replace('px', '')) -
-						2 +
-						'px'
-					: parseInt(dragmeitem.style.left.replace('px', '')) +
-						2 +
-						'px';
+					? parseInt( dragmeitem.style.left.replace( 'px', '' ) ) -
+					  2 +
+					  'px'
+					: parseInt( dragmeitem.style.left.replace( 'px', '' ) ) +
+					  2 +
+					  'px';
 				dragmeitem.style.top = window.dragTop.higher
 					? dragmeitemTop - 2 + 'px'
 					: dragmeitemTop + 2 + 'px';
@@ -6670,20 +6789,20 @@ function engageDraggableFunction() {
 				window.draggingDirection = '';
 
 				// Check if drop position is on draggable destination.
-				const cleanClass = cleanClassName(dragmeitem.className);
+				const cleanClass = cleanClassName( dragmeitem.className );
 				const dragDest = document.querySelector(
 					'.' + cleanClass + '-drag-dest-map-item'
 				);
 
-				if (dragDest) {
+				if ( dragDest ) {
 					const dragDestLeft =
-						parseInt(dragDest.style.left.replace('px', '')) +
+						parseInt( dragDest.style.left.replace( 'px', '' ) ) +
 						dragDest.offsetWidth / 2;
 					const dragDestTop =
-						parseInt(dragDest.style.top.replace('px', '')) +
+						parseInt( dragDest.style.top.replace( 'px', '' ) ) +
 						dragDest.offsetHeight / 2;
 					const dragItemLeft =
-						parseInt(dragmeitem.style.left.replace('px', '')) +
+						parseInt( dragmeitem.style.left.replace( 'px', '' ) ) +
 						dragDest.offsetWidth / 2;
 					const dragItemTop =
 						dragmeitemTop + dragmeitem.offsetHeight / 2;
@@ -6697,10 +6816,10 @@ function engageDraggableFunction() {
 							: dragItemLeft - dragDestLeft;
 
 					if (
-						topOffset < parseInt(dragDest.dataset.offset) &&
-						leftOffset < parseInt(dragDest.dataset.offset) &&
+						topOffset < parseInt( dragDest.dataset.offset ) &&
+						leftOffset < parseInt( dragDest.dataset.offset ) &&
 						false ===
-							dragDest.classList.contains('completed-mission')
+							dragDest.classList.contains( 'completed-mission' )
 					) {
 						saveMission(
 							dragDest.dataset.mission,
@@ -6711,13 +6830,13 @@ function engageDraggableFunction() {
 						);
 
 						// Add completed mission so you can't keep getting points.
-						dragDest.classList.add('completed-mission');
-						dragmeitem.classList.add('no-point');
+						dragDest.classList.add( 'completed-mission' );
+						dragmeitem.classList.add( 'no-point' );
 
-						if ('true' === dragDest.dataset.removable) {
+						if ( 'true' === dragDest.dataset.removable ) {
 							dragDest.remove();
 							persistItemRemoval(
-								cleanClassName(dragDest.className),
+								cleanClassName( dragDest.className ),
 								'point',
 								0,
 								2000,
@@ -6727,7 +6846,7 @@ function engageDraggableFunction() {
 						}
 
 						// Remove drag item if disappear is yes.
-						if ('yes' === dragmeitem.dataset.disappear) {
+						if ( 'yes' === dragmeitem.dataset.disappear ) {
 							dragmeitem.remove();
 							persistItemRemoval(
 								cleanClass,
@@ -6742,35 +6861,35 @@ function engageDraggableFunction() {
 				}
 
 				// Save position of item.
-				const filehref = `${OrbemOrder.siteRESTURL}/save-drag/`;
+				const filehref = `${ OrbemOrder.siteRESTURL }/save-drag/`;
 
 				const jsonString = {
 					slug: cleanClass,
-					top: dragmeitem.style.top.replace('px', ''),
-					left: dragmeitem.style.left.replace('px', ''),
+					top: dragmeitem.style.top.replace( 'px', '' ),
+					left: dragmeitem.style.left.replace( 'px', '' ),
 				};
 
 				// Save position of item.
-				fetch(filehref, {
+				fetch( filehref, {
 					method: 'POST', // Specify the HTTP method
 					headers: {
 						'Content-Type': 'application/json', // Set the content type to JSON
 						'X-WP-Nonce': OrbemOrder.orbemNonce,
 					},
-					body: JSON.stringify(jsonString), // The JSON stringified payload
-				}).then((response) => {
+					body: JSON.stringify( jsonString ), // The JSON stringified payload
+				} ).then( ( response ) => {
 					// Check if the response status is in the range 200-299
-					if (!response.ok) {
+					if ( ! response.ok ) {
 						throw new Error(
 							'Network response was not ok ' + response.statusText
 						);
 					}
-				});
+				} );
 			} else {
 				dragItem();
 			}
 		}
-	});
+	} );
 }
 
 /**
@@ -6779,25 +6898,27 @@ function engageDraggableFunction() {
 function dragItem() {
 	'use strict';
 
-	const itemToDrag = document.querySelector('.dragme');
-	const mapCharacter = document.querySelector('#map-character');
-	const currentlyDragging = document.querySelector('.currently-dragging');
+	const itemToDrag = document.querySelector( '.dragme' );
+	const mapCharacter = document.querySelector( '#map-character' );
+	const currentlyDragging = document.querySelector( '.currently-dragging' );
 	const mapCharacterImage = mapCharacter.querySelector(
 		'.map-character-icon.engage'
 	);
 	let dragDirection;
 
-	if (itemToDrag) {
+	if ( itemToDrag ) {
 		window.allowHit = false;
 
-		const itemToDragTop = parseInt(itemToDrag.style.top.replace('px', ''));
+		const itemToDragTop = parseInt(
+			itemToDrag.style.top.replace( 'px', '' )
+		);
 		const itemToDragLeft = parseInt(
-			itemToDrag.style.left.replace('px', '')
+			itemToDrag.style.left.replace( 'px', '' )
 		);
 		const mapCharacterTop =
-			parseInt(mapCharacter.style.top.replace('px', '')) + 450;
+			parseInt( mapCharacter.style.top.replace( 'px', '' ) ) + 450;
 		const mapCharacterLeft =
-			parseInt(mapCharacter.style.left.replace('px', '')) + 450;
+			parseInt( mapCharacter.style.left.replace( 'px', '' ) ) + 450;
 
 		const itemIsHigher = itemToDragTop < mapCharacterTop;
 		const itemIsLeft = itemToDragLeft < mapCharacterLeft;
@@ -6811,13 +6932,13 @@ function dragItem() {
 		const itemIsActuallyLeft = itemToDragLeft < mapCharacterLeft - 50;
 		const topActuallyOffset = itemIsActuallyHigher
 			? mapCharacterTop - 50 - itemToDragTop
-			: itemToDragTop - (mapCharacterTop - 50);
+			: itemToDragTop - ( mapCharacterTop - 50 );
 		const leftActuallyOffset = itemIsActuallyLeft
 			? mapCharacterLeft -
-				(45 + mapCharacterImage.offsetWidth / 2) -
-				itemToDragLeft
+			  ( 45 + mapCharacterImage.offsetWidth / 2 ) -
+			  itemToDragLeft
 			: itemToDragLeft -
-				(mapCharacterLeft - (55 + mapCharacterImage.offsetWidth / 2));
+			  ( mapCharacterLeft - ( 55 + mapCharacterImage.offsetWidth / 2 ) );
 
 		window.dragTop = { offset: topOffset, higher: itemIsHigher };
 		window.dragLeft = { offset: leftOffset, left: itemIsLeft };
@@ -6841,18 +6962,18 @@ function dragItem() {
 				? 'right'
 				: dragDirection;
 
-		if (undefined === dragDirection) {
+		if ( undefined === dragDirection ) {
 			window.dragTop = false;
 			window.dragLeft = false;
 
 			return;
 		}
 
-		if (currentlyDragging) {
-			currentlyDragging.classList.remove('currently-dragging');
+		if ( currentlyDragging ) {
+			currentlyDragging.classList.remove( 'currently-dragging' );
 		}
 
-		itemToDrag.classList.add('currently-dragging');
+		itemToDrag.classList.add( 'currently-dragging' );
 		window.isDragging = '-drag';
 		window.draggingDirection = dragDirection;
 	} else {
@@ -6865,40 +6986,40 @@ function dragItem() {
  * Transport character.
  * @param clickE
  */
-function clickTransport(clickE) {
+function clickTransport( clickE ) {
 	'use strict';
 
-	const container = document.querySelector('.game-container');
+	const container = document.querySelector( '.game-container' );
 	const rect = container.getBoundingClientRect();
 	const x = clickE.clientX - rect.left - 400;
 	const y = clickE.clientY - rect.top - 400;
-	const mapCharacter = document.getElementById('map-character');
-	const bar = document.querySelector('.power-amount');
-	const gauge = bar.querySelector('.gauge');
-	const powerAmount = bar.getAttribute('data-amount');
+	const mapCharacter = document.getElementById( 'map-character' );
+	const bar = document.querySelector( '.power-amount' );
+	const gauge = bar.querySelector( '.gauge' );
+	const powerAmount = bar.getAttribute( 'data-amount' );
 
 	// Stop recharge.
-	clearInterval(window.rechargeInterval);
+	clearInterval( window.rechargeInterval );
 
-	if (0 < powerAmount) {
+	if ( 0 < powerAmount ) {
 		if (
 			mapCharacter &&
 			'rect' !== clickE.target.tagName &&
-			('true' === clickE.target.dataset.collectable ||
-				false === clickE.target.classList.contains('map-item') ||
-				'true' === clickE.target.dataset.hazard)
+			( 'true' === clickE.target.dataset.collectable ||
+				false === clickE.target.classList.contains( 'map-item' ) ||
+				'true' === clickE.target.dataset.hazard )
 		) {
-			moveCharacter(mapCharacter, y, x, false, false);
+			moveCharacter( mapCharacter, y, x, false, false );
 		}
 
 		const newAmount = powerAmount < 0 ? 0 : powerAmount - 25;
 
-		bar.setAttribute('data-amount', newAmount);
+		bar.setAttribute( 'data-amount', newAmount );
 		gauge.style.width = newAmount + 'px';
 	}
 
-	if (26 > powerAmount) {
-		startPowerRecharge(gauge, bar);
+	if ( 26 > powerAmount ) {
+		startPowerRecharge( gauge, bar );
 	}
 }
 
@@ -6910,11 +7031,11 @@ function clickTransport(clickE) {
  * @param gradual
  * @param cutscene
  */
-function moveCharacter(mapCharacter, newTop, newLeft, gradual, cutscene) {
+function moveCharacter( mapCharacter, newTop, newLeft, gradual, cutscene ) {
 	'use strict';
 
-	const currentLeft = parseInt(mapCharacter.style.left.replace('px', ''));
-	const currentTop = parseInt(mapCharacter.style.top.replace('px', ''));
+	const currentLeft = parseInt( mapCharacter.style.left.replace( 'px', '' ) );
+	const currentTop = parseInt( mapCharacter.style.top.replace( 'px', '' ) );
 
 	// Top bigger/smaller.
 	const leftBigger = currentLeft > newLeft;
@@ -6922,29 +7043,29 @@ function moveCharacter(mapCharacter, newTop, newLeft, gradual, cutscene) {
 	const leftDiff = leftBigger ? currentLeft - newLeft : newLeft - currentLeft;
 	const topDiff = topBigger ? currentTop - newTop : newTop - currentTop;
 	let moveCount = 0;
-	const weapon = document.querySelector('.map-weapon');
+	const weapon = document.querySelector( '.map-weapon' );
 
-	if (gradual) {
-		clearInterval(window.movementInt);
+	if ( gradual ) {
+		clearInterval( window.movementInt );
 
 		// Add class to note movement.
-		mapCharacter.classList.add('auto-move');
+		mapCharacter.classList.add( 'auto-move' );
 
-		const biggestDiff = Math.max(topDiff, leftDiff);
+		const biggestDiff = Math.max( topDiff, leftDiff );
 
 		// Top move.
-		const moveInt = setInterval(() => {
-			if (moveCount <= biggestDiff) {
+		const moveInt = setInterval( () => {
+			if ( moveCount <= biggestDiff ) {
 				let topDown = '';
 				let leftRight = '';
 
-				if (topBigger) {
+				if ( topBigger ) {
 					mapCharacter.style.top =
 						moveCount <= topDiff
 							? currentTop - moveCount + 'px'
 							: newTop + 'px';
 					weapon.style.top =
-						parseInt(mapCharacter.style.top.replace('px', '')) +
+						parseInt( mapCharacter.style.top.replace( 'px', '' ) ) +
 						400 +
 						'px';
 					topDown = 'up';
@@ -6954,19 +7075,21 @@ function moveCharacter(mapCharacter, newTop, newLeft, gradual, cutscene) {
 							? currentTop + moveCount + 'px'
 							: newTop + 'px';
 					weapon.style.top =
-						parseInt(mapCharacter.style.top.replace('px', '')) +
+						parseInt( mapCharacter.style.top.replace( 'px', '' ) ) +
 						400 +
 						'px';
 					topDown = 'down';
 				}
 
-				if (leftBigger) {
+				if ( leftBigger ) {
 					mapCharacter.style.left =
 						moveCount <= leftDiff
 							? currentLeft - moveCount + 'px'
 							: newLeft + 'px';
 					weapon.style.left =
-						parseInt(mapCharacter.style.left.replace('px', '')) +
+						parseInt(
+							mapCharacter.style.left.replace( 'px', '' )
+						) +
 						400 +
 						'px';
 					leftRight = 'left';
@@ -6976,14 +7099,16 @@ function moveCharacter(mapCharacter, newTop, newLeft, gradual, cutscene) {
 							? currentLeft + moveCount + 'px'
 							: newLeft + 'px';
 					weapon.style.left =
-						parseInt(mapCharacter.style.left.replace('px', '')) +
+						parseInt(
+							mapCharacter.style.left.replace( 'px', '' )
+						) +
 						400 +
 						'px';
 					leftRight = 'right';
 				}
 
 				// Change character image based on direction;
-				directCharacter(topDown, leftRight, mapCharacter);
+				directCharacter( topDown, leftRight, mapCharacter );
 			} else {
 				// Reenable cutscene click events.
 				window.allowCutscene = true;
@@ -6995,9 +7120,9 @@ function moveCharacter(mapCharacter, newTop, newLeft, gradual, cutscene) {
 
 				if (
 					currentMovementImage &&
-					false === currentMovementImage.id.includes('static')
+					false === currentMovementImage.id.includes( 'static' )
 				) {
-					currentMovementImage.classList.remove('engage');
+					currentMovementImage.classList.remove( 'engage' );
 
 					const newStaticImage = document.getElementById(
 						currentMovementImage.id.replace(
@@ -7008,8 +7133,8 @@ function moveCharacter(mapCharacter, newTop, newLeft, gradual, cutscene) {
 						)
 					);
 
-					if (newStaticImage) {
-						newStaticImage.classList.add('engage');
+					if ( newStaticImage ) {
+						newStaticImage.classList.add( 'engage' );
 
 						// Reset so you can use static image swap again.
 						window.currentCharacterAutoDirection = '';
@@ -7019,22 +7144,22 @@ function moveCharacter(mapCharacter, newTop, newLeft, gradual, cutscene) {
 				// Once cutscene is over reinstate walking privileges. Also only clear this interval after cutscene is over so you know when to walk again.
 				if (
 					false === cutscene ||
-					false === cutscene.classList.contains('engage')
+					false === cutscene.classList.contains( 'engage' )
 				) {
-					clearInterval(moveInt);
+					clearInterval( moveInt );
 					movementIntFunc();
 				}
 			}
 
 			moveCount++;
-		}, window.moveSpeed);
+		}, window.moveSpeed );
 	} else {
 		mapCharacter.style.left = newLeft + 'px';
 		mapCharacter.style.top = newTop + 'px';
 	}
 }
 
-function directCharacter(topDown, leftRight, mapCharacter) {
+function directCharacter( topDown, leftRight, mapCharacter ) {
 	'use strict';
 
 	const direction = '' === topDown ? leftRight : topDown;
@@ -7042,20 +7167,20 @@ function directCharacter(topDown, leftRight, mapCharacter) {
 		'.map-character-icon.engage'
 	);
 
-	if (direction !== window.currentCharacterAutoDirection) {
+	if ( direction !== window.currentCharacterAutoDirection ) {
 		const newImage = mapCharacter.querySelector(
 			'#' + window.mainCharacter + '-' + direction + window.currentWeapon
 		);
 
 		window.currentCharacterAutoDirection = direction;
-		mapCharacter.classList.add(direction + '-dir');
+		mapCharacter.classList.add( direction + '-dir' );
 
-		if (currentImage) {
-			currentImage.classList.remove('engage');
+		if ( currentImage ) {
+			currentImage.classList.remove( 'engage' );
 		}
 
-		if (newImage) {
-			newImage.classList.add('engage');
+		if ( newImage ) {
+			newImage.classList.add( 'engage' );
 		}
 
 		mapCharacter.className = '';
@@ -7067,19 +7192,19 @@ function directCharacter(topDown, leftRight, mapCharacter) {
  * @param  currentPoints
  * @return {number|string}
  */
-function getCurrentLevel(currentPoints) {
+function getCurrentLevel( currentPoints ) {
 	'use strict';
 
-	if (OrbemOrder.levelMaps) {
-		const levels = JSON.parse(OrbemOrder.levelMaps);
+	if ( OrbemOrder.levelMaps ) {
+		const levels = JSON.parse( OrbemOrder.levelMaps );
 
-		for (const key in levels) {
+		for ( const key in levels ) {
 			if (
-				(currentPoints > levels[key] &&
-					currentPoints < levels[parseInt(key) + 1]) ||
-				currentPoints === levels[key]
+				( currentPoints > levels[ key ] &&
+					currentPoints < levels[ parseInt( key ) + 1 ] ) ||
+				currentPoints === levels[ key ]
 			) {
-				return parseInt(key) + 1;
+				return parseInt( key ) + 1;
 			}
 		}
 	}
@@ -7092,56 +7217,56 @@ function getCurrentLevel(currentPoints) {
  * @param gauge
  * @param bar
  */
-function startPowerRecharge(gauge, bar) {
+function startPowerRecharge( gauge, bar ) {
 	'use strict';
 
-	window.rechargeInterval = setInterval(() => {
-		const currentAmount = parseInt(bar.getAttribute('data-amount'));
+	window.rechargeInterval = setInterval( () => {
+		const currentAmount = parseInt( bar.getAttribute( 'data-amount' ) );
 
-		if (100 <= currentAmount) {
-			clearInterval(window.rechargeInterval);
+		if ( 100 <= currentAmount ) {
+			clearInterval( window.rechargeInterval );
 		} else {
-			bar.setAttribute('data-amount', currentAmount + 1);
+			bar.setAttribute( 'data-amount', currentAmount + 1 );
 			gauge.style.width = currentAmount + 1 + 'px';
 		}
-	}, 1500);
+	}, 1500 );
 }
 
 /**
  * All the logic for minigames.
  * @param minigameTrigger
  */
-function engageMinigameLogic(minigameTrigger) {
+function engageMinigameLogic( minigameTrigger ) {
 	'use strict';
 
 	const theMinigame = document.querySelector(
 		'.' + minigameTrigger.dataset.minigame + '-minigame-item'
 	);
 
-	if (theMinigame) {
+	if ( theMinigame ) {
 		const music = theMinigame.dataset.music;
 		let missionElExists = false;
 		const minigameMission = theMinigame.dataset.mission;
 		let missionEl = false;
 
-		if (minigameMission && '' !== minigameMission) {
+		if ( minigameMission && '' !== minigameMission ) {
 			missionEl = document.querySelector(
 				'.' + minigameMission + '-mission-item'
 			);
 
-			if (missionEl) {
-				missionElExists = missionEl.classList.contains('engage');
+			if ( missionEl ) {
+				missionElExists = missionEl.classList.contains( 'engage' );
 			}
 		}
 
-		if (missionElExists) {
+		if ( missionElExists ) {
 			window.allowMovement = false;
-			theMinigame.classList.add('engage');
-			minigameTrigger.classList.add('hit');
+			theMinigame.classList.add( 'engage' );
+			minigameTrigger.classList.add( 'hit' );
 
 			// start the music
-			if (music && '' !== music) {
-				playSong(music, minigameMission);
+			if ( music && '' !== music ) {
+				playSong( music, minigameMission );
 			}
 
 			let draggedContainer = null;
@@ -7149,25 +7274,25 @@ function engageMinigameLogic(minigameTrigger) {
 			let offsetY = 0;
 
 			// Handle the dragstart event
-			const handleDragStart = (event) => {
+			const handleDragStart = ( event ) => {
 				event.preventDefault();
 				draggedContainer = event.target; // Get the container element
-				if (draggedContainer) {
+				if ( draggedContainer ) {
 					// Calculate the offset of the mouse from the top-left corner of the container
 					const rect = draggedContainer.getBoundingClientRect();
 					offsetX = event.clientX - rect.left;
 					offsetY = event.clientY - rect.top;
 
-					event.dataTransfer.setData('text/plain', '');
+					event.dataTransfer.setData( 'text/plain', '' );
 
 					// Add mousemove event listener to update container position
-					document.addEventListener('mousemove', handleMouseMove);
+					document.addEventListener( 'mousemove', handleMouseMove );
 				}
 			};
 
 			// Handle the mousemove event to update container position
-			const handleMouseMove = (event) => {
-				if (draggedContainer) {
+			const handleMouseMove = ( event ) => {
+				if ( draggedContainer ) {
 					// Calculate the mouse position relative to the .default-map element
 					const mapRect = theMinigame.getBoundingClientRect();
 					const mouseX = event.clientX - mapRect.left;
@@ -7176,41 +7301,44 @@ function engageMinigameLogic(minigameTrigger) {
 					// Update container position based on mouse position relative to the container
 					draggedContainer.style.position = 'fixed';
 					draggedContainer.style.zIndex = '9';
-					draggedContainer.style.left = `${mouseX - offsetX}px`;
-					draggedContainer.style.top = `${mouseY - offsetY}px`;
+					draggedContainer.style.left = `${ mouseX - offsetX }px`;
+					draggedContainer.style.top = `${ mouseY - offsetY }px`;
 				}
 			};
 
 			// Handle the dragend event
 			const handleDragEnd = () => {
-				if (draggedContainer) {
+				if ( draggedContainer ) {
 					// Clear the reference to the dragged container
 					draggedContainer = null;
 
 					// Remove mousemove event listener
-					document.removeEventListener('mousemove', handleMouseMove);
+					document.removeEventListener(
+						'mousemove',
+						handleMouseMove
+					);
 
 					// Did you cover all the solder points.
-					const minigames = document.querySelectorAll('.minigame');
+					const minigames = document.querySelectorAll( '.minigame' );
 
-					if (minigames) {
-						minigames.forEach((minigame) => {
+					if ( minigames ) {
+						minigames.forEach( ( minigame ) => {
 							const computerChip =
-								minigame.querySelector('.computer-chip');
+								minigame.querySelector( '.computer-chip' );
 							const solderPoints =
-								computerChip.querySelectorAll('ellipse');
+								computerChip.querySelectorAll( 'ellipse' );
 							const wireWrap =
-								minigame.querySelector('.draggable-images');
+								minigame.querySelector( '.draggable-images' );
 							const wires = wireWrap.querySelectorAll(
 								'.minigame-draggable-image'
 							);
 
-							function isOverlapping(wire, solderPoint) {
+							function isOverlapping( wire, solderPoint ) {
 								const wireRect = wire.getBoundingClientRect();
 								const solderPointBBox =
 									solderPoint.getBoundingClientRect();
 
-								return !(
+								return ! (
 									wireRect.right < solderPointBBox.left ||
 									wireRect.left > solderPointBBox.right ||
 									wireRect.bottom < solderPointBBox.top ||
@@ -7218,23 +7346,25 @@ function engageMinigameLogic(minigameTrigger) {
 								);
 							}
 
-							function areAllSVGsCovered(wires, solderPoints) {
-								for (const solderPoint of solderPoints) {
+							function areAllSVGsCovered( wires, solderPoints ) {
+								for ( const solderPoint of solderPoints ) {
 									let covered = false;
-									for (const wire of wires) {
-										if (isOverlapping(wire, solderPoint)) {
+									for ( const wire of wires ) {
+										if (
+											isOverlapping( wire, solderPoint )
+										) {
 											covered = true;
 											break;
 										}
 									}
-									if (!covered) {
+									if ( ! covered ) {
 										return false;
 									}
 								}
 								return true;
 							}
 
-							if (areAllSVGsCovered(wires, solderPoints)) {
+							if ( areAllSVGsCovered( wires, solderPoints ) ) {
 								computerChip.style.display = 'none';
 								wireWrap.style.display = 'none';
 
@@ -7244,7 +7374,7 @@ function engageMinigameLogic(minigameTrigger) {
 									minigame
 								);
 							}
-						});
+						} );
 					}
 				}
 			};
@@ -7255,52 +7385,55 @@ function engageMinigameLogic(minigameTrigger) {
 			);
 
 			// Add the dragstart and dragend event listeners to each container
-			containers.forEach((container) => {
-				container.addEventListener('dragstart', handleDragStart);
-				container.addEventListener('mouseup', handleDragEnd);
-			});
+			containers.forEach( ( container ) => {
+				container.addEventListener( 'dragstart', handleDragStart );
+				container.addEventListener( 'mouseup', handleDragEnd );
+			} );
 		}
 	}
 }
 
-function engageProgrammingStep(minigameMission, missionEl, minigame) {
+function engageProgrammingStep( minigameMission, missionEl, minigame ) {
 	'use strict';
 
-	const programmingOutput = minigame.querySelector('.programming-output');
-	const minigameProgramming = minigame.querySelector('.minigame-programming');
-	const programmingSubject = minigame.querySelector('.programming-subject');
-	const textAreaInput = programmingOutput.querySelector('textarea');
+	const programmingOutput = minigame.querySelector( '.programming-output' );
+	const minigameProgramming = minigame.querySelector(
+		'.minigame-programming'
+	);
+	const programmingSubject = minigame.querySelector( '.programming-subject' );
+	const textAreaInput = programmingOutput.querySelector( 'textarea' );
 
-	if (minigameProgramming && programmingSubject) {
-		minigameProgramming.classList.add('engage');
-		programmingSubject.classList.add('engage');
+	if ( minigameProgramming && programmingSubject ) {
+		minigameProgramming.classList.add( 'engage' );
+		programmingSubject.classList.add( 'engage' );
 	}
 
-	if (programmingOutput && programmingSubject && textAreaInput) {
-		programmingOutput.prepend(programmingSubject);
+	if ( programmingOutput && programmingSubject && textAreaInput ) {
+		programmingOutput.prepend( programmingSubject );
 		textAreaInput.focus();
-		const programmingWord = programmingSubject.querySelector('strong');
-		const binaryAnswer = textToBinary(programmingWord.textContent);
+		const programmingWord = programmingSubject.querySelector( 'strong' );
+		const binaryAnswer = textToBinary( programmingWord.textContent );
 
-		textAreaInput.addEventListener('keyup', (e) => {
-			if (13 === e.which) {
+		textAreaInput.addEventListener( 'keyup', ( e ) => {
+			if ( 13 === e.which ) {
 				const textAreaToCheck =
-					programmingOutput.querySelector('textarea');
+					programmingOutput.querySelector( 'textarea' );
 
 				if (
-					parseInt(textAreaToCheck.value) === parseInt(binaryAnswer)
+					parseInt( textAreaToCheck.value ) ===
+					parseInt( binaryAnswer )
 				) {
-					saveMission(minigameMission, missionEl, minigameMission);
-					minigame.classList.remove('engage');
+					saveMission( minigameMission, missionEl, minigameMission );
+					minigame.classList.remove( 'engage' );
 
 					// Reengage walking.
 					window.allowMovement = true;
 
 					// Trigger after minigame is complete.
-					afterMinigame(minigame);
+					afterMinigame( minigame );
 				}
 			}
-		});
+		} );
 	}
 }
 
@@ -7308,69 +7441,69 @@ function engageProgrammingStep(minigameMission, missionEl, minigame) {
  * What happens after a minigame is completed
  * @param minigame
  */
-function afterMinigame(minigame) {
+function afterMinigame( minigame ) {
 	'use strict';
 
-	const minigameName = cleanClassName(minigame.className);
+	const minigameName = cleanClassName( minigame.className );
 	const cutscene = document.querySelector(
 		'.map-cutscene[data-minigame="' + minigameName + '"]'
 	);
 
-	if (cutscene) {
-		engageCutscene(cleanClassName(cutscene.className), false);
+	if ( cutscene ) {
+		engageCutscene( cleanClassName( cutscene.className ), false );
 	}
 
 	let newMusic = '';
 
-	if (OrbemOrder.musicNames) {
-		newMusic = JSON.parse(OrbemOrder.musicNames)[currentLocation];
+	if ( OrbemOrder.musicNames ) {
+		newMusic = JSON.parse( OrbemOrder.musicNames )[ currentLocation ];
 	}
 
 	// restart level music.
-	if (minigame.dataset.music && '' !== minigame.dataset.music && newMusic) {
-		playSong(newMusic, currentLocation);
+	if ( minigame.dataset.music && '' !== minigame.dataset.music && newMusic ) {
+		playSong( newMusic, currentLocation );
 	}
 }
 
-function textToBinary(str) {
+function textToBinary( str ) {
 	'use strict';
 
 	let output = '';
-	str.split('').forEach((element) => {
-		const char = element.charCodeAt(0).toString(2);
-		output += ('00000' + char).slice(-5).concat('');
-	});
+	str.split( '' ).forEach( ( element ) => {
+		const char = element.charCodeAt( 0 ).toString( 2 );
+		output += ( '00000' + char ).slice( -5 ).concat( '' );
+	} );
 	return output;
 }
 
-async function makeTalk(text, voiceName, providedAudio) {
+async function makeTalk( text, voiceName, providedAudio ) {
 	'use strict';
 
 	if (
-		true === text.includes('**') ||
+		true === text.includes( '**' ) ||
 		'' === text ||
 		'…' === text ||
 		'...' === text
 	) {
-		setTimeout(() => {
+		setTimeout( () => {
 			window.nextDialogue = true;
-		}, 1500);
+		}, 1500 );
 		return;
 	}
 
-	if (false !== providedAudio) {
+	if ( false !== providedAudio ) {
 		talkAudio = providedAudio;
-		talkAudio.volume = scaleDbToUnit(parseInt(window.talkingVolume));
+		talkAudio.volume = scaleDbToUnit( parseInt( window.talkingVolume ) );
 		talkAudio.play();
 
-		talkAudio.addEventListener('ended', () => {
+		talkAudio.addEventListener( 'ended', () => {
 			window.nextDialogue = true;
-		});
+		} );
 	}
 
-	if (false === providedAudio) {
+	if ( false === providedAudio ) {
 		const apiKey = OrbemOrder.TTSAPIKEY ?? '';
-		const url = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`;
+		const url = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${ apiKey }`;
 		const pitch = 0;
 
 		const speakingRate = 1.2;
@@ -7383,23 +7516,23 @@ async function makeTalk(text, voiceName, providedAudio) {
 			},
 			audioConfig: {
 				audioEncoding: 'MP3',
-				volumeGainDb: parseInt(window.talkingVolume) + 7,
+				volumeGainDb: parseInt( window.talkingVolume ) + 7,
 			},
 		};
 
-		if (pitch && speakingRate) {
+		if ( pitch && speakingRate ) {
 			requestBody.audioConfig.pitch = pitch;
 			requestBody.audioConfig.speakingRate = speakingRate;
 		}
 
 		try {
-			const response = await fetch(url, {
+			const response = await fetch( url, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(requestBody),
-			});
+				body: JSON.stringify( requestBody ),
+			} );
 
-			if (!response.ok) {
+			if ( ! response.ok ) {
 				return;
 			}
 
@@ -7407,32 +7540,32 @@ async function makeTalk(text, voiceName, providedAudio) {
 			const audioContent = data?.audioContent;
 
 			// Play the audio
-			talkAudio = new Audio(`data:audio/mp3;base64,${audioContent}`);
+			talkAudio = new Audio( `data:audio/mp3;base64,${ audioContent }` );
 			talkAudio.volume = 0.5;
 			talkAudio.play();
 
-			talkAudio.addEventListener('ended', () => {
+			talkAudio.addEventListener( 'ended', () => {
 				window.nextDialogue = true;
-			});
-		} catch (error) {
+			} );
+		} catch ( error ) {
 			window.audioError = error.message;
 		}
 	}
 
-	function scaleDbToUnit(value, dbMin = -40, dbMax = 16) {
-		return (value - dbMin) / (dbMax - dbMin);
+	function scaleDbToUnit( value, dbMin = -40, dbMax = 16 ) {
+		return ( value - dbMin ) / ( dbMax - dbMin );
 	}
 }
 
-function startTheTimer(timeAmount) {
+function startTheTimer( timeAmount ) {
 	'use strict';
 
-	if (false === timerCountDownHit) {
+	if ( false === timerCountDownHit ) {
 		timerCountDownHit = true;
 
-		const timer = document.createElement('div');
+		const timer = document.createElement( 'div' );
 		timer.className = 'timer-countdown';
-		let countDown = parseInt(timeAmount / 1000).toString();
+		let countDown = parseInt( timeAmount / 1000 ).toString();
 		timer.style.position = 'fixed';
 		timer.style.left = '50%';
 		timer.style.transform = 'translateX(-50%)';
@@ -7440,61 +7573,61 @@ function startTheTimer(timeAmount) {
 		timer.style.fontSize = '2rem';
 		timer.style.zIndex = '99999';
 		timer.textContent = countDown;
-		const container = document.querySelector('.game-container');
+		const container = document.querySelector( '.game-container' );
 
-		if (container) {
-			container.appendChild(timer);
+		if ( container ) {
+			container.appendChild( timer );
 		}
 
-		timerCountDownInterval = setInterval(() => {
-			const timerCountDown = document.querySelector('.timer-countdown');
-			const previousContent = parseInt(timerCountDown.textContent);
-			if (0 !== previousContent) {
+		timerCountDownInterval = setInterval( () => {
+			const timerCountDown = document.querySelector( '.timer-countdown' );
+			const previousContent = parseInt( timerCountDown.textContent );
+			if ( 0 !== previousContent ) {
 				countDown = previousContent;
 			}
 
 			timerCountDown.textContent = 0 < countDown ? countDown - 1 : 0;
 
-			if ('0' === timerCountDown.textContent) {
+			if ( '0' === timerCountDown.textContent ) {
 				timerCountDown.remove();
-				clearInterval(timerCountDownInterval);
+				clearInterval( timerCountDownInterval );
 				timerCountDownHit = false;
 			}
-		}, 1000);
+		}, 1000 );
 	}
 }
 
-function playStartScreenMusic(play) {
+function playStartScreenMusic( play ) {
 	'use strict';
 
-	const startMusic = document.getElementById('start-screen-music');
-	const musicUnmute = document.getElementById('music-unmute');
+	const startMusic = document.getElementById( 'start-screen-music' );
+	const musicUnmute = document.getElementById( 'music-unmute' );
 	const fadeDuration = 3000; // 3 seconds
 	const fadeStep = 0.1; // Volume increment step
 	const intervalTime = fadeDuration * fadeStep;
 
-	if (startMusic && false !== play) {
+	if ( startMusic && false !== play ) {
 		startMusic.volume = 0; // Start with volume at 0
 		startMusic.play(); // Start playing the audio
 		startMusic.muted = false;
 
-		if (musicUnmute) {
+		if ( musicUnmute ) {
 			musicUnmute.textContent = '🔉';
 
-			musicUnmute.addEventListener('click', () => {
-				startMusic.muted = !startMusic.muted;
+			musicUnmute.addEventListener( 'click', () => {
+				startMusic.muted = ! startMusic.muted;
 				musicUnmute.textContent = startMusic.muted ? '🔇' : '🔉';
-			});
+			} );
 		}
 
-		const fadeInInterval = setInterval(() => {
-			if (startMusic.volume < 0.7) {
+		const fadeInInterval = setInterval( () => {
+			if ( startMusic.volume < 0.7 ) {
 				startMusic.volume += fadeStep; // Gradually increase volume
 			} else {
-				clearInterval(fadeInInterval); // Stop the interval when volume reaches 1
+				clearInterval( fadeInInterval ); // Stop the interval when volume reaches 1
 			}
-		}, intervalTime);
-	} else if (startMusic) {
+		}, intervalTime );
+	} else if ( startMusic ) {
 		startMusic.remove();
 		musicUnmute.remove();
 	}
@@ -7506,37 +7639,38 @@ function playStartScreenMusic(play) {
 function checkIfHazardHurts() {
 	'use strict';
 
-	setInterval(() => {
-		if (true === inHazard) {
+	setInterval( () => {
+		if ( true === inHazard ) {
 			const hurtAmount = window.theHazardValue;
-			const currentHealth = getCurrentPoints('health');
-			const newAmount = parseInt(currentHealth) - parseInt(hurtAmount);
+			const currentHealth = getCurrentPoints( 'health' );
+			const newAmount =
+				parseInt( currentHealth ) - parseInt( hurtAmount );
 			hurtAnimation();
 
-			addUserPoints(newAmount, 'health', 'hazard', '');
+			addUserPoints( newAmount, 'health', 'hazard', '' );
 		}
 
-		if (false !== hazardItem) {
-			const mapChar = document.getElementById('map-character');
+		if ( false !== hazardItem ) {
+			const mapChar = document.getElementById( 'map-character' );
 
 			// Push character away from hazard center.
-			pushCharacter(25, hazardItem, mapChar);
+			pushCharacter( 25, hazardItem, mapChar );
 		}
-	}, 1000);
+	}, 1000 );
 }
 
 function hurtAnimation() {
 	'use strict';
 
-	clearTimeout(hurtTimeout);
-	const mapCharacter = document.getElementById('map-character');
+	clearTimeout( hurtTimeout );
+	const mapCharacter = document.getElementById( 'map-character' );
 
-	if (mapCharacter) {
+	if ( mapCharacter ) {
 		mapCharacter.dataset.hurt = true;
 
-		hurtTimeout = setTimeout(() => {
+		hurtTimeout = setTimeout( () => {
 			mapCharacter.dataset.hurt = false;
-		}, 1000);
+		}, 1000 );
 	}
 }
 
@@ -7546,51 +7680,51 @@ function hurtAnimation() {
  * @param element
  * @param name
  */
-function spinMiroLogo(element, name) {
+function spinMiroLogo( element, name ) {
 	'use strict';
 
-	if (element) {
-		element.classList.add(name);
-		setTimeout(function () {
-			element.classList.remove(name);
-		}, 1000);
+	if ( element ) {
+		element.classList.add( name );
+		setTimeout( function () {
+			element.classList.remove( name );
+		}, 1000 );
 	}
 }
 
 // Add the SSO response function for login/signin if it doesn't exist in the theme.
-if (typeof window.exploreHandleCredentialResponse !== 'function') {
-	window.exploreHandleCredentialResponse = function (response) {
+if ( typeof window.exploreHandleCredentialResponse !== 'function' ) {
+	window.exploreHandleCredentialResponse = function ( response ) {
 		'use strict';
 		// Save position of item.
-		const filehref = `${OrbemOrder.siteRESTURL}/google-oauth-callback/`;
-		const googleContainer = document.getElementById('g_id_onload');
+		const filehref = `${ OrbemOrder.siteRESTURL }/google-oauth-callback/`;
+		const googleContainer = document.getElementById( 'g_id_onload' );
 		const jsonString = {
 			credential: response.credential,
 			nonce: googleContainer?.dataset?.nonce || '',
 		};
 
 		// Save position of item.
-		fetch(filehref, {
+		fetch( filehref, {
 			method: 'POST', // Specify the HTTP method
 			headers: {
 				'Content-Type': 'application/json', // Set the content type to JSON
 				'X-WP-Nonce': OrbemOrder.orbemNonce,
 			},
-			body: JSON.stringify(jsonString), // The JSON stringified payload
-		})
-			.then((response) => {
-				if (!response.ok) {
+			body: JSON.stringify( jsonString ), // The JSON stringified payload
+		} )
+			.then( ( response ) => {
+				if ( ! response.ok ) {
 					throw new Error(
 						'Network response was not ok ' + response.statusText
 					);
 				}
 				return response.json();
-			})
-			.then((data) => {
-				if (data.success) {
+			} )
+			.then( ( data ) => {
+				if ( data.success ) {
 					window.location.reload();
 				}
-			});
+			} );
 	};
 }
 
@@ -7599,15 +7733,15 @@ if (typeof window.exploreHandleCredentialResponse !== 'function') {
  *
  * @param dist The amount of pixels to push character.
  */
-function pushMC(dist) {
+function pushMC( dist ) {
 	'use strict';
 
-	const mc = document.getElementById('map-character');
-	const left = parseInt(mc.style.left.replace('px', ''));
-	const top = parseInt(mc.style.top.replace('px', ''));
-	const dir = mc.className.replace('-dir', '');
+	const mc = document.getElementById( 'map-character' );
+	const left = parseInt( mc.style.left.replace( 'px', '' ) );
+	const top = parseInt( mc.style.top.replace( 'px', '' ) );
+	const dir = mc.className.replace( '-dir', '' );
 
-	switch (dir) {
+	switch ( dir ) {
 		case 'right':
 			mc.style.left = left - dist + 'px';
 			break;
