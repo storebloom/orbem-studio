@@ -120,7 +120,7 @@ document.addEventListener( 'DOMContentLoaded', function () {
 	}
 
 	colorFields.forEach( ( field ) => {
-		const iris = jQuery( field ).iris( {
+		jQuery( field ).iris( {
 			// jQuery required one time or else I have to build a color picker.
 			defaultColor: field.dataset.defaultColor,
 			change( event, ui ) {
