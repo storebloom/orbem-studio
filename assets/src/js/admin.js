@@ -184,9 +184,7 @@ document.addEventListener( 'DOMContentLoaded', function () {
 			requiredFields.forEach( ( requiredField ) => {
 				requiredField.classList.remove( 'orbem-studio-error' );
 			} );
-		}
-
-		if ( requiredFields ) {
+		
 			requiredFields.forEach( ( requiredField ) => {
 				const field = requiredField;
 
