@@ -1,11 +1,19 @@
 <?php
-if ( ! defined( 'ABSPATH' ) ) exit;
+/**
+ * Orbem Studio plugin file.
+ *
+ * @package OrbemStudio
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
 
 /**
  * Plugin Name: Orbem Studio
  * Plugin URI: https://orbem.studio/
  * Description: Build your own RPG video game using the power of WordPress
- * Version: 1.0.2
+ * Version: 1.0.3
  * Author: orbemorder
  * Author URI: https://orbemorder.com/
  * Text Domain: orbem-studio
@@ -30,24 +38,21 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 /**
  * Plugin version constant.
  */
-const ORBEM_STUDIO_VERSION = '1.0.2';
+const ORBEM_STUDIO_VERSION = '1.0.3';
 
-if (version_compare(phpversion(), '8.1.0', '>=')) {
+if ( version_compare( phpversion(), '8.1.0', '>=' ) ) {
 	require_once __DIR__ . '/instance.php';
+} elseif ( defined( 'WP_CLI' ) ) {
+		WP_CLI::warning( orbem_studio_php_version_text() );
 } else {
-	if (defined('WP_CLI' ) ) {
-		WP_CLI::warning(orbem_studio_php_version_text());
-	} else {
-		add_action('admin_notices', 'orbem_studio_php_version_error');
-	}
+	add_action( 'admin_notices', 'orbem_studio_php_version_error' );
 }
 
 /**
  * Admin notice for incompatible versions of PHP.
  */
-function orbem_studio_php_version_error(): void
-{
-	printf( '<div class="error"><p>%s</p></div>', esc_html(orbem_studio_php_version_text()));
+function orbem_studio_php_version_error(): void {
+	printf( '<div class="error"><p>%s</p></div>', esc_html( orbem_studio_php_version_text() ) );
 }
 
 /**
@@ -55,15 +60,14 @@ function orbem_studio_php_version_error(): void
  *
  * @return string
  */
-function orbem_studio_php_version_text(): string
-{
+function orbem_studio_php_version_text(): string {
 	return __(
 		'Orbem Game Engine plugin error: Your version of PHP is too old to run this plugin. You must be running PHP 8.1 or higher.',
 		'orbem-studio'
 	);
 }
 
-add_filter('plugin_action_links_' . plugin_basename(__FILE__), 'orbem_studio_add_action_links');
+add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), 'orbem_studio_add_action_links' );
 
 /**
  * Add a link to the settings page.
@@ -72,9 +76,8 @@ add_filter('plugin_action_links_' . plugin_basename(__FILE__), 'orbem_studio_add
  *
  * @return array
  */
-function orbem_studio_add_action_links(array $links): array
-{
-	$mylinks = ['<a href="' . admin_url('admin.php?page=orbem-studio') . '">Options</a>'];
+function orbem_studio_add_action_links( array $links ): array {
+	$mylinks = array( '<a href="' . admin_url( 'admin.php?page=orbem-studio' ) . '">Options</a>' );
 
-	return array_merge($links, $mylinks);
+	return array_merge( $links, $mylinks );
 }

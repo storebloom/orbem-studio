@@ -15,415 +15,475 @@ use WP_Post;
  *
  * @package OrbemStudio
  */
-class Dev_Mode
-{
+class Dev_Mode {
 
-    /**
-     * Plugin instance.
-     *
-     * @var object
-     */
-    public object $plugin;
 
-    /**
-     * Meta Box instance.
-     *
-     * @var object
-     */
-    public object $meta_box;
+	/**
+	 * Plugin instance.
+	 *
+	 * @var object
+	 */
+	public object $plugin;
 
-    /**
-     * Class constructor.
-     *
-     * @param object $plugin Plugin class.
-     */
-    public function __construct(object $plugin, object $meta_box)
-    {
-        $this->plugin = $plugin;
-        $this->meta_box = $meta_box;
-    }
+	/**
+	 * Meta Box instance.
+	 *
+	 * @var object
+	 */
+	public object $meta_box;
 
-    /**
-     * Register API field.
-     *
-     * @action rest_api_init
-     */
-    public function restRoutes(): void
-    {
-        $namespace = 'orbemorder/v1';
+	/**
+	 * Class constructor.
+	 *
+	 * @param object $plugin   Plugin class.
+	 * @param object $meta_box Meta box class.
+	 */
+	public function __construct( object $plugin, object $meta_box ) {
+		$this->plugin   = $plugin;
+		$this->meta_box = $meta_box;
+	}
 
-        // Callback that makes sure a user is an administrators on this site in order to access devmode features.
-        $permission_callback = function () {
-            return current_user_can('manage_options');
-        };
+	/**
+	 * Register API field.
+	 *
+	 * @action rest_api_init
+	 */
+	public function restRoutes(): void {
+		$namespace = 'orbemorder/v1';
 
-        // Set item position.
-        register_rest_route($namespace, '/set-item-position/', array(
-            'methods' => 'POST',
-            'callback' => [$this, 'setItemPosition'],
-            'permission_callback' => $permission_callback
-        ));
+		// Callback that makes sure a user is an administrators on this site in order to access devmode features.
+		$permission_callback = function () {
+			return current_user_can( 'manage_options' );
+		};
 
-        // Set item size.
-        register_rest_route($namespace, '/set-item-size/', array(
-            'methods' => 'POST',
-            'callback' => [$this, 'setItemSize'],
-            'permission_callback' => $permission_callback
-        ));
+		// Set item position.
+		register_rest_route(
+			$namespace,
+			'/set-item-position/',
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( $this, 'setItemPosition' ),
+				'permission_callback' => $permission_callback,
+			)
+		);
 
-        // Get addition fields by post type.
-        register_rest_route($namespace, '/get-new-fields/', array(
-            'methods' => 'POST',
-            'callback' => [$this, 'getNewFields'],
-            'permission_callback' => $permission_callback
-        ));
+		// Set item size.
+		register_rest_route(
+			$namespace,
+			'/set-item-size/',
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( $this, 'setItemSize' ),
+				'permission_callback' => $permission_callback,
+			)
+		);
 
-        // Create new whatever orbem studio post type. Requires administrator access.
-        register_rest_route($namespace, '/add-new/', [
-            'methods' => 'POST',
-            'callback' => [$this, 'addNew'],
-            'permission_callback' => $permission_callback
-        ]);
-    }
+		// Get addition fields by post type.
+		register_rest_route(
+			$namespace,
+			'/get-new-fields/',
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( $this, 'getNewFields' ),
+				'permission_callback' => $permission_callback,
+			)
+		);
 
-    /**
-     * Change position of item.
-     * @param \WP_REST_Request $request
-     * @return \WP_REST_Response
-     */
-    public function setItemPosition(\WP_REST_Request $request): \WP_REST_Response
-    {
-        $user   = wp_get_current_user();
-        $userid = (int) $user->ID;
+		// Create new whatever orbem studio post type. Requires administrator access.
+		register_rest_route(
+			$namespace,
+			'/add-new/',
+			array(
+				'methods'             => 'POST',
+				'callback'            => array( $this, 'addNew' ),
+				'permission_callback' => $permission_callback,
+			)
+		);
+	}
 
-        // Endpoint intentionally accessible to all authenticated users.
-        if (0 === $userid) {
-            return rest_ensure_response([
-                'success' => false,
-                'data'    => esc_html__('User not authenticated', 'orbem-studio'),
-            ]);
-        }
+	/**
+	 * Change position of item.
+	 *
+	 * @param \WP_REST_Request $request The REST request object.
+	 * @return \WP_REST_Response
+	 */
+	public function setItemPosition( \WP_REST_Request $request ): \WP_REST_Response {
+		$user   = wp_get_current_user();
+		$userid = (int) $user->ID;
 
-        // Get request data.
-        $data         = $request->get_json_params();
-        $left         = isset($data['left']) ? intval($data['left']) : '';
-        $top          = isset($data['top']) ? intval($data['top']) : '';
-        $height       = isset($data['height']) ? intval($data['height']) : '';
-        $width        = isset($data['width']) ? intval($data['width']) : '';
-        $meta         = isset($data['meta']) ? sanitize_text_field($data['meta']) : '';
-        $walking_path = isset($data['walkingPath']) ? sanitize_text_field($data['walkingPath']) : '';
-        $item         = isset($data['id']) ? absint($data['id']) : 0;
+		// Endpoint intentionally accessible to all authenticated users.
+		if ( 0 === $userid ) {
+			return rest_ensure_response(
+				array(
+					'success' => false,
+					'data'    => esc_html__( 'User not authenticated', 'orbem-studio' ),
+				)
+			);
+		}
 
-        if ($item <= 0 || ! get_post($item) || !current_user_can('edit_post', $item)) {
-            return rest_ensure_response([
-                'success' => false,
-                'data'    => esc_html__('Invalid item ID', 'orbem-studio'),
-            ]);
-        }
+		// Get request data.
+		$data         = $request->get_json_params();
+		$left         = isset( $data['left'] ) ? intval( $data['left'] ) : '';
+		$top          = isset( $data['top'] ) ? intval( $data['top'] ) : '';
+		$height       = isset( $data['height'] ) ? intval( $data['height'] ) : '';
+		$width        = isset( $data['width'] ) ? intval( $data['width'] ) : '';
+		$meta         = isset( $data['meta'] ) ? sanitize_text_field( $data['meta'] ) : '';
+		$walking_path = isset( $data['walkingPath'] ) ? sanitize_text_field( $data['walkingPath'] ) : '';
+		$item         = isset( $data['id'] ) ? absint( $data['id'] ) : 0;
 
-        // $walking_path is 'true' when recording multi walking path.
-        if (false === empty($meta) && 'true' !== $walking_path) {
-            if (!str_starts_with($meta, 'explore-')) {
-                return rest_ensure_response([
-                    'success' => false,
-                    'data'    => esc_html__('Invalid meta key', 'orbem-studio'),
-                ]);
-            }
+		if ( $item <= 0 || ! get_post( $item ) || ! current_user_can( 'edit_post', $item ) ) {
+			return rest_ensure_response(
+				array(
+					'success' => false,
+					'data'    => esc_html__( 'Invalid item ID', 'orbem-studio' ),
+				)
+			);
+		}
 
-            $current_meta = get_post_meta($item, $meta, true);
+		// $walking_path is 'true' when recording multi walking path.
+		if ( false === empty( $meta ) && 'true' !== $walking_path ) {
+			if ( ! str_starts_with( $meta, 'explore-' ) ) {
+				return rest_ensure_response(
+					array(
+						'success' => false,
+						'data'    => esc_html__( 'Invalid meta key', 'orbem-studio' ),
+					)
+				);
+			}
 
-            if (false === empty($current_meta)) {
-                $current_meta['top']    = $top;
-                $current_meta['left']   = $left;
-                $current_meta['height'] = $height;
-                $current_meta['width']  = $width;
+			$current_meta = get_post_meta( $item, $meta, true );
 
-                update_post_meta($item, $meta, $current_meta);
-            }
-        } elseif ('true' === $walking_path) {
-            $current_walking_path = get_post_meta($item, 'explore-path', true);
+			if ( false === empty( $current_meta ) ) {
+				$current_meta['top']    = $top;
+				$current_meta['left']   = $left;
+				$current_meta['height'] = $height;
+				$current_meta['width']  = $width;
 
-            if (false === empty($current_walking_path)) {
-                $current_walking_path[] = ['top' => $top, 'left' => $left];
-            } else {
-                $current_walking_path = [['top' => $top, 'left' => $left]];
-            }
-            update_post_meta($item, 'explore-path', $current_walking_path);
+				update_post_meta( $item, $meta, $current_meta );
+			}
+		} elseif ( 'true' === $walking_path ) {
+			$current_walking_path = get_post_meta( $item, 'explore-path', true );
 
-        } else {
-            update_post_meta($item, 'explore-top', $top);
-            update_post_meta($item, 'explore-left', $left);
-        }
+			if ( false === empty( $current_walking_path ) ) {
+				$current_walking_path[] = array(
+					'top'  => $top,
+					'left' => $left,
+				);
+			} else {
+				$current_walking_path = array(
+					array(
+						'top'  => $top,
+						'left' => $left,
+					),
+				);
+			}
+			update_post_meta( $item, 'explore-path', $current_walking_path );
 
-        return rest_ensure_response([
-                'success' => true,
-                'data'    => esc_html__('success', 'orbem-studio'),
-            ]);
-    }
+		} else {
+			update_post_meta( $item, 'explore-top', $top );
+			update_post_meta( $item, 'explore-left', $left );
+		}
 
-    /**
-     * Set item size front end.
-     * @param \WP_REST_Request $request
-     * @return \WP_REST_Response
-     */
-    public function setItemSize(\WP_REST_Request $request): \WP_REST_Response
-    {
-        $user   = wp_get_current_user();
-        $userid = (int) $user->ID;
+		return rest_ensure_response(
+			array(
+				'success' => true,
+				'data'    => esc_html__( 'success', 'orbem-studio' ),
+			)
+		);
+	}
 
-        // Endpoint intentionally accessible to all authenticated users.
-        if (0 === $userid) {
-            return rest_ensure_response([
-                'success' => false,
-                'data'    => esc_html__('User not authenticated', 'orbem-studio'),
-            ]);
-        }
+	/**
+	 * Set item size front end.
+	 *
+	 * @param \WP_REST_Request $request The REST request object.
+	 * @return \WP_REST_Response
+	 */
+	public function setItemSize( \WP_REST_Request $request ): \WP_REST_Response {
+		$user   = wp_get_current_user();
+		$userid = (int) $user->ID;
 
-        // Get request data.
-        $data   = $request->get_json_params();
-        $height = isset($data['height']) ? intval($data['height']) : '';
-        $width  = isset($data['width']) ? intval($data['width']) : '';
-        $meta   = isset($data['meta']) ? sanitize_text_field($data['meta']) : '';
-        $item   = isset($data['id']) ? absint($data['id']) : 0;
+		// Endpoint intentionally accessible to all authenticated users.
+		if ( 0 === $userid ) {
+			return rest_ensure_response(
+				array(
+					'success' => false,
+					'data'    => esc_html__( 'User not authenticated', 'orbem-studio' ),
+				)
+			);
+		}
 
-        if ('' === $width || '' === $height || $item <= 0 || ! get_post($item) || !current_user_can('edit_post', $item)) {
-            return rest_ensure_response([
-                'success' => false,
-                'data'    => esc_html__('Invalid item ID or missing data param', 'orbem-studio'),
-            ]);
-        }
+		// Get request data.
+		$data   = $request->get_json_params();
+		$height = isset( $data['height'] ) ? intval( $data['height'] ) : '';
+		$width  = isset( $data['width'] ) ? intval( $data['width'] ) : '';
+		$meta   = isset( $data['meta'] ) ? sanitize_text_field( $data['meta'] ) : '';
+		$item   = isset( $data['id'] ) ? absint( $data['id'] ) : 0;
 
-        if (false === empty($meta)) {
-            if (!str_starts_with($meta, 'explore-')) {
-                return rest_ensure_response([
-                    'success' => false,
-                    'data'    => esc_html__('Invalid meta key', 'orbem-studio'),
-                ]);
-            }
+		if ( '' === $width || '' === $height || $item <= 0 || ! get_post( $item ) || ! current_user_can( 'edit_post', $item ) ) {
+			return rest_ensure_response(
+				array(
+					'success' => false,
+					'data'    => esc_html__( 'Invalid item ID or missing data param', 'orbem-studio' ),
+				)
+			);
+		}
 
-            $current_meta           = get_post_meta($item, $meta, true);
-            $current_meta['height'] = $height;
-            $current_meta['width']  = $width;
-            update_post_meta($item, $meta, $current_meta);
-        } else {
-            update_post_meta($item, 'explore-height', $height);
-            update_post_meta($item, 'explore-width', $width);
-        }
+		if ( false === empty( $meta ) ) {
+			if ( ! str_starts_with( $meta, 'explore-' ) ) {
+				return rest_ensure_response(
+					array(
+						'success' => false,
+						'data'    => esc_html__( 'Invalid meta key', 'orbem-studio' ),
+					)
+				);
+			}
 
-        return rest_ensure_response([
-                'success' => true,
-                'data'    => esc_html__('success', 'orbem-studio'),
-            ]);
-    }
+			$current_meta           = get_post_meta( $item, $meta, true );
+			$current_meta['height'] = $height;
+			$current_meta['width']  = $width;
+			update_post_meta( $item, $meta, $current_meta );
+		} else {
+			update_post_meta( $item, 'explore-height', $height );
+			update_post_meta( $item, 'explore-width', $width );
+		}
 
-    /**
-     * Get fields.
-     * @param \WP_REST_Request $request
-     * @return \WP_REST_Response
-     */
-    public function getNewFields(\WP_REST_Request $request): \WP_REST_Response
-    {
-        $user   = wp_get_current_user();
-        $userid = (int) $user->ID;
+		return rest_ensure_response(
+			array(
+				'success' => true,
+				'data'    => esc_html__( 'success', 'orbem-studio' ),
+			)
+		);
+	}
 
-        // Endpoint intentionally accessible to all authenticated users.
-        if (0 === $userid) {
-            return rest_ensure_response([
-                'success' => false,
-                'data'    => esc_html__('User not authenticated', 'orbem-studio'),
-            ]);
-        }
+	/**
+	 * Get fields.
+	 *
+	 * @param \WP_REST_Request $request The REST request object.
+	 * @return \WP_REST_Response
+	 */
+	public function getNewFields( \WP_REST_Request $request ): \WP_REST_Response {
+		$user   = wp_get_current_user();
+		$userid = (int) $user->ID;
 
-        // Get request data.
-        $data      = $request->get_json_params();
-        $post_type = isset($data['type']) ? sanitize_text_field(wp_unslash($data['type'])) : '';
+		// Endpoint intentionally accessible to all authenticated users.
+		if ( 0 === $userid ) {
+			return rest_ensure_response(
+				array(
+					'success' => false,
+					'data'    => esc_html__( 'User not authenticated', 'orbem-studio' ),
+				)
+			);
+		}
 
-        if (!str_starts_with($post_type, 'explore-')) {
-            return rest_ensure_response([
-                'success' => false,
-                'data'    => esc_html__('Invalid post type', 'orbem-studio'),
-            ]);
-        }
+		// Get request data.
+		$data      = $request->get_json_params();
+		$post_type = isset( $data['type'] ) ? sanitize_text_field( wp_unslash( $data['type'] ) ) : '';
 
-        ob_start();
+		if ( ! str_starts_with( $post_type, 'explore-' ) ) {
+			return rest_ensure_response(
+				array(
+					'success' => false,
+					'data'    => esc_html__( 'Invalid post type', 'orbem-studio' ),
+				)
+			);
+		}
 
-        $this->meta_box->explore_point_box($post_type);
+		ob_start();
 
-        $newFields = ob_get_clean();
-        
-        return rest_ensure_response([
-            'success' => true,
-            'data'    => $newFields,
-        ]);
-    }
+		$this->meta_box->explore_point_box( $post_type );
 
-    /**
-     * Add new item.
-     * @param \WP_REST_Request $request
-     * @return \WP_REST_Response
-     */
-    public function addNew(\WP_REST_Request $request): \WP_REST_Response
-    {
-        $user   = wp_get_current_user();
-        $userid = (int) $user->ID;
+		$new_fields = ob_get_clean();
 
-        // Endpoint intentionally accessible to all authenticated users.
-        if (0 === $userid) {
-            return rest_ensure_response([
-                'success' => false,
-                'data'    => esc_html__('User not authenticated', 'orbem-studio'),
-            ]);
-        }
+		return rest_ensure_response(
+			array(
+				'success' => true,
+				'data'    => $new_fields,
+			)
+		);
+	}
 
-        // Get request data.
-        $data        = $request->get_json_params();
-        $post_type   = isset($data['type']) ? sanitize_text_field(wp_unslash($data['type'])) : '';
-        $area        = isset($data['area']) ? sanitize_text_field(wp_unslash($data['area'])) : '';
-        $area        = false === empty($area) ? $area : get_user_meta($userid, 'current_location', true);
-        $post_values = isset($data['values']) ? $data['values'] : '';
+	/**
+	 * Add new item.
+	 *
+	 * @param \WP_REST_Request $request The REST request object.
+	 * @return \WP_REST_Response
+	 */
+	public function addNew( \WP_REST_Request $request ): \WP_REST_Response {
+		$user   = wp_get_current_user();
+		$userid = (int) $user->ID;
 
-        if (true === empty($post_values) || false === is_array($post_values) || '' === $post_type || !str_starts_with($post_type, 'explore-')) {
-            return rest_ensure_response([
-                'success' => false,
-                'data'    => esc_html__('Invalid data point', 'orbem-studio'),
-            ]);
-        }
+		// Endpoint intentionally accessible to all authenticated users.
+		if ( 0 === $userid ) {
+			return rest_ensure_response(
+				array(
+					'success' => false,
+					'data'    => esc_html__( 'User not authenticated', 'orbem-studio' ),
+				)
+			);
+		}
 
-        $post_id = wp_insert_post(['post_status' => 'publish', 'post_type' => $post_type, 'post_title' => sanitize_text_field(wp_unslash($post_values['title']))], true);
+		// Get request data.
+		$data        = $request->get_json_params();
+		$post_type   = isset( $data['type'] ) ? sanitize_text_field( wp_unslash( $data['type'] ) ) : '';
+		$area        = isset( $data['area'] ) ? sanitize_text_field( wp_unslash( $data['area'] ) ) : '';
+		$area        = false === empty( $area ) ? $area : get_user_meta( $userid, 'current_location', true );
+		$post_values = isset( $data['values'] ) ? $data['values'] : '';
 
-        if (is_wp_error($post_id)) {
-            return rest_ensure_response([
-                'success' => false,
-                'data'    => esc_html__('Post creation failed.', 'orbem-studio'),
-            ]);
-        }
+		if ( true === empty( $post_values ) || false === is_array( $post_values ) || '' === $post_type || ! str_starts_with( $post_type, 'explore-' ) ) {
+			return rest_ensure_response(
+				array(
+					'success' => false,
+					'data'    => esc_html__( 'Invalid data point', 'orbem-studio' ),
+				)
+			);
+		}
 
-        $attachment_id = false === empty($post_values['featured-image']) ? attachment_url_to_postid(esc_url_raw($post_values['featured-image'])) : '';
+		$post_id = wp_insert_post(
+			array(
+				'post_status' => 'publish',
+				'post_type'   => $post_type,
+				'post_title'  => sanitize_text_field( wp_unslash( $post_values['title'] ) ),
+			),
+			true
+		);
 
-        if (false === empty($attachment_id)) {
-            set_post_thumbnail($post_id, $attachment_id);
-        }
+		if ( is_wp_error( $post_id ) ) {
+			return rest_ensure_response(
+				array(
+					'success' => false,
+					'data'    => esc_html__( 'Post creation failed.', 'orbem-studio' ),
+				)
+			);
+		}
 
-        update_post_meta($post_id, 'explore-area', $area);
+		$attachment_id = false === empty( $post_values['featured-image'] ) ? attachment_url_to_postid( esc_url_raw( $post_values['featured-image'] ) ) : '';
 
-        // Remove this data. Not post meta values.
-        unset($post_values['featured-image']);
-        unset($post_values['title']);
+		if ( false === empty( $attachment_id ) ) {
+			set_post_thumbnail( $post_id, $attachment_id );
+		}
 
-        $allowed_meta_keys = array_keys($this->meta_box->getMetaData($post_type));
+		update_post_meta( $post_id, 'explore-area', $area );
 
-        foreach ($post_values as $key => $value) {
-            if (in_array($key, $allowed_meta_keys, true)) {
-                update_post_meta($post_id, $key, wp_unslash($value));
-            }
-        }
+		// Remove this data. Not post meta values.
+		unset( $post_values['featured-image'] );
+		unset( $post_values['title'] );
 
-        return rest_ensure_response([
-            'success' => true,
-            'data'    => $post_id,
-        ]);
-    }
+		$allowed_meta_keys = array_keys( $this->meta_box->getMetaData( $post_type ) );
 
-    /**
-     * Get dev mode triggers.
-     * @param $items
-     * @param $cutscenes
-     * @param $missions
-     * @return array
-     */
-    public static function getTriggers($items, $cutscenes, $missions): array
-    {
-        $trigger = [];
+		foreach ( $post_values as $key => $value ) {
+			if ( in_array( $key, $allowed_meta_keys, true ) ) {
+				update_post_meta( $post_id, $key, wp_unslash( $value ) );
+			}
+		}
 
-        if (is_array($items) && is_array($cutscenes) && is_array($missions)) {
-            $things_to_check = array_merge($items, $cutscenes, $missions);
+		return rest_ensure_response(
+			array(
+				'success' => true,
+				'data'    => $post_id,
+			)
+		);
+	}
 
-            foreach ($things_to_check as $thing) {
-                $key = '';
+	/**
+	 * Get dev mode triggers.
+	 *
+	 * @param array $items     The items array.
+	 * @param array $cutscenes The cutscenes array.
+	 * @param array $missions  The missions array.
+	 * @return array
+	 */
+	public static function getTriggers( array $items, array $cutscenes, array $missions ): array {
+		$trigger = array();
 
-                if (isset($thing->post_type) && isset($thing->ID) && isset($thing->post_name)) {
-                    switch ($thing->post_type) {
-                        case 'explore-point':
-                            $key = 'materialize-item-trigger';
-                            break;
-                        case 'explore-cutscene':
-                            $key = 'explore-cutscene-trigger';
-                            break;
-                        case 'explore-explainer':
-                            $key = 'explore-explainer-trigger';
-                            break;
-                        case 'explore-enemy':
-                        case 'explore-character':
-                            $key = 'explore-path-trigger';
-                            break;
-                        case 'explore-mission':
-                            $key = 'explore-mission-trigger';
-                            break;
-                        default:
-                            continue 2;
-                    }
+		if ( is_array( $items ) && is_array( $cutscenes ) && is_array( $missions ) ) {
+			$things_to_check = array_merge( $items, $cutscenes, $missions );
 
-                    $value = '' !== $key ? get_post_meta($thing->ID, $key, true) : '';
+			foreach ( $things_to_check as $thing ) {
+				$key = '';
 
-                    if (false === empty($value) && (true === isset($value['height']) && '0' !== $value['height'])) {
-                        $trigger_array = [
-                            'post_type' => $key,
-                            'post_name' => $thing->post_name . str_replace('explore-', '-', $key),
-                            'ID' => $thing->ID . '-t',
-                        ];
+				if ( isset( $thing->post_type ) && isset( $thing->ID ) && isset( $thing->post_name ) ) {
+					switch ( $thing->post_type ) {
+						case 'explore-point':
+							$key = 'materialize-item-trigger';
+							break;
+						case 'explore-cutscene':
+							$key = 'explore-cutscene-trigger';
+							break;
+						case 'explore-explainer':
+							$key = 'explore-explainer-trigger';
+							break;
+						case 'explore-enemy':
+						case 'explore-character':
+							$key = 'explore-path-trigger';
+							break;
+						case 'explore-mission':
+							$key = 'explore-mission-trigger';
+							break;
+						default:
+							continue 2;
+					}
 
-                        $trigger[] = (object) $trigger_array;
-                    }
-                }
-            }
-        }
+					$value = '' !== $key ? get_post_meta( $thing->ID, $key, true ) : '';
 
-        return $trigger;
-    }
+					if ( false === empty( $value ) && ( true === isset( $value['height'] ) && '0' !== $value['height'] ) ) {
+						$trigger_array = array(
+							'post_type' => $key,
+							'post_name' => $thing->post_name . str_replace( 'explore-', '-', $key ),
+							'ID'        => $thing->ID . '-t',
+						);
 
-    /**
-     * Get the dev mode html.
-     * @return false|string
-     */
-    public static function getDevModeHTML(): false|string
-    {
-        $user = wp_get_current_user();
+						$trigger[] = (object) $trigger_array;
+					}
+				}
+			}
+		}
 
-        if (!current_user_can('manage_options')) {
-            return '';
-        }
+		return $trigger;
+	}
 
-        ob_start();
-        ?>
-        <div class="right-bottom-devmode">
-            <div class="dev-mode-menu-toggle">DEVMODE</div>
-        </div>
+	/**
+	 * Get the dev mode html.
+	 *
+	 * @return false|string
+	 */
+	public static function getDevModeHTML(): false|string {
+		$user = wp_get_current_user();
 
-        <div class="dev-mode-menu">
-            <div id="new-addition">
-                <div class="addition-content">
-                    <?php
-                    $template = plugin_dir_path(__FILE__) . '../templates/components/new-additions.php';
-                    if (file_exists($template)) {
-                        include $template;
-                    }
-                    ?>
-                </div>
-            </div>
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return '';
+		}
 
-            <?php
-            $wall_builder = plugin_dir_path(__FILE__) . '../templates/components/wall-builder.php';
-            if ( file_exists($wall_builder) ) {
-                include $wall_builder;
-            }
+		ob_start();
+		?>
+		<div class="right-bottom-devmode">
+			<div class="dev-mode-menu-toggle">DEVMODE</div>
+		</div>
 
-            $pinpoint = plugin_dir_path(__FILE__) . '../templates/components/pinpoint.php';
-            if (file_exists($pinpoint)) {
-                include $pinpoint;
-            }
-            ?>
-        </div>
-        <?php
-        return ob_get_clean();
-    }
+		<div class="dev-mode-menu">
+			<div id="new-addition">
+				<div class="addition-content">
+					<?php
+					$template = plugin_dir_path( __FILE__ ) . '../templates/components/new-additions.php';
+					if ( file_exists( $template ) ) {
+						include $template;
+					}
+					?>
+				</div>
+			</div>
+
+			<?php
+			$wall_builder = plugin_dir_path( __FILE__ ) . '../templates/components/wall-builder.php';
+			if ( file_exists( $wall_builder ) ) {
+				include $wall_builder;
+			}
+
+			$pinpoint = plugin_dir_path( __FILE__ ) . '../templates/components/pinpoint.php';
+			if ( file_exists( $pinpoint ) ) {
+				include $pinpoint;
+			}
+			?>
+		</div>
+		<?php
+		return ob_get_clean();
+	}
 }

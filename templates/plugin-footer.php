@@ -1,4 +1,12 @@
 <?php
-if ( ! defined( 'ABSPATH' ) ) exit;
+/**
+ * Plugin footer template.
+ *
+ * @package OrbemStudio
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
 
 wp_footer();

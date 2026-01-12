@@ -1,5 +1,17 @@
-<?php if ( ! defined( 'ABSPATH' ) ) exit; ?>
+<?php
+/**
+ * Wall builder template.
+ *
+ * @package OrbemStudio
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;} ?>
+
+/**
+ * Wall builder template.
+ */
 
 <div class="wallbuilder-container">
-    <span id="engage-wallbuilder"><img alt="wall builder" width="60" src="<?php echo esc_url(plugin_dir_url(__FILE__)); ?>../../assets/src/images/wall-icon.svg"/></span>
+	<span id="engage-wallbuilder"><img alt="wall builder" width="60" src="<?php echo esc_url( plugin_dir_url( __FILE__ ) ); ?>../../assets/src/images/wall-icon.svg"/></span>
 </div>

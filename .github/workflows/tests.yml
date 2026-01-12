@@ -1,0 +1,46 @@
+name: Run Tests
+
+on:
+  push:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.1"
+          tools: composer:v2
+
+      - name: Cache WordPress environment
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.wp-env
+            ~/.local/share/wp-env
+            /tmp/local-wp-env
+          key: wp-env-${{ runner.os }}-${{ hashFiles('.wp-env.json', 'package.json', 'package-lock.json') }}
+          restore-keys: |
+            wp-env-${{ runner.os }}-
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Start WordPress environment
+        run: npm run env:start
+
+      - name: Install Composer dependencies
+        run: npm run composer install
+
+      - name: Run tests
+        run: npm run test -- --testdox
