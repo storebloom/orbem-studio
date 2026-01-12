@@ -1,198 +1,226 @@
 import '../sass/admin.scss';
 
 document.addEventListener('DOMContentLoaded', function () {
-    "use strict";
-    // Repeater field functionality.
-    const repeaterContainers = document.querySelectorAll('.repeater-container');
+	'use strict';
+	// Repeater field functionality.
+	const repeaterContainers = document.querySelectorAll('.repeater-container');
 
-    if (repeaterContainers) {
-        repeaterContainers.forEach(repeaterContainer => {
-            const containerWrap = repeaterContainer.querySelector('.field-container-wrap');
-            const addField = repeaterContainer.querySelector('.add-field');
-            const removeFields = containerWrap.querySelectorAll('.remove-field');
+	if (repeaterContainers) {
+		repeaterContainers.forEach((repeaterContainer) => {
+			const containerWrap = repeaterContainer.querySelector(
+				'.field-container-wrap'
+			);
+			const addField = repeaterContainer.querySelector('.add-field');
+			const removeFields =
+				containerWrap.querySelectorAll('.remove-field');
 
-            // Remove field.
-            if (removeFields) {
-                removeFields.forEach(removingField => {
-                    removeField(removingField, repeaterContainer);
-                });
-            }
+			// Remove field.
+			if (removeFields) {
+				removeFields.forEach((removingField) => {
+					removeField(removingField, repeaterContainer);
+				});
+			}
 
-            // Add new field.
-            if (addField) {
-                addField.addEventListener('click', () => {
-                    const fieldContainers = repeaterContainer.querySelectorAll('.field-container');
-                    const newField = fieldContainers[0].cloneNode(true);
-                    const newFields = newField.querySelectorAll('[name]');
-                    const fieldIndex = fieldContainers.length;
+			// Add new field.
+			if (addField) {
+				addField.addEventListener('click', () => {
+					const fieldContainers =
+						repeaterContainer.querySelectorAll('.field-container');
+					const newField = fieldContainers[0].cloneNode(true);
+					const newFields = newField.querySelectorAll('[name]');
+					const fieldIndex = fieldContainers.length;
 
-                    if (newFields) {
-                        newFields.forEach( newFielder => {
-                            newFielder.name = newFielder.name.replaceAll('0', fieldIndex);
-                            newFielder.id = newFielder.id.replaceAll('0', fieldIndex);
-                        });
-                    }
+					if (newFields) {
+						newFields.forEach((newFielder) => {
+							newFielder.name = newFielder.name.replaceAll(
+								'0',
+								fieldIndex
+							);
+							newFielder.id = newFielder.id.replaceAll(
+								'0',
+								fieldIndex
+							);
+						});
+					}
 
-                    newField.querySelector('.container-index').textContent = fieldIndex;
-                    containerWrap.appendChild(newField);
-                    const newestRemove = newField.querySelector('.remove-field');
+					newField.querySelector('.container-index').textContent =
+						fieldIndex;
+					containerWrap.appendChild(newField);
+					const newestRemove =
+						newField.querySelector('.remove-field');
 
-                    // For upload fields.
-                    const uploadImageButton = newField.querySelector('.upload_image_button');
-                    const removeImageButton = newField.querySelector('.remove_image_button');
+					// For upload fields.
+					const uploadImageButton = newField.querySelector(
+						'.upload_image_button'
+					);
+					const removeImageButton = newField.querySelector(
+						'.remove_image_button'
+					);
 
-                    if (uploadImageButton && removeImageButton) {
-                        window.initExploreUploadButton(uploadImageButton);
-                        window.initExploreRemoveButton(removeImageButton);
-                    }
+					if (uploadImageButton && removeImageButton) {
+						window.initExploreUploadButton(uploadImageButton);
+						window.initExploreRemoveButton(removeImageButton);
+					}
 
-                    removeField(newestRemove, repeaterContainer);
-                });
-            }
-        });
-    }
+					removeField(newestRemove, repeaterContainer);
+				});
+			}
+		});
+	}
 
-    function removeField(removeField, repeaterContainer) {
-        const fieldContainers = repeaterContainer.querySelectorAll('.field-container');
+	function removeField(removeField, repeaterContainer) {
+		const fieldContainers =
+			repeaterContainer.querySelectorAll('.field-container');
 
-        removeField.addEventListener('click', () => {
-            const closestContainer = removeField.closest('.field-container');
+		removeField.addEventListener('click', () => {
+			const closestContainer = removeField.closest('.field-container');
 
-            // Remove.
-            closestContainer.remove();
+			// Remove.
+			closestContainer.remove();
 
-            if (closestContainer) {
-                // Reset Indexes.
-                const fieldContainersNew = repeaterContainer.querySelectorAll('.field-container');
+			if (closestContainer) {
+				// Reset Indexes.
+				const fieldContainersNew =
+					repeaterContainer.querySelectorAll('.field-container');
 
-                if (fieldContainers) {
+				if (fieldContainers) {
+					fieldContainersNew.forEach((fieldContainer, index) => {
+						const fcInputs =
+							fieldContainer.querySelectorAll('input');
+						const containerIndex =
+							fieldContainer.querySelector('.container-index');
+						const oldIndex = containerIndex.textContent;
 
-                    fieldContainersNew.forEach((fieldContainer, index) => {
-                        const fcInputs = fieldContainer.querySelectorAll('input');
-                        const containerIndex = fieldContainer.querySelector('.container-index');
-                        const oldIndex = containerIndex.textContent;
+						if (containerIndex) {
+							containerIndex.textContent = index;
+						}
 
-                        if (containerIndex) {
-                            containerIndex.textContent = index;
-                        }
+						fcInputs.forEach((fcInput) => {
+							const firstInputName = fcInput.id.replace(
+								oldIndex,
+								index
+							);
+							fcInput.setAttribute('data-index', index);
+							fcInput.id = firstInputName;
+							fcInput.setAttribute('name', firstInputName);
+						});
+					});
+				}
+			}
+		});
+	}
 
-                        fcInputs.forEach(fcInput => {
-                            const firstInputName = fcInput.id.replace(oldIndex, index);
-                            fcInput.setAttribute('data-index', index);
-                            fcInput.id = firstInputName;
-                            fcInput.setAttribute('name', firstInputName);
-                        });
-                    });
-                }
-            }
-        });
-    }
+	const colorFields = document.querySelectorAll('.explore-color-field');
+	if (!colorFields) {
+		return;
+	}
 
-    const colorFields = document.querySelectorAll('.explore-color-field');
-    if (!colorFields) {
-        return;
-    }
+	colorFields.forEach((field) => {
+		const iris = jQuery(field).iris({
+			// jQuery required one time or else I have to build a color picker.
+			defaultColor: field.dataset.defaultColor,
+			change(event, ui) {
+				field.value = ui.color.toString();
+			},
+		});
 
-    colorFields.forEach(field => {
-        const iris = jQuery(field).iris({ // jQuery required one time or else I have to build a color picker.
-            defaultColor: field.dataset.defaultColor,
-            change: function(event, ui) {
-                field.value = ui.color.toString();
-            }
-        });
+		// Hide Iris UI until user clicks the input
+		const irisContainer = field.parentNode.querySelector('.iris-picker');
+		irisContainer.style.display = 'none';
 
-        // Hide Iris UI until user clicks the input
-        const irisContainer = field.parentNode.querySelector('.iris-picker');
-        irisContainer.style.display = 'none';
+		field.addEventListener('focus', () => {
+			irisContainer.style.display = 'block';
+		});
 
-        field.addEventListener('focus', () => {
-            irisContainer.style.display = 'block';
-        });
+		document.addEventListener('click', (e) => {
+			if (
+				!field.contains(e.target) &&
+				!irisContainer.contains(e.target)
+			) {
+				irisContainer.style.display = 'none';
+			}
+		});
+	});
 
-        document.addEventListener('click', (e) => {
-            if (!field.contains(e.target) && !irisContainer.contains(e.target)) {
-                irisContainer.style.display = 'none';
-            }
-        });
-    });
+	// Required field check.
+	const publishButtons = document.querySelectorAll(
+		'#publish, .editor-post-publish-button, .editor-post-update-button'
+	);
 
-    // Required field check.
-    const publishButtons = document.querySelectorAll(
-        '#publish, .editor-post-publish-button, .editor-post-update-button'
-    );
+	if (!publishButtons.length) {
+		return;
+	}
 
-    if (!publishButtons.length) {
-        return;
-    }
+	function isFieldInvalid(field) {
+		if (field.disabled || field.offsetParent === null) {
+			return false;
+		}
 
-    function isFieldInvalid(field) {
-        if (field.disabled || field.offsetParent === null) {
-            return false;
-        }
+		const tag = field.tagName.toLowerCase();
+		const value = field.value;
 
-        const tag = field.tagName.toLowerCase();
-        const value = field.value;
+		if (tag === 'select') {
+			return !value || value === 'none';
+		}
 
-        if (tag === 'select') {
-            return !value || value === 'none';
-        }
+		if (tag === 'input' || tag === 'textarea') {
+			return !value || value === 0 || value === '' || value === '0';
+		}
 
-        if (tag === 'input' || tag === 'textarea') {
-            return !value || value === 0 || value === '' || value === '0';
-        }
+		return false;
+	}
 
-        return false;
-    }
+	function validateRequiredFields(event) {
+		const requiredFields = document.querySelectorAll('[required]');
+		let firstInvalid = null;
+		let hasErrors = false;
 
-    function validateRequiredFields(event) {
-        let requiredFields = document.querySelectorAll('[required]');
-        let firstInvalid = null;
-        let hasErrors = false;
+		// Clear previous errors
+		if (requiredFields) {
+			requiredFields.forEach((requiredField) => {
+				requiredField.classList.remove('orbem-studio-error');
+			});
+		}
 
-        // Clear previous errors
-        if (requiredFields) {
-            requiredFields.forEach( requiredField => {
-                requiredField.classList.remove('orbem-studio-error');
-            } );
-        }
+		if (requiredFields) {
+			requiredFields.forEach((requiredField) => {
+				const field = requiredField;
 
-        if (requiredFields) {
-            requiredFields.forEach( requiredField => {
-                const field = requiredField;
+				if (isFieldInvalid(field)) {
+					field.classList.add('orbem-studio-error');
 
-                if (isFieldInvalid(field)) {
-                    field.classList.add('orbem-studio-error');
+					if (!firstInvalid) {
+						firstInvalid = field;
+					}
 
-                    if (!firstInvalid) {
-                        firstInvalid = field;
-                    }
+					hasErrors = true;
+				}
+			});
+		}
 
-                    hasErrors = true;
-                }
-            } )
-        }
+		if (hasErrors) {
+			event.preventDefault();
+			event.stopPropagation();
 
-        if (hasErrors) {
-            event.preventDefault();
-            event.stopPropagation();
+			alert(
+				'There is one or more required fields that need attending to.'
+			);
 
-            alert('There is one or more required fields that need attending to.');
+			if (firstInvalid) {
+				firstInvalid.scrollIntoView({
+					behavior: 'smooth',
+					block: 'center',
+				});
+				firstInvalid.focus();
+			}
 
-            if (firstInvalid) {
-                firstInvalid.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'center'
-                });
-                firstInvalid.focus();
-            }
+			return false;
+		}
 
-            return false;
-        }
+		return true;
+	}
 
-        return true;
-    }
-
-    for (let k = 0; k < publishButtons.length; k++) {
-        publishButtons[k].addEventListener('click', validateRequiredFields);
-    }
+	for (let k = 0; k < publishButtons.length; k++) {
+		publishButtons[k].addEventListener('click', validateRequiredFields);
+	}
 });
