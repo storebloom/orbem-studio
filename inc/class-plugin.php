@@ -99,6 +99,7 @@ class Plugin extends Plugin_Base {
     {
         if (true === current_user_can('manage_options') && (str_starts_with(get_post_type(), 'explore-')) || 'toplevel_page_orbem-studio' === get_current_screen()->base) {
             self::enqueueScript('orbem-order/admin');
+            self::enqueueScript('orbem-order/required');
             self::enqueueStyle('orbem-order/admin');
             self::enqueueScript('orbem-order/image-upload');
             wp_enqueue_media();
@@ -424,11 +425,15 @@ class Plugin extends Plugin_Base {
     /**
      * Detect when explore_game_page option is saved.
      *
-     * @action update_option_explore_game_page
+     * @action admin_init
      */
     public function saveGamePageOption(): void
     {
         // Mark tutorial complete.
-        update_option( 'orbem_studio_setup_triggered', 'false' );
+        $game_page = get_option('explore_game_page', '');
+
+        if (false === empty($game_page)) {
+            update_option( 'orbem_studio_setup_triggered', 'false' );
+        }
     }
 }

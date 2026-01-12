@@ -240,6 +240,28 @@ class Meta_Box {
                     ],
                 ],
 
+                'Player Entry Position' => [
+                    'explore-start-top-required' => [
+                        'number',
+                        'The vertical (top) position where the player character will appear when entering this area.'
+                    ],
+                    'explore-start-left-required' => [
+                        'number',
+                        'The horizontal (left) position where the player character will appear when entering this area.'
+                    ],
+                    'explore-start-direction' => [
+                        [
+                            'select' => [
+                                'up',
+                                'down',
+                                'left',
+                                'right'
+                            ]
+                        ],
+                        'The direction the character will be facing when they enter this area.'
+                    ],
+                ],
+
                 'Area Flow & Behavior' => [
                     'explore-is-cutscene' => [
                         [
@@ -274,28 +296,6 @@ class Meta_Box {
                     'explore-width' => [
                         'number',
                         'The width of the trigger area.'
-                    ],
-                ],
-
-                'Player Entry Position' => [
-                    'explore-start-top-required' => [
-                        'number',
-                        'The vertical (top) position where the player character will appear when entering this area.'
-                    ],
-                    'explore-start-left-required' => [
-                        'number',
-                        'The horizontal (left) position where the player character will appear when entering this area.'
-                    ],
-                    'explore-start-direction' => [
-                        [
-                            'select' => [
-                                'up',
-                                'down',
-                                'left',
-                                'right'
-                            ]
-                        ],
-                        'The direction the character will be facing when they enter this area.'
                     ],
                 ],
 
@@ -369,7 +369,6 @@ class Meta_Box {
                         'The width of this wall.'
                     ],
                 ],
-
             ],
             'explore-mission' => [
 

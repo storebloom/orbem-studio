@@ -63,8 +63,9 @@ $orbem_studio_allowed_tags['option'] = [
         <div class="grouped-meta-data">
             <h2><?php echo esc_html($orbem_studio_label_key); ?></h2>
             <?php foreach($orbem_studio_meta_data_data as $orbem_studio_key => $orbem_studio_value):
-            $orbem_studio_is_required = str_contains($orbem_studio_key, '-required');
-            $orbem_studio_key = str_replace('-required', '', $orbem_studio_key); // Remove required flag.
+            $orbem_studio_is_required           = str_contains($orbem_studio_key, '-required');
+            $orbem_studio_key_with_required     = $orbem_studio_key;
+            $orbem_studio_key                   = str_replace('-required', '', $orbem_studio_key); // Remove required flag.
             $orbem_studio_character_image_class = true === str_contains($orbem_studio_key, 'character-images') || true === str_contains($orbem_studio_key, 'weapon-images') ? ' character-images-wrapper' : '';
             ?>
             <h3>
@@ -78,8 +79,6 @@ $orbem_studio_allowed_tags['option'] = [
                 <?php foreach($orbem_studio_value[0] as $orbem_studio_sub_key => $orbem_studio_sub_value): ?>
 
                     <?php if (false === is_array($orbem_studio_sub_value) || true === in_array($orbem_studio_sub_key, ['select', 'radio', 'repeater', 'multiselect'])) :
-                        $orbem_studio_sub_key = str_replace('-required', '', $orbem_studio_sub_key); // Remove required flag.
-
                         if (false === in_array($orbem_studio_sub_key, ['select', 'radio', 'repeater', 'multiselect'])) : ?>
                                 <?php echo wp_kses(Meta_Box::getMetaHtml($orbem_studio_sub_key, $orbem_studio_sub_value, $orbem_studio_values, $orbem_studio_key, false, false, $orbem_studio_is_required), $orbem_studio_allowed_tags); ?>
                         <?php elseif ('repeater' !== $orbem_studio_sub_key) :?>
@@ -93,6 +92,7 @@ $orbem_studio_allowed_tags['option'] = [
                         foreach($orbem_studio_sub_value as $orbem_studio_sub_value_key_1 => $orbem_studio_sub_value_value_1):?>
                             <?php if (false === in_array($orbem_studio_sub_value_key_1, ['select', 'radio', 'repeater', 'multiselect'])) : ?>
                                 <?php
+                                $orbem_studio_is_required     = str_contains($orbem_studio_sub_value_key_1, '-required');
                                 $orbem_studio_sub_value_key_1 = str_replace('-required', '', $orbem_studio_sub_value_key_1); // Remove required flag.
                                 echo wp_kses(Meta_Box::getMetaHtml($orbem_studio_sub_value_key_1, $orbem_studio_sub_value_value_1, $orbem_studio_values, $orbem_studio_key, false, false, $orbem_studio_is_required), $orbem_studio_allowed_tags); ?>
                             <?php elseif ('repeater' !== $orbem_studio_sub_value_key_1) : ?>
@@ -108,7 +108,7 @@ $orbem_studio_allowed_tags['option'] = [
                 </div>
             <?php endif; ?>
             <?php
-                if (array_search($orbem_studio_key, array_keys($orbem_studio_meta_data_data)) < (count($orbem_studio_meta_data_data) - 1 )) : ?>
+                if (array_search($orbem_studio_key_with_required, array_keys($orbem_studio_meta_data_data)) < (count($orbem_studio_meta_data_data) - 1 )) : ?>
                 <hr>
             <?php endif; ?>
             <?php endforeach; ?>
