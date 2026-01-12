@@ -10,6 +10,7 @@
 assets/src/js/*
 assets/src/sass/*
 CONTRIBUTING.md
+docs/AGENTS.md
 node_modules/*
 package-lock.json
 package.json
