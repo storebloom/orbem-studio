@@ -16,7 +16,7 @@ if (false === $orbem_studio_first_area) {
     return;
 }
 
-$orbem_studio_allowed_tags = wp_kses_allowed_html( 'post' );
+$orbem_studio_allowed_tags = wp_kses_allowed_html('post');
 
 $orbem_studio_allowed_tags['svg'] = [
     'class'           => true,

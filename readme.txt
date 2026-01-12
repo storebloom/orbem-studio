@@ -5,7 +5,7 @@ Tags: game engine, rpg, storytelling, gamification, narrative game
 Requires at least: 6.1
 Tested up to: 6.9
 Requires PHP: 8.1
-Stable tag: 1.0.2
+Stable tag: 1.0.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -165,7 +165,16 @@ This is configurable. You can require login or allow guest gameplay depending on
 = Is Orbem Studio extensible? =
 Yes. All systems are designed to be extended using WordPress hooks, filters, and custom metadata.
 
+= Where can I find documentation for Orbem Studio? =
+We have extensive documentation at https://orbemorder.com/orbem-studio/docs/readme. Tutorials can be found on our channel at https://youtube.com/@orbemorder.
+
 == Changelog ==
+
+= 1.0.3 =
+* Add required field logic.
+* Add field groups in post types.
+* Update label messages for clarity.
+* Limit admin assets
 
 = 1.0.2 =
 * Fix activation tutorial.

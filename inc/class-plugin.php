@@ -97,7 +97,7 @@ class Plugin extends Plugin_Base {
 	 */
 	public function enqueueAdminAssets(): void
     {
-        if (true === current_user_can('manage_options')) {
+        if (true === current_user_can('manage_options') && (str_starts_with(get_post_type(), 'explore-')) || 'toplevel_page_orbem-studio' === get_current_screen()->base) {
             self::enqueueScript('orbem-order/admin');
             self::enqueueStyle('orbem-order/admin');
             self::enqueueScript('orbem-order/image-upload');

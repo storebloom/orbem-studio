@@ -1,11 +1,12 @@
 {
   "name": "orbem-studio",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Dependencies for Orbem Studio plugin",
   "devDependencies": {
     "@wordpress/scripts": "^30.15.0",
     "dotenv": "^16.5.0",
-    "prettier": "^3.5.3"
+    "prettier": "^3.5.3",
+    "regenerator-transform": "^0.15.2"
   },
   "scripts": {
     "build": "wp-scripts build assets/src/js/*.js --output-path=assets/build/",

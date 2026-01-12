@@ -1690,11 +1690,6 @@ class Explore
                         $html .= '<video style="position:absolute;z-index: 1;width: 100%;height:100%;top:0; left:0;" src="' . esc_url($video_override) . '" autoplay loop muted></video>';
                     }
 
-                    // Sign.
-                    if ('explore-sign' === $explore_point->post_type) {
-                        $html .= '<img src="' . esc_url($item_image) . '" class="sign-image" />';
-                    }
-
                     // Raw content for game engine; do not apply WordPress filters.
                     $html .= true === in_array($explore_point->post_type, ['explore-character', 'explore-sign'], true) ? wp_kses_post($explore_point->post_content) : '';
 
@@ -3087,7 +3082,7 @@ class Explore
         // Explore map points
         if (is_array($explore_points)) {
             foreach ($explore_points as $point) {
-                if (! isset($point->ID) || ! get_post($point->ID) || 'explore-character' == $point->post_type) {
+                if (! isset($point->ID) || ! get_post($point->ID) || 'explore-character' === $point->post_type) {
                     continue;
                 }
 
@@ -3104,7 +3099,7 @@ class Explore
                     left: " . esc_attr($left) . ";
                     " . ($height !== '0px' ? 'height:' . esc_attr($height) . ';' : '') . "
                     " . ($width !== '0px' ? 'width:' . esc_attr($width) . ';' : '') . "
-                    " . (! empty($bg_url) ? "background: url('" . esc_url($bg_url) . "') no-repeat; background-size: cover;" : '') . "
+                    " . (! empty($bg_url) ? "background: url('" . esc_url($bg_url) . "') no-repeat; background-size: contain;" : '') . "
                 }
                 ";
             }
