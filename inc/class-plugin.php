@@ -436,4 +436,15 @@ class Plugin extends Plugin_Base {
             update_option( 'orbem_studio_setup_triggered', 'false' );
         }
     }
+
+    /**
+     * Remove image scaling to allow users to upload large maps.
+     * @filter big_image_size_threshold
+     * @return false
+     */
+    public function disableImageScaling()
+    {
+        // Correct way to disable scaling
+        return false;
+    }
 }

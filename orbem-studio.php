@@ -5,14 +5,14 @@ if ( ! defined( 'ABSPATH' ) ) exit;
  * Plugin Name: Orbem Studio
  * Plugin URI: https://orbem.studio/
  * Description: Build your own RPG video game using the power of WordPress
- * Version: 1.0.4
+ * Version: 1.0.5
  * Author: orbemorder
  * Author URI: https://orbemorder.com/
  * Text Domain: orbem-studio
  * Domain Path: /languages
  * License: GPL v2 or later
  *
- * Copyright 2025 Orbem Order
+ * Copyright 2026 Orbem Order
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,7 +30,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 /**
  * Plugin version constant.
  */
-const ORBEM_STUDIO_VERSION = '1.0.4';
+const ORBEM_STUDIO_VERSION = '1.0.5';
 
 if (version_compare(phpversion(), '8.1.0', '>=')) {
 	require_once __DIR__ . '/instance.php';

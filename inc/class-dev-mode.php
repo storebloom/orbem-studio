@@ -310,10 +310,15 @@ class Dev_Mode
         unset($post_values['featured-image']);
         unset($post_values['title']);
 
-        $allowed_meta_keys = array_keys($this->meta_box->getMetaData($post_type));
+        $allowed_meta_keys       = $this->meta_box->getMetaData($post_type);
+        $allowed_meta_keys_array = [];
 
         foreach ($post_values as $key => $value) {
-            if (in_array($key, $allowed_meta_keys, true)) {
+            foreach ($allowed_meta_keys as $allowed_meta_value) {
+                $allowed_meta_keys_array[] = str_replace('-required' , '', array_keys($allowed_meta_value));
+            }
+
+            if (in_array($key, array_merge(...$allowed_meta_keys_array), true)) {
                 update_post_meta($post_id, $key, wp_unslash($value));
             }
         }

@@ -1810,7 +1810,7 @@ class Explore
                         $html .= '<div class="materialize-item-trigger wp-block-group map-item ' . esc_attr($explore_point->post_name) . '-materialize-item-map-item is-layout-flow wp-block-group-is-layout-flow" data-type="point" data-value="0"';
                         $html .= ' data-meta="explore-materialize-item-trigger"';
                         $html .= ' style="z-index:0;left:' . esc_attr($materialize_item_left) . 'px;top:' . esc_attr($materialize_item_top) . 'px;height:' . esc_attr($materialize_item_height) . 'px; width:' . esc_attr($materialize_item_width) . 'px;"';
-                        $html .= '">';
+                        $html .= '>';
                         $html .= '</div>';
                     }
                 }
