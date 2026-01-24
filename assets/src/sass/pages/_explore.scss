@@ -15,6 +15,7 @@ html {
 
     #select-level {
       position: fixed;
+      top: 2rem;
       z-index: 99;
     }
 
@@ -30,6 +31,7 @@ html {
       position: fixed;
       top: 0;
       max-width: 100%;
+      width: 100%;
 
       .level-option {
         display: flex;
@@ -982,6 +984,10 @@ html {
         position: fixed;
         top: 1rem;
         z-index: 6;
+
+        &.empty {
+          display: none;
+        }
 
         .point-bar {
           border: #2b2b2b 1px solid;

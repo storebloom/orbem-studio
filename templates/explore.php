@@ -211,7 +211,13 @@ include plugin_dir_path(__FILE__) . 'plugin-header.php';
         <?php if ((false === empty($orbem_studio_explore_area_map) && false !== stripos($orbem_studio_explore_area_map, '.webm')) || (false === empty($orbem_studio_explore_area_map) && false !== stripos($orbem_studio_explore_area_map, '.mp4'))): ?>
             <video style="position:absolute;z-index: 1;width: 100%;height:100%;top:0; left:0;" src="<?php echo esc_attr($orbem_studio_explore_area_map); ?>" autoplay loop muted></video>
         <?php endif; ?>
-        <div id="explore-points">
+        <div id="explore-points<?php echo false === in_array('on', [
+            $orbem_studio_health_bar,
+            $orbem_studio_mana_bar,
+            $orbem_studio_power_bar,
+            $orbem_studio_money_bar,
+            $orbem_studio_points_bar
+        ]) && true === empty($orbem_studio_explore_missions) ? ' empty' : ''; ?>">
             <?php if ('on' === $orbem_studio_health_bar) : ?>
                 <div class="health-amount point-bar" data-type="health" data-amount="<?php echo esc_attr($orbem_studio_health + ($orbem_studio_point_widths['health'] - 100)); ?>" style="width: <?php echo isset($orbem_studio_point_widths['health']) ? esc_attr($orbem_studio_point_widths['health']) : 100; ?>px;"><div class="gauge"></div></div>
             <?php endif; ?>

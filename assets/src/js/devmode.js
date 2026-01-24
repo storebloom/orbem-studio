@@ -211,7 +211,7 @@ export function engageDevMode() {
 				devModeMenu.classList.toggle('engage');
 				devmodeMenuToggle.classList.toggle('engage');
 				const triggers = document.querySelectorAll(
-					'.explainer-container, [data-genre="explore-wall"], [data-trigger="true"], [data-genre="explore-area"], [data-genre="blockade"]'
+					'.explainer-container, .materialize-item-trigger, [data-genre="explore-wall"], [data-trigger="true"], [data-genre="explore-area"], [data-genre="blockade"]'
 				);
 
 				if (devModeMenu.classList.contains('engage')) {
