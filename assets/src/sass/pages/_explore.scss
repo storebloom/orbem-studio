@@ -631,6 +631,12 @@ html {
       }
     }
 
+    .dev-mode-menu-toggle {
+      background: #ffffff47;
+      padding: .5rem;
+      border-radius: 6px;
+    }
+
     .dev-mode-menu {
       display: none;
 
@@ -822,8 +828,11 @@ html {
         }
       }
       .pinpoint-container {
+        background: #ffffff47;
+        border-radius: 6px;
         bottom: 13rem;
         left: 1rem;
+        padding: 0 .5rem .5rem;
         position: fixed;
         z-index: 9;
 

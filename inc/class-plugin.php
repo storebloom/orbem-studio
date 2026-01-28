@@ -25,14 +25,17 @@ class Plugin extends Plugin_Base {
      * @var Explore
      */
     public Explore $explore;
+    private Telemetry $telemetry;
 
-	/**
+    /**
 	 * Plugin constructor.
 	 */
 	public function __construct() {
 		parent::__construct();
 
-        $meta_box = new Meta_Box( $this );
+        $meta_box  = new Meta_Box( $this );
+        $telemetry = new Telemetry( $this );
+        $this->telemetry = $telemetry;
 
 		// Initiate classes.
 		$classes = array(
@@ -40,7 +43,8 @@ class Plugin extends Plugin_Base {
 			new Explore( $this ),
             $meta_box,
             new Dev_Mode( $this, $meta_box ),
-            new Menu( $this )
+            new Menu( $this, $telemetry ),
+            $telemetry
 		);
 
 		// Add classes doc hooks.
@@ -53,6 +57,11 @@ class Plugin extends Plugin_Base {
             $this->dir_path . '/orbem-studio.php',
             [$this, 'activateOrbemStudio']
         );
+
+        register_deactivation_hook(
+            $this->dir_path . '/orbem-studio.php',
+            [$this, 'deactivateOrbemStudio']
+        );
 	}
 
     /**
@@ -64,7 +73,27 @@ class Plugin extends Plugin_Base {
 
         if ('false' === $setup_triggered) {
             update_option('orbem_studio_setup_triggered', 'true');
+
+            // Tag game site.
+            if (!get_option('orbem_install_id')) {
+                update_option('orbem_install_id', wp_generate_uuid4());
+            }
         }
+    }
+
+    /**
+     * Remove all global options on deactivate.
+     */
+    public function deactivateOrbemStudio(): void
+    {
+        $options = Menu::getGameOptionSettings();
+
+        foreach(array_keys($options) as $option) {
+            delete_option($option);
+        }
+
+        // Setup data.
+        delete_option('explore_setup');
     }
 
     /**
@@ -303,6 +332,11 @@ class Plugin extends Plugin_Base {
         $page = get_queried_object();
 
         if (false === empty($game_page) && false === empty($page->post_name) && $page instanceof \WP_Post && $game_page === $page->post_name) {
+            $this->telemetry->orbemTlmEventOnce('game_play_viewed', [
+                'play_page_id' => get_queried_object_id(),
+                'has_game_data' => true,
+            ], 'install');
+
             return plugin_dir_path(__FILE__) . '../templates/explore.php';
         }
 

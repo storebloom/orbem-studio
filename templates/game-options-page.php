@@ -1,11 +1,12 @@
 <?php
+
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 /**
  * This is the game options menu.
+ *
+ * @var $orbem_studio_setup_triggered
  */
-
-$orbem_studio_setup_triggered = get_option('orbem_studio_setup_triggered', 'false');
 
 if ('false' !== $orbem_studio_setup_triggered) {
     include $this->plugin->dir_path . '/templates/setup.php';
