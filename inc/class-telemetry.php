@@ -95,10 +95,15 @@ class Telemetry
             return;
         }
 
-        $sig = hash_hmac('sha256', $install_id . "\n" . $body, ORBEM_TLM_SECRET);
+        $sig            = hash_hmac('sha256', $install_id . "\n" . $body, ORBEM_TLM_SECRET);
+        $orbem_endpoint = defined('ORBEM_TLM_ENDPOINT') ? ORBEM_TLM_ENDPOINT : '';
+
+        if (empty($orbem_endpoint)) {
+            return;
+        }
 
         // Send.
-        wp_remote_post(defined('ORBEM_TLM_ENDPOINT') ? ORBEM_TLM_ENDPOINT : '', [
+        wp_remote_post($orbem_endpoint, [
             'timeout' => 2,
             'blocking' => false,
             'headers' => [

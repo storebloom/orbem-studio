@@ -1,6 +1,6 @@
-import { initImageUpload } from './image-upload';
-
 document.addEventListener('DOMContentLoaded', function () {
+    "use strict";
+
 	const tutorialStep = document.querySelector(
 		'.tutorial-step[data-step="3"]'
 	);
@@ -102,6 +102,10 @@ document.addEventListener('DOMContentLoaded', function () {
 		}
 	}
 
+    /**
+     * Choose which type of wizard setup to use.
+     * @param type
+     */
     function chooseSetupType(type)
     {
         const filehref = `${OrbemOrder.siteRESTURL}/choose-setup-type/`;

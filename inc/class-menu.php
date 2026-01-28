@@ -61,9 +61,15 @@ class Menu
      */
     public function chooseSetupTypes(\WP_REST_Request $request): \WP_REST_Response
     {
+        $accepted_types = [
+            'generate',
+            'manual',
+            'page'
+        ];
+
         // Get request data.
         $data   = $request->get_json_params();
-        $type   = isset($data['type']) ? sanitize_text_field($data['type']) : '';
+        $type   = isset($data['type']) && true === in_array($data['type'], $accepted_types, true) ? sanitize_text_field($data['type']) : '';
 
         if ('' === $type) {
             return rest_ensure_response([
@@ -386,10 +392,14 @@ class Menu
             return false;
         }
 
-        // Copy to temp file for WP upload handlers
+        // Copy to temp file for WP upload handler.
         $tmp = wp_tempnam(basename($asset_url));
-        if (!$tmp || !copy($asset_url, $tmp)) {
-            if ($tmp) wp_delete_file($tmp);
+        if (!$tmp) {
+            return false;
+        }
+
+        if (!copy($asset_url, $tmp)) {
+            wp_delete_file($tmp);
             return false;
         }
 

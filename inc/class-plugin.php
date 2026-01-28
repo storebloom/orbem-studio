@@ -57,11 +57,6 @@ class Plugin extends Plugin_Base {
             $this->dir_path . '/orbem-studio.php',
             [$this, 'activateOrbemStudio']
         );
-
-        register_deactivation_hook(
-            $this->dir_path . '/orbem-studio.php',
-            [$this, 'deactivateOrbemStudio']
-        );
 	}
 
     /**
@@ -79,21 +74,6 @@ class Plugin extends Plugin_Base {
                 update_option('orbem_install_id', wp_generate_uuid4());
             }
         }
-    }
-
-    /**
-     * Remove all global options on deactivate.
-     */
-    public function deactivateOrbemStudio(): void
-    {
-        $options = Menu::getGameOptionSettings();
-
-        foreach(array_keys($options) as $option) {
-            delete_option($option);
-        }
-
-        // Setup data.
-        delete_option('explore_setup');
     }
 
     /**
