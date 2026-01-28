@@ -23,6 +23,25 @@
     top: 0;
     width: 100%;
 
+    h3 {
+      margin-bottom: .5rem;
+      margin-top: 0;
+    }
+
+    .choose-setup-type-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      max-width: 700px;
+    }
+
+    button {
+      cursor: pointer;
+      margin-bottom: .5rem;
+      margin-top: 2rem;
+      width: 100%;
+    }
+
     &.hide-overlay {
       background: white;
       border: 5px solid #0ff;
@@ -57,6 +76,30 @@
 
         &.engage {
           display: block;
+        }
+      }
+
+      .game-generating {
+        display: none;
+
+        &.engage {
+          display: block;
+        }
+
+        &-load {
+          display: none;
+
+          &.engage {
+            display: block;
+          }
+        }
+
+        &-finished {
+          display: none;
+
+          &.engage {
+            display: block;
+          }
         }
       }
     }

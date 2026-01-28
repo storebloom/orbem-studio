@@ -21,15 +21,402 @@ class Menu
      * @var object
      */
     public object $plugin;
+    private object $telemetry;
 
     /**
      * Class constructor.
      *
      * @param object $plugin Plugin class.
+     * @param object $telemetry Telemetry class.
      */
-    public function __construct(object $plugin)
+    public function __construct(object $plugin, object $telemetry)
     {
-        $this->plugin = $plugin;
+        $this->plugin    = $plugin;
+        $this->telemetry = $telemetry;
+    }
+
+    /**
+     * Register API field.
+     *
+     * @action rest_api_init
+     */
+    public function addRestRoutes(): void
+    {
+        $permission_callback = function () {
+            return current_user_can('read');
+        };
+        $namespace = 'orbemorder/v1';
+
+        register_rest_route($namespace, '/choose-setup-type/', [
+            'methods'             => 'POST',
+            'callback'            => [$this, 'chooseSetupTypes'],
+            'permission_callback' => $permission_callback
+        ]);
+    }
+
+    /**
+     * Call back function for rest route that saves the setup type choice and creates game if generate type chosen.
+     * @param \WP_REST_Request $request
+     * @return \WP_REST_Response
+     */
+    public function chooseSetupTypes(\WP_REST_Request $request): \WP_REST_Response
+    {
+        $accepted_types = [
+            'generate',
+            'manual',
+            'page'
+        ];
+
+        // Get request data.
+        $data   = $request->get_json_params();
+        $type   = isset($data['type']) && true === in_array($data['type'], $accepted_types, true) ? sanitize_text_field($data['type']) : '';
+
+        if ('' === $type) {
+            return rest_ensure_response([
+                'success' => false,
+                'data'    => esc_html__('Invalid request data', 'orbem-studio'),
+            ]);
+        }
+
+        if ('generate' === $type) {
+            // Generate the starter area.
+            $this->generateStarterGame(
+                'explore-area',
+                [
+                    'title' => 'Rovanar forest',
+                    'meta'  => [
+                        'explore-map'        => $this->plugin->dir_url . '/assets/src/images/starter-game/Rovanar_Forest.jpg',
+                        'explore-start-top'  => 2900,
+                        'explore-start-left' => 2276,
+                    ]
+                ]
+            );
+            update_option('explore_first_area', 'rovanar-forest');
+
+            // Generate the starter character.
+            $this->generateStarterGame(
+                'explore-character',
+                [
+                    'title' => 'Trek',
+                    'meta'  => [
+                        'explore-area'   => 'rovanar-forest',
+                        'explore-height' => 185,
+                        'explore-width'  => 114,
+                        'explore-character-images' => [
+                            'static'       => $this->plugin->dir_url . '/assets/src/images/starter-game/trek-static.png',
+                            'static-down'  => $this->plugin->dir_url . '/assets/src/images/starter-game/trek-static.png',
+                            'static-up'    => $this->plugin->dir_url . '/assets/src/images/starter-game/trek-static-up.png',
+                            'static-left'  => $this->plugin->dir_url . '/assets/src/images/starter-game/trek-static-left.png',
+                            'static-right' => $this->plugin->dir_url . '/assets/src/images/starter-game/trek-static-right.png',
+                            'up'           => $this->plugin->dir_url . '/assets/src/images/starter-game/trek-up-walk.gif',
+                            'left'         => $this->plugin->dir_url . '/assets/src/images/starter-game/trek-left-walk.gif',
+                            'right'        => $this->plugin->dir_url . '/assets/src/images/starter-game/trek-right-walk.gif',
+                            'down'         => $this->plugin->dir_url . '/assets/src/images/starter-game/trek-down-walk.gif',
+                            'down-punch'   => $this->plugin->dir_url . '/assets/src/images/starter-game/trek-static.png',
+                            'up-punch'     => $this->plugin->dir_url . '/assets/src/images/starter-game/trek-static-up.png',
+                            'left-punch'   => $this->plugin->dir_url . '/assets/src/images/starter-game/trek-static-left.png',
+                            'right-punch'  => $this->plugin->dir_url . '/assets/src/images/starter-game/trek-static-right.png'
+                        ],
+                    ]
+                ]
+            );
+            update_option('explore_main_character', 'trek');
+
+            // Generate the walls.
+            $this->generateStarterGame(
+                'explore-wall',
+                [
+                    'title' => 'Wall 1',
+                    'meta'  => [
+                        'explore-area'   => 'rovanar-forest',
+                        'explore-top'    => 2684,
+                        'explore-left'   => 2982,
+                        'explore-height' => 733,
+                        'explore-width'  => 104
+                    ]
+                ]
+            );
+
+            $this->generateStarterGame(
+                'explore-wall',
+                [
+                    'title' => 'Wall 2',
+                    'meta'  => [
+                        'explore-area'        => 'rovanar-forest',
+                        'explore-top'    => 3414,
+                        'explore-left'   => 2361,
+                        'explore-height' => 58,
+                        'explore-width'  => 726
+                    ]
+                ]
+            );
+
+            $this->generateStarterGame(
+                'explore-wall',
+                [
+                    'title' => 'Wall 3',
+                    'meta'  => [
+                        'explore-area'   => 'rovanar-forest',
+                        'explore-top'    => 2670,
+                        'explore-left'   => 2365,
+                        'explore-height' => 802,
+                        'explore-width'  => 70
+                    ]
+                ]
+            );
+
+            $this->generateStarterGame(
+                'explore-wall',
+                [
+                    'title' => 'Wall 5',
+                    'meta'  => [
+                        'explore-area'   => 'rovanar-forest',
+                        'explore-top'    => 2365,
+                        'explore-left'   => 2414,
+                        'explore-height' => 418,
+                        'explore-width'  => 122
+                    ]
+                ]
+            );
+
+            $this->generateStarterGame(
+                'explore-wall',
+                [
+                    'title' => 'Wall 4',
+                    'meta'  => [
+                        'explore-area'   => 'rovanar-forest',
+                        'explore-top'    => 2349,
+                        'explore-left'   => 2861,
+                        'explore-height' => 434,
+                        'explore-width'  => 186
+                    ]
+                ]
+            );
+
+            $this->generateStarterGame(
+                'explore-point',
+                [
+                    'title'         => 'Gate',
+                    'meta'          => [
+                        'explore-area'             => 'rovanar-forest',
+                        'explore-top'              => 2294,
+                        'explore-left'             => 2261,
+                        'explore-height'           => 527,
+                        'explore-width'            => 900,
+                        'explore-interacted'       => $this->plugin->dir_url . '/assets/src/images/starter-game/gate-open.png',
+                        'explore-passable'         => 'yes',
+                        'explore-disappear'        => 'no',
+                        'explore-interaction-type' => 'collectable'
+                    ],
+                    'featured_image' => $this->plugin->dir_path . '/assets/src/images/starter-game/gate.png',
+                ]
+            );
+
+            $this->generateStarterGame(
+                'explore-point',
+                [
+                    'title'         => 'Key',
+                    'meta'          => [
+                        'explore-area'             => 'rovanar-forest',
+                        'explore-top'              => 3204,
+                        'explore-left'             => 2941,
+                        'explore-height'           => 100,
+                        'explore-width'            => 40,
+                        'explore-interaction-type' => 'collectable'
+                    ],
+                    'featured_image' => $this->plugin->dir_path . '/assets/src/images/starter-game/key.png',
+                ]
+            );
+
+            // Generate starter missions with blockade.
+            $this->generateStarterGame(
+                'explore-mission',
+                [
+                    'title'         => 'Open the gate',
+                    'meta'          => [
+                        'explore-area'             => 'rovanar-forest',
+                        'explore-trigger-item'     => ['gate' => 'on'],
+                    ],
+                ]
+            );
+
+            $this->generateStarterGame(
+                'explore-mission',
+                [
+                    'title'         => 'Collect the key',
+                    'meta'          => [
+                        'explore-area'             => 'rovanar-forest',
+                        'explore-top'              => 2834,
+                        'explore-left'             => 2436,
+                        'explore-height'           => 10,
+                        'explore-width'            => 550,
+                        'explore-trigger-item'     => ['key' => 'on'],
+                        'explore-next-mission'     => ['open-the-gate' => 'on']
+                    ],
+                ]
+            );
+
+            // Generate starter mission with blockade.
+            $this->generateStarterGame(
+                'explore-explainer',
+                [
+                    'title'         => 'You win',
+                    'content'       => '<!-- wp:paragraph {"align":"center","fontSize":"x-large"} -->
+<p class="has-text-align-center has-x-large-font-size"><strong>Congratulations! You completed the game!</strong></p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph {"align":"center"} -->
+<p class="has-text-align-center"><strong>Learn more about game building at <a href="https://orbem.studio/" target="_blank" rel="noreferrer noopener">Orbem.Studio</a></strong></p>
+<!-- /wp:paragraph -->',
+                    'meta'          => [
+                        'explore-area'             => 'rovanar-forest',
+                        'explore-width'            => 700,
+                        'explore-explainer-type'   => 'fullscreen',
+                        'explore-top'              => 2834,
+                        'explore-left'             => 2436,
+                        'explore-height'           => 10,
+                        'explore-explainer-trigger' => [
+                            'top' => 2264,
+                            'left' => 2415,
+                            'height' => 80,
+                            'width' => 550
+                        ]
+                    ],
+                ]
+            );
+
+            $this->telemetry->orbemTlmEvent('starter_game_generated', ['type' => 'starter']);
+        }
+
+        if ('page' === $type) {
+            // Generate starter page.
+            $this->generateStarterGame(
+                'page',
+                [
+                    'title' => 'My Orbem Studio Game',
+                ]
+            );
+
+            update_option('explore_game_page', 'my-orbem-studio-game');
+
+            $this->telemetry->orbemTlmEvent('play_page_assigned', ['method' => 'auto_create']);
+
+            return rest_ensure_response( [
+                'success' => true,
+                'data'    => home_url() . '/my-orbem-studio-game',
+            ] );
+        }
+
+        $this->telemetry->orbemTlmEvent('wizard_mode_selected', ['mode' => $type]);
+
+        update_option('explore_setup', 'true');
+
+        return rest_ensure_response( [
+            'success' => true,
+            'data'    => esc_html__('success', 'orbem-studio'),
+        ] );
+    }
+
+    /**
+     * @param string $type
+     * @param array $args
+     * @return bool Did the post get created.
+     */
+    private function generateStarterGame(string $type, array $args): bool
+    {
+        $defaults = [
+            'title' => 'New ' . $type,
+            'content' => '',
+            'status' => 'publish',
+            'author' => get_current_user_id(),
+            'meta' => [],
+            'featured_image' => null,
+        ];
+
+        $args = wp_parse_args($args, $defaults);
+
+        $post_data = [
+            'post_type'    => $type,
+            'post_title'   => wp_strip_all_tags($args['title']),
+            'post_content' => $args['content'],
+            'post_status'  => $args['status'],
+            'post_author'  => $args['author'],
+        ];
+
+        $post_id = wp_insert_post($post_data, true);
+
+        if (is_wp_error($post_id)) {
+            return false;
+        }
+
+        // Save post meta if provided
+        if (! empty($args['meta']) && is_array($args['meta'])) {
+            foreach ($args['meta'] as $key => $value) {
+                update_post_meta($post_id, $key, $value);
+            }
+        }
+
+        // Handle featured image
+        if ($args['featured_image']) {
+            $image_id = $this->uploadAndAttachFeaturedImage(
+                $args['featured_image'],
+                $post_id
+            );
+
+            if (false === $image_id) {
+                return false;
+            }
+
+            set_post_thumbnail($post_id, $image_id);
+        }
+
+        return true;
+    }
+
+    /**
+     * Upload image and attach it to a post.
+     *
+     * @param array|string $image Image URL or $_FILES-style array
+     * @param int $post_id
+     *
+     * @return int|bool Attachment ID or false
+     */
+    public function uploadAndAttachFeaturedImage(array|string $asset_url, int $post_id): int|bool
+    {
+        require_once ABSPATH . 'wp-admin/includes/file.php';
+        require_once ABSPATH . 'wp-admin/includes/media.php';
+        require_once ABSPATH . 'wp-admin/includes/image.php';
+
+
+        if (!file_exists($asset_url) || !is_readable($asset_url)) {
+            return false;
+        }
+
+        // Copy to temp file for WP upload handler.
+        $tmp = wp_tempnam(basename($asset_url));
+        if (!$tmp) {
+            return false;
+        }
+
+        if (!copy($asset_url, $tmp)) {
+            wp_delete_file($tmp);
+            return false;
+        }
+
+        $file = [
+            'name' => basename($asset_url),
+            'tmp_name' => $tmp,
+        ];
+
+        $attachment_id = media_handle_sideload($file, $post_id);
+
+        wp_delete_file($tmp);
+
+        if (is_wp_error($attachment_id)) {
+            return false;
+        }
+
+        return (int) $attachment_id;
     }
 
     /**
@@ -46,8 +433,7 @@ class Menu
 
         $parent_slug  = 'orbem-studio';
         $parent_title = 'Orbem Studio';
-
-        $post_types = Util::getCurrentPostTypes();
+        $post_types   = Util::getCurrentPostTypes();
 
         add_menu_page(
             $parent_title,
@@ -72,19 +458,24 @@ class Menu
             $obj = get_post_type_object($cpt);
             if (!$obj) continue;
 
-            // Add CPT.
+            $cpt_menu_slug = "edit.php?post_type=$cpt";
+
+            // Add CPT as submenu under Orbem Studio.
             add_submenu_page(
                 $parent_slug,
                 $obj->labels->menu_name,
                 $obj->labels->menu_name,
                 $obj->cap->edit_posts,
-                "edit.php?post_type=$cpt"
+                $cpt_menu_slug,
             );
 
-            // Add its taxonomies directly underneath
+            // Add its taxonomies directly underneath.
             $taxonomies = get_object_taxonomies($cpt, 'objects');
+
             foreach ($taxonomies as $tax) {
-                if (!$tax->show_ui || !$tax->show_in_menu) continue;
+                if (false === $tax->show_ui || false === $tax->show_in_menu) {
+                    continue;
+                }
 
                 add_submenu_page(
                     $parent_slug,
@@ -96,21 +487,72 @@ class Menu
             }
 
             // Remove original top-level CPT menu.
-            remove_menu_page("edit.php?post_type=$cpt");
+            remove_menu_page($cpt_menu_slug);
+
+            // Also remove the CPT's submenu entries that WordPress auto-creates.
+            // This prevents get_admin_page_parent() from finding the wrong parent.
+            remove_submenu_page($cpt_menu_slug, $cpt_menu_slug);
+            remove_submenu_page($cpt_menu_slug, "post-new.php?post_type=$cpt");
+
+            // Remove taxonomy submenu items from the original CPT menu.
+            // WordPress auto-creates these and they interfere with parent detection.
+            foreach ($taxonomies as $tax) {
+                if (false === $tax->show_ui || false === $tax->show_in_menu) {
+                    continue;
+                }
+
+                remove_submenu_page($cpt_menu_slug, "edit-tags.php?taxonomy=$tax->name&post_type=$cpt");
+            }
         }
     }
 
+    /**
+     * Highlight the Orbem Studio menu for explore-* CPT and taxonomy pages.
+     *
+     * WordPress's get_admin_page_parent() doesn't handle taxonomy pages
+     * with custom parents, so we need to use the parent_file filter.
+     *
+     * @filter parent_file
+     * @param string $parent_file The current parent file.
+     * @return string
+     */
+    public function highlightExploreMenuItems(string $parent_file): string
+    {
+        global $typenow, $submenu_file, $pagenow, $taxnow;
+
+        // Handle both CPT pages (edit.php) and taxonomy pages (edit-tags.php).
+        if (false === empty($typenow) && true === str_starts_with($typenow, 'explore-')) {
+            // For taxonomy pages, also set the submenu_file so the item gets highlighted.
+            if ($pagenow === 'edit-tags.php' && false === empty($taxnow)) {
+                $submenu_file = "edit-tags.php?taxonomy={$taxnow}&post_type={$typenow}";
+            }
+            return 'orbem-studio';
+        }
+
+        return $parent_file;
+    }
 
     /**
+     * Filter taxonomy menu items to only show relevant ones.
+     *
+     * - On CPT pages: show only taxonomies for the current CPT
+     * - On Game Options page: hide all taxonomy items
      * @action admin_head
      * @return void
      */
-    public function organizeTaxoMenuItems (): void
+    public function organizeTaxoMenuItems(): void
     {
         global $submenu;
 
         $screen = get_current_screen();
-        if (!$screen || empty($screen->post_type)) {
+
+        if (true === empty($screen)) {
+            return;
+        }
+
+        $menu_slug = 'orbem-studio';
+
+        if (empty($submenu[$menu_slug])) {
             return;
         }
 
@@ -121,7 +563,6 @@ class Menu
             'explore-cutscene',
             'explore-enemy',
             'explore-weapon',
-           // 'explore-magic', TODO add magic back.
             'explore-mission',
             'explore-sign',
             'explore-minigame',
@@ -132,25 +573,33 @@ class Menu
 
         $current_post_type = $screen->post_type;
 
-        if (!in_array($current_post_type, $post_types, true)) {
+        // If we're on the Game Options page or a non-explore CPT, hide all taxonomy items.
+        if (true === empty($current_post_type) || false === in_array($current_post_type, $post_types, true)) {
+            foreach ($submenu[$menu_slug] as $index => $item) {
+                $slug = $item[2];
+                if (true === str_starts_with($slug, 'edit-tags.php')) {
+                    unset($submenu[$menu_slug][$index]);
+                }
+            }
+
             return;
         }
 
-        // Get allowed taxonomy slugs for the current CPT
+        // On a CPT page, only show taxonomies for the current CPT.
         $allowed_tax_slugs = [];
         $taxonomies = get_object_taxonomies($current_post_type);
+
         foreach ($taxonomies as $taxonomy) {
             $allowed_tax_slugs[] = "edit-tags.php?taxonomy=$taxonomy&post_type=$current_post_type";
         }
 
-        $menu_slug = 'orbem-studio';
-
-        if (!empty($submenu[$menu_slug])) {
-            foreach ($submenu[$menu_slug] as $index => $item) {
-                $slug = $item[2];
-                if (str_starts_with($slug, 'edit-tags.php') && !in_array($slug, $allowed_tax_slugs, true)) {
-                    unset($submenu[$menu_slug][$index]);
-                }
+        foreach ($submenu[$menu_slug] as $index => $item) {
+            $slug = $item[2];
+            if (
+                true === str_starts_with($slug, 'edit-tags.php') &&
+                false === in_array($slug, $allowed_tax_slugs, true)
+            ) {
+                unset($submenu[$menu_slug][$index]);
             }
         }
     }
@@ -161,7 +610,7 @@ class Menu
      */
     public function registerGameOptions(): void
     {
-        $settings = $this->getGameOptionSettings();
+        $settings = self::getGameOptionSettings();
 
         add_settings_section('game_options_section', 'Global Game Options', function () {
             settings_fields('game_options');
@@ -244,7 +693,7 @@ class Menu
      *
      * @return array
      */
-    protected function getGameOptionSettings(): array
+    public static function getGameOptionSettings(): array
     {
         $pages = get_posts(['post_type' => 'page', 'post_status' => 'publish', 'posts_per_page' => -1, 'no_found_rows' => true]);
         $areas = get_posts(['post_type' => 'explore-area', 'post_status' => 'publish', 'posts_per_page' => -1, 'no_found_rows' => true]);
@@ -297,7 +746,7 @@ class Menu
             ? null
             : str_replace('sanitize_option_', '', current_filter());
 
-        $settings = $this->getGameOptionSettings();
+        $settings = self::getGameOptionSettings();
 
         if (!$option_name || !isset($settings[$option_name])) {
             return sanitize_text_field($value);
@@ -375,15 +824,22 @@ class Menu
             ]
         );
         $finished_character = false === empty($characters) && 0 < count($characters);
-        $weapons = get_posts(
+        $weapons            = get_posts(
             [
                 'post_type' => 'explore-weapon',
                 'posts_per_page' => -1,
                 'no_found_rows'  => true,
             ]
         );
-        $finished_weapon = false === empty($weapons) && 0 < count($weapons);
-        $things_made = true === $finished_area && true === $finished_character;
+        $finished_weapon              = false === empty($weapons) && 0 < count($weapons);
+        $things_made                  = true === $finished_area && true === $finished_character;
+        $orbem_studio_setup_triggered = get_option('orbem_studio_setup_triggered', 'false');
+
+        if ('false' !== $orbem_studio_setup_triggered) {
+            $this->telemetry->orbemTlmEventOnce('wizard_started', [
+                'context' => 'setup_template',
+            ]);
+        }
 
         include $this->plugin->dir_path . '/templates/game-options-page.php';
     }

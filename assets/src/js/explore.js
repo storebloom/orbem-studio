@@ -2455,7 +2455,7 @@ function getCurrentPoints(type) {
 
 	const thePoints = document.querySelector(`#explore-points .${type}-amount`);
 
-	return parseInt(thePoints.getAttribute('data-amount'));
+	return thePoints ? parseInt(thePoints.getAttribute('data-amount')) : 0;
 }
 
 function playSong(path, name) {
@@ -3228,7 +3228,7 @@ function shouldRemoveItemOnload(mapItem) {
 		'explore-character' === mapItem.dataset.genre ||
 		'true' === mapItem.dataset.hazard ||
 		'true' === mapItem.dataset.collectable ||
-		('true' === mapItem.dataset.breakable &&
+		(('true' === mapItem.dataset.breakable || 'true' === mapItem.dataset.collectable) &&
 			'no' !== mapItem.dataset?.disappear) ||
 		('true' === mapItem.dataset.removable &&
 			'no' !== mapItem.dataset?.disappear) ||
@@ -3987,9 +3987,11 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 				}
 
 				// remove item on collision if collectable.
-				if ('true' === value.getAttribute('data-collectable')) {
+				if ('true' === value.dataset.collectable && 'no' !== value.dataset.disappear) {
 					value.remove();
-				}
+				} else if ('true' === value.dataset.collectable && 'no' === value.dataset.disappear) {
+                    interactWithItem(value, mapChar);
+                }
 
 				// Clear this so it doesn't set hazard to false even when I'm in it.
 				clearTimeout(getOutOfHazard);
@@ -4119,7 +4121,7 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 							noOtherItemAttachedToMission(
 								value.dataset.mission
 							) &&
-						'true' === value.dataset.breakable &&
+                        ('true' === value.dataset.breakable || 'true' === value.dataset.collectable) &&
 						'explore-sign' !== value.dataset.genre &&
 						canCharacterInteract(value, mapChar, 'strength') &&
 						(null === value.dataset.minigame ||
@@ -4421,7 +4423,7 @@ function interactWithItem(item) {
 	// If item is breakable.
 	if (
 		'no' !== item.dataset?.disappear &&
-		'true' === item.dataset.breakable &&
+        ('true' === item.dataset.breakable || 'true' === item.dataset.collectable) &&
 		'explore-sign' !== item.dataset.genre
 	) {
 		item.style.display = 'none';
@@ -4570,7 +4572,7 @@ function storeExploreItem(item) {
 	let currentPoints = 100;
 
 	if (thePoints) {
-		currentPoints = thePoints.getAttribute('data-amount');
+		currentPoints = thePoints ? thePoints.getAttribute('data-amount') : 0;
 	}
 
 	if (
@@ -6875,7 +6877,7 @@ function clickTransport(clickE) {
 	const mapCharacter = document.getElementById('map-character');
 	const bar = document.querySelector('.power-amount');
 	const gauge = bar.querySelector('.gauge');
-	const powerAmount = bar.getAttribute('data-amount');
+	const powerAmount = bar ? bar.getAttribute('data-amount') : 0;
 
 	// Stop recharge.
 	clearInterval(window.rechargeInterval);
