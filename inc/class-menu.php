@@ -433,8 +433,7 @@ class Menu
 
         $parent_slug  = 'orbem-studio';
         $parent_title = 'Orbem Studio';
-
-        $post_types = Util::getCurrentPostTypes();
+        $post_types   = Util::getCurrentPostTypes();
 
         add_menu_page(
             $parent_title,
@@ -459,19 +458,24 @@ class Menu
             $obj = get_post_type_object($cpt);
             if (!$obj) continue;
 
-            // Add CPT.
+            $cpt_menu_slug = "edit.php?post_type=$cpt";
+
+            // Add CPT as submenu under Orbem Studio.
             add_submenu_page(
                 $parent_slug,
                 $obj->labels->menu_name,
                 $obj->labels->menu_name,
                 $obj->cap->edit_posts,
-                "edit.php?post_type=$cpt"
+                $cpt_menu_slug,
             );
 
-            // Add its taxonomies directly underneath
+            // Add its taxonomies directly underneath.
             $taxonomies = get_object_taxonomies($cpt, 'objects');
+
             foreach ($taxonomies as $tax) {
-                if (!$tax->show_ui || !$tax->show_in_menu) continue;
+                if (false === $tax->show_ui || false === $tax->show_in_menu) {
+                    continue;
+                }
 
                 add_submenu_page(
                     $parent_slug,
@@ -483,21 +487,72 @@ class Menu
             }
 
             // Remove original top-level CPT menu.
-            remove_menu_page("edit.php?post_type=$cpt");
+            remove_menu_page($cpt_menu_slug);
+
+            // Also remove the CPT's submenu entries that WordPress auto-creates.
+            // This prevents get_admin_page_parent() from finding the wrong parent.
+            remove_submenu_page($cpt_menu_slug, $cpt_menu_slug);
+            remove_submenu_page($cpt_menu_slug, "post-new.php?post_type=$cpt");
+
+            // Remove taxonomy submenu items from the original CPT menu.
+            // WordPress auto-creates these and they interfere with parent detection.
+            foreach ($taxonomies as $tax) {
+                if (false === $tax->show_ui || false === $tax->show_in_menu) {
+                    continue;
+                }
+
+                remove_submenu_page($cpt_menu_slug, "edit-tags.php?taxonomy=$tax->name&post_type=$cpt");
+            }
         }
     }
 
+    /**
+     * Highlight the Orbem Studio menu for explore-* CPT and taxonomy pages.
+     *
+     * WordPress's get_admin_page_parent() doesn't handle taxonomy pages
+     * with custom parents, so we need to use the parent_file filter.
+     *
+     * @filter parent_file
+     * @param string $parent_file The current parent file.
+     * @return string
+     */
+    public function highlightExploreMenuItems(string $parent_file): string
+    {
+        global $typenow, $submenu_file, $pagenow, $taxnow;
+
+        // Handle both CPT pages (edit.php) and taxonomy pages (edit-tags.php).
+        if (false === empty($typenow) && true === str_starts_with($typenow, 'explore-')) {
+            // For taxonomy pages, also set the submenu_file so the item gets highlighted.
+            if ($pagenow === 'edit-tags.php' && false === empty($taxnow)) {
+                $submenu_file = "edit-tags.php?taxonomy={$taxnow}&post_type={$typenow}";
+            }
+            return 'orbem-studio';
+        }
+
+        return $parent_file;
+    }
 
     /**
+     * Filter taxonomy menu items to only show relevant ones.
+     *
+     * - On CPT pages: show only taxonomies for the current CPT
+     * - On Game Options page: hide all taxonomy items
      * @action admin_head
      * @return void
      */
-    public function organizeTaxoMenuItems (): void
+    public function organizeTaxoMenuItems(): void
     {
         global $submenu;
 
         $screen = get_current_screen();
-        if (!$screen || empty($screen->post_type)) {
+
+        if (true === empty($screen)) {
+            return;
+        }
+
+        $menu_slug = 'orbem-studio';
+
+        if (empty($submenu[$menu_slug])) {
             return;
         }
 
@@ -508,7 +563,6 @@ class Menu
             'explore-cutscene',
             'explore-enemy',
             'explore-weapon',
-           // 'explore-magic', TODO add magic back.
             'explore-mission',
             'explore-sign',
             'explore-minigame',
@@ -519,25 +573,33 @@ class Menu
 
         $current_post_type = $screen->post_type;
 
-        if (!in_array($current_post_type, $post_types, true)) {
+        // If we're on the Game Options page or a non-explore CPT, hide all taxonomy items.
+        if (true === empty($current_post_type) || false === in_array($current_post_type, $post_types, true)) {
+            foreach ($submenu[$menu_slug] as $index => $item) {
+                $slug = $item[2];
+                if (true === str_starts_with($slug, 'edit-tags.php')) {
+                    unset($submenu[$menu_slug][$index]);
+                }
+            }
+
             return;
         }
 
-        // Get allowed taxonomy slugs for the current CPT
+        // On a CPT page, only show taxonomies for the current CPT.
         $allowed_tax_slugs = [];
         $taxonomies = get_object_taxonomies($current_post_type);
+
         foreach ($taxonomies as $taxonomy) {
             $allowed_tax_slugs[] = "edit-tags.php?taxonomy=$taxonomy&post_type=$current_post_type";
         }
 
-        $menu_slug = 'orbem-studio';
-
-        if (!empty($submenu[$menu_slug])) {
-            foreach ($submenu[$menu_slug] as $index => $item) {
-                $slug = $item[2];
-                if (str_starts_with($slug, 'edit-tags.php') && !in_array($slug, $allowed_tax_slugs, true)) {
-                    unset($submenu[$menu_slug][$index]);
-                }
+        foreach ($submenu[$menu_slug] as $index => $item) {
+            $slug = $item[2];
+            if (
+                true === str_starts_with($slug, 'edit-tags.php') &&
+                false === in_array($slug, $allowed_tax_slugs, true)
+            ) {
+                unset($submenu[$menu_slug][$index]);
             }
         }
     }
