@@ -215,6 +215,7 @@ class Plugin extends Plugin_Base {
 
         $current_user_id = get_current_user_id();
         $explore_points = get_user_meta($current_user_id, 'explore_points', true);
+        $current_materialized_items = get_user_meta($current_user_id, 'explore_materialized_items', true);
         $explore_points = $explore_points ?? [];
         $default_weapon  = get_option('explore_default_weapon', '');
         $explore_abilities = get_user_meta($current_user_id, 'explore_abilities', true);
@@ -246,6 +247,7 @@ class Plugin extends Plugin_Base {
             'object_name' => 'OrbemOrder',
             'value'       => [
                 'explorePoints' => $explore_points,
+                'exploreMaterializedItems' => $current_materialized_items,
                 'exploreAbilities' => $explore_abilities,
                 'levelMaps' => wp_json_encode(Explore::getLevelMap()),
                 'gameURL' => get_permalink(get_page_by_path(get_option('explore_game_page', ''))),

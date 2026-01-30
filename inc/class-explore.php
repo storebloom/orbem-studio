@@ -1468,6 +1468,7 @@ class Explore
                 $path_trigger_cutscene          = false === empty($path_trigger['cutscene']) ? $path_trigger['cutscene'] : '';
                 $materialize_item_trigger       = $explore_point_meta['explore-materialize-item-trigger'] ?? '';
                 $materialize_after_cutscene     = $explore_point_meta['explore-materialize-after-cutscene'] ?? '';
+                $materialize_after_mission      = $explore_point_meta['explore-materialize-after-mission'] ?? '';
                 $wanderer                       = $explore_point_meta['explore-wanderer'] ?? '';
                 $materialize_item_trigger       = $materialize_item_trigger ?? false;
                 $is_materialized_item_triggered = self::isMaterializedItemTriggered($explore_point->post_name, $current_location, $userid);
@@ -1629,6 +1630,11 @@ class Explore
                     // Materialize this item after this cutscene.
                     if (false === empty($materialize_after_cutscene)) {
                         $html .= ' data-showaftercutscene="' . esc_attr($materialize_after_cutscene) . '"';
+                    }
+
+                    // Materialize this item after this mission.
+                    if (false === empty($materialize_after_mission)) {
+                        $html .= ' data-showaftermission="' . esc_attr($materialize_after_mission) . '"';
                     }
 
                     if (true === $draggable) {

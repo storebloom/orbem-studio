@@ -197,10 +197,10 @@ class Meta_Box {
         ];
         $character_images = [
             'static-required' => 'upload',
-            'static-up-required' => 'upload',
-            'static-left-required' => 'upload',
-            'static-right-required' => 'upload',
-            'static-down-required' => 'upload',
+            'static-up' => 'upload',
+            'static-left' => 'upload',
+            'static-right' => 'upload',
+            'static-down' => 'upload',
             'static-up-drag' => 'upload',
             'static-left-drag' => 'upload',
             'static-right-drag' => 'upload',
@@ -208,10 +208,10 @@ class Meta_Box {
             'down-required' => 'upload',
             'left-required' => 'upload',
             'right-required' => 'upload',
-            'up-punch-required' => 'upload',
-            'down-punch-required' => 'upload',
-            'left-punch-required' => 'upload',
-            'right-punch-required' => 'upload',
+            'up-punch' => 'upload',
+            'down-punch' => 'upload',
+            'left-punch' => 'upload',
+            'right-punch' => 'upload',
             'up-drag' => 'upload',
             'left-drag' => 'upload',
             'right-drag' => 'upload',
@@ -221,7 +221,7 @@ class Meta_Box {
         foreach ($explore_weapon_array as $explore_weapon) {
             if ($default_weapon !== $explore_weapon) {
                 foreach ($character_images as $character_image_key => $character_image) {
-                    $weapon_images[$character_image_key . '-' . $explore_weapon] = 'upload';
+                    $weapon_images[str_replace('-required', '', $character_image_key) . '-' . $explore_weapon] = 'upload';
                 }
             }
         }
@@ -641,16 +641,6 @@ class Meta_Box {
                         'Select the boss that will begin combat after this cutscene completes.'
                     ],
                 ],
-
-                'NPC Interaction' => [
-                    'explore-character' => [
-                        [
-                            'select' => $explore_character_array
-                        ],
-                        'Select the NPC involved in this cutscene.'
-                    ],
-                ],
-
             ],
             'explore-weapon' => [
 

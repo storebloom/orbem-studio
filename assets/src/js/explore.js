@@ -1085,7 +1085,7 @@ function persistItemRemoval(item, type, amount, timeoutTime, reset, direct) {
 					);
 				}
 
-				if (type === 'communicate') {
+				if (type === 'communicate' || 'money' === type) {
 					type = 'point';
 				}
 
@@ -1229,6 +1229,25 @@ function saveMission(mission, value, position) {
 					// Enable transportation in DB.
 					enableAbility('transportation');
 				}
+
+                // Show after mission.
+                const showItems = document.querySelectorAll(
+                    '[data-showaftermission="' + mission + '"]'
+                );
+
+                if (showItems) {
+                    showItems.forEach((showItem) => {
+                        materializedItemsArray.push(
+                            cleanClassName(showItem.className)
+                        );
+                        showItem.classList.add('materialize'); // Use materialize instead of no point because other interactions use no point.
+                    });
+
+                    saveMaterializedItem(
+                        currentLocation,
+                        materializedItemsArray
+                    );
+                }
 			}, 500);
 
 			if (value && missionPoints > 0) {
@@ -3217,6 +3236,17 @@ function addNoPoints() {
 			});
 		}
 	});
+
+    // Engage already materialized items.
+    if (OrbemOrder?.exploreMaterializedItems[currentLocation] && 0 < OrbemOrder.exploreMaterializedItems[currentLocation].length) {
+        OrbemOrder.exploreMaterializedItems[currentLocation].forEach((item) => {
+            const theItemElement = document.querySelector('.' + item + '-map-item');
+
+            if (theItemElement) {
+                theItemElement.classList.add('materialized');
+            }
+        });
+    }
 }
 
 function shouldRemoveItemOnload(mapItem) {
@@ -4853,13 +4883,16 @@ function engageCutscene(position, areaCutscene) {
 					) {
 						const mapMainCharacter =
 							document.getElementById('map-character');
-						document
-							.querySelector(
-								'div[data-character="' +
-									mapMainCharacter.dataset?.mainid +
-									'"].cut-character'
-							)
-							.classList.remove('engage');
+
+                        if (mapMainCharacter) {
+                            document
+                                .querySelector(
+                                    'div[data-character="' +
+                                    mapMainCharacter.dataset?.mainid +
+                                    '"].cut-character'
+                                )
+                                .classList.remove('engage');
+                        }
 					}
 
 					// Reengage movement.
