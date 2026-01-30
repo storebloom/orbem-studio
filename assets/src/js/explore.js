@@ -4885,13 +4885,16 @@ function engageCutscene(position, areaCutscene) {
 							document.getElementById('map-character');
 
                         if (mapMainCharacter) {
-                            document
+                            const mainCharacterDialogue = document
                                 .querySelector(
                                     'div[data-character="' +
                                     mapMainCharacter.dataset?.mainid +
                                     '"].cut-character'
-                                )
-                                .classList.remove('engage');
+                                );
+
+                            if ( mainCharacterDialogue ) {
+                                mainCharacterDialogue.classList.remove('engage');
+                            }
                         }
 					}
 
