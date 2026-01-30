@@ -153,6 +153,12 @@ html {
       }
     }
 
+    .map-item[data-showaftermission] {
+      &:not(.materialized) {
+        display: none;
+      }
+    }
+
     .explainer-trigger {
       position: absolute;
     }

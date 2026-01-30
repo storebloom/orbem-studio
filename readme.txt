@@ -5,7 +5,7 @@ Tags: game engine, rpg, storytelling, gamification, narrative game
 Requires at least: 6.1
 Tested up to: 6.9
 Requires PHP: 8.1
-Stable tag: 1.1.0
+Stable tag: 1.1.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -170,24 +170,30 @@ We have extensive documentation at https://orbemorder.com/orbem-studio/docs/read
 
 == Changelog ==
 
+= 1.1.1 =
+* Enable materialize after mission function.
+* Remove disruptive required fields.
+* Fix console error for cutscenes without main character.
+* Fix money console error.
+
 = 1.1.0 =
-* Fix collectable interacted state
-* Add game generate to wizard
-* Fix dev mode visibility
-* Add deactivation option data removal
-* Fix empty point console error
-* Fix admin menu collapse for submenus
+* Fix collectable interacted state.
+* Add game generate to wizard.
+* Fix dev mode visibility.
+* Add deactivation option data removal.
+* Fix empty point console error.
+* Fix admin menu collapse for submenus.
 
 = 1.0.5 =
-* Fix wall builder
-* Fix materialize item trigger
-* Add disable image upload scaling for map uploads
+* Fix wall builder.
+* Fix materialize item trigger.
+* Add disable image upload scaling for map uploads.
 
 = 1.0.4 =
-* Fix setup wizard trigger
-* Add collapsible groups for non required
-* Fix required fields logic on Gutenberg enabled pages
-* Fix character image issue
+* Fix setup wizard trigger.
+* Add collapsible groups for non required.
+* Fix required fields logic on Gutenberg enabled pages.
+* Fix character image issue.
 
 = 1.0.3 =
 * Add required field logic.
