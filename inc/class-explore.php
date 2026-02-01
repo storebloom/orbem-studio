@@ -1484,6 +1484,10 @@ class Explore
                 $path_onload = true === empty($path_trigger_left) && true === empty($path_trigger_cutscene) && ('explore-character' === $explore_point->post_type || 'explore-enemy' === $explore_point->post_type) ? ' path-onload' : '';
                 $classes     = $path_onload;
 
+                if ('explore-character' === $explore_point->post_type && $passable) {
+                    $classes .= ' passable';
+                }
+
                 // If it's an enemy, and they have health show or if not an enemy show.
                 if (
                     'explore-enemy' !== $explore_point->post_type ||
@@ -1535,7 +1539,7 @@ class Explore
                     $html .= ' data-disappear="' . esc_attr($disappear) . '"';
 
                     // Will be passable?
-                    if (true === $passable) {
+                    if (true === $passable && 'explore-character' !== $explore_point->post_type) {
                         $html .= ' data-passable="true"';
                     }
 

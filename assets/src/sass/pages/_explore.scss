@@ -1186,7 +1186,7 @@ html {
             border-radius: 4px;
           }
 
-          &[data-passable="true"].passable, &[data-passable="true"].no-point {
+          &[data-passable="true"], &.passable {
             z-index: 0;
           }
 
@@ -1442,6 +1442,7 @@ html {
 
           &.engage {
             display: block;
+            margin: 0!important;
             transition: filter .3s;
           }
 

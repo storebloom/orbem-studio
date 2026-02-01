@@ -16,6 +16,7 @@ if (true === $orbem_studio_is_admin) {
     $orbem_studio_areas = get_posts(['post_type' => 'explore-area', 'posts_per_page' => -1, 'fields' => ['ids', 'post_name']]);
 }
 
+$orbem_studio_new_game = 'No' === $orbem_studio_require_login ? 'Start Game' : 'New Game';
 ?>
 <div class="explore-overlay engage" style="background: url(<?php echo esc_attr($orbem_studio_signin_screen); ?>) no-repeat center;background-size: cover;height: 100svh;left: 0;position: fixed;top: 0;width: 100%; z-index: 4;">
     <?php if ((false === empty($orbem_studio_signin_screen) && false !== stripos($orbem_studio_signin_screen, '.webm')) || (false === empty($orbem_studio_signin_screen) && false !== stripos($orbem_studio_signin_screen, '.mp4'))): ?>
@@ -25,24 +26,24 @@ if (true === $orbem_studio_is_admin) {
         <div class="greeting-buttons">
             <?php the_content(); ?>
 
-            <?php if (true === is_user_logged_in() && false === empty($orbem_studio_coordinates) ) : ?>
+            <?php if (true === is_user_logged_in() && false === empty($orbem_studio_coordinates)) : ?>
                 <button type="button" class="engage" id="engage-explore">
                     <?php esc_html_e('Continue', 'orbem-studio'); ?>
                 </button>
             <?php endif; ?>
-            <?php if ('on' !== $orbem_studio_require_login || true === is_user_logged_in()) : ?>
+            <?php if ('Yes' !== $orbem_studio_require_login || true === is_user_logged_in()) : ?>
                 <button type="button" class="engage" id="<?php echo esc_attr($orbem_studio_new_type); ?>">
-                    <?php esc_html_e('New Game', 'orbem-studio'); ?>
+                    <?php echo esc_html($orbem_studio_new_game); ?>
                 </button>
             <?php endif; ?>
-            <?php if (false === is_user_logged_in()) : ?>
+            <?php if (false === is_user_logged_in() && 'No' !== $orbem_studio_require_login) : ?>
                 <button type="button" class="engage" id="login-register">
                     <?php esc_html_e('Login or register.', 'orbem-studio'); ?>
                 </button>
             <?php endif; ?>
         </div>
 
-        <?php if (false === is_user_logged_in()) : ?>
+        <?php if (false === is_user_logged_in() && 'No' !== $orbem_studio_require_login) : ?>
             <div class="game-login-create-container">
                 <h2><?php esc_html_e('Login or register.', 'orbem-studio'); ?></h2>
                 <div class="login-form form-wrapper">
@@ -62,7 +63,7 @@ if (true === $orbem_studio_is_admin) {
                 </p>
             </div>
         <?php endif; ?>
-        <?php if ('' === $orbem_studio_require_login) : ?>
+        <?php if ('No' !== $orbem_studio_require_login) : ?>
             <div class="non-login-warning">
                 <h2>WARNING!</h2>
                 <p>If you start a new game without logging in, your game progress will <strong>NOT</strong> be saved.</p>

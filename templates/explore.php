@@ -189,7 +189,7 @@ if ( $orbem_studio_is_admin ) {
 }
 
 $orbem_studio_new_type   = false === empty($orbem_studio_coordinates) ? 'new-explore' : 'try-engage-explore';
-$orbem_studio_new_type   = is_user_logged_in() && false !== empty($orbem_studio_coordinates) ? 'engage-explore' : $orbem_studio_new_type;
+$orbem_studio_new_type   = is_user_logged_in() && false !== empty($orbem_studio_coordinates) || 'No' === $orbem_studio_require_login ? 'engage-explore' : $orbem_studio_new_type;
 $orbem_studio_health_bar = $orbem_studio_hud_bars['health'] ?? '';
 $orbem_studio_mana_bar   = $orbem_studio_hud_bars['mana'] ?? '';
 $orbem_studio_power_bar  = $orbem_studio_hud_bars['power'] ?? '';

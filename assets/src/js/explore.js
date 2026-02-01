@@ -236,13 +236,13 @@ document.addEventListener('DOMContentLoaded', function () {
 		});
 	}
 
-	if (tryEngageExplore) {
+	if (tryEngageExplore && nonLoginWarning) {
 		tryEngageExplore.addEventListener('click', function () {
 			nonLoginWarning.classList.add('engage');
 		});
 	}
 
-	if (loginRegisters) {
+	if (loginRegisters && nonLoginWarning) {
 		loginRegisters.forEach((loginRegister) => {
 			loginRegister.addEventListener('click', function () {
 				loginRegisterCont.classList.add('engage');
@@ -3613,6 +3613,7 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 			const cutsceneEl = document.querySelector(
 				`.map-cutscene[data-character="${characterName}"]`
 			);
+
 			const finalCharPos = {
 				offsetLeft: mapChar.offsetLeft + (400 - box.offsetWidth / 2),
 				offsetWidth: box.offsetWidth,
@@ -5941,6 +5942,7 @@ function cleanClassName(classes) {
 			.replace('mission-trigger ', '')
 			.replace(' hit', '')
 			.replace('-minigame-item', '')
+            .replace( ' passable', '')
 			.replace('minigame ', '')
 			.replace(' pulse-wave-engage', '')
 			.replace(' barage-wave-engage', '')
