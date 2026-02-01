@@ -767,6 +767,15 @@ class Meta_Box {
                         'number',
                         'Controls how this character is layered visually. Higher numbers appear in front of lower numbers.'
                     ],
+                    'explore-passable' => [
+                        [
+                            'radio' => [
+                                'yes',
+                                'no'
+                            ]
+                        ],
+                        'Choose whether this character can be walked over.'
+                    ]
                 ],
 
                 'Character Identity & Visuals' => [

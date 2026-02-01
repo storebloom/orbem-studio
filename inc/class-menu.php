@@ -705,7 +705,7 @@ class Menu
             'explore_first_area' => ['select', 'Starting Area', 'The starting area/level of the game.', $areas],
             'explore_main_character' => ['select', 'Main Character', 'Your main character that users will control first.', $characters],
             'explore_default_weapon' => ['select', 'Default Weapon', 'The starting weapon your main character will have. (Can be "fist" for no weapon)', $weapons],
-            'explore_require_login' => ['checkbox', 'Require Login', 'Require users to login in order to play or give a "logged out" option.'],
+            'explore_require_login' => ['select', 'Require Login', 'Require users to login in order to play. "Both" gives a "logged out" option.', ['Yes', 'No', 'Both']],
             'explore_google_login_client_id' => ['text', 'Google Login ClientID', 'Add your Google client id to allow SSO login. (Search google how if you this is confusing)'],
             'explore_google_tts_api_key' => ['text', 'Google TTS API Key', 'Add your Google TTS API key to allow cutscenes and explainers to talk using text to speech.'],
             'explore_hud_bars'     => ['multiselect', 'HUD bars', 'Choose which bars you wish to use for your game.', ['health', 'mana', 'power', 'money', 'points']],
