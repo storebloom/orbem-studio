@@ -9,7 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
  */
 
 $orbem_studio_final_value = false === empty($orbem_studio_meta_values[$orbem_studio_key]) ? $orbem_studio_meta_values[$orbem_studio_key] : '';
-$orbem_studio_final_value = false !== $orbem_studio_main_key ? $orbem_studio_meta_values[$orbem_studio_main_key][$orbem_studio_key] : $orbem_studio_final_value;
+$orbem_studio_final_value = false !== $orbem_studio_main_key && isset($orbem_studio_meta_values[$orbem_studio_main_key][$orbem_studio_key]) ? $orbem_studio_meta_values[$orbem_studio_main_key][$orbem_studio_key] : $orbem_studio_final_value;
 ?>
 <p>
 <?php if (false !== $orbem_studio_main_key): ?>
