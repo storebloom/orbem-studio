@@ -1912,6 +1912,7 @@ class Explore
             $minigame                   = $cutscene_post_meta['explore-cutscene-minigame'] ?? '';
             $mute_music                 = $cutscene_post_meta['explore-mute-music'] ?? '';
             $value_type                 = $cutscene_post_meta['explore-value-type'] ?? '';
+            $remove_after_cutscene      = $explore_point_meta['explore-remove-after-cutscene'] ?? '';
             $value                      = $cutscene_post_meta['explore-value'] ?? '';
             $has_video                  = has_block('video', $explore_cutscene->post_content);
             $cutscene_trigger           = $cutscene_post_meta['explore-cutscene-trigger'] ?? '';
@@ -2107,6 +2108,11 @@ class Explore
                 $html .= ' style="left:' . esc_attr($path_trigger_left) . 'px;top:' . esc_attr($path_trigger_top) . 'px;height:' . esc_attr($path_trigger_height) . 'px; width:' . esc_attr($path_trigger_width) . 'px;"';
                 $html .= ' data-trigger="true" data-triggee="' . esc_attr($explore_cutscene->post_name) . '"';
                 $html .= ' data-triggertype="' . esc_attr($cutscene_trigger_type) . '"';
+
+                // Remove this after cutscene specified in data att.
+                if (false === empty($remove_after_cutscene)) {
+                    $html .= ' data-removeaftercutscene="' . esc_attr($remove_after_cutscene) . '"';
+                }
 
                 if (false === empty($materialize_cutscene)) {
                     $html .= ' data-materializecutscene="' . esc_attr($materialize_cutscene) . '"';

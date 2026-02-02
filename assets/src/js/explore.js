@@ -5358,6 +5358,9 @@ function afterCutscene(cutscene, areaCutscene, character) {
 	const materializeCutscene = document.querySelector(
 		'[data-materializecutscene="' + cutsceneName + '"]'
 	);
+    const removeCutsceneTrigger = document.querySelector(
+        '[data-removeaftercutscene="' + cutsceneName + '"]'
+    );
 
 	if (
 		materializeCutscene &&
@@ -5365,6 +5368,13 @@ function afterCutscene(cutscene, areaCutscene, character) {
 	) {
 		materializeCutscene.classList.add('enable');
 	}
+
+    // Remove trigger after another cutscene.
+    if (
+        removeCutsceneTrigger
+    ) {
+        removeCutsceneTrigger.remove();
+    }
 
 	// Show dependent communication devices.
 	if (communicateDevice && '' !== communicateDevice) {
