@@ -403,11 +403,11 @@ class Plugin extends Plugin_Base {
         $post_type = $editor_context->post->post_type;
 
         // Only target explore-* post types
-        if (!str_starts_with($post_type, 'explore-')) {
+        if (!str_starts_with($post_type, 'explore-') || 'explore-explainer' === $post_type) {
             return $allowed_blocks;
         }
 
-        if (in_array($post_type, ['explore-magic', 'explore-explainer', 'explore-sign'], true)) {
+        if (in_array($post_type, ['explore-magic', 'explore-sign'], true)) {
             return [
                 'core/paragraph',
                 'core/image',

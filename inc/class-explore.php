@@ -1912,7 +1912,7 @@ class Explore
             $minigame                   = $cutscene_post_meta['explore-cutscene-minigame'] ?? '';
             $mute_music                 = $cutscene_post_meta['explore-mute-music'] ?? '';
             $value_type                 = $cutscene_post_meta['explore-value-type'] ?? '';
-            $remove_after_cutscene      = $explore_point_meta['explore-remove-after-cutscene'] ?? '';
+            $remove_after_cutscene      = $cutscene_post_meta['explore-remove-after-cutscene'] ?? '';
             $value                      = $cutscene_post_meta['explore-value'] ?? '';
             $has_video                  = has_block('video', $explore_cutscene->post_content);
             $cutscene_trigger           = $cutscene_post_meta['explore-cutscene-trigger'] ?? '';
