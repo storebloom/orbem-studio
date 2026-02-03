@@ -38,9 +38,14 @@ window.godMode = false;
 window.noTouch = false;
 window.isDragging = '';
 window.hazardTime = 600;
+window.globalLeftPositionOffset = 400;
 
 document.addEventListener('DOMContentLoaded', function () {
 	'use strict';
+
+    if (500 > window.innerWidth) {
+        window.globalLeftPositionOffset = 150;
+    }
 
 	currentLocation = document.querySelector('.game-container');
 	window.mainCharacter = currentLocation.dataset?.main;
@@ -3615,7 +3620,7 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 			);
 
 			const finalCharPos = {
-				offsetLeft: mapChar.offsetLeft + (400 - box.offsetWidth / 2),
+				offsetLeft: mapChar.offsetLeft + (window.globalLeftPositionOffset - box.offsetWidth / 2),
 				offsetWidth: box.offsetWidth,
 				offsetTop: mapChar.offsetTop + (400 - box.offsetHeight / 2),
 				offsetHeight: box.offsetHeight,
@@ -4927,7 +4932,7 @@ function engageCutscene(position, areaCutscene) {
 			const cutsceneKeys = (event) => {
 				if (true === window.allowCutscene) {
 					if (
-						event.code === 'Space' &&
+                        (event.code === 'Space' || event.target.classList.contains('action-key')) &&
 						dialogues &&
 						cutscene.classList.contains('engage')
 					) {
@@ -5037,6 +5042,7 @@ function engageCutscene(position, areaCutscene) {
 
 			// Add a keydown event listener to the document to detect spacebar press
 			document.addEventListener('keydown', cutsceneKeys);
+            document.querySelector('.action-key').addEventListener('click', cutsceneKeys);
 
 			// Fade in if area cutscene.
 			if (true === areaCutscene) {
@@ -5232,23 +5238,27 @@ function engageSign(signname) {
 
 	document.addEventListener(
 		'click',
-		() => {
-			item.classList.remove('open-up');
+		(e) => {
+            if (false === e.target.classList.contains('action-key')) {
+                item.classList.remove('open-up');
+            }
 		},
 		{ once: true }
 	);
 
 	// Close on action key
 	document.addEventListener('keydown', closeSign);
+    document.querySelector('.action-key').addEventListener('click', closeSign)
 
 	/**
 	 * Close event using spacebar for focus view.
 	 * @param event
 	 */
 	function closeSign(event) {
-		if ('Space' === event.code) {
+		if ('Space' === event.code || event.target.classList.contains('action-key')) {
 			item.classList.remove('open-up');
 			document.removeEventListener('keydown', closeSign);
+            document.querySelector('.action-key').removeEventListener('click', closeSign)
 		}
 	}
 }
@@ -6022,8 +6032,6 @@ function setStaticMCImage(mapChar, direction, weaponChange) {
 function addCharacterHit() {
 	'use strict';
 
-	let weaponTime = 200;
-	let heavyAttackInProgress = false;
 	let chargeAttackInProgress = false;
 
 	// Reset shiftispressed if you let go of it.
@@ -6048,268 +6056,274 @@ function addCharacterHit() {
 		}
 	});
 
-	document.addEventListener('keyup', (event) => {
-		const weapon = document.querySelector('.map-weapon');
-		const weaponType =
-			defaultWeapon === weapon.dataset.weapon
-				? ''
-				: '-' + weapon.dataset.weapon;
-		const direction =
-			'top' === weapon.dataset.direction
-				? 'up'
-				: weapon.dataset.direction;
-		const mapChar = document.querySelector('#map-character');
-		const currentImageMapCharacter = mapChar.querySelector(
-			'.map-character-icon.engage'
-		);
-		const weaponAnimation = mapChar.querySelector(
-			`#${window.mainCharacter}-${direction}-punch${weaponType}`
-		);
+	document.addEventListener('keyup', characterHitEvent);
+    document.querySelector('.action-key').addEventListener('click', characterHitEvent);
+}
 
-		if (false !== window.allowHit) {
-			const manaPoints = document.querySelector(
-				`#explore-points .mana-amount`
-			);
-			const currentPoints = manaPoints ? manaPoints.dataset.amount : 0;
+function characterHitEvent(event) {
+    let chargeAttackInProgress = false;
+    let weaponTime = 200;
+    let heavyAttackInProgress = false;
+    const weapon = document.querySelector('.map-weapon');
+    const weaponType =
+        defaultWeapon === weapon.dataset.weapon
+            ? ''
+            : '-' + weapon.dataset.weapon;
+    const direction =
+        'top' === weapon.dataset.direction
+            ? 'up'
+            : weapon.dataset.direction;
+    const mapChar = document.querySelector('#map-character');
+    const currentImageMapCharacter = mapChar.querySelector(
+        '.map-character-icon.engage'
+    );
+    const weaponAnimation = mapChar.querySelector(
+        `#${window.mainCharacter}-${direction}-punch${weaponType}`
+    );
 
-			if (true === ['ShiftLeft', 'ShiftRight'].includes(event.code)) {
-				shiftIsPressed = false;
-			}
+    if (false !== window.allowHit) {
+        const manaPoints = document.querySelector(
+            `#explore-points .mana-amount`
+        );
+        const currentPoints = manaPoints ? manaPoints.dataset.amount : 0;
 
-			if ('Space' === event.code) {
-				// Trigger charge attack if started.
-				spaceIsPressed = false;
-				clearTimeout(chargeAttackTimeout);
+        if (true === ['ShiftLeft', 'ShiftRight'].includes(event.code)) {
+            shiftIsPressed = false;
+        }
 
-				if (weapon && false === heavyAttackInProgress) {
-					const isSpell = weapon.classList.contains('spell');
-					weaponTime = weapon.classList.contains('protection')
-						? 8000
-						: 100;
+        if ('Space' === event.code || event.target.classList.contains('action-key')) {
+            // Trigger charge attack if started.
+            spaceIsPressed = false;
+            clearTimeout(chargeAttackTimeout);
 
-					// Only engage if not a spell or mana is not 0.
-					if (
-						'true' === weapon.dataset.projectile ||
-						(true === isSpell && 0 < currentPoints) ||
-						(false === isSpell && false === chargeAttackInProgress)
-					) {
-						weapon.classList.add('engage');
+            if (weapon && false === heavyAttackInProgress) {
+                const isSpell = weapon.classList.contains('spell');
+                weaponTime = weapon.classList.contains('protection')
+                    ? 8000
+                    : 100;
 
-						// Move weapon based on direction
-						switch (direction) {
-							case 'up':
-								weaponPosTop = 310;
-								break;
-							case 'down':
-								weaponPosTop = 490;
-								break;
-							case 'left':
-								weaponPosLeft = 350;
-								break;
-							case 'right':
-								weaponPosLeft = 450;
-								break;
-						}
+                // Only engage if not a spell or mana is not 0.
+                if (
+                    'true' === weapon.dataset.projectile ||
+                    (true === isSpell && 0 < currentPoints) ||
+                    (false === isSpell && false === chargeAttackInProgress)
+                ) {
+                    weapon.classList.add('engage');
 
-						if (currentImageMapCharacter) {
-							currentImageMapCharacter.classList.add('punched');
+                    // Move weapon based on direction
+                    switch (direction) {
+                        case 'up':
+                            weaponPosTop = 310;
+                            break;
+                        case 'down':
+                            weaponPosTop = 490;
+                            break;
+                        case 'left':
+                            weaponPosLeft = 350;
+                            break;
+                        case 'right':
+                            weaponPosLeft = 450;
+                            break;
+                    }
 
-							weaponAnimation.classList.add('engage');
-						}
-					}
+                    if (currentImageMapCharacter) {
+                        currentImageMapCharacter.classList.add('punched');
 
-					// If spell, take manna away if above 0.
-					if (0 < currentPoints && true === isSpell) {
-						// Use mana.
-						const objectAmount = weapon.getAttribute('data-value');
+                        weaponAnimation.classList.add('engage');
+                    }
+                }
 
-						// Remove amount to current points.
-						manaPoints.setAttribute(
-							'data-amount',
-							parseInt(currentPoints) - parseInt(objectAmount)
-						);
+                // If spell, take manna away if above 0.
+                if (0 < currentPoints && true === isSpell) {
+                    // Use mana.
+                    const objectAmount = weapon.getAttribute('data-value');
 
-						// Add class for notification of point gain.
-						manaPoints.classList.add('engage');
+                    // Remove amount to current points.
+                    manaPoints.setAttribute(
+                        'data-amount',
+                        parseInt(currentPoints) - parseInt(objectAmount)
+                    );
 
-						// Get new amount.
-						let newAmount =
-							parseInt(currentPoints) - parseInt(objectAmount);
-						newAmount = 0 > newAmount ? 0 : newAmount;
+                    // Add class for notification of point gain.
+                    manaPoints.classList.add('engage');
 
-						// Add new point count to DB.
-						addUserPoints(newAmount, 'mana', 'magic', false, '');
+                    // Get new amount.
+                    let newAmount =
+                        parseInt(currentPoints) - parseInt(objectAmount);
+                    newAmount = 0 > newAmount ? 0 : newAmount;
 
-						// Remove highlight on point bar.
-						setTimeout(() => {
-							manaPoints.classList.remove('engage');
-						}, 500);
-					}
+                    // Add new point count to DB.
+                    addUserPoints(newAmount, 'mana', 'magic', false, '');
 
-					// If spell or user has not hit weapon 3 time consecutively then reset weapon or is projectile.
-					if (
-						'true' === weapon.dataset.projectile ||
-						true === isSpell ||
-						(false === isSpell &&
-							false === heavyAttackInProgress &&
-							false === shiftIsPressed)
-					) {
-						setTimeout(() => {
-							// If heavy attack is not happening then you reset weapon.
-							if (
-								false ===
-								weapon.classList.contains('heavy-engage')
-							) {
-								weapon.classList.remove('engage');
-								currentImageMapCharacter.classList.remove(
-									'punched'
-								);
+                    // Remove highlight on point bar.
+                    setTimeout(() => {
+                        manaPoints.classList.remove('engage');
+                    }, 500);
+                }
 
-								weaponAnimation.classList.remove('engage');
+                // If spell or user has not hit weapon 3 time consecutively then reset weapon or is projectile.
+                if (
+                    'true' === weapon.dataset.projectile ||
+                    true === isSpell ||
+                    (false === isSpell &&
+                        false === heavyAttackInProgress &&
+                        false === shiftIsPressed)
+                ) {
+                    setTimeout(() => {
+                        // If heavy attack is not happening then you reset weapon.
+                        if (
+                            false ===
+                            weapon.classList.contains('heavy-engage')
+                        ) {
+                            weapon.classList.remove('engage');
+                            currentImageMapCharacter.classList.remove(
+                                'punched'
+                            );
 
-								// Reset weapon based on direction
-								switch (direction) {
-									case 'up':
-										weaponPosTop = 400;
-										break;
-									case 'down':
-										weaponPosTop = 400;
-										break;
-									case 'left':
-										weaponPosLeft = 400;
-										break;
-									case 'right':
-										weaponPosLeft = 400;
-										break;
-								}
-							}
-						}, weaponTime);
-					} else if (true === shiftIsPressed) {
-						const weaponAnimation = mapChar.querySelector(
-							`#${window.mainCharacter}-${direction}-punch${weaponType}`
-						);
+                            weaponAnimation.classList.remove('engage');
 
-						weapon.classList.add('heavy-engage');
-						heavyAttackInProgress = true;
+                            // Reset weapon based on direction
+                            switch (direction) {
+                                case 'up':
+                                    weaponPosTop = 400;
+                                    break;
+                                case 'down':
+                                    weaponPosTop = 400;
+                                    break;
+                                case 'left':
+                                    weaponPosLeft = 400;
+                                    break;
+                                case 'right':
+                                    weaponPosLeft = 400;
+                                    break;
+                            }
+                        }
+                    }, weaponTime);
+                } else if (true === shiftIsPressed) {
+                    const weaponAnimation = mapChar.querySelector(
+                        `#${window.mainCharacter}-${direction}-punch${weaponType}`
+                    );
 
-						setTimeout(() => {
-							heavyAttackInProgress = false;
-							weapon.classList.remove('heavy-engage');
-							weapon.classList.remove('engage');
-							currentImageMapCharacter.classList.remove(
-								'punched'
-							);
-							weaponAnimation.classList.remove('engage');
+                    weapon.classList.add('heavy-engage');
+                    heavyAttackInProgress = true;
 
-							// Reset weapon based on direction
-							switch (direction) {
-								case 'up':
-									weaponPosTop = 400;
-									break;
-								case 'down':
-									weaponPosTop = 400;
-									break;
-								case 'left':
-									weaponPosLeft = 400;
-									break;
-								case 'right':
-									weaponPosLeft = 400;
-									break;
-							}
+                    setTimeout(() => {
+                        heavyAttackInProgress = false;
+                        weapon.classList.remove('heavy-engage');
+                        weapon.classList.remove('engage');
+                        currentImageMapCharacter.classList.remove(
+                            'punched'
+                        );
+                        weaponAnimation.classList.remove('engage');
 
-							shiftIsPressed = false;
-						}, 500);
-					}
+                        // Reset weapon based on direction
+                        switch (direction) {
+                            case 'up':
+                                weaponPosTop = 400;
+                                break;
+                            case 'down':
+                                weaponPosTop = 400;
+                                break;
+                            case 'left':
+                                weaponPosLeft = 400;
+                                break;
+                            case 'right':
+                                weaponPosLeft = 400;
+                                break;
+                        }
 
-					// For shooting.
-					if (
-						0 < currentPoints &&
-						weapon &&
-						('yes' === weapon.dataset.projectile ||
-							true === isSpell)
-					) {
-						let weaponLeft = parseInt(
-							weapon.style.left.replace('px', '')
-						);
-						let weaponTop = parseInt(
-							weapon.style.top.replace('px', '')
-						);
-						const weaponClass =
-							true === isSpell ? '.magic-weapon' : '.map-weapon';
-						const playerDirection =
-							weapon.getAttribute('data-direction');
+                        shiftIsPressed = false;
+                    }, 500);
+                }
 
-						switch (playerDirection) {
-							case 'down':
-								weaponTop = weaponTop + 10000;
-								break;
-							case 'top':
-								weaponTop = weaponTop - 10000;
-								break;
-							case 'left':
-								weaponLeft = weaponLeft - 10000;
-								break;
-							case 'right':
-								weaponLeft = weaponLeft + 10000;
-								break;
-						}
+                // For shooting.
+                if (
+                    0 < currentPoints &&
+                    weapon &&
+                    ('yes' === weapon.dataset.projectile ||
+                        true === isSpell)
+                ) {
+                    let weaponLeft = parseInt(
+                        weapon.style.left.replace('px', '')
+                    );
+                    let weaponTop = parseInt(
+                        weapon.style.top.replace('px', '')
+                    );
+                    const weaponClass =
+                        true === isSpell ? '.magic-weapon' : '.map-weapon';
+                    const playerDirection =
+                        weapon.getAttribute('data-direction');
 
-						shootProjectile(
-							weapon,
-							weaponLeft,
-							weaponTop,
-							document,
-							2,
-							isSpell,
-							weaponClass,
-							weapon.dataset.projectile
-						);
-					}
+                    switch (playerDirection) {
+                        case 'down':
+                            weaponTop = weaponTop + 10000;
+                            break;
+                        case 'top':
+                            weaponTop = weaponTop - 10000;
+                            break;
+                        case 'left':
+                            weaponLeft = weaponLeft - 10000;
+                            break;
+                        case 'right':
+                            weaponLeft = weaponLeft + 10000;
+                            break;
+                    }
 
-					if (true === chargeAttackInProgress) {
-						chargeAttackInProgress = false;
-						weapon.classList.remove('charge-engage');
-						weapon.classList.add('charge-attack-engage');
+                    shootProjectile(
+                        weapon,
+                        weaponLeft,
+                        weaponTop,
+                        document,
+                        2,
+                        isSpell,
+                        weaponClass,
+                        weapon.dataset.projectile
+                    );
+                }
 
-						// Remove highlight on point bar.
-						setTimeout(() => {
-							weapon.classList.remove('charge-attack-engage');
-							currentImageMapCharacter.classList.remove(
-								'punched'
-							);
-							weaponAnimation.classList.remove('engage');
-						}, 700);
-					}
-				}
-			}
-		} else if ('Space' === event.code) {
-			const indicator = document.querySelector('.indicator-icon');
+                if (true === chargeAttackInProgress) {
+                    chargeAttackInProgress = false;
+                    weapon.classList.remove('charge-engage');
+                    weapon.classList.add('charge-attack-engage');
 
-			if (indicator && true === indicator.classList.contains('engage')) {
-				const cutscene = indicator.dataset?.cutscene;
-				const sign = indicator.dataset?.sign;
-				const minigame = indicator.dataset?.minigame;
-				const minigameEl = minigame
-					? document.querySelector('[data-minigame=' + minigame + ']')
-					: false;
+                    // Remove highlight on point bar.
+                    setTimeout(() => {
+                        weapon.classList.remove('charge-attack-engage');
+                        currentImageMapCharacter.classList.remove(
+                            'punched'
+                        );
+                        weaponAnimation.classList.remove('engage');
+                    }, 700);
+                }
+            }
+        }
+    } else if ('Space' === event.code || event.target.classList.contains('action-key')) {
+        const indicator = document.querySelector('.indicator-icon');
 
-				if (cutscene && '' !== cutscene) {
-					engageCutscene(cutscene, false);
-					indicator.dataset.cutscene = '';
-				}
+        if (indicator && true === indicator.classList.contains('engage')) {
+            const cutscene = indicator.dataset?.cutscene;
+            const sign = indicator.dataset?.sign;
+            const minigame = indicator.dataset?.minigame;
+            const minigameEl = minigame
+                ? document.querySelector('[data-minigame=' + minigame + ']')
+                : false;
 
-				if (sign && '' !== sign) {
-					engageSign(sign);
-					indicator.dataset.sign = '';
-				}
+            if (cutscene && '' !== cutscene) {
+                engageCutscene(cutscene, false);
+                indicator.dataset.cutscene = '';
+            }
 
-				if (minigame && minigameEl && '' !== minigame) {
-					engageMinigameLogic(minigameEl);
-					indicator.dataset.minigame = '';
-				}
-			}
-		}
-	});
+            if (sign && '' !== sign) {
+                engageSign(sign);
+                indicator.dataset.sign = '';
+            }
+
+            if (minigame && minigameEl && '' !== minigame) {
+                engageMinigameLogic(minigameEl);
+                indicator.dataset.minigame = '';
+            }
+        }
+    }
 }
 
 /**
@@ -6375,7 +6389,7 @@ function getBlockDirection(
 	const final = { top: finalTop, left: finalLeft, collide: false };
 	const mapChar = document.getElementById('map-character');
 	const mainCharPos = {
-		offsetLeft: mapChar.offsetLeft + (400 - box.offsetWidth / 2),
+		offsetLeft: mapChar.offsetLeft + (window.globalLeftPositionOffset - box.offsetWidth / 2),
 		offsetWidth: box.offsetWidth,
 		offsetTop: mapChar.offsetTop + (400 - box.offsetHeight / 2),
 		offsetHeight: box.offsetHeight,
@@ -6683,144 +6697,147 @@ function engageTransportFunction() {
 function engageDraggableFunction() {
 	'use strict';
 
-	document.addEventListener('keydown', (e) => {
-		const dragmeitem = document.querySelector('.dragme');
-		// If Shift is pressed start transport sequence.
-		if ('Space' === e.code) {
-			if (
-				dragmeitem &&
-				true === dragmeitem.classList.contains('currently-dragging')
-			) {
-				// Reengage hit.
-				setTimeout(() => {
-					window.allowHit = true;
-				}, 100);
+	document.addEventListener('keydown', dragItemEvent);
+    document.querySelector('.action-key').addEventListener('click', dragItemEvent);
+}
 
-				const dragmeitemTop = parseInt(
-					dragmeitem.style.top.replace('px', '')
-				);
+function dragItemEvent(e) {
+    if ('Space' === e.code || e.target.classList.contains('action-key')) {
+        const dragmeitem = document.querySelector('.dragme');
 
-				dragmeitem.classList.remove('currently-dragging');
-				dragmeitem.classList.remove('dragme');
+        if (
+            dragmeitem &&
+            true === dragmeitem.classList.contains('currently-dragging')
+        ) {
+            // Reengage hit.
+            setTimeout(() => {
+                window.allowHit = true;
+            }, 100);
 
-				dragmeitem.style.left = window.dragLeft.left
-					? parseInt(dragmeitem.style.left.replace('px', '')) -
-						2 +
-						'px'
-					: parseInt(dragmeitem.style.left.replace('px', '')) +
-						2 +
-						'px';
-				dragmeitem.style.top = window.dragTop.higher
-					? dragmeitemTop - 2 + 'px'
-					: dragmeitemTop + 2 + 'px';
+            const dragmeitemTop = parseInt(
+                dragmeitem.style.top.replace('px', '')
+            );
 
-				window.dragLeft = false;
-				window.dragTop = false;
-				window.isDragging = '';
-				window.draggingDirection = '';
+            dragmeitem.classList.remove('currently-dragging');
+            dragmeitem.classList.remove('dragme');
 
-				// Check if drop position is on draggable destination.
-				const cleanClass = cleanClassName(dragmeitem.className);
-				const dragDest = document.querySelector(
-					'.' + cleanClass + '-drag-dest-map-item'
-				);
+            dragmeitem.style.left = window.dragLeft.left
+                ? parseInt(dragmeitem.style.left.replace('px', '')) -
+                2 +
+                'px'
+                : parseInt(dragmeitem.style.left.replace('px', '')) +
+                2 +
+                'px';
+            dragmeitem.style.top = window.dragTop.higher
+                ? dragmeitemTop - 2 + 'px'
+                : dragmeitemTop + 2 + 'px';
 
-				if (dragDest) {
-					const dragDestLeft =
-						parseInt(dragDest.style.left.replace('px', '')) +
-						dragDest.offsetWidth / 2;
-					const dragDestTop =
-						parseInt(dragDest.style.top.replace('px', '')) +
-						dragDest.offsetHeight / 2;
-					const dragItemLeft =
-						parseInt(dragmeitem.style.left.replace('px', '')) +
-						dragDest.offsetWidth / 2;
-					const dragItemTop =
-						dragmeitemTop + dragmeitem.offsetHeight / 2;
-					const topOffset =
-						dragItemTop < dragDestTop
-							? dragDestTop - dragItemTop
-							: dragItemTop - dragDestTop;
-					const leftOffset =
-						dragItemLeft < dragDestLeft
-							? dragDestLeft - dragItemLeft
-							: dragItemLeft - dragDestLeft;
+            window.dragLeft = false;
+            window.dragTop = false;
+            window.isDragging = '';
+            window.draggingDirection = '';
 
-					if (
-						topOffset < parseInt(dragDest.dataset.offset) &&
-						leftOffset < parseInt(dragDest.dataset.offset) &&
-						false ===
-							dragDest.classList.contains('completed-mission')
-					) {
-						saveMission(
-							dragDest.dataset.mission,
-							document.querySelector(
-								'.' + dragDest.dataset.mission + '-mission-item'
-							),
-							cleanClass
-						);
+            // Check if drop position is on draggable destination.
+            const cleanClass = cleanClassName(dragmeitem.className);
+            const dragDest = document.querySelector(
+                '.' + cleanClass + '-drag-dest-map-item'
+            );
 
-						// Add completed mission so you can't keep getting points.
-						dragDest.classList.add('completed-mission');
-						dragmeitem.classList.add('no-point');
+            if (dragDest) {
+                const dragDestLeft =
+                    parseInt(dragDest.style.left.replace('px', '')) +
+                    dragDest.offsetWidth / 2;
+                const dragDestTop =
+                    parseInt(dragDest.style.top.replace('px', '')) +
+                    dragDest.offsetHeight / 2;
+                const dragItemLeft =
+                    parseInt(dragmeitem.style.left.replace('px', '')) +
+                    dragDest.offsetWidth / 2;
+                const dragItemTop =
+                    dragmeitemTop + dragmeitem.offsetHeight / 2;
+                const topOffset =
+                    dragItemTop < dragDestTop
+                        ? dragDestTop - dragItemTop
+                        : dragItemTop - dragDestTop;
+                const leftOffset =
+                    dragItemLeft < dragDestLeft
+                        ? dragDestLeft - dragItemLeft
+                        : dragItemLeft - dragDestLeft;
 
-						if ('true' === dragDest.dataset.removable) {
-							dragDest.remove();
-							persistItemRemoval(
-								cleanClassName(dragDest.className),
-								'point',
-								0,
-								2000,
-								'',
-								true
-							);
-						}
+                if (
+                    topOffset < parseInt(dragDest.dataset.offset) &&
+                    leftOffset < parseInt(dragDest.dataset.offset) &&
+                    false ===
+                    dragDest.classList.contains('completed-mission')
+                ) {
+                    saveMission(
+                        dragDest.dataset.mission,
+                        document.querySelector(
+                            '.' + dragDest.dataset.mission + '-mission-item'
+                        ),
+                        cleanClass
+                    );
 
-						// Remove drag item if disappear is yes.
-						if ('yes' === dragmeitem.dataset.disappear) {
-							dragmeitem.remove();
-							persistItemRemoval(
-								cleanClass,
-								'point',
-								0,
-								2000,
-								'',
-								true
-							);
-						}
-					}
-				}
+                    // Add completed mission so you can't keep getting points.
+                    dragDest.classList.add('completed-mission');
+                    dragmeitem.classList.add('no-point');
 
-				// Save position of item.
-				const filehref = `${OrbemOrder.siteRESTURL}/save-drag/`;
+                    if ('true' === dragDest.dataset.removable) {
+                        dragDest.remove();
+                        persistItemRemoval(
+                            cleanClassName(dragDest.className),
+                            'point',
+                            0,
+                            2000,
+                            '',
+                            true
+                        );
+                    }
 
-				const jsonString = {
-					slug: cleanClass,
-					top: dragmeitem.style.top.replace('px', ''),
-					left: dragmeitem.style.left.replace('px', ''),
-				};
+                    // Remove drag item if disappear is yes.
+                    if ('yes' === dragmeitem.dataset.disappear) {
+                        dragmeitem.remove();
+                        persistItemRemoval(
+                            cleanClass,
+                            'point',
+                            0,
+                            2000,
+                            '',
+                            true
+                        );
+                    }
+                }
+            }
 
-				// Save position of item.
-				fetch(filehref, {
-					method: 'POST', // Specify the HTTP method
-					headers: {
-						'Content-Type': 'application/json', // Set the content type to JSON
-						'X-WP-Nonce': OrbemOrder.orbemNonce,
-					},
-					body: JSON.stringify(jsonString), // The JSON stringified payload
-				}).then((response) => {
-					// Check if the response status is in the range 200-299
-					if (!response.ok) {
-						throw new Error(
-							'Network response was not ok ' + response.statusText
-						);
-					}
-				});
-			} else {
-				dragItem();
-			}
-		}
-	});
+            // Save position of item.
+            const filehref = `${OrbemOrder.siteRESTURL}/save-drag/`;
+
+            const jsonString = {
+                slug: cleanClass,
+                top: dragmeitem.style.top.replace('px', ''),
+                left: dragmeitem.style.left.replace('px', ''),
+            };
+
+            // Save position of item.
+            fetch(filehref, {
+                method: 'POST', // Specify the HTTP method
+                headers: {
+                    'Content-Type': 'application/json', // Set the content type to JSON
+                    'X-WP-Nonce': OrbemOrder.orbemNonce,
+                },
+                body: JSON.stringify(jsonString), // The JSON stringified payload
+            }).then((response) => {
+                // Check if the response status is in the range 200-299
+                if (!response.ok) {
+                    throw new Error(
+                        'Network response was not ok ' + response.statusText
+                    );
+                }
+            });
+        } else {
+            dragItem();
+        }
+    }
 }
 
 /**

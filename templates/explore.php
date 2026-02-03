@@ -302,6 +302,7 @@ include plugin_dir_path(__FILE__) . 'plugin-header.php';
             <span class="bottom-right">
             </span>
         </div>
+        <button class="action-key">action key</button>
         <span id="key-guide" href="<?php echo esc_url($orbem_studio_game_url); ?>">
             <img alt="controls" src="<?php echo esc_url($orbem_studio_plugin_dir . '/assets/src/images/keys.png'); ?>" />
         </span>

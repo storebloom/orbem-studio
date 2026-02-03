@@ -425,6 +425,10 @@ html {
         padding: 20px 50px;
         display: none;
 
+        @media only screen and (max-width: 480px) {
+          padding: 0 13px;
+        }
+
         &.engage {
           display: block;
 
@@ -444,6 +448,10 @@ html {
         &.engage {
           display: block;
           opacity: 1;
+
+          @media only screen and (max-width: 480px) {
+            width: 100px;
+          }
         }
 
         img {
@@ -1544,15 +1552,29 @@ html {
         }
       }
 
+      .action-key {
+        display: none;
+
+        @media only screen and (max-width: 480px) {
+          bottom: 25%;
+          display: block;
+          position: fixed;
+          left: 50%;
+          transform: translateX(-50%);
+          z-index: 20;
+        }
+      }
+
       .touch-buttons {
         display: flex;
         flex-wrap: wrap;
-        height: 100dvh;
+        height: 80dvh;
         left: 0;
         max-width: 100%!important;
         opacity: 0;
         position: fixed;
-        top: 0;
+        top: 50%;
+        transform: translateY(-50%);
         transition: all .5s;
         width: 100vw;
         z-index: -1;
