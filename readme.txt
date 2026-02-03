@@ -173,7 +173,8 @@ We have extensive documentation at https://orbemorder.com/orbem-studio/docs/read
 = 1.1.6 =
 * Fix cutscene removal typo.
 * Allow all blocks for explainer content editor.
-* Make mobile usable.
+* Fix mobile scroll event.
+* Add mobile action key.
 
 = 1.1.5 =
 * Add cutscene removal feature.
