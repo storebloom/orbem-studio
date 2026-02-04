@@ -26,17 +26,26 @@ $orbem_studio_storage_limit          = get_user_meta($orbem_studio_userid, 'stor
 $orbem_studio_storage_limit          = false === empty($orbem_studio_storage_limit ) ? $orbem_studio_storage_limit : 11;
 $orbem_studio_current_explore_gear   = get_user_meta($orbem_studio_userid, 'explore_current_gear', true) ?? [];
 $orbem_studio_current_explore_weapon = get_user_meta($orbem_studio_userid, 'explore_current_weapons', true) ?? [$orbem_studio_default_weapon_id];
+$orbem_studio_storage_tabs           = get_option('explore_storage_tabs', []);
+$orbem_studio_storage_tabs_items     = $orbem_studio_storage_tabs['items'] ?? '';
+$orbem_studio_storage_tabs_weapons   = $orbem_studio_storage_tabs['weapons'] ?? '';
+$orbem_studio_storage_tabs_gear      = $orbem_studio_storage_tabs['gear'] ?? '';
 ?>
 <div class="storage-form">
     <span class="close-settings">X</span>
-    <h2>Retrieval Points</h2>
     <div class="retrieval-points">
         <div class="menu-tabs">
-            <div class="items-tab engage">Items</div>
-            <div class="weapons-tab">Weapons</div>
-            <div class="gear-tab">Gear</div>
+            <?php if (is_array($orbem_studio_storage_tabs) && true === in_array('on', $orbem_studio_storage_tabs)) : ?>
+                <?php if ('on' === $orbem_studio_storage_tabs_items) :?><div class="items-tab engage">Items</div><?php endif; ?>
+                <?php if ('on' === $orbem_studio_storage_tabs_weapons) :?><div class="weapons-tab engage">Weapons</div><?php endif; ?>
+                <?php if ('on' === $orbem_studio_storage_tabs_gear) :?><div class="gear-tab engage">Gear</div><?php endif; ?>
+            <?php endif; ?>
         </div>
-        <?php foreach($orbem_studio_storage as $orbem_studio_storage_type => $orbem_studio_storage_items): ?>
+        <?php foreach($orbem_studio_storage as $orbem_studio_storage_type => $orbem_studio_storage_items):
+            if (false === isset($orbem_studio_storage_tabs[$orbem_studio_storage_type]) || 'on' !== $orbem_studio_storage_tabs[$orbem_studio_storage_type]) {
+                continue;
+            }
+            ?>
             <div data-menu="<?php echo esc_attr($orbem_studio_storage_type); ?>" class="storage-menu <?php echo 'items' === $orbem_studio_storage_type ? 'engage' : ''; ?>">
                 <?php for ( $orbem_studio_x = 0; $orbem_studio_x <= intval($orbem_studio_storage_limit); $orbem_studio_x++ ) :
                     $orbem_studio_item = isset($orbem_studio_storage_items[$orbem_studio_x]) && is_array($orbem_studio_storage_items[$orbem_studio_x])
