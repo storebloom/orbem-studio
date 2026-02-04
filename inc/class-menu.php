@@ -709,6 +709,7 @@ class Menu
             'explore_google_login_client_id' => ['text', 'Google Login ClientID', 'Add your Google client id to allow SSO login. (Search google how if you this is confusing)'],
             'explore_google_tts_api_key' => ['text', 'Google TTS API Key', 'Add your Google TTS API key to allow cutscenes and explainers to talk using text to speech.'],
             'explore_hud_bars'     => ['multiselect', 'HUD bars', 'Choose which bars you wish to use for your game.', ['health', 'mana', 'power', 'money', 'points']],
+            'explore_storage_tabs' => ['multiselect', 'Storage tabs', 'Choose which storage tabs your storage menu should offer.', ['items', 'weapons', 'gear']],
             'explore_settings_icon' => ['upload', 'Settings Icon', 'Override settings icon in HUD'],
             'explore_hide_storage' => ['checkbox', 'Hide Storage Menu', 'If checked the storage menu will not appear in HUD.'],
             'explore_storage_icon' => ['upload', 'Storage Menu Icon', 'Override storage menu icon in HUD'],
