@@ -565,7 +565,7 @@ class Meta_Box {
                                 ]
                             ]
                         ],
-                        'Choose whether the NPC begins moving before or after the cutscene.'
+                        'Choose whether the Main Character of NPC begins moving before or after the cutscene.'
                     ],
                     'explore-npc-face-me' => [
                         [
