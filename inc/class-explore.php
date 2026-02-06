@@ -1488,6 +1488,10 @@ class Explore
                     $classes .= ' passable';
                 }
 
+                if (true !== $breakable && true !== $collectable && $passable && 'explore-point' === $explore_point->post_type) {
+                    $classes .= ' no-point';
+                }
+
                 // If it's an enemy, and they have health show or if not an enemy show.
                 if (
                     'explore-enemy' !== $explore_point->post_type ||
@@ -2016,16 +2020,16 @@ class Explore
             }
 
             // Add character position point if selected.
-            if (false === empty($character_position_top)) {
+            if (false === empty($character_position_trigger)) {
                 $data = wp_json_encode([
                     [
-                        'left'    => $character_position_left,
-                        'top'     => $character_position_top,
-                        'trigger' => $character_position_trigger,
+                        'left'    => $character_position_left ?? 0,
+                        'top'     => $character_position_top ?? 0,
+                        'trigger' => $character_position_trigger['trigger'] ?? 'before',
                     ],
                 ]);
 
-                $html .= " data-character-position='" . esc_attr( $data ) . "'";
+                $html .= " data-character-position='" . esc_attr($data) . "'";
             }
 
             if (false === empty($next_area)) {

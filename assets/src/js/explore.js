@@ -39,6 +39,7 @@ window.noTouch = false;
 window.isDragging = '';
 window.hazardTime = 600;
 window.globalLeftPositionOffset = 400;
+window.nextDialogue = false;
 
 document.addEventListener('DOMContentLoaded', function () {
 	'use strict';
@@ -327,7 +328,7 @@ function engageCharacterSelection() {
  * @param npc
  * @param cutscene
  */
-function moveNPC(npc, cutscene) {
+function moveNPC(npc, cutscene, areaCutscene, cutPosition) {
 	'use strict';
 
 	let walkingInterval;
@@ -454,10 +455,12 @@ function moveNPC(npc, cutscene) {
 									firstRun = true;
 									position = pathCount;
 									loopCount = 0;
+                                    playCutscene(cutPosition, areaCutscene);
 
 									// If not repeat and position is at end, clear interval.
 								} else if (pathCount === nextPosition) {
 									clearInterval(walkingInterval);
+                                    playCutscene(cutPosition, areaCutscene);
 								}
 
 								// if it is the first run, set to false and iterate on position and loopcount.
@@ -520,8 +523,13 @@ function moveNPC(npc, cutscene) {
 			}
 		} else if (true === wanderer) {
 			makeNPCWander(npc, walkingSpeed, timeBetween);
+            playCutscene(cutPosition, areaCutscene);
 		}
-	}
+
+        window.allowCutscene = true;
+	} else {
+        playCutscene(cutPosition, areaCutscene);
+    }
 }
 
 // Storage menu functionality.
@@ -1998,7 +2006,7 @@ const enterNewArea = (function () {
 							if (moveableCharacters) {
 								moveableCharacters.forEach(
 									(moveableCharacter) => {
-										moveNPC(moveableCharacter, false);
+										moveNPC(moveableCharacter, false, false, false);
 									}
 								);
 							}
@@ -3392,7 +3400,7 @@ export function engageExploreGame() {
 
 	if (moveableCharacters) {
 		moveableCharacters.forEach((moveableCharacter) => {
-			moveNPC(moveableCharacter, false);
+			moveNPC(moveableCharacter, false, false, false);
 		});
 	}
 
@@ -3631,9 +3639,13 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 				// Pause NPC from moving if touching MC.
 				if (
 					'explore-character' === value.dataset.genre &&
-					'' !== value.dataset.path
+					'' !== value.dataset.path &&
+                    cutsceneEl
 				) {
-					value.dataset.canmove = 'false';
+
+                    if (false === value.classList.contains('passable')) {
+                        value.dataset.canmove = 'false';
+                    }
 
 					const cutsceneTrigger = document.getElementById(
 						cutsceneEl.id + '-t'
@@ -3812,7 +3824,7 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 							document.getElementById(triggee.id + '-s') ?? false;
 
 						// Do text to speech.
-						makeTalk(text, mcVoice, providedAudio);
+						makeTalk(text, mcVoice, providedAudio, true);
 
 						const arrow = triggee.querySelector('img');
 
@@ -3892,7 +3904,7 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 					);
 
 					// Move triggered NPC.
-					moveNPC(triggee, false);
+					moveNPC(triggee, false, false, false);
 
 					value.remove();
 				}
@@ -4354,8 +4366,12 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 		}
 
 		playWalkSound();
+
+        window.amwalking = true;
 	} else {
-		stopWalkSound();
+        if (window.amwalking) {
+            stopWalkSound();
+        }
 	}
 
 	const w = pane.offsetWidth - box.offsetWidth;
@@ -4729,8 +4745,12 @@ function setPreviousCutsceneArea(cutsceneName) {
  * @param position
  * @param areaCutscene
  */
-function engageCutscene(position, areaCutscene) {
+function playCutscene(position, areaCutscene) {
 	'use strict';
+
+    if (false === position && false === areaCutscene) {
+        return;
+    }
 
 	const cutscene =
 		undefined === position?.className
@@ -4764,9 +4784,6 @@ function engageCutscene(position, areaCutscene) {
 			window.allowMovement = false;
 			window.allowHit = false;
 
-			// Before Cutscene.
-			beforeCutscene(cutscene);
-
 			if (npc) {
 				setTimeout(() => {
 					npc.scrollIntoView({
@@ -4789,6 +4806,9 @@ function engageCutscene(position, areaCutscene) {
 			if ('yes' === cutscene.dataset?.mutemusic && window.currentMusic) {
 				window.currentMusic.pause();
 			}
+
+            // Stop walk sound during cutscene.
+            resetWalkSound();
 
 			let textContainer = dialogues[0];
 
@@ -4824,6 +4844,7 @@ function engageCutscene(position, areaCutscene) {
 					}, 50); // Adjust the delay here
 				} else {
 					window.nextDialogueTimeout = setInterval(() => {
+
 						if (true === window.nextDialogue) {
 							nextDialogue();
 
@@ -4871,7 +4892,7 @@ function engageCutscene(position, areaCutscene) {
 					typeWriter(nextP, text, 0);
 
 					moveDialogueBox();
-					makeTalk(text, nextDialogue.dataset.voice, providedAudio);
+					makeTalk(text, nextDialogue.dataset.voice, providedAudio, false);
 				} else {
 					clearTimeout(typeWriterTimeout);
 					clearInterval(window.nextDialogueTimeout);
@@ -4936,6 +4957,7 @@ function engageCutscene(position, areaCutscene) {
 						dialogues &&
 						cutscene.classList.contains('engage')
 					) {
+                        console.log('key');
 						nextDialogue();
 					}
 				}
@@ -5022,11 +5044,11 @@ function engageCutscene(position, areaCutscene) {
 
 				// If triggerable, trigger the move path for character.
 				if (pathTrigger && theCharacterEl) {
-					moveNPC(theCharacterEl, false);
+					moveNPC(theCharacterEl, false, false, false);
 				}
 
 				if ('' !== firstText) {
-					makeTalk(firstText, voice, providedAudio);
+					makeTalk(firstText, voice, providedAudio, false);
 
 					if (mc && theCharacterImage) {
 						theCharacterImage.classList.add('engage');
@@ -5157,7 +5179,7 @@ function communicateParentClick() {
 								const voice = currentDialogue.dataset.voice;
 
 								if ('' !== firstText) {
-									makeTalk(firstText, voice, providedAudio);
+									makeTalk(firstText, voice, providedAudio, false);
 								}
 							};
 
@@ -5266,33 +5288,81 @@ function engageSign(signname) {
 /**
  * Stuff that happens before a cutscene.
  * @param cutscene
+ * @param character
  */
-function beforeCutscene(cutscene) {
+function engageCutscene(position, areaCutscene) {
 	'use strict';
+
+    const cutscene =
+        undefined === position?.className
+            ? document.querySelector('.' + position + '-map-cutscene')
+            : position;
+
+    const mc = document.getElementById('map-character');
+    const character = cleanClassName(
+        cutscene.querySelector(
+            '.wp-block-orbem-paragraph-mp3:not(.explore-character-' +
+            mc?.dataset?.mainid +
+            ')'
+        )?.className
+    );
 
 	const characterPosition = JSON.parse(
 		cutscene.getAttribute('data-character-position')
 	);
+    const cutsceneName = cleanClassName(cutscene.className).replace(' ', '');
+    const cutsceneCharacter = character
+        ? document.getElementById(character)
+        : false;
 	const mapCharacter = document.getElementById('map-character');
 
 	// Face NPC before talking to them. Good manners.
 	faceNPC(mapCharacter, cutscene.dataset.character, cutscene);
 
-	if (
-		characterPosition &&
-		0 < characterPosition.length &&
-		undefined !== characterPosition[0]
-	) {
-		window.allowCutscene = false;
-		// Trigger character move before cutscene starts.
-		moveCharacter(
-			mapCharacter,
-			characterPosition[0].top,
-			characterPosition[0].left,
-			true,
-			cutscene
-		);
-	}
+    if (
+        characterPosition &&
+        0 < characterPosition.length &&
+        undefined !== characterPosition[0] &&
+        'before' === characterPosition[0]?.trigger
+    ) {
+        window.allowCutscene = false;
+
+        if ('0' !== characterPosition[0]?.top) {
+            // Trigger character move before cutscene starts.
+            moveCharacter(
+                mapCharacter,
+                characterPosition[0].top,
+                characterPosition[0].left,
+                true,
+                cutscene,
+                areaCutscene,
+                position
+            );
+        }
+
+        // Trigger walking path if selected and has path.
+        const pathTriggerPosition = document.querySelector(
+            '[data-trigger-cutscene="' + cutsceneName + '"]'
+        );
+        const cutsceneHasPath = undefined !== cutscene.dataset?.path;
+
+        // Push MC if NPC needs to walk after cutscene.
+        if (pathTriggerPosition || cutsceneHasPath) {
+            // Push MC away from character.
+            pushMC(30);
+        }
+
+        if (pathTriggerPosition) {
+            moveNPC(pathTriggerPosition, false, areaCutscene, position);
+        }
+
+        // If cutscene has walking path. Move NPC after cutscene.
+        if (cutsceneHasPath) {
+            moveNPC(cutsceneCharacter, cutscene, areaCutscene, position);
+        }
+    } else {
+        playCutscene(position, areaCutscene);
+    }
 }
 
 function faceNPC(mapCharacter, npc, cutscene) {
@@ -5365,25 +5435,29 @@ function afterCutscene(cutscene, areaCutscene, character) {
 		: false;
 	const indicator = document.querySelector('.indicator-icon');
 	const communicateDevice = cutscene.dataset?.communicate;
-	const materializeCutscene = document.querySelector(
+	const materializeCutscenes = document.querySelectorAll(
 		'[data-materializecutscene="' + cutsceneName + '"]'
 	);
-    const removeCutsceneTrigger = document.querySelector(
+    const removeCutsceneTriggers = document.querySelectorAll(
         '[data-removeaftercutscene="' + cutsceneName + '"]'
     );
 
-	if (
-		materializeCutscene &&
-		false === materializeCutscene.classList.contains('enable')
-	) {
-		materializeCutscene.classList.add('enable');
+	if (materializeCutscenes && 0 < materializeCutscenes.length) {
+        materializeCutscenes.forEach(materializeCutscene => {
+            if (false === materializeCutscene.classList.contains('enable')) {
+                materializeCutscene.classList.add('enable');
+            }
+        })
 	}
 
     // Remove trigger after another cutscene.
     if (
-        removeCutsceneTrigger
+        removeCutsceneTriggers
+        && 0 < removeCutsceneTriggers.length
     ) {
-        removeCutsceneTrigger.remove();
+        removeCutsceneTriggers.forEach(removeCutsceneTrigger => {
+            removeCutsceneTrigger.remove();
+        });
     }
 
 	// Show dependent communication devices.
@@ -5443,26 +5517,38 @@ function afterCutscene(cutscene, areaCutscene, character) {
 		talkAudio.currentTime = 0;
 	}
 
-	// Trigger walking path if selected and has path.
-	const pathTriggerPosition = document.querySelector(
-		'[data-trigger-cutscene="' + cutsceneName + '"]'
-	);
-	const cutsceneHasPath = undefined !== cutscene.dataset?.path;
+    const characterPosition = JSON.parse(
+        cutscene.getAttribute('data-character-position')
+    );
 
-	// Push MC if NPC needs to walk after cutscene.
-	if (pathTriggerPosition || cutsceneHasPath) {
-		// Push MC away from character.
-		pushMC(30);
-	}
+    // Trigger walking path if selected and has path.
+    const pathTriggerPosition = document.querySelector(
+        '[data-trigger-cutscene="' + cutsceneName + '"]'
+    );
 
-	if (pathTriggerPosition) {
-		moveNPC(pathTriggerPosition, false);
-	}
+    if (
+        characterPosition &&
+        0 < characterPosition.length &&
+        undefined !== characterPosition[0] &&
+        'after' === characterPosition[0]?.trigger
+    ) {
+        const cutsceneHasPath = undefined !== cutscene.dataset?.path;
 
-	// If cutscene has walking path. Move NPC after cutscene.
-	if (cutsceneHasPath) {
-		moveNPC(cutsceneCharacter, cutscene);
-	}
+        // Push MC if NPC needs to walk after cutscene.
+        if (pathTriggerPosition || cutsceneHasPath) {
+            // Push MC away from character.
+            pushMC(30);
+        }
+
+        if (pathTriggerPosition) {
+            moveNPC(pathTriggerPosition, false, false, false);
+        }
+
+        // If cutscene has walking path. Move NPC after cutscene.
+        if (cutsceneHasPath) {
+            moveNPC(cutsceneCharacter, cutscene, false, false);
+        }
+    }
 
 	// Remove after cutscene.
 	const removeThings = document.querySelectorAll(
@@ -5562,6 +5648,28 @@ function removeItems(removeThings, cutsceneName) {
 	});
 }
 
+function resetWalkSound() {
+    'use strict';
+
+    const walkingSound = document.getElementById('walking');
+
+    if (
+        walkingSound &&
+        undefined !== walkingSound?.src &&
+        '' !== walkingSound.src
+    ) {
+        const walkingSoundURL = walkingSound.src;
+
+        walkingSound.src = '';
+
+        setTimeout(() => {
+            walkingSound.src = walkingSoundURL;
+        }, 100);
+    }
+
+    return false;
+}
+
 function playWalkSound() {
 	'use strict';
 
@@ -5617,6 +5725,8 @@ function stopWalkSound() {
 		walkingSound.pause();
 		walkingSound.currentTime = 0;
 	}
+
+    window.amwalking = false;
 
 	return false;
 }
@@ -6955,7 +7065,7 @@ function clickTransport(clickE) {
 				false === clickE.target.classList.contains('map-item') ||
 				'true' === clickE.target.dataset.hazard)
 		) {
-			moveCharacter(mapCharacter, y, x, false, false);
+			moveCharacter(mapCharacter, y, x, false, false, false, false);
 		}
 
 		const newAmount = powerAmount < 0 ? 0 : powerAmount - 25;
@@ -6977,7 +7087,7 @@ function clickTransport(clickE) {
  * @param gradual
  * @param cutscene
  */
-function moveCharacter(mapCharacter, newTop, newLeft, gradual, cutscene) {
+function moveCharacter(mapCharacter, newTop, newLeft, gradual, cutscene, areaCutscene, position) {
 	'use strict';
 
 	const currentLeft = parseInt(mapCharacter.style.left.replace('px', ''));
@@ -7091,6 +7201,8 @@ function moveCharacter(mapCharacter, newTop, newLeft, gradual, cutscene) {
 					clearInterval(moveInt);
 					movementIntFunc();
 				}
+
+                playCutscene(position, areaCutscene);
 			}
 
 			moveCount++;
@@ -7410,8 +7522,10 @@ function textToBinary(str) {
 	return output;
 }
 
-async function makeTalk(text, voiceName, providedAudio) {
+async function makeTalk(text, voiceName, providedAudio, explainer) {
 	'use strict';
+
+    let noVoice = false;
 
 	if (
 		true === text.includes('**') ||
@@ -7431,12 +7545,18 @@ async function makeTalk(text, voiceName, providedAudio) {
 		talkAudio.play();
 
 		talkAudio.addEventListener('ended', () => {
-			window.nextDialogue = true;
+            if (false === explainer) {
+			    window.nextDialogue = true;
+            }
 		});
-	}
+	} else {
+        noVoice = true;
+    }
 
-	if (false === providedAudio) {
-		const apiKey = OrbemOrder.TTSAPIKEY ?? '';
+    const apiKey = OrbemOrder.TTSAPIKEY ?? '';
+
+	if (false === providedAudio && '' !== apiKey && voiceName && '' !== voiceName) {
+        noVoice = false;
 		const url = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`;
 		const pitch = 0;
 
@@ -7476,15 +7596,21 @@ async function makeTalk(text, voiceName, providedAudio) {
 			// Play the audio
 			talkAudio = new Audio(`data:audio/mp3;base64,${audioContent}`);
 			talkAudio.volume = 0.5;
-			talkAudio.play();
+			await talkAudio.play();
 
 			talkAudio.addEventListener('ended', () => {
-				window.nextDialogue = true;
+                if (false === explainer) {
+                    window.nextDialogue = true;
+                }
 			});
 		} catch (error) {
 			window.audioError = error.message;
 		}
 	}
+
+    if (noVoice) {
+        window.nextDialogue = true;
+    }
 
 	function scaleDbToUnit(value, dbMin = -40, dbMax = 16) {
 		return (value - dbMin) / (dbMax - dbMin);
