@@ -112,7 +112,7 @@ class Util
         $posts = get_posts($args);
 
         foreach ($posts as $post) {
-            $explore_array[] = $post->post_name;
+            $explore_array[$post->post_title] = $post->post_name;
         }
 
         return $explore_array;

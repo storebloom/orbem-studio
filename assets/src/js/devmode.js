@@ -757,7 +757,12 @@ export function engageDevMode() {
 }
 document.addEventListener('DOMContentLoaded', function () {
 	'use strict';
-	engageDevMode();
+
+    const devMode = document.querySelector('main[data-devmode=true]');
+
+    if ( devMode ) {
+        engageDevMode();
+    }
 });
 
 function makeNewFormSub() {
