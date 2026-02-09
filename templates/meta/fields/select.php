@@ -23,11 +23,11 @@ $orbem_studio_final_value = false !== $orbem_studio_main_key && isset($orbem_stu
 >
     <option value="" selected="selected">None</option>
     <?php if (true === is_array($orbem_studio_sub_value)): ?>
-        <?php foreach($orbem_studio_sub_value as $orbem_studio_option):
+        <?php foreach($orbem_studio_sub_value as $orbem_studio_name => $orbem_studio_option):
             $orbem_studio_option_value = false !== isset($orbem_studio_option['name']) ? esc_html($orbem_studio_option['name']) : esc_html($orbem_studio_option);
             ?>
             <option value="<?php echo esc_html($orbem_studio_option_value); ?>" <?php selected($orbem_studio_final_value, $orbem_studio_option_value); ?>>
-                <?php echo false !== isset($orbem_studio_option['name']) ? esc_html($orbem_studio_option['name']) . ' : ' : esc_html(ucfirst(str_replace('-', ' ', $orbem_studio_option))); ?><?php echo false !== isset($orbem_studio_option['gender']) ? esc_html($orbem_studio_option['gender']) : '' ?>
+                <?php echo false !== isset($orbem_studio_option['name']) ? esc_html($orbem_studio_option['name']) . ' : ' : esc_html($orbem_studio_name); ?><?php echo false !== isset($orbem_studio_option['gender']) ? esc_html($orbem_studio_option['gender']) : '' ?>
             </option>
     <?php endforeach; endif; ?>
 </select>

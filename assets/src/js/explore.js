@@ -4957,7 +4957,6 @@ function playCutscene(position, areaCutscene) {
 						dialogues &&
 						cutscene.classList.contains('engage')
 					) {
-                        console.log('key');
 						nextDialogue();
 					}
 				}
