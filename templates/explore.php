@@ -181,6 +181,7 @@ $orbem_studio_main_character_info          = Explore::getCharacterImages($orbem_
 $orbem_studio_direction_images             = $orbem_studio_main_character_info['direction_images'] ?? [];
 $orbem_studio_main_character_id            = $orbem_studio_main_character_info['id'] ?? false;
 $orbem_studio_is_admin                     = user_can(get_current_user_id(), 'manage_options');
+$orbem_studio_is_logged_in                 = is_user_logged_in();
 
 if ( $orbem_studio_is_admin ) {
     $orbem_studio_item_list = array_merge($orbem_studio_explore_points, $orbem_studio_explore_minigames, $orbem_studio_explore_explainers, $orbem_studio_explore_walls);
@@ -202,7 +203,7 @@ extract([
 
 include plugin_dir_path(__FILE__) . 'plugin-header.php';
 ?>
-<main id="primary"<?php echo esc_attr(true === $orbem_studio_is_admin ? ' data-devmode=true' : ''); ?> class="site-main<?php echo esc_attr($orbem_studio_rst); ?>">
+<main id="primary"<?php echo esc_attr(true === $orbem_studio_is_admin ? ' data-devmode=true' : ''); ?><?php echo esc_attr(true === $orbem_studio_is_logged_in ? ' data-loggedin=true' : ''); ?> class="site-main<?php echo esc_attr($orbem_studio_rst); ?>">
     <?php include $orbem_studio_plugin_dir_path . 'start-screen.php'; ?>
     <?php if (true === $orbem_studio_is_admin) : ?>
         <?php echo wp_kses(html_entity_decode(Dev_Mode::getDevModeHTML()), $orbem_studio_allowed_tags); ?>
