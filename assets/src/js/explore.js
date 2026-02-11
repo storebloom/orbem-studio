@@ -32,6 +32,7 @@ let weaponPosLeft = 400;
 let hazardCounter = 0;
 let pulsewaveTrackInterval;
 const defaultWeapon = OrbemOrder.defaultWeapon;
+let isLoggedIn = false;
 
 window.mainCharacter = '';
 window.godMode = false;
@@ -40,6 +41,7 @@ window.isDragging = '';
 window.hazardTime = 600;
 window.globalLeftPositionOffset = 400;
 window.nextDialogue = false;
+window.crewCharacters = [];
 
 document.addEventListener('DOMContentLoaded', function () {
 	'use strict';
@@ -1044,6 +1046,10 @@ function triggerGameOver() {
 function persistItemRemoval(item, type, amount, timeoutTime, reset, direct) {
 	'use strict';
 
+	if (false === isLoggedIn) {
+		return;
+	}
+
 	const filehref = `${OrbemOrder.siteRESTURL}/add-explore-points/`;
 
 	// Don't allow health to be 0.
@@ -1293,22 +1299,24 @@ function saveMission(mission, value, position) {
 			mission,
 		};
 
-		// Save position of item.
-		fetch(filehref, {
-			method: 'POST', // Specify the HTTP method
-			headers: {
-				'Content-Type': 'application/json', // Set the content type to JSON
-				'X-WP-Nonce': OrbemOrder.orbemNonce,
-			},
-			body: JSON.stringify(jsonString), // The JSON stringified payload
-		}).then((response) => {
-			// Check if the response status is in the range 200-299
-			if (!response.ok) {
-				throw new Error(
-					'Network response was not ok ' + response.statusText
-				);
-			}
-		});
+		if (false !== isLoggedIn) {
+			// Save position of item.
+			fetch(filehref, {
+				method: 'POST', // Specify the HTTP method
+				headers: {
+					'Content-Type': 'application/json', // Set the content type to JSON
+					'X-WP-Nonce': OrbemOrder.orbemNonce,
+				},
+				body: JSON.stringify(jsonString), // The JSON stringified payload
+			}).then((response) => {
+				// Check if the response status is in the range 200-299
+				if (!response.ok) {
+					throw new Error(
+						'Network response was not ok ' + response.statusText
+					);
+				}
+			});
+		}
 	}, 500);
 }
 
@@ -1405,33 +1413,35 @@ function equipNewItem(type, id, amount, unequip, name) {
 		window.currentWeapon = defaultWeapon !== name ? '-' + name : '';
 	}
 
-	// Save position of item.
-	fetch(`${OrbemOrder.siteRESTURL}/equip-explore-item/`, {
-		method: 'POST', // Specify the HTTP method
-		headers: {
-			'Content-Type': 'application/json', // Set the content type to JSON
-			'X-WP-Nonce': OrbemOrder.orbemNonce,
-		},
-		body: JSON.stringify(jsonString), // The JSON stringified payload
-	}).then((response) => {
-		// Check if the response status is in the range 200-299
-		if (!response.ok) {
-			throw new Error(
-				'Network response was not ok ' + response.statusText
+	if (false !== isLoggedIn) {
+		// Save position of item.
+		fetch(`${OrbemOrder.siteRESTURL}/equip-explore-item/`, {
+			method: 'POST', // Specify the HTTP method
+			headers: {
+				'Content-Type': 'application/json', // Set the content type to JSON
+				'X-WP-Nonce': OrbemOrder.orbemNonce,
+			},
+			body: JSON.stringify(jsonString), // The JSON stringified payload
+		}).then((response) => {
+			// Check if the response status is in the range 200-299
+			if (!response.ok) {
+				throw new Error(
+					'Network response was not ok ' + response.statusText
+				);
+			}
+
+			const itemDescription = document.getElementById('item-description');
+			if (itemDescription) {
+				itemDescription.innerHTML = '';
+			}
+
+			setStaticMCImage(
+				document.getElementById('map-character'),
+				'down',
+				true
 			);
-		}
-
-		const itemDescription = document.getElementById('item-description');
-		if (itemDescription) {
-			itemDescription.innerHTML = '';
-		}
-
-		setStaticMCImage(
-			document.getElementById('map-character'),
-			'down',
-			true
-		);
-	});
+		});
+	}
 }
 
 /**
@@ -1448,22 +1458,24 @@ function addNewSpell(id) {
 		spellid: id,
 	};
 
-	// Save position of item.
-	fetch(filehref, {
-		method: 'POST', // Specify the HTTP method
-		headers: {
-			'Content-Type': 'application/json', // Set the content type to JSON
-			'X-WP-Nonce': OrbemOrder.orbemNonce,
-		},
-		body: JSON.stringify(jsonString), // The JSON stringified payload
-	}).then((response) => {
-		// Check if the response status is in the range 200-299
-		if (!response.ok) {
-			throw new Error(
-				'Network response was not ok ' + response.statusText
-			);
-		}
-	});
+	if (false !== isLoggedIn) {
+		// Save position of item.
+		fetch(filehref, {
+			method: 'POST', // Specify the HTTP method
+			headers: {
+				'Content-Type': 'application/json', // Set the content type to JSON
+				'X-WP-Nonce': OrbemOrder.orbemNonce,
+			},
+			body: JSON.stringify(jsonString), // The JSON stringified payload
+		}).then((response) => {
+			// Check if the response status is in the range 200-299
+			if (!response.ok) {
+				throw new Error(
+					'Network response was not ok ' + response.statusText
+				);
+			}
+		});
+	}
 }
 
 /**
@@ -1506,6 +1518,10 @@ function removeItemFromStorage(position, type) {
  */
 function saveSettings(music, sfx, talking) {
 	'use strict';
+
+	if (false === isLoggedIn) {
+		return;
+	}
 
 	const jsonString = {
 		music,
@@ -1553,6 +1569,10 @@ function saveStorageItem(id, name, type, value, remove) {
 		remove,
 	};
 
+	if (false === isLoggedIn) {
+		return;
+	}
+
 	// Save position of item.
 	fetch(filehref, {
 		method: 'POST', // Specify the HTTP method
@@ -1577,6 +1597,10 @@ function saveStorageItem(id, name, type, value, remove) {
  */
 async function resetExplore() {
 	'use strict';
+
+	if (false === isLoggedIn) {
+		return;
+	}
 
 	const filehref = `${OrbemOrder.siteRESTURL}/resetexplore/`;
 
@@ -1608,6 +1632,10 @@ async function resetExplore() {
  */
 function addUserCoordianate(left, top) {
 	'use strict';
+
+	if (false === isLoggedIn) {
+		return;
+	}
 
 	const filehref = `${OrbemOrder.siteRESTURL}/coordinates/`;
 
@@ -1719,23 +1747,25 @@ const hurtTheEnemy = (function () {
 							position,
 						};
 
-						// Save position of item.
-						fetch(filehref, {
-							method: 'POST', // Specify the HTTP method
-							headers: {
-								'Content-Type': 'application/json', // Set the content type to JSON
-								'X-WP-Nonce': OrbemOrder.orbemNonce,
-							},
-							body: JSON.stringify(jsonString), // The JSON stringified payload
-						}).then((response) => {
-							// Check if the response status is in the range 200-299
-							if (!response.ok) {
-								throw new Error(
-									'Network response was not ok ' +
+						if (false !== isLoggedIn) {
+							// Save position of item.
+							fetch(filehref, {
+								method: 'POST', // Specify the HTTP method
+								headers: {
+									'Content-Type': 'application/json', // Set the content type to JSON
+									'X-WP-Nonce': OrbemOrder.orbemNonce,
+								},
+								body: JSON.stringify(jsonString), // The JSON stringified payload
+							}).then((response) => {
+								// Check if the response status is in the range 200-299
+								if (!response.ok) {
+									throw new Error(
+										'Network response was not ok ' +
 										response.statusText
-								);
-							}
-						});
+									);
+								}
+							});
+						}
 
 						if (
 							enemyMission &&
@@ -1767,8 +1797,9 @@ const enterNewArea = (function () {
 	window.runningPointFunction = false;
 	let called = false;
 
-	return function (position, weapon, mapUrl, nextAreaPosition) {
+	return function (position, weapon, mapUrl, nextAreaPosition, characters) {
 		fadeOutScene();
+		isLoggedIn = document.querySelector('main').dataset?.loggedin ?? false;
 
 		window.previousCutsceneArea =
 			'' === window.previousCutsceneArea
@@ -1828,6 +1859,7 @@ const enterNewArea = (function () {
 
 			const jsonString = {
 				position,
+				characters,
 			};
 
 			// Save position of item.
@@ -1975,7 +2007,9 @@ const enterNewArea = (function () {
 								checkIfHazardHurts();
 
 								// Engage dev mode.
-								engageDevMode();
+								if (document.querySelector('main[devmode="true"]')) {
+									engageDevMode();
+								}
 
 								// Add close menu event.
 								const characterMenu =
@@ -2095,7 +2129,11 @@ const enterNewArea = (function () {
 										crewMates[characterCount].className
 									);
 
-									addCharacter(characterName);
+									if (false === isLoggedIn) {
+										window.crewCharacters.push(characterName);
+									} else {
+										addCharacter(characterName);
+									}
 
 									characterCount++;
 								}, 1000);
@@ -2152,9 +2190,10 @@ const enterNewArea = (function () {
 								OrbemOrder.exploreAbilities.includes(
 									'transportation'
 								)) ||
-							newMapItems['explore-ability'].includes(
+							(newMapItems['explore-ability'] &&
+								newMapItems['explore-ability'].includes(
 								'transportation'
-							)
+							))
 						) {
 							engageTransportFunction();
 						}
@@ -3291,6 +3330,7 @@ function shouldRemoveItemOnload(mapItem) {
 export function engageExploreGame() {
 	'use strict';
 
+	isLoggedIn = document.querySelector('main').dataset?.loggedin ?? false;
 	const container = document.querySelector('.game-container');
 	const touchButtons = document.querySelector('.touch-buttons');
 	window.previousCutsceneArea = OrbemOrder.previousCutsceneArea ?? '';
@@ -4509,6 +4549,10 @@ function swapInteractedImage(item) {
 function saveMaterializedItem(area, materializedItemsArray) {
 	'use strict';
 
+	if (false === isLoggedIn) {
+		return;
+	}
+
 	const jsonString = {
 		area,
 		item: materializedItemsArray,
@@ -4533,6 +4577,10 @@ function saveMaterializedItem(area, materializedItemsArray) {
 
 function enableAbility(ability) {
 	'use strict';
+
+	if (false === isLoggedIn) {
+		return;
+	}
 
 	const jsonString = {
 		slug: ability,
@@ -4717,6 +4765,10 @@ function storeExploreItem(item) {
 
 function setPreviousCutsceneArea(cutsceneName) {
 	'use strict';
+
+	if (false === isLoggedIn) {
+		return;
+	}
 
 	const jsonString = {
 		cutscene: cutsceneName,
@@ -5592,7 +5644,7 @@ function afterCutscene(cutscene, areaCutscene, character) {
 
 	// If nextArea exists then trigger new area change.
 	if (nextArea) {
-		enterNewArea(nextArea, weapon, areaMap, nextAreaPosition);
+		enterNewArea(nextArea, weapon, areaMap, nextAreaPosition, window.crewCharacters);
 	}
 
 	// Reengage hit.
@@ -5750,7 +5802,7 @@ export function enterExplorePoint(value, mapUrl) {
 		weaponEl.style.display = 'none';
 	}
 
-	enterNewArea(position, weaponEl, mapUrl);
+	enterNewArea(position, weaponEl, mapUrl, false, window.crewCharacters);
 }
 
 /**
@@ -6927,22 +6979,24 @@ function dragItemEvent(e) {
                 left: dragmeitem.style.left.replace('px', ''),
             };
 
-            // Save position of item.
-            fetch(filehref, {
-                method: 'POST', // Specify the HTTP method
-                headers: {
-                    'Content-Type': 'application/json', // Set the content type to JSON
-                    'X-WP-Nonce': OrbemOrder.orbemNonce,
-                },
-                body: JSON.stringify(jsonString), // The JSON stringified payload
-            }).then((response) => {
-                // Check if the response status is in the range 200-299
-                if (!response.ok) {
-                    throw new Error(
-                        'Network response was not ok ' + response.statusText
-                    );
-                }
-            });
+			if (false !== isLoggedIn) {
+				// Save position of item.
+				fetch(filehref, {
+					method: 'POST', // Specify the HTTP method
+					headers: {
+						'Content-Type': 'application/json', // Set the content type to JSON
+						'X-WP-Nonce': OrbemOrder.orbemNonce,
+					},
+					body: JSON.stringify(jsonString), // The JSON stringified payload
+				}).then((response) => {
+					// Check if the response status is in the range 200-299
+					if (!response.ok) {
+						throw new Error(
+							'Network response was not ok ' + response.statusText
+						);
+					}
+				});
+			}
         } else {
             dragItem();
         }

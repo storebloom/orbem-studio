@@ -45,11 +45,12 @@ class Explore
     {
         $permission_callback = function() { return current_user_can( 'read' ); };
         $namespace           = 'orbemorder/v1';
+        $google_function     = is_plugin_active('orbem-studio-pro/orbem-studio-pro.php') ? 'handleProGoogleOauthCallback' : 'handleGoogleOauthCallback';
 
         // Google oauth handle for logging in.
         register_rest_route($namespace, '/google-oauth-callback/', [
             'methods'             => 'POST',
-            'callback'            => [$this, 'handleGoogleOauthCallback'],
+            'callback'            => [$this, $google_function],
             'permission_callback' => '__return_true',
         ]);
 
@@ -71,14 +72,14 @@ class Explore
         register_rest_route($namespace, '/area/', [
             'methods'             => 'POST',
             'callback'            => [$this, 'getOrbemArea'],
-            'permission_callback' => $permission_callback
+            'permission_callback' => '__return_true',
         ]);
 
         // Register route for getting item description.
         register_rest_route($namespace, '/get-item-description/', [
             'methods'             => 'POST',
             'callback'            => [$this, 'getItemDescription'],
-            'permission_callback' => $permission_callback
+            'permission_callback' => '__return_true',
         ]);
 
         // Register route for getting event by location.
@@ -896,17 +897,22 @@ class Explore
         $user                = wp_get_current_user();
         $orbem_studio_userid = (int) $user->ID;
 
-        // Endpoint intentionally accessible to all authenticated users.
-        if (0 === $orbem_studio_userid) {
-            return rest_ensure_response([
-                'success' => false,
-                'data'    => esc_html__('User not authenticated', 'orbem-studio'),
-            ]);
+        // Get request data.
+        $data                    = $request->get_json_params();
+        $position                = isset($data['position']) ? sanitize_title(wp_unslash($data['position'])) : '';
+        $characters              = $data['characters'] ?? '';
+        $orbem_studio_characters = [];
+
+        if (true === is_array($characters)) {
+            foreach( $characters as $value ) {
+                if ( true === empty($orbem_studio_characters[$value])) {
+                    $orbem_studio_characters[] = is_numeric($value) ? intval($value) : sanitize_text_field(wp_unslash($value));
+                }
+            }
+        } elseif ('' !== $characters) {
+            $orbem_studio_characters[] = is_numeric($characters) ? intval($characters) : sanitize_text_field(wp_unslash($characters));
         }
 
-        // Get request data.
-        $data     = $request->get_json_params();
-        $position = isset($data['position']) ? sanitize_title(wp_unslash($data['position'])) : '';
         $area     = '' !== $position ? get_posts([
             'post_type'        => 'explore-area',
             'name'             => $position,
@@ -1003,14 +1009,6 @@ class Explore
     {
         $user     = wp_get_current_user();
         $userid   = (int) $user->ID;
-
-        // Endpoint intentionally accessible to all authenticated users.
-        if (0 === $userid) {
-            return rest_ensure_response([
-                'success' => false,
-                'data'    => esc_html__('User not authenticated', 'orbem-studio'),
-            ]);
-        }
 
         // Get request data.
         $data  = $request->get_json_params();
@@ -1488,7 +1486,7 @@ class Explore
                     $classes .= ' passable';
                 }
 
-                if (true !== $breakable && true !== $collectable && $passable && 'explore-point' === $explore_point->post_type) {
+                if (true !== $breakable && true !== $collectable && true !== $draggable && true !== $is_hazard && $passable && 'explore-point' === $explore_point->post_type) {
                     $classes .= ' no-point';
                 }
 
