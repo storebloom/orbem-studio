@@ -10,6 +10,7 @@ use OrbemStudio\Explore;
  * @var string  $orbem_studio_new_type
  * @var string  $orbem_studio_first_area
  * @var array   $orbem_studio_coordinates
+ * @var boolean $orbem_studio_player_name
  */
 
 if (true === $orbem_studio_is_admin) {
@@ -25,6 +26,13 @@ $orbem_studio_new_game = 'No' === $orbem_studio_require_login ? 'Start Game' : '
     <div class="greeting-message engage">
         <div class="greeting-buttons">
             <?php the_content(); ?>
+
+            <?php if (true === $orbem_studio_player_name) : ?>
+                <label for="orbem-studio-player-name">
+                    Choose your character name
+                    <input id="orbem-studio-play-name" value="" placeholder="">
+                </label>
+            <?php endif; ?>
 
             <?php if (true === is_user_logged_in() && false === empty($orbem_studio_coordinates)) : ?>
                 <button type="button" class="engage" id="engage-explore">

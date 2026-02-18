@@ -42,6 +42,7 @@ window.hazardTime = 600;
 window.globalLeftPositionOffset = 400;
 window.nextDialogue = false;
 window.crewCharacters = [];
+window.playerName = '';
 
 document.addEventListener('DOMContentLoaded', function () {
 	'use strict';
@@ -322,6 +323,44 @@ function engageCharacterSelection() {
 			});
 		});
 	}
+}
+
+/**
+ * Set click events for all clickable items.
+ */
+function engageClickableTimes()
+{
+    const clickables = document.querySelectorAll('[data-clickable="true"]');
+
+    if ( clickables ) {
+        clickables.forEach((clickable) => {
+            clickable.addEventListener('click', () => {
+                interactWithItem(clickable);
+
+                if (clickable.dataset.mission && '' !== clickable.dataset.mission) {
+                    saveMission(clickable.dataset.mission, clickable, cleanClassName(clickable.className));
+                }
+
+                // Add item to storage menu.
+                storeExploreItem(clickable);
+
+                // If just points. store it.
+                if (
+                    'point' === clickable.dataset.type &&
+                    clickable.dataset?.value &&
+                    0 < clickable.dataset.value
+                ) {
+                    runPointAnimation(
+                        clickable,
+                        cleanClassName(clickable.className),
+                        false,
+                        clickable.dataset.value,
+                        ''
+                    );
+                }
+            });
+        });
+    }
 }
 
 /**
@@ -2007,7 +2046,7 @@ const enterNewArea = (function () {
 								checkIfHazardHurts();
 
 								// Engage dev mode.
-								if (document.querySelector('main[devmode="true"]')) {
+								if (document.querySelector('main[data-devmode="true"]')) {
 									engageDevMode();
 								}
 
@@ -2183,6 +2222,9 @@ const enterNewArea = (function () {
 						window.allowMovement = true;
 						theWeapon.style.display = 'block';
 
+                        // Engage clickables.
+                        engageClickableTimes();
+
 						if (
 							('undefined' !==
 								typeof OrbemOrder.exploreAbilities &&
@@ -2197,6 +2239,10 @@ const enterNewArea = (function () {
 						) {
 							engageTransportFunction();
 						}
+
+                        const mainCharName = document.querySelector('#map-character .map-character-icon').alt.replace(' static', '');
+                        const currentPlayerName = '' !== window.playerName ? window.playerName : mainCharName;
+                        replaceNameInBody('{{playerName}}', currentPlayerName);
 					}, 100);
 				});
 
@@ -3310,7 +3356,7 @@ function shouldRemoveItemOnload(mapItem) {
 		'explore-character' === mapItem.dataset.genre ||
 		'true' === mapItem.dataset.hazard ||
 		'true' === mapItem.dataset.collectable ||
-		(('true' === mapItem.dataset.breakable || 'true' === mapItem.dataset.collectable) &&
+		(('true' === mapItem.dataset.breakable || 'true' === mapItem.dataset.collectable || 'true' === mapItem.dataset.clickable) &&
 			'no' !== mapItem.dataset?.disappear) ||
 		('true' === mapItem.dataset.removable &&
 			'no' !== mapItem.dataset?.disappear) ||
@@ -3331,9 +3377,20 @@ export function engageExploreGame() {
 	'use strict';
 
 	isLoggedIn = document.querySelector('main').dataset?.loggedin ?? false;
+    const playerName = document.querySelector('#orbem-studio-play-name');
 	const container = document.querySelector('.game-container');
 	const touchButtons = document.querySelector('.touch-buttons');
 	window.previousCutsceneArea = OrbemOrder.previousCutsceneArea ?? '';
+
+    if (playerName && '' !== playerName.value) {
+        const playerNameString = playerName.value;
+        window.playerName = playerNameString;
+
+        replaceNameInBody('{{playerName}}', playerNameString);
+    } else {
+        const mainCharName = document.querySelector('#map-character .map-character-icon').alt.replace(' static', '');
+        replaceNameInBody('{{playerName}}', mainCharName);
+    }
 
 	// Set all first cutscene dialogues to engage.
 	const allFirstDialogues = document.querySelectorAll(
@@ -3351,6 +3408,9 @@ export function engageExploreGame() {
 
 	// Engage communicate click.
 	communicateParentClick();
+
+    // Engage clickables.
+    engageClickableTimes();
 
 	// Set true by default.
 	window.weaponConnection = true;
@@ -3848,7 +3908,6 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 
 					if (triggee) {
 						triggee.classList.add('show-explainer');
-						triggee.style.zIndex = '10';
 						value.classList.add('already-hit');
 						window.allowMovement = false;
 						window.allowHit = false;
@@ -4180,9 +4239,9 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 						saveMission(value.dataset.mission, value, position);
 					}
 
-					// For collectables.
+					// For breakable.
 					if (
-						'true' === value.getAttribute('data-breakable') &&
+                        ('true' === value.dataset.breakable) &&
 						false === value.classList.contains('interacted-with') &&
 						false === value.classList.contains('no-point')
 					) {
@@ -4219,7 +4278,7 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 						'no' !== value.dataset?.disappear
 					) {
 						value.remove();
-					} else if (value) {
+					} else if (value && 'true' !== value.dataset.clickable) {
 						interactWithItem(value, mapChar);
 					}
 				}
@@ -4515,7 +4574,7 @@ function interactWithItem(item) {
 	// If item is breakable.
 	if (
 		'no' !== item.dataset?.disappear &&
-        ('true' === item.dataset.breakable || 'true' === item.dataset.collectable) &&
+        ('true' === item.dataset.breakable || 'true' === item.dataset.collectable || 'true' === item.dataset.clickable) &&
 		'explore-sign' !== item.dataset.genre
 	) {
 		item.style.display = 'none';
@@ -5331,7 +5390,19 @@ function engageSign(signname) {
 		if ('Space' === event.code || event.target.classList.contains('action-key')) {
 			item.classList.remove('open-up');
 			document.removeEventListener('keydown', closeSign);
-            document.querySelector('.action-key').removeEventListener('click', closeSign)
+            document.querySelector('.action-key').removeEventListener('click', closeSign);
+
+            const focusViewName = cleanClassName(item.className);
+            const cutscene = document.querySelector('.cutscene-trigger[data-materializefocus="' + focusViewName + '"]');
+            const removeCutscene = document.querySelector('.cutscene-trigger[data-removeafterfocus="' + focusViewName + '"]');
+
+            if (cutscene) {
+                cutscene.classList.add('enable');
+            }
+
+            if (removeCutscene) {
+                removeCutscene.remove();
+            }
 		}
 	}
 }
@@ -7867,4 +7938,59 @@ function pushMC(dist) {
 			mc.style.top = left - dist + 'px';
 			break;
 	}
+}
+
+function escapeRegExp(str) {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function replaceNameInBody(search, replacement, {
+    caseInsensitive = false,
+    includeEventHandlerAttributes = false, // set true if you REALLY want to touch onclick="", etc.
+} = {}) {
+    if (search == null || search === "") return;
+
+    const flags = "g" + (caseInsensitive ? "i" : "");
+    const re = new RegExp(escapeRegExp(String(search)), flags);
+
+    // 1) Replace in text nodes
+    const textWalker = document.createTreeWalker(
+        document.body,
+        NodeFilter.SHOW_TEXT
+    );
+
+    let textNode;
+    while ((textNode = textWalker.nextNode())) {
+        const v = textNode.nodeValue;
+        if (v && re.test(v)) {
+            textNode.nodeValue = v.replace(re, replacement);
+            re.lastIndex = 0; // reset because we reuse the same regex
+        } else {
+            re.lastIndex = 0;
+        }
+    }
+
+    // 2) Replace in attributes (includes data-* attributes)
+    const elemWalker = document.createTreeWalker(
+        document.body,
+        NodeFilter.SHOW_ELEMENT
+    );
+
+    let el;
+    while ((el = elemWalker.nextNode())) {
+        for (const attr of Array.from(el.attributes)) {
+            const name = attr.name;
+            const value = attr.value;
+
+            // Optional safety: skip inline event handler attributes like onclick=""
+            if (!includeEventHandlerAttributes && /^on/i.test(name)) continue;
+
+            if (value && re.test(value)) {
+                el.setAttribute(name, value.replace(re, replacement));
+                re.lastIndex = 0;
+            } else {
+                re.lastIndex = 0;
+            }
+        }
+    }
 }

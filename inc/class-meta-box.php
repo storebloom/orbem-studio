@@ -179,6 +179,7 @@ class Meta_Box {
     public function getMetaData($post_type = '')
     {
         $explore_item_array = $this->plugin->util->getOrbemArray('explore-point');
+        $explore_focus_array = $this->plugin->util->getOrbemArray('explore-sign');
         $explore_area_array = $this->plugin->util->getOrbemArray('explore-area');
         $explore_communicate_array = $this->plugin->util->getOrbemArray('explore-communication-type', true);
         $explore_character_array = $this->plugin->util->getOrbemArray('explore-character');
@@ -427,6 +428,12 @@ class Meta_Box {
                         ],
                         'Select item(s) required to complete this mission. If multiple items are selected, all must be interacted with.'
                     ],
+                    'explore-trigger-focus' => [
+                        [
+                            'multiselect' => $explore_focus_array
+                        ],
+                        'Select focus view(s) required to complete this mission. If multiple focus views are selected, all must be interacted with.'
+                    ],
                     'explore-trigger-enemy' => [
                         [
                             'select' => $explore_enemy_array
@@ -539,6 +546,18 @@ class Meta_Box {
                             'select' => $explore_mission_array
                         ],
                         'Select a mission that will reveal this cutscene trigger after it is completed.'
+                    ],
+                    'explore-remove-after-focus' => [
+                        [
+                            'select' => $explore_focus_array
+                        ],
+                        'Select a focus view that, once completed, will remove this cutscene trigger.'
+                    ],
+                    'explore-materialize-after-focus' => [
+                        [
+                            'select' => $explore_focus_array
+                        ],
+                        'Select a focus view that will reveal this cutscene trigger after it is completed.'
                     ],
                 ],
 
@@ -1372,10 +1391,11 @@ class Meta_Box {
                     'explore-interaction-type' => [
                         [
                             'select' => [
-                                'collectable',
-                                'breakable',
-                                'draggable',
-                                'hazard',
+                                'Collectable' => 'collectable',
+                                'Breakable' => 'breakable',
+                                'Draggable' => 'draggable',
+                                'Hazard' => 'hazard',
+                                'Clickable' => 'clickable',
                             ]
                         ],
                         'Define how the player interacts with this item.'
