@@ -129,6 +129,8 @@ $orbem_studio_hide_storage                 = get_option('explore_hide_storage', 
 $orbem_studio_hud_bars                     = get_option('explore_hud_bars', []);
 $orbem_studio_require_login                = get_option('explore_require_login', false);
 $orbem_studio_money_img                    = get_option('explore_money_image', false);
+$orbem_studio_player_name                  = get_option('explore_player_name', false);
+$orbem_studio_player_name                  = 'Yes' === $orbem_studio_player_name;
 $orbem_studio_plugin_dir                   = str_replace( '/templates/', '', plugin_dir_url(__FILE__));
 $orbem_studio_plugin_dir_path              = plugin_dir_path(__FILE__);
 $orbem_studio_default_weapon               = get_option('explore_default_weapon', '');
@@ -203,7 +205,11 @@ extract([
 
 include plugin_dir_path(__FILE__) . 'plugin-header.php';
 ?>
-<main id="primary"<?php echo esc_attr(true === $orbem_studio_is_admin ? ' data-devmode=true' : ''); ?><?php echo esc_attr(true === $orbem_studio_is_logged_in ? ' data-loggedin=true' : ''); ?> class="site-main<?php echo esc_attr($orbem_studio_rst); ?>">
+<main id="primary"
+    <?php echo esc_attr(true === $orbem_studio_is_admin ? ' data-devmode=true' : ''); ?>
+    <?php echo esc_attr(true === $orbem_studio_is_logged_in ? ' data-loggedin=true' : ''); ?>
+    <?php echo esc_attr(true === $orbem_studio_player_name ? ' data-playername=true' : ''); ?>
+      class="site-main<?php echo esc_attr($orbem_studio_rst); ?>">
     <?php include $orbem_studio_plugin_dir_path . 'start-screen.php'; ?>
     <?php if (true === $orbem_studio_is_admin) : ?>
         <?php echo wp_kses(html_entity_decode(Dev_Mode::getDevModeHTML()), $orbem_studio_allowed_tags); ?>
@@ -312,7 +318,7 @@ include plugin_dir_path(__FILE__) . 'plugin-header.php';
             class="<?php echo esc_attr($orbem_studio_explore_area_start_direction); ?>"
             data-mainid="<?php echo esc_attr($orbem_studio_main_character_id); ?>"
             id="map-character"
-            data-name="<?php echo esc_attr($orbem_studio_main_character_info['name'] ?? ''); ?>"
+            data-name="<?php echo esc_attr(true !== $orbem_studio_player_name ? $orbem_studio_main_character_info['name'] ?? '' : '{{playerName}}'); ?>"
             data-voice="<?php echo esc_attr($orbem_studio_main_character_info['voice'] ?? '');?>"
             data-ability="<?php echo esc_attr($orbem_studio_main_character_info['ability'] ?? ''); ?>"
         >

@@ -1441,6 +1441,7 @@ class Explore
                 $collectable                    = 'collectable' === $interaction_type;
                 $draggable                      = 'draggable' === $interaction_type;
                 $is_hazard                      = 'hazard' === $interaction_type;
+                $clickable                      = 'clickable' === $interaction_type;
                 $is_strong                      = $explore_point_meta['explore-is-strong'] ?? '';
                 $is_strong                      = false === empty($is_strong) ? $is_strong : false;
                 $top                            = $explore_point_meta['explore-top'] ?? '';
@@ -1486,8 +1487,12 @@ class Explore
                     $classes .= ' passable';
                 }
 
-                if (true !== $breakable && true !== $collectable && true !== $draggable && true !== $is_hazard && $passable && 'explore-point' === $explore_point->post_type) {
+                if (true !== $clickable && true !== $breakable && true !== $collectable && true !== $draggable && true !== $is_hazard && $passable && 'explore-point' === $explore_point->post_type) {
                     $classes .= ' no-point';
+                }
+
+                if (true === $clickable) {
+                    $layer = intval($layer) + 2;
                 }
 
                 // If it's an enemy, and they have health show or if not an enemy show.
@@ -1631,6 +1636,10 @@ class Explore
 
                     if (true === $collectable || 'explore-weapon' === $explore_point->post_type) {
                         $html .= ' data-collectable="true"';
+                    }
+
+                    if (true === $clickable) {
+                        $html .= ' data-clickable="true"';
                     }
 
                     // Materialize this item after this cutscene.
@@ -1898,8 +1907,10 @@ class Explore
             ]
         );
 
-        $is_area_cutscene = false === empty($area[0]) && 'yes' === get_post_meta($area[0]->ID, 'explore-is-cutscene', true);
-        $area_name        = false === empty($area[0]) ? $area[0]->post_name : '';
+        $orbem_studio_player_name = 'Yes' === get_option('explore_player_name', false);
+        $main_character           = get_option('explore_main_character', false);
+        $is_area_cutscene         = false === empty($area[0]) && 'yes' === get_post_meta($area[0]->ID, 'explore-is-cutscene', true);
+        $area_name                = false === empty($area[0]) ? $area[0]->post_name : '';
 
         foreach( $explore_cutscenes as $explore_cutscene ) {
             $cutscene_post_meta = [];
@@ -1915,6 +1926,7 @@ class Explore
             $mute_music                 = $cutscene_post_meta['explore-mute-music'] ?? '';
             $value_type                 = $cutscene_post_meta['explore-value-type'] ?? '';
             $remove_after_cutscene      = $cutscene_post_meta['explore-remove-after-cutscene'] ?? '';
+            $remove_after_focus         = $cutscene_post_meta['explore-remove-after-focus'] ?? '';
             $value                      = $cutscene_post_meta['explore-value'] ?? '';
             $has_video                  = has_block('video', $explore_cutscene->post_content);
             $cutscene_trigger           = $cutscene_post_meta['explore-cutscene-trigger'] ?? '';
@@ -1932,6 +1944,7 @@ class Explore
             $mission_cutscene           = $cutscene_post_meta['explore-mission-cutscene'] ?? '';
             $music                      = $cutscene_post_meta['explore-cutscene-music'] ?? '';
             $materialize_cutscene       = $cutscene_post_meta['explore-materialize-after-cutscene'] ?? ''; // The cutscene that materializes this cutscene.
+            $materialize_focus          = $cutscene_post_meta['explore-materialize-after-focus'] ?? ''; // The focus view that materializes this cutscene after closing.
             $mission_complete_cutscene  = $cutscene_post_meta['explore-mission-complete-cutscene'] ?? '';
             $boss_fight                 = $cutscene_post_meta['explore-cutscene-boss'] ?? '';
             $cutscene_trigger_type      = $cutscene_post_meta['explore-trigger-type'] ?? '';
@@ -2082,7 +2095,9 @@ class Explore
             $html .= '<div class="character-name-wrapper">';
             foreach($unique_character_ids as $character_id) {
                 if ( false === empty($character_id) ) {
+                    $character_slug = get_post_field('post_name', $character_id);
                     $character_name = get_post_meta($character_id, 'explore-character-name', true);
+                    $character_name = true === $orbem_studio_player_name && $main_character === $character_slug ? '{{playerName}}' : $character_name;
                     $character_name = false === empty($character_name) ? $character_name : get_post_field('post_title', $character_id);
 
                     $html .= '<div data-character="' . esc_attr($character_id) . '" class="character-name">' . esc_html($character_name) . '</div>';
@@ -2115,9 +2130,16 @@ class Explore
                 if (false === empty($remove_after_cutscene)) {
                     $html .= ' data-removeaftercutscene="' . esc_attr($remove_after_cutscene) . '"';
                 }
+                if (false === empty($remove_after_focus)) {
+                    $html .= ' data-removeafterfocus="' . esc_attr($remove_after_focus) . '"';
+                }
 
                 if (false === empty($materialize_cutscene)) {
                     $html .= ' data-materializecutscene="' . esc_attr($materialize_cutscene) . '"';
+                }
+
+                if (false === empty($materialize_focus)) {
+                    $html .= ' data-materializefocus="' . esc_attr($materialize_focus) . '"';
                 }
 
                 $html .= ' data-meta="explore-cutscene-trigger"';

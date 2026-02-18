@@ -141,9 +141,11 @@ html {
       }
     }
 
-    .cutscene-trigger[data-materializecutscene] {
-      &:not(.enable) {
-        display: none;
+    .cutscene-trigger{
+      &[data-materializecutscene], &[data-materializefocus] {
+        &:not(.enable) {
+          display: none;
+        }
       }
     }
 
@@ -179,7 +181,7 @@ html {
 
       &.show-explainer {
         opacity: 1;
-        z-index: 8;
+        z-index: 8!important;
 
         &:after {
           content: "✕";
@@ -560,11 +562,21 @@ html {
             position: absolute;
             padding: 10px 20px;
             transition: opacity .5s;
-            width: 200px;
+            width: 224px;
 
             &.engage {
               opacity: 1;
               position: unset;
+            }
+          }
+
+          label[for="orbem-studio-player-name"] {
+            color: white;
+
+            input {
+              font-size: 20px;
+              max-width: 224px;
+              padding: .75rem;
             }
           }
         }
