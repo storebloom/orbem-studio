@@ -269,10 +269,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
 	if (newGame) {
 		newGame.addEventListener('click', async () => {
-			window.confirm(
+			if (!window.confirm(
 				'Are you sure you want to start a new game? All your previously saved data will be lost.'
-			);
-			await resetExplore();
+			)) {
+                return;
+            }
+
+			resetExplore();
 
 			setTimeout(() => {
 				window.location.href = OrbemOrder.gameURL;
@@ -335,10 +338,14 @@ function engageClickableTimes()
     if ( clickables ) {
         clickables.forEach((clickable) => {
             clickable.addEventListener('click', () => {
+                const clickableName = cleanClassName(clickable.className);
+
+                revealCutscene(clickable);
+                removeCutscene(clickable);
                 interactWithItem(clickable);
 
                 if (clickable.dataset.mission && '' !== clickable.dataset.mission) {
-                    saveMission(clickable.dataset.mission, clickable, cleanClassName(clickable.className));
+                    saveMission(clickable.dataset.mission, clickable, clickableName);
                 }
 
                 // Add item to storage menu.
@@ -363,11 +370,32 @@ function engageClickableTimes()
     }
 }
 
+function revealCutscene(item) {
+    const itemName = cleanClassName(item.className);
+    const triggerCutscene = document.querySelector('.cutscene-trigger[data-materializeitem="' + itemName + '"]');
+
+    if (triggerCutscene && false === triggerCutscene.classList.contains('enable')) {
+        triggerCutscene.classList.add('enable');
+        triggerCutscene.style.display = 'block';
+    }
+}
+
+function removeCutscene(item) {
+    const itemName = cleanClassName(item.className);
+    const triggerCutscene = document.querySelector('.cutscene-trigger[data-removeafteritem="' + itemName + '"]');
+
+    if (triggerCutscene) {
+        triggerCutscene.remove();
+    }
+}
+
 /**
  * Make npc follow walking path if it exists.
  *
  * @param npc
  * @param cutscene
+ * @param areaCutscene
+ * @param cutPosition
  */
 function moveNPC(npc, cutscene, areaCutscene, cutPosition) {
 	'use strict';
@@ -1203,7 +1231,12 @@ function saveMission(mission, value, position) {
 
 		if (materializes) {
 			materializes.forEach((materialize) => {
-				materialize.style.display = 'block';
+                if (materialize.classList.contains('cutscene-trigger') && !materialize.classList.contains('enable') ) {
+                    materialize.classList.add('enable');
+                    materialize.style.display = 'block';
+                } else {
+                    materialize.style.display = 'block';
+                }
 			});
 		}
 
@@ -1634,12 +1667,16 @@ function saveStorageItem(id, name, type, value, remove) {
  * Adds points to user's account.
  *
  */
-async function resetExplore() {
+function resetExplore() {
 	'use strict';
+
+    isLoggedIn = document.querySelector('main').dataset?.loggedin ?? false;
 
 	if (false === isLoggedIn) {
 		return;
 	}
+
+    console.log('hey');
 
 	const filehref = `${OrbemOrder.siteRESTURL}/resetexplore/`;
 
@@ -3892,9 +3929,10 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 					);
 					const closeExplainer = (event) => {
 						if (
-							('keydown' === event.type &&
+                            (('keydown' === event.type &&
 								'Space' === event.code) ||
-							'click' === event.type
+							'click' === event.type) &&
+                            !triggee.contains(event.target)
 						) {
 							window.allowMovement = true;
 							window.allowHit = true;
@@ -3911,19 +3949,22 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 						value.classList.add('already-hit');
 						window.allowMovement = false;
 						window.allowHit = false;
+                        const firstExplainerText = triggee.querySelector('p');
 
-						const text = Array.from(
-							triggee.querySelector('p').childNodes
-						)
-							.filter((node) => node.nodeType === Node.TEXT_NODE)
-							.map((node) => node.textContent)
-							.join('');
-						const mcVoice = mapChar.dataset.voice;
-						const providedAudio =
-							document.getElementById(triggee.id + '-s') ?? false;
+                        if (firstExplainerText) {
+                            const text = Array.from(
+                                firstExplainerText.childNodes
+                            )
+                                .filter((node) => node.nodeType === Node.TEXT_NODE)
+                                .map((node) => node.textContent)
+                                .join('');
+                            const mcVoice = mapChar.dataset.voice;
+                            const providedAudio =
+                                document.getElementById(triggee.id + '-s') ?? false;
 
-						// Do text to speech.
-						makeTalk(text, mcVoice, providedAudio, true);
+                            // Do text to speech.
+                            makeTalk(text, mcVoice, providedAudio, true);
+                        }
 
 						const arrow = triggee.querySelector('img');
 
@@ -4017,6 +4058,12 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 					// Add item to storage menu.
 					storeExploreItem(value);
 
+                    // Reveal cutscene if item trigger.
+                    revealCutscene(value);
+
+                    // Remove cutscene if item trigger.
+                    removeCutscene(value);
+
 					// If just points. store it.
 					if (
 						'point' === value.dataset.type &&
@@ -4087,12 +4134,13 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 						value.remove();
 					} else {
 						value.classList.add('engage');
+                        let characterEl = '.' + theCutScene.dataset?.character + '-map-item';
+
+                        if (theCutScene.dataset?.character === window.mainCharacter) {
+                            characterEl = '#map-character .map-character-icon.engage';
+                        }
 						triggerIndicator(
-							document.querySelector(
-								'.' +
-									theCutScene.dataset?.character +
-									'-map-item'
-							),
+							document.querySelector(characterEl),
 							true,
 							value,
 							false
@@ -4675,14 +4723,21 @@ function triggerIndicator(indicateMe, isCutscene, trigger, isMinigame) {
 	window.allowHit = false;
 	const indicator = document.querySelector('.indicator-icon');
 
+    console.log(indicateMe);
+
 	if (
 		window.allowIndicate &&
 		indicateMe &&
 		indicator &&
 		false === indicator.classList.contains('engage')
 	) {
-		const leftPosition = indicateMe.style.left.replace('px', '');
-		const topPosition = indicateMe.style.top.replace('px', '');
+        let leftPosition = indicateMe.style.left.replace('px', '');
+        let topPosition = indicateMe.style.top.replace('px', '');
+        if (true === indicateMe.classList.contains('map-character-icon')) {
+            topPosition = (parseInt(indicateMe.parentElement.style.top.replace('px', '')) + 400) - (indicateMe.offsetHeight / 2);
+            leftPosition = (parseInt(indicateMe.parentElement.style.left.replace('px', '')) + window.globalLeftPositionOffset) - (indicateMe.offsetWidth / 2);
+        }
+
 		const width = indicateMe.getBoundingClientRect().width / 2 - 7.5;
 		const positionName = cleanClassName(indicateMe.className);
 
@@ -5403,6 +5458,10 @@ function engageSign(signname) {
             if (removeCutscene) {
                 removeCutscene.remove();
             }
+
+            if (item.dataset.mission && '' !== item.dataset.mission) {
+                saveMission(item.dataset.mission, item, focusViewName);
+            }
 		}
 	}
 }
@@ -5560,9 +5619,6 @@ function afterCutscene(cutscene, areaCutscene, character) {
 	const materializeCutscenes = document.querySelectorAll(
 		'[data-materializecutscene="' + cutsceneName + '"]'
 	);
-    const removeCutsceneTriggers = document.querySelectorAll(
-        '[data-removeaftercutscene="' + cutsceneName + '"]'
-    );
 
 	if (materializeCutscenes && 0 < materializeCutscenes.length) {
         materializeCutscenes.forEach(materializeCutscene => {
@@ -5571,16 +5627,6 @@ function afterCutscene(cutscene, areaCutscene, character) {
             }
         })
 	}
-
-    // Remove trigger after another cutscene.
-    if (
-        removeCutsceneTriggers
-        && 0 < removeCutsceneTriggers.length
-    ) {
-        removeCutsceneTriggers.forEach(removeCutsceneTrigger => {
-            removeCutsceneTrigger.remove();
-        });
-    }
 
 	// Show dependent communication devices.
 	if (communicateDevice && '' !== communicateDevice) {
@@ -5755,18 +5801,22 @@ function removeItems(removeThings, cutsceneName) {
 	'use strict';
 
 	removeThings.forEach((removeThing) => {
-		if (cutsceneName === removeThing.dataset.removeaftercutscene) {
-			removeThing.remove();
+        if (removeThing.dataset?.removeaftercutscene && '' !== removeThing.dataset.removeaftercutscene) {
+            const theRemoveCutscenes = JSON.parse(removeThing.dataset.removeaftercutscene);
 
-			persistItemRemoval(
-				cleanClassName(removeThing.className),
-				'point',
-				0,
-				2000,
-				'',
-				true
-			);
-		}
+            if (theRemoveCutscenes[cutsceneName]) {
+                removeThing.remove();
+
+                persistItemRemoval(
+                    cleanClassName(removeThing.className),
+                    'point',
+                    0,
+                    2000,
+                    '',
+                    true
+                );
+            }
+        }
 	});
 }
 

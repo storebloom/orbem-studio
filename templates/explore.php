@@ -130,6 +130,10 @@ $orbem_studio_hud_bars                     = get_option('explore_hud_bars', []);
 $orbem_studio_require_login                = get_option('explore_require_login', false);
 $orbem_studio_money_img                    = get_option('explore_money_image', false);
 $orbem_studio_player_name                  = get_option('explore_player_name', false);
+$orbem_studio_mobile_dpad                  = get_option('explore_mobile_dpad', false);
+$orbem_studio_mobile_dpad                  = true === empty($orbem_studio_mobile_dpad) ? plugin_dir_url(__FILE__) . '../assets/src/images/mobile-dpad.svg' : $orbem_studio_mobile_dpad;
+$orbem_studio_mobile_action                = get_option('explore_mobile_action', false);
+$orbem_studio_mobile_action                = true === empty($orbem_studio_mobile_action) ? plugin_dir_url(__FILE__) . '../assets/src/images/action-key.svg' : $orbem_studio_mobile_action;
 $orbem_studio_player_name                  = 'Yes' === $orbem_studio_player_name;
 $orbem_studio_plugin_dir                   = str_replace( '/templates/', '', plugin_dir_url(__FILE__));
 $orbem_studio_plugin_dir_path              = plugin_dir_path(__FILE__);
@@ -288,7 +292,7 @@ include plugin_dir_path(__FILE__) . 'plugin-header.php';
             </div>
         </div>
         <?php echo wp_kses_post(html_entity_decode(Explore::getExplainerHTML($orbem_studio_explore_explainers, 'menu'))); ?>
-        <?php echo wp_kses_post(html_entity_decode(Explore::getExplainerHTML($orbem_studio_explore_explainers, 'fullscreen'))); ?>
+        <?php echo html_entity_decode(Explore::getExplainerHTML($orbem_studio_explore_explainers, 'fullscreen')); ?>
         <div class="touch-buttons">
             <span class="top-left">
             </span>
@@ -308,11 +312,17 @@ include plugin_dir_path(__FILE__) . 'plugin-header.php';
             </span>
             <span class="bottom-right">
             </span>
+            <?php if (false === empty($orbem_studio_mobile_dpad)) : ?>
+                <img class="mobile-dpad" src="<?php echo esc_url($orbem_studio_mobile_dpad); ?>" />
+            <?php endif; ?>
         </div>
-        <button class="action-key">action key</button>
-        <span id="key-guide" href="<?php echo esc_url($orbem_studio_game_url); ?>">
-            <img alt="controls" src="<?php echo esc_url($orbem_studio_plugin_dir . '/assets/src/images/keys.png'); ?>" />
-        </span>
+        <div class="mobile-action-key">
+            <?php if (false === empty($orbem_studio_mobile_action)) : ?>
+                <img class="action-key" src="<?php echo esc_url($orbem_studio_mobile_action); ?>" />
+            <?php else : ?>
+                action key
+            <?php endif; ?>
+        </div>
         <div
             style="top: <?php echo false === empty($orbem_studio_coordinates['top']) ? esc_attr($orbem_studio_coordinates['top']) : esc_attr($orbem_studio_explore_area_start_top); ?>px; left: <?php echo false === empty($orbem_studio_coordinates['left']) ? esc_attr($orbem_studio_coordinates['left']) : esc_attr($orbem_studio_explore_area_start_left); ?>px"
             class="<?php echo esc_attr($orbem_studio_explore_area_start_direction); ?>"
@@ -370,10 +380,10 @@ include plugin_dir_path(__FILE__) . 'plugin-header.php';
         </div>
         <audio id="start-screen-music" src="<?php echo esc_attr($orbem_studio_start_music); ?>" loop <?php echo false === empty($orbem_studio_coordinates) ? 'autoplay' : ''; ?> muted></audio>
     <?php endif; ?>
-    <?php if (false !== $orbem_studio_walking_sound) : ?>
+    <?php if (false === empty($orbem_studio_walking_sound)) : ?>
         <audio id="walking" src="<?php echo esc_attr($orbem_studio_walking_sound); ?>"></audio>
     <?php endif; ?>
-    <?php if (false !== $orbem_studio_points_sound) : ?>
+    <?php if (false === empty($orbem_studio_points_sound)) : ?>
         <audio id="ching" src="<?php echo esc_attr($orbem_studio_points_sound); ?>"></audio>
     <?php endif; ?>
 </main>

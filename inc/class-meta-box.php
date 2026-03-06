@@ -372,7 +372,6 @@ class Meta_Box {
                 ],
             ],
             'explore-mission' => [
-
                 'Mission Area' => [
                     'explore-area-required' => [
                         [
@@ -531,9 +530,9 @@ class Meta_Box {
                     ],
                     'explore-remove-after-cutscene' => [
                         [
-                            'select' => $explore_cutscene_array
+                            'multiselect' => $explore_cutscene_array
                         ],
-                        'Select a cutscene that, once completed, will remove this cutscene trigger.'
+                        'Select a cutscene that will remove this item after it finishes.'
                     ],
                     'explore-materialize-after-cutscene' => [
                         [
@@ -552,6 +551,18 @@ class Meta_Box {
                             'select' => $explore_focus_array
                         ],
                         'Select a focus view that, once completed, will remove this cutscene trigger.'
+                    ],
+                    'explore-materialize-after-item' => [
+                        [
+                            'select' => $explore_item_array
+                        ],
+                        'Select an item that, once completed, will review this cutscene trigger.'
+                    ],
+                    'explore-remove-after-item' => [
+                        [
+                            'select' => $explore_item_array
+                        ],
+                        'Select an item that, once completed, will remove this cutscene trigger.'
                     ],
                     'explore-materialize-after-focus' => [
                         [
@@ -1329,9 +1340,9 @@ class Meta_Box {
                     ],
                     'explore-remove-after-cutscene' => [
                         [
-                            'select' => $explore_cutscene_array
+                            'multiselect' => $explore_cutscene_array
                         ],
-                        'Select a cutscene that will permanently remove this explainer after it finishes.'
+                        'Select a cutscene that will remove this item after it finishes.'
                     ],
                     'explore-materialize-after-cutscene' => [
                         [
@@ -1455,7 +1466,7 @@ class Meta_Box {
                     ],
                     'explore-remove-after-cutscene' => [
                         [
-                            'select' => $explore_cutscene_array
+                            'multiselect' => $explore_cutscene_array
                         ],
                         'Select a cutscene that will remove this item after it finishes.'
                     ],
