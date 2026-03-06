@@ -1487,7 +1487,16 @@ class Explore
                     $classes .= ' passable';
                 }
 
-                if (true !== $clickable && true !== $breakable && true !== $collectable && true !== $draggable && true !== $is_hazard && $passable && 'explore-point' === $explore_point->post_type) {
+                if (
+                        true !== $clickable &&
+                        true !== $breakable &&
+                        true !== $collectable &&
+                        true !== $draggable &&
+                        true !== $is_hazard &&
+                        $passable &&
+                        'explore-point' === $explore_point->post_type &&
+                        true === empty($materialize_after_cutscene)
+                ) {
                     $classes .= ' no-point';
                 }
 
@@ -1579,11 +1588,18 @@ class Explore
                     if (0 < count($all_missions)) {
                         foreach ($all_missions as $mission) {
                             $trigger_item       = get_post_meta($mission->ID, 'explore-trigger-item', true);
+                            $trigger_focus      = get_post_meta($mission->ID, 'explore-trigger-focus', true);
                             $trigger_item       = is_array($trigger_item) && false === empty($trigger_item) ? array_keys($trigger_item)[0] : $trigger_item;
                             $trigger_item       = is_array($trigger_item) ? '' : $trigger_item;
+                            $trigger_focus      = is_array($trigger_focus) && false === empty($trigger_focus) ? array_keys($trigger_focus)[0] : $trigger_focus;
+                            $trigger_focus      = is_array($trigger_focus) ? '' : $trigger_focus;
                             $enemy_trigger_item = get_post_meta($mission->ID, 'explore-trigger-enemy', true);
 
                             if ((false === empty($trigger_item) && is_array($trigger_item) && true === in_array($explore_point->post_name, $trigger_item, true)) || (false === empty($trigger_item) && false === is_array($trigger_item) && str_contains($explore_point->post_name, $trigger_item))) {
+                                $missions[] = $mission;
+                            }
+
+                            if ((false === empty($trigger_focus) && is_array($trigger_focus) && true === in_array($explore_point->post_name, $trigger_focus, true)) || (false === empty($trigger_focus) && false === is_array($trigger_focus) && str_contains($explore_point->post_name, $trigger_focus))) {
                                 $missions[] = $mission;
                             }
 
@@ -1662,7 +1678,12 @@ class Explore
 
                     // Remove this after cutscene specified in data att.
                     if (false === empty($remove_after_cutscene)) {
-                        $html .= ' data-removeaftercutscene="' . esc_attr($remove_after_cutscene) . '"';
+                        if (is_array($remove_after_cutscene)) {
+                            $remove_after_cutscene = wp_json_encode($remove_after_cutscene);
+                        }
+
+
+                        $html .= ' data-removeaftercutscene=\'' . esc_attr($remove_after_cutscene) . '\'';
                     }
 
                     $pulse_wave = false;
@@ -1944,7 +1965,10 @@ class Explore
             $mission_cutscene           = $cutscene_post_meta['explore-mission-cutscene'] ?? '';
             $music                      = $cutscene_post_meta['explore-cutscene-music'] ?? '';
             $materialize_cutscene       = $cutscene_post_meta['explore-materialize-after-cutscene'] ?? ''; // The cutscene that materializes this cutscene.
+            $materialize_after_mission  = $cutscene_post_meta['explore-materialize-after-mission'] ?? ''; // The mission that materializes this cutscene.
             $materialize_focus          = $cutscene_post_meta['explore-materialize-after-focus'] ?? ''; // The focus view that materializes this cutscene after closing.
+            $materialize_item           = $cutscene_post_meta['explore-materialize-after-item'] ?? ''; // The item that materializes this cutscene after interaction.
+            $remove_item                = $cutscene_post_meta['explore-remove-after-item'] ?? ''; // The item that removes this cutscene after interaction.
             $mission_complete_cutscene  = $cutscene_post_meta['explore-mission-complete-cutscene'] ?? '';
             $boss_fight                 = $cutscene_post_meta['explore-cutscene-boss'] ?? '';
             $cutscene_trigger_type      = $cutscene_post_meta['explore-trigger-type'] ?? '';
@@ -2128,7 +2152,11 @@ class Explore
 
                 // Remove this after cutscene specified in data att.
                 if (false === empty($remove_after_cutscene)) {
-                    $html .= ' data-removeaftercutscene="' . esc_attr($remove_after_cutscene) . '"';
+                    if (is_array($remove_after_cutscene)) {
+                        $remove_after_cutscene = wp_json_encode($remove_after_cutscene);
+                    }
+
+                    $html .= ' data-removeaftercutscene=\'' . esc_attr($remove_after_cutscene) . '\'';
                 }
                 if (false === empty($remove_after_focus)) {
                     $html .= ' data-removeafterfocus="' . esc_attr($remove_after_focus) . '"';
@@ -2138,8 +2166,20 @@ class Explore
                     $html .= ' data-materializecutscene="' . esc_attr($materialize_cutscene) . '"';
                 }
 
+                if (false === empty($materialize_after_mission)) {
+                    $html .= ' data-materializemission="' . esc_attr($materialize_after_mission) . '"';
+                }
+
                 if (false === empty($materialize_focus)) {
                     $html .= ' data-materializefocus="' . esc_attr($materialize_focus) . '"';
+                }
+
+                if (false === empty($materialize_item)) {
+                    $html .= ' data-materializeitem="' . esc_attr($materialize_item) . '"';
+                }
+
+                if (false === empty($remove_item)) {
+                    $html .= ' data-removeafteritem="' . esc_attr($remove_item) . '"';
                 }
 
                 $html .= ' data-meta="explore-cutscene-trigger"';
@@ -2451,7 +2491,7 @@ class Explore
                     $html .= '>';
                     $html .= $arrow_img && 'fullscreen' !== $type ? '<img data-rotate="' . esc_attr($rotation) . '" width="120" height="120" style="'. esc_attr($arrow_style_css) . '" src="' . esc_url($arrow_img) . '" />' : '';
                     // Raw content for game engine; do not apply WordPress filters.
-                    $html .= wp_kses_post($explainer->post_content);
+                    $html .= do_blocks($explainer->post_content);
 
                     if (false === empty($sound_byte)) {
                         $html .= '<audio id="' . esc_attr($explainer->ID) . '-s" src="' . esc_url($sound_byte) . '"></audio>';

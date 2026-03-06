@@ -10,7 +10,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 ?>
 <div class="multiselect-wrapper">
     <?php if (true === is_array($orbem_studio_sub_value)): ?>
-        <?php foreach($orbem_studio_sub_value as $orbem_studio_option): ?>
+        <?php foreach($orbem_studio_sub_value as $orbem_studio_name => $orbem_studio_option): ?>
         <p>
         <label>
             <input
@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
                 name="<?php echo esc_attr($orbem_studio_key . '[' . $orbem_studio_option . ']'); ?>"
                 id="<?php echo esc_attr($orbem_studio_key . '[' . $orbem_studio_option . ']'); ?>"
             >
-            <?php echo esc_html(ucwords(str_replace('-',' ', $orbem_studio_option))); ?>
+            <?php echo esc_html($orbem_studio_name); ?>
         </label>
         </p>
     <?php endforeach; endif; ?>

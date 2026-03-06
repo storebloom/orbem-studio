@@ -717,6 +717,8 @@ class Menu
             'explore_crew_icon'   => ['upload', 'Crewmate Menu Icon', 'Override crewmate menu icon in HUD'],
             'explore_money_image' => ['upload', 'Money Icon', 'Override money icon for in game currency.'],
             'explore_indicator_icon' => ['upload', 'Indicator Icon', 'Override your indicator icon that shows when "focus view" or "character" game assets are interactable.'],
+            'explore_mobile_dpad' => ['upload', 'Mobile D-pad', 'Override the mobile d-pad that allows users to move on mobile devices.'],
+            'explore_mobile_action' => ['upload', 'Mobile Action Key', 'Override the mobile action key that allows users to interact on mobile devices.'],
             'explore_arrow_icon' => ['upload', 'Arrow Icon', 'Override the default arrow icon that is used to point for explainer popups.'],
             'explore_cutscene_border_color' => ['color', 'Cutscene Border Color', 'The cutscene popup border color.'],
             'explore_cutscene_border_size' => ['number', 'Cutscene Border Size', 'The border size of the Cutscene popups (in pixel).'],

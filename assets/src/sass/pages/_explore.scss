@@ -141,23 +141,30 @@ html {
       }
     }
 
-    .cutscene-trigger{
-      &[data-materializecutscene], &[data-materializefocus] {
+    .cutscene-trigger {
+      &[data-materializecutscene], &[data-materializefocus], &[data-materializemission], &[data-materializeitem] {
         &:not(.enable) {
           display: none;
         }
       }
     }
 
-    .map-item[data-showaftercutscene] {
-      &:not(.no-point) {
-        display: none;
-      }
-    }
+    .map-item {
+      &[data-showaftercutscene] {
 
-    .map-item[data-showaftermission] {
-      &:not(.materialized) {
-        display: none;
+        &:not(.no-point) {
+          display: none;
+        }
+      }
+
+      &[data-showaftermission] {
+        &:not(.materialized) {
+          display: none;
+        }
+      }
+
+      &[data-clickable] {
+        cursor: pointer;
       }
     }
 
@@ -166,7 +173,6 @@ html {
     }
 
     .explainer-container {
-      background: white;
       font-size: 20px;
       left: -5000px;
       opacity: 0;
@@ -182,16 +188,6 @@ html {
       &.show-explainer {
         opacity: 1;
         z-index: 8!important;
-
-        &:after {
-          content: "✕";
-          cursor: pointer;
-          font-size: 28px;
-          font-weight: bold;
-          position: absolute;
-          right: 5px;
-          top: 5px;
-        }
       }
 
       &[data-type="menu"] {
@@ -1563,32 +1559,42 @@ html {
         }
       }
 
-      .action-key {
+      .mobile-action-key {
         display: none;
 
         @media only screen and (max-width: 480px) {
           bottom: 25%;
           display: block;
           position: fixed;
-          left: 50%;
-          transform: translateX(-50%);
+          right: 1rem;
+          width: 30vw;
           z-index: 20;
+
+          img {
+            width: 100%;
+          }
         }
       }
 
       .touch-buttons {
         display: flex;
         flex-wrap: wrap;
-        height: 80dvh;
-        left: 0;
-        max-width: 100%!important;
-        opacity: 0;
+        height: 30vw;
+        left: 1rem;
+        max-width: 100% !important;
         position: fixed;
-        top: 50%;
-        transform: translateY(-50%);
+        bottom: 25%;
         transition: all .5s;
-        width: 100vw;
-        z-index: -1;
+        width: 30vw;
+
+        span {
+          z-index: 2;
+        }
+
+        img {
+          position: absolute;
+          z-index: 1;
+        }
 
         &.do-mobile {
           @media only screen and (max-width: 480px) {
@@ -1616,55 +1622,6 @@ html {
             position: absolute;
             top: 10%;
             width: 30px;
-          }
-
-          &:first-child {
-            &:before {
-              background: url('../../src/images/sword-arrow.png') no-repeat;
-              transform: rotate(125deg);
-            }
-          }
-          &:nth-child(2) {
-            &:before {
-              background: url('../../src/images/sword-arrow.png') no-repeat;
-              transform: rotate(180deg);
-            }
-          }
-          &:nth-child(3) {
-            &:before {
-              background: url('../../src/images/sword-arrow.png') no-repeat;
-              transform: rotate(225deg);
-            }
-          }
-          &:nth-child(4) {
-            &:before {
-              background: url('../../src/images/sword-arrow.png') no-repeat;
-
-              transform: rotate(90deg);
-            }
-          }
-          &:nth-child(6) {
-            &:before {
-              background: url('../../src/images/sword-arrow.png') no-repeat;
-              transform: rotate(270deg);
-            }
-          }
-          &:nth-child(7) {
-            &:before {
-              background: url('../../src/images/sword-arrow.png') no-repeat;
-              transform: rotate(45deg);
-            }
-          }
-          &:nth-child(8) {
-            &:before {
-              background: url('../../src/images/sword-arrow.png') no-repeat;
-            }
-          }
-          &:nth-child(9) {
-            &:before {
-              background: url('../../src/images/sword-arrow.png') no-repeat;
-              transform: rotate(315deg);
-            }
           }
         }
       }

@@ -30,7 +30,7 @@ $orbem_studio_new_game = 'No' === $orbem_studio_require_login ? 'Start Game' : '
             <?php if (true === $orbem_studio_player_name) : ?>
                 <label for="orbem-studio-player-name">
                     Choose your character name
-                    <input id="orbem-studio-play-name" value="" placeholder="">
+                    <input id="orbem-studio-play-name" value="" placeholder="Enter name...">
                 </label>
             <?php endif; ?>
 
