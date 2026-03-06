@@ -292,7 +292,7 @@ include plugin_dir_path(__FILE__) . 'plugin-header.php';
             </div>
         </div>
         <?php echo wp_kses_post(html_entity_decode(Explore::getExplainerHTML($orbem_studio_explore_explainers, 'menu'))); ?>
-        <?php echo html_entity_decode(Explore::getExplainerHTML($orbem_studio_explore_explainers, 'fullscreen')); ?>
+        <?php echo wp_kses_post(html_entity_decode(Explore::getExplainerHTML($orbem_studio_explore_explainers, 'fullscreen'))); ?>
         <div class="touch-buttons">
             <span class="top-left">
             </span>
