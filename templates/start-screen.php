@@ -6,6 +6,7 @@ use OrbemStudio\Explore;
 /**
  * @var boolean $orbem_studio_is_admin
  * @var string  $orbem_studio_signin_screen
+ * @var string  $orbem_studio_signin_screen_mobile
  * @var string  $orbem_studio_require_login
  * @var string  $orbem_studio_new_type
  * @var string  $orbem_studio_first_area
@@ -19,9 +20,21 @@ if (true === $orbem_studio_is_admin) {
 
 $orbem_studio_new_game = 'No' === $orbem_studio_require_login ? 'Start Game' : 'New Game';
 ?>
-<div class="explore-overlay engage" style="background: url(<?php echo esc_attr($orbem_studio_signin_screen); ?>) no-repeat center;background-size: cover;height: 100svh;left: 0;position: fixed;top: 0;width: 100%; z-index: 4;">
-    <?php if ((false === empty($orbem_studio_signin_screen) && false !== stripos($orbem_studio_signin_screen, '.webm')) || (false === empty($orbem_studio_signin_screen) && false !== stripos($orbem_studio_signin_screen, '.mp4'))): ?>
-        <video style="object-fit:cover;position:absolute;z-index: 0;width: 100%;height:100svh;top:0; left:0;" src="<?php echo esc_url($orbem_studio_signin_screen); ?>" autoplay loop muted></video>
+<div class="explore-overlay engage" style="height: 100svh;left: 0;position: fixed;top: 0;width: 100%; z-index: 4;">
+    <?php if (!empty($orbem_studio_signin_screen)) : ?>
+        <?php if (false !== stripos($orbem_studio_signin_screen, '.webm') || false !== stripos($orbem_studio_signin_screen, '.mp4')) : ?>
+            <video class="signin-media-desktop" style="object-fit:cover;position:absolute;z-index:0;width:100%;height:100svh;top:0;left:0;" src="<?php echo esc_url($orbem_studio_signin_screen); ?>" autoplay loop muted></video>
+        <?php else: ?>
+            <img class="signin-media-desktop" style="object-fit:cover;position:absolute;z-index:0;width:100%;height:100svh;top:0;left:0;" src="<?php echo esc_url($orbem_studio_signin_screen); ?>" alt="" />
+        <?php endif; ?>
+    <?php endif; ?>
+
+    <?php if (!empty($orbem_studio_signin_screen_mobile)) : ?>
+        <?php if (false !== stripos($orbem_studio_signin_screen_mobile, '.webm') || false !== stripos($orbem_studio_signin_screen_mobile, '.mp4')) : ?>
+            <video class="signin-media-mobile" style="object-fit:cover;position:absolute;z-index:0;width:100%;height:100svh;top:0;left:0;" src="<?php echo esc_url($orbem_studio_signin_screen_mobile); ?>" autoplay loop muted></video>
+        <?php else: ?>
+            <img class="signin-media-mobile" style="object-fit:cover;position:absolute;z-index:0;width:100%;height:100svh;top:0;left:0;" src="<?php echo esc_url($orbem_studio_signin_screen_mobile); ?>" alt="" />
+        <?php endif; ?>
     <?php endif; ?>
     <div class="greeting-message engage">
         <div class="greeting-buttons">

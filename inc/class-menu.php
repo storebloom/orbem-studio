@@ -707,6 +707,7 @@ class Menu
             'explore_default_weapon' => ['select', 'Default Weapon', 'The starting weapon your main character will have. (Can be "fist" for no weapon)', $weapons],
             'explore_require_login' => ['select', 'Require Login', 'Require users to login in order to play. "Both" gives a "logged out" option.', ['Yes', 'No', 'Both']],
             'explore_player_name' => ['select', 'Add player name input', 'Do you want to add an input field where people can enter their names to use for character and dialogues?', ['Yes', 'No']],
+            'explore_autoplay_cutscene' => ['select', 'Autoplay cutscene dialogue', 'Do you want your cutscene dialogue to automatically go to the next line as it completes?', ['Yes', 'No']],
             'explore_google_login_client_id' => ['text', 'Google Login ClientID', 'Add your Google client id to allow SSO login. (Search google how if you this is confusing)'],
             'explore_google_tts_api_key' => ['text', 'Google TTS API Key', 'Add your Google TTS API key to allow cutscenes and explainers to talk using text to speech.'],
             'explore_hud_bars'     => ['multiselect', 'HUD bars', 'Choose which bars you wish to use for your game.', ['health', 'mana', 'power', 'money', 'points']],
@@ -733,6 +734,7 @@ class Menu
             'explore_intro_video' => ['upload', 'Intro Video', 'The video that will play when users first visit the game page.'],
             'explore_start_music' => ['upload', 'Start Screen Music', 'The music that will play after the intro video and on the start screen.'],
             'explore_signin_screen' => ['upload', 'Sign In Screen Background Image', 'The image/video that will show on the start screen.'],
+            'explore_signin_screen_mobile' => ['upload', 'Mobile Sign In Screen Background Image', 'The image/video that will show on the start screen on mobile devices.'],
             'explore_walking_sound' => ['upload', 'Walking Sound Effect', 'The sound that will play when your main character walks.'],
             'explore_points_sound' => ['upload', 'Sound When Points Are Given', 'The sound that will play when you complete a mission or collect something.']
         ];

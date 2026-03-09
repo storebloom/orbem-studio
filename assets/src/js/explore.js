@@ -33,6 +33,7 @@ let hazardCounter = 0;
 let pulsewaveTrackInterval;
 const defaultWeapon = OrbemOrder.defaultWeapon;
 let isLoggedIn = false;
+let isOnMobile = false;
 
 window.mainCharacter = '';
 window.godMode = false;
@@ -49,6 +50,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (500 > window.innerWidth) {
         window.globalLeftPositionOffset = 150;
+        isOnMobile = true;
     }
 
 	currentLocation = document.querySelector('.game-container');
@@ -1675,8 +1677,6 @@ function resetExplore() {
 	if (false === isLoggedIn) {
 		return;
 	}
-
-    console.log('hey');
 
 	const filehref = `${OrbemOrder.siteRESTURL}/resetexplore/`;
 
@@ -3492,7 +3492,7 @@ export function engageExploreGame() {
 	}
 	document.body.style.position = 'unset';
 
-	if (touchButtons) {
+	if (touchButtons && isOnMobile) {
 		touchButtons.classList.add('do-mobile');
 	}
 
@@ -3521,12 +3521,8 @@ export function engageExploreGame() {
 	const keyGuide = document.getElementById('key-guide');
 	spinMiroLogo(keyGuide, 'engage');
 
-	// Bring touch buttons forward and flash arrows.
-	spinMiroLogo(touchButtons, 'engage');
-
 	// Run arrow flash intermittently.
 	window.buttonShow = setInterval(function () {
-		spinMiroLogo(touchButtons, 'engage');
 		spinMiroLogo(keyGuide, 'engage');
 	}, 10000);
 
@@ -3600,6 +3596,10 @@ export function engageExploreGame() {
 			block: 'center',
 			inline: 'center',
 		});
+
+        if (isOnMobile) {
+            mapChar.style.left = parseInt(mapChar.style.left.replace('px', '')) + 200 + 'px';
+        }
 	}
 
 	setTimeout(() => {
@@ -4723,8 +4723,6 @@ function triggerIndicator(indicateMe, isCutscene, trigger, isMinigame) {
 	window.allowHit = false;
 	const indicator = document.querySelector('.indicator-icon');
 
-    console.log(indicateMe);
-
 	if (
 		window.allowIndicate &&
 		indicateMe &&
@@ -5119,7 +5117,7 @@ function playCutscene(position, areaCutscene) {
 			const cutsceneKeys = (event) => {
 				if (true === window.allowCutscene) {
 					if (
-                        (event.code === 'Space' || event.target.classList.contains('action-key')) &&
+                        (event.code === 'Space' || event.target.classList.contains('action-key') || event.target.classList.contains('wp-block-orbem-paragraph-mp3')) &&
 						dialogues &&
 						cutscene.classList.contains('engage')
 					) {
@@ -5230,6 +5228,7 @@ function playCutscene(position, areaCutscene) {
 			// Add a keydown event listener to the document to detect spacebar press
 			document.addEventListener('keydown', cutsceneKeys);
             document.querySelector('.action-key').addEventListener('click', cutsceneKeys);
+            cutscene.addEventListener('click', cutsceneKeys);
 
 			// Fade in if area cutscene.
 			if (true === areaCutscene) {
@@ -5423,29 +5422,21 @@ function engageSign(signname) {
 	const item = document.querySelector('.' + signname + '-map-item');
 	item.classList.add('open-up');
 
-	document.addEventListener(
-		'click',
-		(e) => {
-            if (false === e.target.classList.contains('action-key')) {
-                item.classList.remove('open-up');
-            }
-		},
-		{ once: true }
-	);
+	setTimeout(() => {
+		document.addEventListener('click', closeSign);
+	}, 0);
 
 	// Close on action key
 	document.addEventListener('keydown', closeSign);
-    document.querySelector('.action-key').addEventListener('click', closeSign)
 
 	/**
 	 * Close event using spacebar for focus view.
 	 * @param event
 	 */
 	function closeSign(event) {
-		if ('Space' === event.code || event.target.classList.contains('action-key')) {
+		if ('Space' === event.code || 'click' === event.type) {
 			item.classList.remove('open-up');
 			document.removeEventListener('keydown', closeSign);
-            document.querySelector('.action-key').removeEventListener('click', closeSign);
 
             const focusViewName = cleanClassName(item.className);
             const cutscene = document.querySelector('.cutscene-trigger[data-materializefocus="' + focusViewName + '"]');
@@ -7700,6 +7691,7 @@ async function makeTalk(text, voiceName, providedAudio, explainer) {
 	'use strict';
 
     let noVoice = false;
+    const autoplayCutscene = document.querySelector('main').dataset?.autoplaycutscene;
 
 	if (
 		true === text.includes('**') ||
@@ -7719,7 +7711,7 @@ async function makeTalk(text, voiceName, providedAudio, explainer) {
 		talkAudio.play();
 
 		talkAudio.addEventListener('ended', () => {
-            if (false === explainer) {
+            if (false === explainer && 'false' !== autoplayCutscene) {
 			    window.nextDialogue = true;
             }
 		});
@@ -7773,7 +7765,7 @@ async function makeTalk(text, voiceName, providedAudio, explainer) {
 			await talkAudio.play();
 
 			talkAudio.addEventListener('ended', () => {
-                if (false === explainer) {
+                if (false === explainer && 'false' !== autoplayCutscene) {
                     window.nextDialogue = true;
                 }
 			});

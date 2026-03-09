@@ -31,11 +31,6 @@ $orbem_studio_allowed_tags['svg'] = [
 ];
 
 $orbem_studio_allowed_tags['defs'] = [];
-
-$orbem_studio_allowed_tags['style'] = [
-    'type' => true,
-];
-
 $orbem_studio_allowed_tags['g'] = [
     'class'        => true,
     'id'           => true,
@@ -118,11 +113,107 @@ $orbem_studio_allowed_tags['polyline'] = [
 $orbem_studio_allowed_tags['title']     = [];
 $orbem_studio_allowed_tags['desc']      = [];
 $orbem_studio_allowed_tags['img']['draggable'] = true;
-$orbem_studio_allowed_tags['input']     = [
-    'value' => true,
+$orbem_studio_allowed_tags['style'] = [
     'type'  => true,
+    'media' => true,
     'id'    => true,
+];
+
+$orbem_studio_allowed_tags['form'] = [
+    'action'         => true,
+    'method'         => true,
+    'id'             => true,
+    'class'          => true,
+    'style'          => true,
+    'novalidate'     => true,
+    'target'         => true,
+    'accept-charset' => true,
+];
+
+$orbem_studio_allowed_tags['input'] = [
+    'type'          => true,
+    'name'          => true,
+    'value'         => true,
+    'placeholder'   => true,
+    'id'            => true,
+    'class'         => true,
+    'style'         => true,
+    'checked'       => true,
+    'selected'      => true,
+    'disabled'      => true,
+    'readonly'      => true,
+    'required'      => true,
+    'maxlength'     => true,
+    'minlength'     => true,
+    'size'          => true,
+    'autocomplete'  => true,
+    'aria-label'    => true,
+    'aria-required' => true,
+    'aria-invalid'  => true,
+];
+
+$orbem_studio_allowed_tags['select'] = [
+    'name'         => true,
+    'id'           => true,
+    'class'        => true,
+    'style'        => true,
+    'required'     => true,
+    'disabled'     => true,
+    'multiple'     => true,
+    'autocomplete' => true,
+    'aria-label'   => true,
+];
+
+$orbem_studio_allowed_tags['option'] = [
+    'value'    => true,
+    'selected' => true,
+    'disabled' => true,
+];
+
+$orbem_studio_allowed_tags['textarea'] = [
+    'name'         => true,
+    'id'           => true,
+    'class'        => true,
+    'style'        => true,
+    'rows'         => true,
+    'cols'         => true,
+    'placeholder'  => true,
+    'required'     => true,
+    'disabled'     => true,
+    'readonly'     => true,
+    'maxlength'    => true,
+    'minlength'    => true,
+    'autocomplete' => true,
+    'aria-label'   => true,
+];
+
+$orbem_studio_allowed_tags['button'] = [
+    'type'       => true,
+    'id'         => true,
+    'class'      => true,
+    'style'      => true,
+    'disabled'   => true,
+    'name'       => true,
+    'value'      => true,
+    'aria-label' => true,
+];
+
+$orbem_studio_allowed_tags['label'] = [
+    'for'   => true,
     'class' => true,
+    'style' => true,
+];
+
+$orbem_studio_allowed_tags['iframe'] = [
+    'src'             => true,
+    'width'           => true,
+    'height'          => true,
+    'class'           => true,
+    'style'           => true,
+    'frameborder'     => true,
+    'allowfullscreen' => true,
+    'loading'         => true,
+    'title'           => true,
 ];
 
 $orbem_studio_hide_storage                 = get_option('explore_hide_storage', false);
@@ -140,6 +231,7 @@ $orbem_studio_plugin_dir_path              = plugin_dir_path(__FILE__);
 $orbem_studio_default_weapon               = get_option('explore_default_weapon', '');
 $orbem_studio_userid                       = get_current_user_id();
 $orbem_studio_game_url                     = get_option('explore_game_page', '');
+$orbem_studio_autoplay_cutscene            = get_option('explore_autoplay_cutscene', 'Yes');
 $orbem_studio_game_url                     = false === empty($orbem_studio_game_url) ? get_permalink(get_page_by_path($orbem_studio_game_url)) : '/';
 $orbem_studio_walking_sound                = get_option('explore_walking_sound', false);
 $orbem_studio_points_sound                 = get_option('explore_points_sound', false);
@@ -181,6 +273,7 @@ $orbem_studio_explore_attack               = false === empty($orbem_studio_equip
 $orbem_studio_weapon_strength              = false === empty($orbem_studio_explore_attack) ? wp_json_encode($orbem_studio_explore_attack) : '""';
 $orbem_studio_intro_video                  = get_option('explore_intro_video', false);
 $orbem_studio_signin_screen                = get_option('explore_signin_screen', '');
+$orbem_studio_signin_screen_mobile         = get_option('explore_signin_screen_mobile', '');
 $orbem_studio_start_music                  = get_option('explore_start_music', false);
 $orbem_studio_main_character               = get_option('explore_main_character', false);
 $orbem_studio_main_character_info          = Explore::getCharacterImages($orbem_studio_main_character);
@@ -213,6 +306,7 @@ include plugin_dir_path(__FILE__) . 'plugin-header.php';
     <?php echo esc_attr(true === $orbem_studio_is_admin ? ' data-devmode=true' : ''); ?>
     <?php echo esc_attr(true === $orbem_studio_is_logged_in ? ' data-loggedin=true' : ''); ?>
     <?php echo esc_attr(true === $orbem_studio_player_name ? ' data-playername=true' : ''); ?>
+    <?php echo esc_attr('No' === $orbem_studio_autoplay_cutscene ? ' data-autoplaycutscene=false' : ''); ?>
       class="site-main<?php echo esc_attr($orbem_studio_rst); ?>">
     <?php include $orbem_studio_plugin_dir_path . 'start-screen.php'; ?>
     <?php if (true === $orbem_studio_is_admin) : ?>
@@ -292,7 +386,7 @@ include plugin_dir_path(__FILE__) . 'plugin-header.php';
             </div>
         </div>
         <?php echo wp_kses_post(html_entity_decode(Explore::getExplainerHTML($orbem_studio_explore_explainers, 'menu'))); ?>
-        <?php echo wp_kses_post(html_entity_decode(Explore::getExplainerHTML($orbem_studio_explore_explainers, 'fullscreen'))); ?>
+        <?php echo wp_kses(html_entity_decode(Explore::getExplainerHTML($orbem_studio_explore_explainers, 'fullscreen')), $orbem_studio_allowed_tags); ?>
         <div class="touch-buttons">
             <span class="top-left">
             </span>
