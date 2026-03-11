@@ -188,6 +188,7 @@ class Meta_Box {
         $explore_mission_array = $this->plugin->util->getOrbemArray('explore-mission');
         $explore_minigame_array = $this->plugin->util->getOrbemArray('explore-minigame');
         $explore_cutscene_array = $this->plugin->util->getOrbemArray('explore-cutscene');
+        $explore_explainer_array = $this->plugin->util->getOrbemArray('explore-explainer');
         $explore_hazard_array = $this->plugin->util->getOrbemArray('explore-point', false, 'explore-interaction-type', 'hazard');
         $default_weapon = get_option('explore_default_weapon', false);
         $explore_value_array = [
@@ -568,7 +569,13 @@ class Meta_Box {
                         [
                             'select' => $explore_focus_array
                         ],
-                        'Select a focus view that will reveal this cutscene trigger after it is completed.'
+                        'Select a focus view that will reveal this cutscene trigger after it is closed.'
+                    ],
+                    'explore-materialize-after-explainer' => [
+                        [
+                            'select' => $explore_explainer_array
+                        ],
+                        'Select an explainer that will reveal this cutscene trigger after it is closed.'
                     ],
                 ],
 
@@ -1320,6 +1327,15 @@ class Meta_Box {
                 ],
 
                 'Trigger & Visibility' => [
+                    'explore-click-close' => [
+                        [
+                            'radio' => [
+                                'yes',
+                                'no'
+                            ]
+                        ],
+                        'Allow clicking on the explainer to close it?'
+                    ],
                     'explore-explainer-trigger-required' => [
                         [
                             'top' => 'number',
