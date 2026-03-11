@@ -170,7 +170,7 @@ html {
     }
 
     .cutscene-trigger {
-      &[data-materializecutscene], &[data-materializefocus], &[data-materializemission], &[data-materializeitem] {
+      &[data-materializecutscene], &[data-materializefocus], &[data-materializeexplainer], &[data-materializemission], &[data-materializeitem] {
         &:not(.enable) {
           display: none;
         }

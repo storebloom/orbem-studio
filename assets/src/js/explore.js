@@ -3928,11 +3928,12 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 						'.' + value.dataset.triggee + '-explainer-item'
 					);
 					const closeExplainer = (event) => {
+                        const clickClose = '1' === triggee.dataset?.clickclose ? true : !triggee.contains(event.target);
 						if (
                             (('keydown' === event.type &&
 								'Space' === event.code) ||
 							'click' === event.type) &&
-                            !triggee.contains(event.target)
+                            clickClose
 						) {
 							window.allowMovement = true;
 							window.allowHit = true;
@@ -3941,6 +3942,12 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 								'keydown',
 								closeExplainer
 							);
+
+                            const cutscene = document.querySelector('.cutscene-trigger[data-materializeexplainer="' + value.dataset.triggee + '"]');
+
+                            if (cutscene) {
+                                cutscene.classList.add('enable');
+                            }
 						}
 					};
 

@@ -1967,6 +1967,7 @@ class Explore
             $materialize_cutscene       = $cutscene_post_meta['explore-materialize-after-cutscene'] ?? ''; // The cutscene that materializes this cutscene.
             $materialize_after_mission  = $cutscene_post_meta['explore-materialize-after-mission'] ?? ''; // The mission that materializes this cutscene.
             $materialize_focus          = $cutscene_post_meta['explore-materialize-after-focus'] ?? ''; // The focus view that materializes this cutscene after closing.
+            $materialize_explainer      = $cutscene_post_meta['explore-materialize-after-explainer'] ?? ''; // The explainer that materializes this cutscene after closing.
             $materialize_item           = $cutscene_post_meta['explore-materialize-after-item'] ?? ''; // The item that materializes this cutscene after interaction.
             $remove_item                = $cutscene_post_meta['explore-remove-after-item'] ?? ''; // The item that removes this cutscene after interaction.
             $mission_complete_cutscene  = $cutscene_post_meta['explore-mission-complete-cutscene'] ?? '';
@@ -2172,6 +2173,10 @@ class Explore
 
                 if (false === empty($materialize_focus)) {
                     $html .= ' data-materializefocus="' . esc_attr($materialize_focus) . '"';
+                }
+
+                if (false === empty($materialize_explainer)) {
+                    $html .= ' data-materializeexplainer="' . esc_attr($materialize_explainer) . '"';
                 }
 
                 if (false === empty($materialize_item)) {
@@ -2446,6 +2451,7 @@ class Explore
                 $explainer_left             = $explainer_meta['explore-left'] ?? '0';
                 $explainer_top              = $explainer_meta['explore-top'] ?? '0';
                 $width_value                = $explainer_meta['explore-width'] ?? '0';
+                $close_on_click             = 'yes' === $explainer_meta['explore-click-close'] ?? false;
                 $explainer_width            = ('fullscreen' === $type)
                     ? 'width: 100%; max-width:' . $width_value
                     : 'width:' . $width_value;
@@ -2487,6 +2493,12 @@ class Explore
                 if (false === empty($explainer_top)) {
                     $html .= '<div id="' . esc_attr($explainer->ID) . '" class="' . esc_attr($explainer->post_name) . '-explainer-item explainer-container map-item' . esc_attr($fullscreen) . '"';
                     $html .= ' style="left:' . esc_attr($explainer_left) . 'px;top:' . esc_attr($explainer_top) . 'px;height:auto; ' . esc_attr($explainer_width) . 'px; border: ' . esc_attr($border_size) . 'px ' . esc_attr($border_style) . ' ' . esc_attr($border_color) . '; border-radius: ' . esc_attr($border_radius) . 'px;"';
+                    $html .= ' data-type="' . esc_attr($explainer_type) . '"';
+
+                    if (false === empty($close_on_click)) {
+                        $html .= ' data-clickclose="' . esc_attr($close_on_click) . '"';
+                    }
+
                     $html .= ' data-type="' . esc_attr($explainer_type) . '"';
                     $html .= '>';
                     $html .= $arrow_img && 'fullscreen' !== $type ? '<img data-rotate="' . esc_attr($rotation) . '" width="120" height="120" style="'. esc_attr($arrow_style_css) . '" src="' . esc_url($arrow_img) . '" />' : '';
