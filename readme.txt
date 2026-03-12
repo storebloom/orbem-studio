@@ -5,7 +5,7 @@ Tags: game engine, rpg, storytelling, gamification, narrative game
 Requires at least: 6.1
 Tested up to: 6.9
 Requires PHP: 8.1
-Stable tag: 1.2.4
+Stable tag: 1.2.5
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -170,7 +170,7 @@ We have extensive documentation at https://orbemorder.com/orbem-studio/docs/read
 
 == Changelog ==
 
-= 1.2.4 =
+= 1.2.5 =
 * Fix cutscene autoplay without voice.
 * Add multiselect for areas in meta.
 
