@@ -170,6 +170,10 @@ We have extensive documentation at https://orbemorder.com/orbem-studio/docs/read
 
 == Changelog ==
 
+= 1.2.4 =
+* Fix cutscene autoplay without voice.
+* Add multiselect for areas in meta.
+
 = 1.2.3 =
 * Add materialize after explainer close for cutscenes.
 * Add clickable close option for explainer.

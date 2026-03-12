@@ -304,7 +304,7 @@ class Dev_Mode
             set_post_thumbnail($post_id, $attachment_id);
         }
 
-        update_post_meta($post_id, 'explore-area', $area);
+        update_post_meta($post_id, 'explore-area', [$area => 'on']);
 
         // Remove this data. Not post meta values.
         unset($post_values['featured-image']);

@@ -1226,27 +1226,34 @@ class Explore
     {
         $position   = sanitize_key($position);
         $first_area = sanitize_key(get_option('explore_first_area', ''));
+        $target_area = $position ?: $first_area;
 
-        if ($position || $first_area) {
-            $args = [
-                'posts_per_page' => -1,
-                'post_type'      => ['explore-weapon', 'explore-area', 'explore-point', 'explore-character', 'explore-enemy', 'explore-sign', 'explore-wall'],
-                // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
-                'meta_query'     => [
-                    [
-                        'key'     => 'explore-area',
-                        'value'   => $position ?: $first_area,
-                        'compare' => '='
-                    ]
-                ],
-                'no_found_rows'  => true,
-                'post_status'    => 'publish',
-            ];
-
-            return get_posts($args);
+        if ('' === $target_area) {
+            return [];
         }
 
-        return [];
+        $args = [
+            'posts_per_page' => -1,
+            'post_type'      => ['explore-weapon', 'explore-area', 'explore-point', 'explore-character', 'explore-enemy', 'explore-sign', 'explore-wall'],
+            // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+            'meta_query'     => [
+                'relation' => 'OR',
+                [
+                    'key'     => 'explore-area',
+                    'value'   => $target_area,
+                    'compare' => '=',
+                ],
+                [
+                    'key'     => 'explore-area',
+                    'value'   => '"' . $target_area . '"',
+                    'compare' => 'LIKE',
+                ],
+            ],
+            'no_found_rows'  => true,
+            'post_status'    => 'publish',
+        ];
+
+        return get_posts($args);
     }
 
     /**
@@ -1302,16 +1309,28 @@ class Explore
             return [];
         }
 
-        $first_area = get_option('explore_first_area', '');
-        $args       = [
+        $first_area  = sanitize_key(get_option('explore_first_area', ''));
+        $target_area = sanitize_key(false === empty($position) ? $position : $first_area);
+
+        if ('' === $target_area) {
+            return [];
+        }
+
+        $args = [
             'post_type'      => $post_type,
             // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
             'meta_query'     => [
+                'relation' => 'OR',
                 [
                     'key'     => 'explore-area',
-                    'value'   => false === empty($position) ? sanitize_text_field($position) : $first_area,
-                    'compare' => '='
-                ]
+                    'value'   => $target_area,
+                    'compare' => '=',
+                ],
+                [
+                    'key'     => 'explore-area',
+                    'value'   => '"' . $target_area . '"',
+                    'compare' => 'LIKE',
+                ],
             ],
             'posts_per_page' => -1,
             'post_status'    => 'publish',

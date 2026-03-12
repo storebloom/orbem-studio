@@ -208,6 +208,10 @@ html {
       position: absolute;
       transition: .3s opacity;
       z-index: -1;
+      
+      &[data-clickclose="1"] {
+        cursor: pointer;
+      }
 
       &>img[data-rotate] {
         position: absolute;
@@ -419,6 +423,7 @@ html {
     }
 
     .map-cutscene {
+      align-items: center;
       display: flex;
       position: fixed;
       bottom: -1500px;
@@ -454,7 +459,7 @@ html {
         background: white;
         display: none;
         flex-basis: 70%;
-        padding: 20px 50px;
+        padding: 0 20px;
         width: 400px;
 
         @media only screen and (max-width: 480px) {
@@ -491,17 +496,14 @@ html {
 
       .cut-character {
         display: none;
+        margin-right: 20px;
         opacity: 0;
         text-align: right;
-        width: 300px;
+        width: 100px;
 
         &.engage {
           display: block;
           opacity: 1;
-
-          @media only screen and (max-width: 480px) {
-            width: 100px;
-          }
         }
 
         img {

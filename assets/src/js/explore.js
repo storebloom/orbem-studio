@@ -7781,7 +7781,7 @@ async function makeTalk(text, voiceName, providedAudio, explainer) {
 		}
 	}
 
-    if (noVoice) {
+    if (noVoice && 'false' !== autoplayCutscene) {
         window.nextDialogue = true;
     }
 

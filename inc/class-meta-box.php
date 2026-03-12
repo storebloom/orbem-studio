@@ -347,9 +347,9 @@ class Meta_Box {
                 'Wall Area' => [
                     'explore-area-required' => [
                         [
-                            'select' => $explore_area_array
+                            'multiselect' => $explore_area_array
                         ],
-                        'Select the area where this wall will exist.'
+                        'Select the area(s) where this wall will exist.'
                     ],
                 ],
 
@@ -776,9 +776,9 @@ class Meta_Box {
                 'Character Placement & Position' => [
                     'explore-area' => [
                         [
-                            'select' => $explore_area_array
+                            'multiselect' => $explore_area_array
                         ],
-                        'Select the area where this character will appear.'
+                        'Select the area(s) where this character will appear.'
                     ],
                     'explore-top' => [
                         'number',
@@ -954,9 +954,9 @@ class Meta_Box {
                 'Enemy Placement & Position' => [
                     'explore-area-required' => [
                         [
-                            'select' => $explore_area_array
+                            'multiselect' => $explore_area_array
                         ],
-                        'Select the area where this enemy will appear.'
+                        'Select the area(s) where this enemy will appear.'
                     ],
                     'explore-top-required' => [
                         'number',
@@ -1380,9 +1380,9 @@ class Meta_Box {
                 'Placement & Size' => [
                     'explore-area-required' => [
                         [
-                            'select' => $explore_area_array
+                            'multiselect' => $explore_area_array
                         ],
-                        'Select the area where this item will appear.'
+                        'Select the area(s) where this item will appear.'
                     ],
                     'explore-top-required' => [
                         'number',
