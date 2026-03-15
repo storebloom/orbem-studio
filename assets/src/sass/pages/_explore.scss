@@ -429,10 +429,8 @@ html {
       bottom: -1500px;
       left: 50%;
       max-height: 300px;
-      max-width: 1000px;
       transform: translatex(-50%);
       transition: bottom .3s;
-      width: 80vw;
       z-index: 99999999;
 
       &.engage {
@@ -460,7 +458,7 @@ html {
         display: none;
         flex-basis: 70%;
         padding: 0 20px;
-        width: 400px;
+        width: 500px;
 
         @media only screen and (max-width: 480px) {
           padding: 0 13px;

@@ -2050,6 +2050,13 @@ const enterNewArea = (function () {
 								container.innerHTML +
 								newDefaultMap.outerHTML;
 
+                            // Engage walking.
+                            movementIntFunc();
+
+                            // Engage action.
+                            document.querySelector('.action-key').addEventListener('click', dragItemEvent);
+                            document.querySelector('.action-key').addEventListener('click', characterHitEvent);
+
 							// Engage settings menus.
 							engageSettingsMenus();
 
