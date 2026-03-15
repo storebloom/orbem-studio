@@ -5,7 +5,7 @@ Tags: game engine, rpg, storytelling, gamification, narrative game
 Requires at least: 6.1
 Tested up to: 6.9
 Requires PHP: 8.1
-Stable tag: 1.2.4
+Stable tag: 1.2.6
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -169,6 +169,13 @@ Yes. All systems are designed to be extended using WordPress hooks, filters, and
 We have extensive documentation at https://orbemorder.com/orbem-studio/docs/readme. Tutorials can be found on our channel at https://youtube.com/@orbemorder.
 
 == Changelog ==
+
+= 1.2.6 =
+* Fix cutscene size and position.
+* Fix mobile walking/action key.
+
+= 1.2.5 =
+* Version fix.
 
 = 1.2.4 =
 * Fix cutscene autoplay without voice.
