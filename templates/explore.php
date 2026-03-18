@@ -378,13 +378,6 @@ include plugin_dir_path(__FILE__) . 'plugin-header.php';
                 </div>
             </div>
         <?php endif; ?>
-        <div id="weapon">
-            <div class="weapon-content">
-                <?php if (false === empty($orbem_studio_equipped_weapon)) : ?>
-                    <img alt="equipped weapon" src="<?php echo esc_url(get_the_post_thumbnail_url($orbem_studio_equipped_weapon->ID)); ?>" width="60px" height="60px" />
-                <?php endif; ?>
-            </div>
-        </div>
         <?php echo wp_kses_post(html_entity_decode(Explore::getExplainerHTML($orbem_studio_explore_explainers, 'menu'))); ?>
         <?php echo wp_kses(html_entity_decode(Explore::getExplainerHTML($orbem_studio_explore_explainers, 'fullscreen')), $orbem_studio_allowed_tags); ?>
         <div class="touch-buttons">
