@@ -1195,6 +1195,33 @@ html {
           }
         }
 
+        .enemy-item {
+          &.hurt {
+            filter: sepia(1) hue-rotate(313deg) saturate(2) contrast(2.5);
+            animation: flash .05s infinite alternate;
+          }
+
+          .enemy-health-bar-wrapper {
+            background: gray;
+            border-radius: 3px;
+            display: none;
+            height: 10px;
+            left: 50%;
+            overflow: hidden;
+            position: absolute;
+            top: -21px;
+            transform: translateX(-50%);
+            width: 80px;
+
+            .enemy-health-bar {
+              background: red;
+              display: block;
+              height: 100%;
+              width: 100%;
+            }
+          }
+        }
+
         .map-item,
         .enemy-item {
           position: absolute;

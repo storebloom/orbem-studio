@@ -206,10 +206,10 @@ class Meta_Box {
             'static-up-drag' => 'upload',
             'static-left-drag' => 'upload',
             'static-right-drag' => 'upload',
-            'up-required' => 'upload',
-            'down-required' => 'upload',
-            'left-required' => 'upload',
-            'right-required' => 'upload',
+            'up' => 'upload',
+            'down' => 'upload',
+            'left' => 'upload',
+            'right' => 'upload',
             'up-punch' => 'upload',
             'down-punch' => 'upload',
             'left-punch' => 'upload',
@@ -989,17 +989,17 @@ class Meta_Box {
                         'text',
                         'Optional display name that overrides the enemy’s default name.'
                     ],
-                    'explore-character-images-required' => [
+                    'explore-character-images' => [
                         $character_images,
                         'The images used to visually represent this enemy.'
                     ],
                     'explore-enemy-type-required' => [
                         [
                             'select' => [
-                                'blocker',
-                                'shooter',
-                                'runner',
-                                'boss'
+                                'Blocker' => 'blocker',
+                                'Shooter' => 'shooter',
+                                'Runner' => 'runner',
+                                'Boss' => 'boss'
                             ]
                         ],
                         'Select the enemy behavior type: Blocker (stationary), Shooter (fires projectiles), Runner (charges the player), or Boss (uses multi-phase attacks).'
@@ -1123,7 +1123,7 @@ class Meta_Box {
                             'height' => 'number',
                             'width' => 'number',
                         ],
-                        'Define the trigger area that causes this enemy to fire projectiles.'
+                        'Define the trigger area that causes this enemy to fire projectiles or start running.'
                     ],
                 ],
 

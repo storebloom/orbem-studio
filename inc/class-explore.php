@@ -1758,6 +1758,10 @@ class Explore
                         $character_info = self::getCharacterImages($explore_point, '');
                         $direction_images = $character_info['direction_images'] ?? false;
 
+                        if ('explore-enemy' === $explore_point->post_type) {
+                            $html .= '<div class="enemy-health-bar-wrapper"><span class="enemy-health-bar"></span></div>';
+                        }
+
                         if ($direction_images) {
                             foreach ($direction_images as $direction_label => $direction_image) {
                                 $fight_animation = false !== stripos($direction_label, 'punch') ? ' fight-image' : '';
