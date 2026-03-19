@@ -1622,7 +1622,7 @@ class Explore
                                 $missions[] = $mission;
                             }
 
-                            if ((is_array($enemy_trigger_item) && in_array($explore_point->post_name, array_keys($enemy_trigger_item), true)) || false === is_array($enemy_trigger_item) && $explore_point->post_name === $enemy_trigger_item) {
+                            if ((is_array($enemy_trigger_item) && in_array($explore_point->post_name, array_keys($enemy_trigger_item), true)) || (false === is_array($enemy_trigger_item) && $explore_point->post_name === $enemy_trigger_item)) {
                                 $enemy_missions[] = $mission;
                             }
                         }
