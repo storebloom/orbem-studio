@@ -1,5 +1,6 @@
 html {
   overflow: hidden;
+  scroll-behavior: unset!important;
 
   body {
     overflow: hidden;
@@ -177,7 +178,7 @@ html {
       }
     }
 
-    .map-item {
+    .map-item, .enemy-item {
       &[data-showaftercutscene] {
 
         &:not(.no-point) {

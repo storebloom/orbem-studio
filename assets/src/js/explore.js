@@ -2921,7 +2921,7 @@ function startRunnerPunching(enemyEl) {
         }
 
         showPunch = !showPunch;
-    }, 800);
+    }, 500);
 }
 
 function stopRunnerEnemy(enemyEl) {
@@ -6118,6 +6118,10 @@ function afterCutscene(cutscene, areaCutscene, character) {
 		showItems.forEach((showItem) => {
 			showItem.classList.add('no-point');
 			materializedItemsArray.push(cleanClassName(showItem.className));
+
+            if ('explore-enemy' === showItem.dataset.genre) {
+                engageEnemy(showItem, false)
+            }
 		});
 
 		saveMaterializedItem(currentLocation, materializedItemsArray);
