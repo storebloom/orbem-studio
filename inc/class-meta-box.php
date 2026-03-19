@@ -254,10 +254,10 @@ class Meta_Box {
                     'explore-start-direction' => [
                         [
                             'select' => [
-                                'up',
-                                'down',
-                                'left',
-                                'right'
+                                'Up' => 'up',
+                                'Down' => 'down',
+                                'Left' => 'left',
+                                'Right' => 'right'
                             ]
                         ],
                         'The direction the character will be facing when they enter this area.'
@@ -396,7 +396,7 @@ class Meta_Box {
                     'explore-ability' => [
                         [
                             'select' => [
-                                'transportation'
+                                'Transportation' => 'transportation'
                             ]
                         ],
                         'Select the ability rewarded for completing this mission.'
@@ -436,9 +436,9 @@ class Meta_Box {
                     ],
                     'explore-trigger-enemy' => [
                         [
-                            'select' => $explore_enemy_array
+                            'multiselect' => $explore_enemy_array
                         ],
-                        'Select an enemy that completes this mission when defeated.'
+                        'Select an enemy(ies) that completes this mission when defeated.'
                     ],
                 ],
 
@@ -734,7 +734,7 @@ class Meta_Box {
                     ],
                     'explore-value-type-required' => [
                         [
-                            'select' => ['weapons']
+                            'select' => ['Weapons' => 'weapons']
                         ],
                         'Defines the item category for this object.'
                     ],
@@ -827,10 +827,10 @@ class Meta_Box {
                     'explore-ability' => [
                         [
                             'select' => [
-                                'speed',
-                                'strength',
-                                'hazard',
-                                'programming',
+                                'Speed' => 'speed',
+                                'Strength' => 'strength',
+                                'Hazard' => 'hazard',
+                                'Programming' => 'programming',
                             ]
                         ],
                         'Select the special ability this playable character has.'
@@ -1166,7 +1166,7 @@ class Meta_Box {
                 'Minigame Configuration' => [
                     'explore-minigame-type-required' => [
                         [
-                            'select' => ['draggable']
+                            'select' => ['Draggable' => 'draggable']
                         ],
                         'Select the type of minigame to use.'
                     ],

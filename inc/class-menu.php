@@ -695,7 +695,7 @@ class Menu
      */
     public static function getGameOptionSettings(): array
     {
-        $pages = get_posts(['post_type' => 'page', 'post_status' => 'publish', 'posts_per_page' => -1, 'no_found_rows' => true]);
+        $pages = get_posts(['post_type' => 'page', 'post_status' => 'any', 'posts_per_page' => -1, 'no_found_rows' => true]);
         $areas = get_posts(['post_type' => 'explore-area', 'post_status' => 'publish', 'posts_per_page' => -1, 'no_found_rows' => true]);
         $characters = get_posts(['post_type' => 'explore-character', 'post_status' => 'publish', 'posts_per_page' => -1, 'no_found_rows' => true]);
         $weapons = get_posts(['post_type' => 'explore-weapon', 'post_status' => 'publish', 'posts_per_page' => -1, 'no_found_rows' => true]);
