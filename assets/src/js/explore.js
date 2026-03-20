@@ -30,7 +30,6 @@ let timerCountDownHit = false;
 let weaponPosTop = 400;
 let weaponPosLeft = 400;
 let hazardCounter = 0;
-let pulsewaveTrackInterval;
 const defaultWeapon = OrbemOrder.defaultWeapon;
 let isLoggedIn = false;
 let isOnMobile = false;
@@ -50,6 +49,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (500 > window.innerWidth) {
         window.globalLeftPositionOffset = 150;
+        weaponPosLeft = window.globalLeftPositionOffset;
         isOnMobile = true;
     }
 
@@ -593,7 +593,7 @@ function moveNPC(npc, cutscene, areaCutscene, cutPosition) {
 				npc.style.top = pathArray[nextPosition].top + 'px';
 			}
 		} else if (true === wanderer) {
-			makeNPCWander(npc, walkingSpeed, timeBetween);
+			makeNPCWander(npc, walkingSpeed, timeBetween, false);
             playCutscene(cutPosition, areaCutscene);
 		}
 
@@ -759,10 +759,10 @@ function setStaticNPCImage(moveDirection, npc) {
 	}
 }
 
-function makeNPCWander(npc, walkingSpeed, timeBetween) {
+function makeNPCWander(npc, walkingSpeed, timeBetween, enemy) {
 	'use strict';
 
-	let startDir = getRandomDir([]);
+	let startDir = getRandomDir([], enemy, npc);
 	let moveDir = '';
 	let triedDown = false;
 	let triedLeft = false;
@@ -785,16 +785,51 @@ function makeNPCWander(npc, walkingSpeed, timeBetween) {
 		}, pauseTime);
 	}
 
-	startRandomNpcPause();
+    if (false === enemy) {
+        startRandomNpcPause();
+    }
 
 	setInterval(() => {
 		if (
 			'true' !== npc.dataset?.break &&
 			'true' !== npc.dataset?.cutscenebreak
 		) {
+			if (true === enemy && '' === moveDir) {
+				startDir = getRandomDir(startDir, true, npc);
+			}
 			const currentLeft = npc.style.left.replace('px', '');
 			const currentTop = npc.style.top.replace('px', '');
-			const finalPos = blockMovement(currentTop, currentLeft, npc);
+			const finalPos = blockMovement(currentTop, currentLeft, npc, enemy);
+            const mapCharacter = document.getElementById('map-character');
+            const mapCharacterImage = document.querySelector('.map-character-icon.engage');
+
+            const targetLeft =
+                parseInt(mapCharacter.style.left.replace('px', ''), 10) +
+                (400 - mapCharacterImage.width / 2);
+
+            const targetTop =
+                parseInt(mapCharacter.style.top.replace('px', ''), 10) +
+                (400 - mapCharacterImage.height / 2);
+
+            const horizontalDiff = targetLeft - currentLeft;
+            const verticalDiff = targetTop - currentTop;
+            const absHorizontalDiff = Math.abs(horizontalDiff);
+            const absVerticalDiff = Math.abs(verticalDiff);
+
+            let displayDirection = npc.dataset.currentDirection || 'down';
+            const directionBuffer = 2; // prevents flip-flopping when nearly equal
+
+            if (absVerticalDiff > absHorizontalDiff + directionBuffer) {
+                displayDirection = verticalDiff > 0 ? 'down' : 'up';
+            } else if (absHorizontalDiff > absVerticalDiff + directionBuffer) {
+                displayDirection = horizontalDiff > 0 ? 'right' : 'left';
+            }
+
+            // only update if it actually changed
+            if (displayDirection !== npc.dataset.currentDirection) {
+                npc.dataset.currentDirection = displayDirection;
+                setDirectionImage(npc, displayDirection);
+            }
 
 			switch (startDir) {
 				case 'down':
@@ -882,7 +917,7 @@ function makeNPCWander(npc, walkingSpeed, timeBetween) {
 				(true === triedUp && true === triedDown)
 			) {
 				moveDir = '';
-				startDir = getRandomDir(startDir);
+				startDir = getRandomDir(startDir, enemy, npc);
 				triedLeft = false;
 				triedRight = false;
 				triedUp = false;
@@ -932,8 +967,15 @@ function makeNPCWander(npc, walkingSpeed, timeBetween) {
 			}
 
 			if (collisionCount > 100) {
-				pauseNpc(timeBetween, npc);
+				if (false === enemy) {
+					pauseNpc(timeBetween, npc);
+				}
 				moveDir = '';
+				triedDown = false;
+				triedUp = false;
+				triedLeft = false;
+				triedRight = false;
+				swap++;
 			}
 
 			if (noCollideCount > 20) {
@@ -945,8 +987,8 @@ function makeNPCWander(npc, walkingSpeed, timeBetween) {
 				moveDir = '';
 				swap++;
 			}
-		} else {
-			startDir = getRandomDir(startDir);
+		} else if (false === enemy) {
+			startDir = getRandomDir(startDir, enemy, npc);
 		}
 	}, walkingSpeed);
 }
@@ -960,25 +1002,50 @@ function pauseNpc(timeBetween, npc) {
 	}, timeBetween);
 }
 
-function getRandomDir(currentDir) {
-	'use strict';
+function getRandomDir(currentDir, enemy, enemyEl) {
+    'use strict';
 
-	const dirs = ['up', 'down', 'left', 'right'];
+    const dirs = ['up', 'down', 'left', 'right'];
 
-	// Normalize currentDir to an array if it's not already
-	const excludeDirs = Array.isArray(currentDir) ? currentDir : [currentDir];
+    if (true === enemy && enemyEl) {
+        const mapCharacter = document.getElementById('map-character');
+        const mapCharacterImage = document.querySelector(
+            '.map-character-icon.engage'
+        );
 
-	// Filter out any directions in excludeDirs
-	const filteredDirs = dirs.filter((dir) => !excludeDirs.includes(dir));
+        if (mapCharacter && mapCharacterImage) {
+            const enemyLeft = parseInt(enemyEl.style.left.replace('px', ''), 10);
+            const enemyTop = parseInt(enemyEl.style.top.replace('px', ''), 10);
+            const targetLeft =
+                parseInt(mapCharacter.style.left.replace('px', ''), 10) +
+                (400 - mapCharacterImage.width / 2);
+            const targetTop =
+                parseInt(mapCharacter.style.top.replace('px', ''), 10) +
+                (400 - mapCharacterImage.height / 2);
+            const horizontalDiff = targetLeft - enemyLeft;
+            const verticalDiff = targetTop - enemyTop;
+            const absHorizontalDiff = Math.abs(horizontalDiff);
+            const absVerticalDiff = Math.abs(verticalDiff);
 
-	// If no directions left, return null or handle gracefully
-	if (filteredDirs.length === 0) {
-		return null;
-	}
+            if (absVerticalDiff > absHorizontalDiff) {
+                return verticalDiff > 0 ? 'down' : 'up';
+            }
 
-	// Pick a random direction from the remaining ones
-	const randomIndex = Math.floor(Math.random() * filteredDirs.length);
-	return filteredDirs[randomIndex];
+            if (0 < absHorizontalDiff) {
+                return horizontalDiff > 0 ? 'right' : 'left';
+            }
+        }
+    }
+
+    const excludeDirs = Array.isArray(currentDir) ? currentDir : [currentDir];
+    const filteredDirs = dirs.filter((dir) => !excludeDirs.includes(dir));
+
+    if (0 === filteredDirs.length) {
+        return null;
+    }
+
+    const randomIndex = Math.floor(Math.random() * filteredDirs.length);
+    return filteredDirs[randomIndex];
 }
 
 /**
@@ -2314,12 +2381,17 @@ const enterNewArea = (function () {
 								JSON.parse(nextAreaPosition).left;
 						}
 
+                        if (isOnMobile) {
+                            newMapItems['start-left'] = parseInt(newMapItems['start-left']) + 240;
+                        }
+
 						characterItem.style.top =
 							newMapItems['start-top'] + 'px';
 						characterItem.style.left =
 							newMapItems['start-left'] + 'px';
 						characterItem.className =
 							newMapItems['start-direction'] + '-dir';
+
 						characterItem.scrollIntoView({
 							behavior: 'instant',
 							block: 'center',
@@ -2847,7 +2919,7 @@ function selectNewCharacter(character) {
 /**
  * Helper to set the enemy's directional image.
  */
-function setEnemyDirectionImage(enemyEl, direction) {
+function setDirectionImage(enemyEl, direction) {
 	'use strict';
 
 	if (!enemyEl || !direction) {
@@ -2945,6 +3017,17 @@ function engageEnemy(enemy, trigger) {
 	'use strict';
 
 	const enemyType = enemy.getAttribute('data-enemy-type');
+    const enemySound = enemy.querySelector('audio');
+
+    if (enemySound) {
+        enemySound.volume = window.sfxVolume;
+
+        setInterval(() => {
+            enemySound.volume = window.sfxVolume;
+        }, 1000);
+
+        enemySound.play();
+    }
 
 	if (trigger) {
 		trigger.remove();
@@ -2956,271 +3039,7 @@ function engageEnemy(enemy, trigger) {
 
 	// Runner Type.
     if ('runner' === enemyType) {
-        stopRunnerEnemy(enemy);
-
-		if (!enemy.dataset.targetOffsetX || !enemy.dataset.targetOffsetY) {
-			const angle = Math.random() * Math.PI * 2;
-			const radius = 60 + Math.random() * 45;
-			enemy.dataset.targetOffsetX = String(
-				Math.round(Math.cos(angle) * radius)
-			);
-			enemy.dataset.targetOffsetY = String(
-				Math.round(Math.sin(angle) * radius)
-			);
-			const steerDir = Math.random() > 0.5 ? 1 : -1;
-			enemy.dataset.steerDirection = String(steerDir);
-		}
-        enemy._runnerInt = setInterval(() => {
-			const enemyName = cleanClassName(enemy.className);
-			const newEnemy = document.querySelector(
-				'.' + enemyName + '-map-item'
-			);
-            if (!newEnemy) {
-                stopRunnerEnemy(enemy);
-                return;
-            }
-
-			const collisionWalls = document.querySelectorAll(
-				'.map-character-icon.engage, .default-map svg rect, .map-item' +
-				':not([data-wanderer="yes"]):not(.explainer-container):not(.materialize-item-trigger):not(.drag-dest):not([data-trigger="true"]):not(.currently-dragging):not([data-passable="true"].no-point):not(.passable):not([data-genre="explore-sign"]):not([data-foreground="true"]):not([data-background="true"])'
-			);
-			const currentLeft = parseInt(newEnemy.style.left, 10);
-			const currentTop = parseInt(newEnemy.style.top, 10);
-			let moveDirection = '';
-            // Speed control from data-speed attribute.
-            // Uses whole numbers where 1 = 0.01 of normal speed and 100 = normal speed.
-            const enemySpeedValue = parseInt(enemy.dataset.speed ?? '100', 10);
-
-            // If speed is 0 or invalid, runner does not move.
-            if (isNaN(enemySpeedValue) || enemySpeedValue <= 0) {
-                return;
-            }
-
-            const enemySpeed = Math.min(enemySpeedValue, 100) / 100;
-            const currentSpeedProgress = parseFloat(enemy.dataset.speedProgress || '0');
-            const nextSpeedProgress = currentSpeedProgress + enemySpeed;
-
-            if (nextSpeedProgress < 1) {
-                enemy.dataset.speedProgress = String(nextSpeedProgress);
-                return;
-            }
-
-            enemy.dataset.speedProgress = String(nextSpeedProgress - 1);
-            const moveStep = 1;
-
-            const mapCharacter = document.getElementById('map-character');
-            const mapCharacterImage = document.querySelector(
-                '.map-character-icon.engage'
-            );
-            const gameContainer = document.querySelector('.game-container');
-
-            if (!mapCharacter || !mapCharacterImage || !gameContainer) {
-                return;
-            }
-
-            const enemyCenter = getPositionAtCenter(newEnemy);
-            const characterCenter = getPositionAtCenter(mapCharacterImage);
-            const enemyDistanceFromCharacter = Math.hypot(
-                characterCenter.x - enemyCenter.x,
-                characterCenter.y - enemyCenter.y
-            );
-            const stopDistance = 70;
-            const releaseDistance = 115;
-
-            if ('true' === enemy.dataset.runnerHolding) {
-                if (enemyDistanceFromCharacter >= releaseDistance) {
-                    enemy.dataset.runnerHolding = 'false';
-                    stopRunnerPunching(newEnemy);
-                } else {
-                    startRunnerPunching(newEnemy);
-                    return;
-                }
-            }
-
-            if (enemyDistanceFromCharacter <= stopDistance) {
-                enemy.dataset.runnerHolding = 'true';
-                startRunnerPunching(newEnemy);
-                return;
-            }
-
-			const baseLeft =
-				parseInt(mapCharacter.style.left.replace('px', ''), 10) +
-				(400 - mapCharacterImage.width / 2);
-			const baseTop =
-				parseInt(mapCharacter.style.top.replace('px', ''), 10) +
-				(400 - mapCharacterImage.height / 2);
-			const offsetX = parseInt(enemy.dataset.targetOffsetX || '0', 10);
-			const offsetY = parseInt(enemy.dataset.targetOffsetY || '0', 10);
-			const mapCharacterLeft = baseLeft + offsetX;
-			const mapCharacterTop = baseTop + offsetY;
-
-			let nextLeft = currentLeft;
-			let nextTop = currentTop;
-
-			const horizontalDiff = mapCharacterLeft - currentLeft;
-			const verticalDiff = mapCharacterTop - currentTop;
-			const absHorizontalDiff = Math.abs(horizontalDiff);
-			const absVerticalDiff = Math.abs(verticalDiff);
-
-			if (0 < absHorizontalDiff) {
-				nextLeft =
-					currentLeft + (horizontalDiff > 0 ? moveStep : -moveStep);
-			}
-
-			if (0 < absVerticalDiff) {
-				nextTop =
-					currentTop + (verticalDiff > 0 ? moveStep : -moveStep);
-			}
-
-			if (absVerticalDiff > absHorizontalDiff) {
-				moveDirection = verticalDiff > 0 ? 'down' : 'up';
-			} else if (0 < absHorizontalDiff) {
-				moveDirection = horizontalDiff > 0 ? 'right' : 'left';
-			} else if (0 < absVerticalDiff) {
-				moveDirection = verticalDiff > 0 ? 'down' : 'up';
-			}
-
-			const directBlockedPosition = getBlockDirection(
-				collisionWalls,
-				newEnemy,
-				nextTop,
-				nextLeft,
-				true,
-				false
-			);
-
-			const directBlocked =
-				directBlockedPosition.left === currentLeft &&
-				directBlockedPosition.top === currentTop;
-
-            const closeToCharacter =
-                Math.abs(currentLeft - baseLeft) < 120 &&
-                Math.abs(currentTop - baseTop) < 120;
-
-            if (!directBlocked) {
-                stopRunnerPunching(newEnemy);
-                enemy.dataset.runnerHolding = 'false';
-                newEnemy.style.left = directBlockedPosition.left + 'px';
-                newEnemy.style.top = directBlockedPosition.top + 'px';
-
-                if ('' !== moveDirection) {
-                    setEnemyDirectionImage(newEnemy, moveDirection);
-                }
-
-                return;
-            }
-
-            if (directBlocked && closeToCharacter) {
-                if ('true' !== enemy.dataset.runnerHolding) {
-                    enemy.dataset.runnerHolding = 'true';
-
-                    const characterHorizontalDiff = baseLeft - currentLeft;
-                    const characterVerticalDiff = baseTop - currentTop;
-                    const absCharacterHorizontalDiff = Math.abs(
-                        characterHorizontalDiff
-                    );
-                    const absCharacterVerticalDiff = Math.abs(
-                        characterVerticalDiff
-                    );
-                    let holdDirection = enemy.dataset.currentDirection || 'down';
-
-                    if (absCharacterVerticalDiff > absCharacterHorizontalDiff) {
-                        holdDirection =
-                            characterVerticalDiff > 0 ? 'down' : 'up';
-                    } else if (0 < absCharacterHorizontalDiff) {
-                        holdDirection =
-                            characterHorizontalDiff > 0 ? 'right' : 'left';
-                    }
-
-                    setEnemyDirectionImage(newEnemy, holdDirection);
-                }
-
-                startRunnerPunching(newEnemy);
-                return;
-            }
-
-			const steerDirection =
-				parseInt(enemy.dataset.steerDirection || '1', 10) || 1;
-			const options = [
-				{
-					left: currentLeft + moveStep * steerDirection,
-					top: currentTop,
-					direction: steerDirection > 0 ? 'right' : 'left',
-				},
-				{
-					left: currentLeft,
-					top: currentTop + moveStep * steerDirection,
-					direction: steerDirection > 0 ? 'down' : 'up',
-				},
-				{
-					left: currentLeft - moveStep * steerDirection,
-					top: currentTop,
-					direction: steerDirection > 0 ? 'left' : 'right',
-				},
-				{
-					left: currentLeft,
-					top: currentTop - moveStep * steerDirection,
-					direction: steerDirection > 0 ? 'up' : 'down',
-				},
-			];
-
-			let moved = false;
-
-			options.forEach((option) => {
-				if (moved) {
-					return;
-				}
-
-				const steeredBlockedPosition = getBlockDirection(
-					collisionWalls,
-					newEnemy,
-					option.top,
-					option.left,
-					true,
-					false
-				);
-
-				const canMove =
-					steeredBlockedPosition.left !== currentLeft ||
-					steeredBlockedPosition.top !== currentTop;
-
-                if (canMove) {
-                    stopRunnerPunching(newEnemy);
-                    newEnemy.style.left = steeredBlockedPosition.left + 'px';
-                    newEnemy.style.top = steeredBlockedPosition.top + 'px';
-                    setEnemyDirectionImage(newEnemy, option.direction);
-                    moved = true;
-                }
-			});
-
-			if (!moved) {
-				enemy.dataset.steerDirection = String(steerDirection * -1);
-			}
-		}, 20);
-	}
-
-	if ('boss' === enemyType) {
-		updateBossWave(enemy);
-
-		pulsewaveTrackInterval = setInterval(() => {
-			const pulseWave = document.querySelector('.pulse-wave-container');
-			const mainChar = document.querySelector(
-				'.map-character-icon.engage'
-			);
-
-			if (
-				enemyOverlap(
-					pulseWave,
-					mainChar,
-					document.querySelector('.game-container')
-				)
-			) {
-				inHazard = true;
-				window.theHazardValue = pulseWave.dataset.value;
-			} else {
-				inHazard = false;
-			}
-		}, 20);
+        makeNPCWander(enemy, enemy.dataset.speed, 0, true);
 	}
 }
 
@@ -3975,15 +3794,15 @@ export function engageExploreGame() {
 	const mapChar = document.getElementById('map-character');
 
 	if (mapChar) {
+        if (isOnMobile && mapChar.style.left.replace('px', '') === mapChar.dataset.startLeft) {
+            mapChar.style.left = (parseInt(mapChar.style.left.replace('px', '')) + 240) + 'px';
+        }
+
 		mapChar.scrollIntoView({
 			behavior: 'instant',
 			block: 'center',
 			inline: 'center',
 		});
-
-        if (isOnMobile) {
-            mapChar.style.left = parseInt(mapChar.style.left.replace('px', '')) + 200 + 'px';
-        }
 	}
 
 	setTimeout(() => {
@@ -6551,7 +6370,7 @@ function movementIntFunc() {
 		const topVal = box.style.top;
 		const leftValInt = parseInt(leftVal, 10);
 		const topValInt = parseInt(topVal, 10);
-		const finalPos = blockMovement(topValInt, leftValInt, false);
+		const finalPos = blockMovement(topValInt, leftValInt, false, false);
 		const draggableItem = document.querySelector('.dragme');
 
 		if (window.allowMovement) {
@@ -6788,10 +6607,10 @@ function characterHitEvent(event) {
                             weaponPosTop = 500;
                             break;
                         case 'left':
-                            weaponPosLeft = 350;
+                            weaponPosLeft = 350 - ( window.globalLeftPositionOffset - 50 );
                             break;
                         case 'right':
-                            weaponPosLeft = 450;
+                            weaponPosLeft = 450 - ( window.globalLeftPositionOffset - 50 );
                             break;
                     }
 
@@ -6799,6 +6618,8 @@ function characterHitEvent(event) {
                         currentImageMapCharacter.classList.add('punched');
 
                         weaponAnimation.classList.add('engage');
+
+                        playWeaponSound(weapon);
                     }
                 }
 
@@ -6860,10 +6681,10 @@ function characterHitEvent(event) {
                                     weaponPosTop = 400;
                                     break;
                                 case 'left':
-                                    weaponPosLeft = 400;
+                                    weaponPosLeft = ( window.globalLeftPositionOffset - 50 );
                                     break;
                                 case 'right':
-                                    weaponPosLeft = 400;
+                                    weaponPosLeft = ( window.globalLeftPositionOffset - 50 );
                                     break;
                             }
                         }
@@ -6894,10 +6715,10 @@ function characterHitEvent(event) {
                                 weaponPosTop = 400;
                                 break;
                             case 'left':
-                                weaponPosLeft = 400;
+                                weaponPosLeft = ( window.globalLeftPositionOffset - 50 );
                                 break;
                             case 'right':
-                                weaponPosLeft = 400;
+                                weaponPosLeft = ( window.globalLeftPositionOffset - 50 );
                                 break;
                         }
 
@@ -6995,14 +6816,24 @@ function characterHitEvent(event) {
     }
 }
 
+function playWeaponSound(weapon) {
+    const weaponSound = weapon?.querySelector('audio');
+
+    if (weaponSound) {
+        weaponSound.volume = window.sfxVolume;
+        weaponSound.play();
+    }
+}
+
 /**
  * Block movement if intersecting with the walls.
  * @param  top
  * @param  left
  * @param  box
+ * @param enemy
  * @return {{top, left}}
  */
-function blockMovement(top, left, box) {
+function blockMovement(top, left, box, enemy) {
 	'use strict';
 
 	const finalTop = top;
@@ -7027,8 +6858,8 @@ function blockMovement(top, left, box) {
 		box,
 		parseInt(finalTop),
 		parseInt(finalLeft),
-		false,
-		'' !== mainChar
+        enemy,
+        '' !== mainChar,
 	);
 }
 
@@ -7049,7 +6880,7 @@ function getBlockDirection(
 	finalTop,
 	finalLeft,
 	enemy,
-	npc
+    npc
 ) {
 	'use strict';
 
@@ -7057,14 +6888,53 @@ function getBlockDirection(
 	const top = finalTop;
 	const final = { top: finalTop, left: finalLeft, collide: false };
 	const mapChar = document.getElementById('map-character');
-	const mainCharPos = {
-		offsetLeft: mapChar.offsetLeft + (window.globalLeftPositionOffset - box.offsetWidth / 2),
-		offsetWidth: box.offsetWidth,
-		offsetTop: mapChar.offsetTop + (400 - box.offsetHeight / 2),
-		offsetHeight: box.offsetHeight,
-	};
+    const mapImage = mapChar.querySelector('.map-character-icon.engage');
+
+    let enemyTargetCorner = 'center';
+
+    if (true === enemy) {
+        if (!box.dataset.targetCorner) {
+            const corners = ['top-left', 'top-right', 'bottom-left', 'bottom-right'];
+            box.dataset.targetCorner =
+                corners[Math.floor(Math.random() * corners.length)];
+        }
+
+        enemyTargetCorner = box.dataset.targetCorner;
+    }
+
+    let cornerOffsetLeft = window.globalLeftPositionOffset - box.offsetWidth / 2;
+    let cornerOffsetTop = 400 - box.offsetHeight / 2;
+
+    if (true === enemy) {
+        switch (enemyTargetCorner) {
+            case 'top-left':
+                cornerOffsetLeft -= 30;
+                cornerOffsetTop -= 30;
+                break;
+            case 'top-right':
+                cornerOffsetLeft += 30;
+                cornerOffsetTop -= 30;
+                break;
+            case 'bottom-left':
+                cornerOffsetLeft -= 30;
+                cornerOffsetTop += 30;
+                break;
+            case 'bottom-right':
+                cornerOffsetLeft += 30;
+                cornerOffsetTop += 30;
+                break;
+        }
+    }
+
+    const mainCharPos = {
+        offsetLeft: mapChar.offsetLeft + cornerOffsetLeft,
+        offsetWidth: box.offsetWidth,
+        offsetTop: mapChar.offsetTop + cornerOffsetTop,
+        offsetHeight: box.offsetHeight,
+    };
 
 	const finalCharPos = (true === npc || true === enemy) ? box : mainCharPos;
+    let touchingMainChar = false;
 
 	if (
 		collisionWalls &&
@@ -7073,7 +6943,7 @@ function getBlockDirection(
 		collisionWalls.forEach((collisionWallEle) => {
 			let collisionWall = collisionWallEle;
 
-			if (true === collisionWall.id.includes('mc-')) {
+			if (mapImage.id === collisionWall.id) {
 				collisionWall = mainCharPos;
 			}
 
@@ -7114,7 +6984,12 @@ function getBlockDirection(
 				let adjust = true === enemy ? 5 : window.moveSpeed;
 				adjust = true === npc ? 1 : adjust;
 
-				if (
+                if (true === enemy && collisionWall === mainCharPos) {
+                    touchingMainChar = true;
+                    startRunnerPunching(box);
+                }
+
+                if (
 					leftCollision &&
 					!rightCollision &&
 					!topCollision &&
@@ -7146,6 +7021,10 @@ function getBlockDirection(
 			}
 		});
 	}
+
+    if (true === enemy && false === touchingMainChar) {
+        stopRunnerPunching(box);
+    }
 
 	return final;
 }

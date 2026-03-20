@@ -682,25 +682,25 @@ class Meta_Box {
             'explore-weapon' => [
 
                 'Weapon Placement & Position' => [
-                    'explore-area-required' => [
+                    'explore-area' => [
                         [
                             'select' => $explore_area_array
                         ],
                         'Select the area where this weapon can be found.'
                     ],
-                    'explore-top-required' => [
+                    'explore-top' => [
                         'number',
                         'The top position of this weapon within the area when it is placed for collection.'
                     ],
-                    'explore-left-required' => [
+                    'explore-left' => [
                         'number',
                         'The left position of this weapon within the area when it is placed for collection.'
                     ],
-                    'explore-height-required' => [
+                    'explore-height' => [
                         'number',
                         'The height of the weapon’s interaction area on the map.'
                     ],
-                    'explore-width-required' => [
+                    'explore-width' => [
                         'number',
                         'The width of the weapon’s interaction area on the map.'
                     ],
@@ -738,6 +738,10 @@ class Meta_Box {
                         ],
                         'Defines the item category for this object.'
                     ],
+                    'explore-weapon-sound' => [
+                        'upload',
+                        'The sound the weapon makes when used.'
+                    ]
                 ],
 
                 'Weapon Materialization & Visibility' => [
@@ -989,6 +993,10 @@ class Meta_Box {
                         'text',
                         'Optional display name that overrides the enemy’s default name.'
                     ],
+                    'explore-enemy-sound' => [
+                        'upload',
+                        'The sound the enemy makes when walking used.'
+                    ],
                     'explore-character-images' => [
                         $character_images,
                         'The images used to visually represent this enemy.'
@@ -1137,8 +1145,8 @@ class Meta_Box {
                     'explore-boss-waves' => [
                         [
                             'multiselect' => [
-                                'projectile',
-                                'pulse-wave'
+                                'Projectile' => 'projectile',
+                                'Pulse Wave' => 'pulse-wave'
                             ]
                         ],
                         'Select the attack patterns this boss can use during combat.'
