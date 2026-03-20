@@ -1710,8 +1710,8 @@ class Explore
 
                     // Enemy specific data-points.
                     if ('explore-enemy' === $explore_point->post_type) {
-                        $speed = $explore_point_meta['explore-speed'] ?? '';
-                        $enemy_speed = $explore_point_meta['explore-enemy-speed'] ?? '';
+                        $speed             = $explore_point_meta['explore-speed'] ?? '';
+                        $enemy_speed       = $explore_point_meta['explore-enemy-speed'] ?? '';
                         $enemy_weapon_type = $explore_point_meta['explore-weapon-weakness'] ?? '';
 
                         if (false === empty($enemy_weapon_type)) {
@@ -1759,7 +1759,13 @@ class Explore
                         $direction_images = $character_info['direction_images'] ?? false;
 
                         if ('explore-enemy' === $explore_point->post_type) {
+                            $enemy_sound       = $explore_point_meta['explore-enemy-sound'] ?? false;
+
                             $html .= '<div class="enemy-health-bar-wrapper"><span class="enemy-health-bar"></span></div>';
+
+                            if ($enemy_sound) {
+                                $html .= '<audio src="' . esc_url($enemy_sound) . '" id="' . esc_attr($explore_point->post_name) . '-s" loop></audio>';
+                            }
                         }
 
                         if ($direction_images) {
@@ -3197,7 +3203,7 @@ class Explore
         // Explore map points
         if (is_array($explore_points)) {
             foreach ($explore_points as $point) {
-                if (! isset($point->ID) || ! get_post($point->ID) || 'explore-character' === $point->post_type) {
+                if (! isset($point->ID) || ! get_post($point->ID) || true === in_array($point->post_type, ['explore-enemy', 'explore-character'], true)) {
                     continue;
                 }
 
