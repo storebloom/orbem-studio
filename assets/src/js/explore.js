@@ -43,6 +43,7 @@ window.globalLeftPositionOffset = 400;
 window.nextDialogue = false;
 window.crewCharacters = [];
 window.playerName = '';
+window.mcHurtCooldown = false;
 
 document.addEventListener('DOMContentLoaded', function () {
 	'use strict';
@@ -1400,7 +1401,7 @@ function saveMission(mission, value, position) {
                         materializedItemsArray.push(
                             cleanClassName(showItem.className)
                         );
-                        showItem.classList.add('materialize'); // Use materialize instead of no point because other interactions use no point.
+                        showItem.classList.add('materialized'); // Use materialize instead of no point because other interactions use no point.
                     });
 
                     saveMaterializedItem(
@@ -1410,17 +1411,17 @@ function saveMission(mission, value, position) {
                 }
 			}, 500);
 
+            // Trigger cutscene if mission is attached.
+            const theCutscene = document.querySelector(
+                `.map-cutscene[data-mission="${mission}"]`
+            );
+
+            if (theCutscene) {
+                const cutsceneName = cleanClassName(theCutscene.className);
+                engageCutscene(cutsceneName, false);
+            }
+
 			if (value && missionPoints > 0) {
-				// Trigger cutscene if mission is attached.
-				const theCutscene = document.querySelector(
-					`.map-cutscene[data-mission="${mission}"]`
-				);
-
-				if (theCutscene) {
-					const cutsceneName = cleanClassName(theCutscene.className);
-					engageCutscene(cutsceneName, false);
-				}
-
 				// Give points.
 				runPointAnimation(
 					value,
@@ -1810,139 +1811,135 @@ function addUserCoordianate(left, top) {
  * Take health away from enemy.
  */
 const hurtTheEnemy = (function () {
-	'use strict';
+    'use strict';
 
-	let called = false;
+    return function (theWeapon, value) {
+        if (value && theWeapon && elementsOverlap(theWeapon, value, 0)) {
+            const now = Date.now();
+            const nextAllowedHit = parseInt(value.dataset.nextAllowedHit || '0', 10);
 
-	return function (theWeapon, value) {
-		if (value && theWeapon && elementsOverlap(theWeapon, value, 0)) {
-			if (called === false) {
-				if (
-					'explore-enemy' === value.dataset.genre &&
-					false === theWeapon.classList.contains('protection')
-				) {
-					const enemyHealth = value.dataset.health;
-					const enemyFullHealth = value.dataset.healthamount;
-					const enemyMission = value.dataset.mission;
+            if (now < nextAllowedHit) {
+                return;
+            }
 
-					// Kill enemy or lower health.
-					let attackType =
-						true === theWeapon.classList.contains('heavy-engage')
-							? 'heavy'
-							: 'normal';
-					attackType =
-						true ===
-						theWeapon.classList.contains('charge-attack-engage')
-							? 'charged'
-							: attackType;
-					const attackStrength =
-						parseInt(
-							JSON.parse(theWeapon.dataset.strength)[attackType]
-						) + window.attackMultiplier;
-					const newHealth =
-						0 <= enemyHealth - attackStrength
-							? enemyHealth - attackStrength
-							: 0;
-					const weaponType = value.dataset.weapon ?? '';
+            if (
+                'explore-enemy' === value.dataset.genre &&
+                false === theWeapon.classList.contains('protection')
+            ) {
+                const enemyHealth = value.dataset.health;
+                const enemyFullHealth = value.dataset.healthamount;
+                const enemyMission = value.dataset.mission;
 
-					// If weapon type is defined and matches the current weapon or it's not defined, then hurt the enemy.
-					if (
-						('' !== weaponType &&
-							theWeapon.dataset.weapon === weaponType) ||
-						'' === weaponType
-					) {
-						value.setAttribute('data-health', newHealth);
-                        hurtAnimationEnemy(value, attackStrength);
+                let attackType =
+                    true === theWeapon.classList.contains('heavy-engage')
+                        ? 'heavy'
+                        : 'normal';
 
-                        const enemyHealthBar = value.querySelector('.enemy-health-bar-wrapper');
+                attackType =
+                    true === theWeapon.classList.contains('charge-attack-engage')
+                        ? 'charged'
+                        : attackType;
 
-                        if (enemyHealthBar) {
-                            if ('block' !== enemyHealthBar.style.display) {
-                                enemyHealthBar.style.display = 'block';
-                            }
+                const attackStrength =
+                    parseInt(JSON.parse(theWeapon.dataset.strength)[attackType]) +
+                    window.attackMultiplier;
 
-                            const enemyHealthPercent = parseInt((parseInt(value.dataset.health) / parseInt(value.dataset.healthamount)) * 100);
+                const newHealth =
+                    0 <= enemyHealth - attackStrength
+                        ? enemyHealth - attackStrength
+                        : 0;
 
-                            if (enemyHealthPercent) {
-                                enemyHealthBar.querySelector('.enemy-health-bar').style.width = enemyHealthPercent + '%';
-                            }
+                const weaponType = value.dataset.weapon ?? '';
+
+                if (
+                    ('' !== weaponType &&
+                        theWeapon.dataset.weapon === weaponType) ||
+                    '' === weaponType
+                ) {
+                    value.dataset.nextAllowedHit = String(now + 1000);
+                    value.setAttribute('data-health', newHealth);
+                    hurtAnimationEnemy(value, attackStrength);
+
+                    const enemyHealthBar = value.querySelector('.enemy-health-bar-wrapper');
+
+                    if (enemyHealthBar) {
+                        if ('block' !== enemyHealthBar.style.display) {
+                            enemyHealthBar.style.display = 'block';
                         }
-					}
 
-					if ('boss' === value.getAttribute('data-enemy-type')) {
-						if (
-							newHealth <= enemyFullHealth * 0.75 &&
-							false === secondWaveHit
-						) {
-							secondWaveHit = true;
-							updateBossWave(value);
-						} else if (
-							newHealth <= enemyFullHealth * 0.5 &&
-							false === thirdWaveHit
-						) {
-							thirdWaveHit = true;
-							updateBossWave(value);
-						} else if (
-							newHealth <= enemyFullHealth * 0.25 &&
-							false === fourthWaveHit
-						) {
-							fourthWaveHit = true;
-							updateBossWave(value);
-						}
-					}
+                        const enemyHealthPercent = parseInt(
+                            (parseInt(value.dataset.health) / parseInt(value.dataset.healthamount)) * 100
+                        );
 
-					if (0 === newHealth && isLoggedIn) {
-                        clearInterval(window.shooterInt);
-                        stopRunnerEnemy(value);
-						value.remove();
+                        if (enemyHealthPercent) {
+                            enemyHealthBar.querySelector('.enemy-health-bar').style.width =
+                                enemyHealthPercent + '%';
+                        }
+                    }
+                }
 
-						// Save new health.
-						const position = cleanClassName(value.className);
-						const filehref = `${OrbemOrder.siteRESTURL}/enemy/`;
+                if ('boss' === value.getAttribute('data-enemy-type')) {
+                    if (
+                        newHealth <= enemyFullHealth * 0.75 &&
+                        false === secondWaveHit
+                    ) {
+                        secondWaveHit = true;
+                        updateBossWave(value);
+                    } else if (
+                        newHealth <= enemyFullHealth * 0.5 &&
+                        false === thirdWaveHit
+                    ) {
+                        thirdWaveHit = true;
+                        updateBossWave(value);
+                    } else if (
+                        newHealth <= enemyFullHealth * 0.25 &&
+                        false === fourthWaveHit
+                    ) {
+                        fourthWaveHit = true;
+                        updateBossWave(value);
+                    }
+                }
 
-						const jsonString = {
-							health: 0,
-							position,
-						};
+                if (0 === newHealth && isLoggedIn) {
+                    clearInterval(window.shooterInt);
+                    stopRunnerEnemy(value);
+                    value.remove();
 
-						if (false !== isLoggedIn) {
-							// Save position of item.
-							fetch(filehref, {
-								method: 'POST', // Specify the HTTP method
-								headers: {
-									'Content-Type': 'application/json', // Set the content type to JSON
-									'X-WP-Nonce': OrbemOrder.orbemNonce,
-								},
-								body: JSON.stringify(jsonString), // The JSON stringified payload
-							}).then((response) => {
-								// Check if the response status is in the range 200-299
-								if (!response.ok) {
-									throw new Error(
-										'Network response was not ok ' +
-										response.statusText
-									);
-								}
-							});
-						}
+                    const position = cleanClassName(value.className);
+                    const filehref = `${OrbemOrder.siteRESTURL}/enemy/`;
 
-						if (
-							enemyMission &&
-							noOtherItemAttachedToMission(enemyMission)
-						) {
-							saveMission(enemyMission, value, enemyMission);
-						}
-					}
-				}
+                    const jsonString = {
+                        health: 0,
+                        position,
+                    };
 
-				called = true;
+                    if (false !== isLoggedIn) {
+                        fetch(filehref, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-WP-Nonce': OrbemOrder.orbemNonce,
+                            },
+                            body: JSON.stringify(jsonString),
+                        }).then((response) => {
+                            if (!response.ok) {
+                                throw new Error(
+                                    'Network response was not ok ' + response.statusText
+                                );
+                            }
+                        });
+                    }
 
-				// Reset called var.
-				setTimeout(() => {
-					called = false;
-				}, 1000);
-			}
-		}
-	};
+                    if (
+                        enemyMission &&
+                        noOtherItemAttachedToMission(enemyMission)
+                    ) {
+                        saveMission(enemyMission, value, enemyMission);
+                    }
+                }
+            }
+        }
+    };
 })();
 
 function hurtAnimationEnemy(enemy, pushAmount) {
@@ -2986,14 +2983,23 @@ function startRunnerPunching(enemyEl) {
 
         if (showPunch) {
             // Hurt main.
-            const currentHealth = getCurrentPoints('health');
-            const newAmount = parseInt(currentHealth) - parseInt(strength);
-            addUserPoints(newAmount, 'health', 'enemy', '');
-            hurtAnimation();
+            if (!window.mcHurtCooldown) {
+                window.mcHurtCooldown = true;
+
+                // apply damage here
+                const currentHealth = getCurrentPoints('health');
+                const newAmount = parseInt(currentHealth, 10) - parseInt(strength, 10);
+                hurtAnimation();
+                addUserPoints(newAmount, 'health', 'enemy', '');
+
+                setTimeout(() => {
+                    window.mcHurtCooldown = false;
+                }, 1000);
+            }
         }
 
         showPunch = !showPunch;
-    }, 500);
+    }, 800);
 }
 
 function stopRunnerEnemy(enemyEl) {
@@ -5408,11 +5414,18 @@ function playCutscene(position, areaCutscene) {
 					);
 
 					if (currentCharImage && currentCharName) {
-						currentCharName.classList.remove('engage');
-						currentCharImage.classList.remove('engage');
-						theCharacterImage.classList.add('engage');
-						theCharacterName.classList.add('engage');
-					}
+                        currentCharName.classList.remove('engage');
+                        currentCharImage.classList.remove('engage');
+                        theCharacterImage.classList.add('engage');
+                        theCharacterName.classList.add('engage');
+
+                        setTimeout(() => {
+                            currentCharImage.scrollIntoView({
+                                behavior: 'smooth',
+                                block: 'nearest',
+                            });
+                        }, 500);
+                    }
 				}
 
 				// If triggerable, trigger the move path for character.
@@ -5812,8 +5825,9 @@ function afterCutscene(cutscene, areaCutscene, character) {
 	window.nextAreaMissionComplete = '';
 	const cutsceneName = cleanClassName(cutscene.className).replace(' ', '');
 	const bossFight = cutscene.dataset.boss;
-	const cutsceneCharacter = character
-		? document.getElementById(character)
+    const selectedCutsceneCharacter = cutscene.dataset?.character ?? character;
+	const cutsceneCharacter = selectedCutsceneCharacter
+		? document.querySelector('.' + selectedCutsceneCharacter + '-map-item')
 		: false;
 	const indicator = document.querySelector('.indicator-icon');
 	const communicateDevice = cutscene.dataset?.communicate;
@@ -6597,6 +6611,11 @@ function characterHitEvent(event) {
                     (false === isSpell && false === chargeAttackInProgress)
                 ) {
                     weapon.classList.add('engage');
+                    let mobileoffset = 0;
+
+                    if (isOnMobile) {
+                        mobileoffset = window.globalLeftPositionOffset - 50;
+                    }
 
                     // Move weapon based on direction
                     switch (direction) {
@@ -6607,10 +6626,10 @@ function characterHitEvent(event) {
                             weaponPosTop = 500;
                             break;
                         case 'left':
-                            weaponPosLeft = 350 - ( window.globalLeftPositionOffset - 50 );
+                            weaponPosLeft = 350 - mobileoffset;
                             break;
                         case 'right':
-                            weaponPosLeft = 450 - ( window.globalLeftPositionOffset - 50 );
+                            weaponPosLeft = 450 - mobileoffset;
                             break;
                     }
 
@@ -6889,6 +6908,9 @@ function getBlockDirection(
 	const final = { top: finalTop, left: finalLeft, collide: false };
 	const mapChar = document.getElementById('map-character');
     const mapImage = mapChar.querySelector('.map-character-icon.engage');
+    const enemyImage = box.querySelector('.character-icon.engage') || box;
+    const enemyHitInset = true === enemy ? 28 : 0;
+    const playerHitInset = true === enemy ? 0 : 0;
 
     let enemyTargetCorner = 'center';
 
@@ -6902,8 +6924,8 @@ function getBlockDirection(
         enemyTargetCorner = box.dataset.targetCorner;
     }
 
-    let cornerOffsetLeft = window.globalLeftPositionOffset - box.offsetWidth / 2;
-    let cornerOffsetTop = 400 - box.offsetHeight / 2;
+    let cornerOffsetLeft = window.globalLeftPositionOffset - (box.offsetWidth / 2);
+    let cornerOffsetTop = 400 - (box.offsetHeight / 2);
 
     if (true === enemy) {
         switch (enemyTargetCorner) {
@@ -6932,8 +6954,35 @@ function getBlockDirection(
         offsetTop: mapChar.offsetTop + cornerOffsetTop,
         offsetHeight: box.offsetHeight,
     };
+    const mainCharBodyPos = {
+        offsetLeft:
+            mapChar.offsetLeft +
+            (window.globalLeftPositionOffset - mapImage.offsetWidth / 2) +
+            playerHitInset,
+        offsetWidth: Math.max(10, mapImage.offsetWidth - playerHitInset * 2),
+        offsetTop:
+            mapChar.offsetTop +
+            (400 - mapImage.offsetHeight / 2) +
+            playerHitInset,
+        offsetHeight: Math.max(10, mapImage.offsetHeight - playerHitInset * 2),
+    };
 
-	const finalCharPos = (true === npc || true === enemy) ? box : mainCharPos;
+    const finalCharPos =
+        (true === npc || true === enemy)
+            ? {
+                offsetLeft: finalLeft + (true === enemy ? enemyHitInset : 0),
+                offsetTop: finalTop + (true === enemy ? enemyHitInset : 0),
+                offsetWidth:
+                    true === enemy
+                        ? Math.max(10, enemyImage.offsetWidth - enemyHitInset * 2)
+                        : box.offsetWidth,
+                offsetHeight:
+                    true === enemy
+                        ? Math.max(10, enemyImage.offsetHeight - enemyHitInset * 2)
+                        : box.offsetHeight,
+            }
+            : mainCharPos;
+
     let touchingMainChar = false;
 
 	if (
@@ -6943,9 +6992,9 @@ function getBlockDirection(
 		collisionWalls.forEach((collisionWallEle) => {
 			let collisionWall = collisionWallEle;
 
-			if (mapImage.id === collisionWall.id) {
-				collisionWall = mainCharPos;
-			}
+            if (mapImage.id === collisionWall.id) {
+                collisionWall = true === enemy ? mainCharBodyPos : mainCharPos;
+            }
 
 			if (
 				box !== collisionWallEle &&
@@ -6984,7 +7033,7 @@ function getBlockDirection(
 				let adjust = true === enemy ? 5 : window.moveSpeed;
 				adjust = true === npc ? 1 : adjust;
 
-                if (true === enemy && collisionWall === mainCharPos) {
+                if (true === enemy && collisionWall === mainCharBodyPos) {
                     touchingMainChar = true;
                     startRunnerPunching(box);
                 }
@@ -8252,7 +8301,7 @@ function pushMC(dist) {
 			mc.style.top = top + dist + 'px';
 			break;
 		case 'down':
-			mc.style.top = left - dist + 'px';
+			mc.style.top = top - dist + 'px';
 			break;
 	}
 }

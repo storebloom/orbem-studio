@@ -2480,7 +2480,7 @@ class Explore
                 $explainer_left             = $explainer_meta['explore-left'] ?? '0';
                 $explainer_top              = $explainer_meta['explore-top'] ?? '0';
                 $width_value                = $explainer_meta['explore-width'] ?? '0';
-                $close_on_click             = 'yes' === $explainer_meta['explore-click-close'] ?? false;
+                $close_on_click             = isset($explainer_meta['explore-click-close']) && 'yes' === $explainer_meta['explore-click-close'];
                 $explainer_width            = ('fullscreen' === $type)
                     ? 'width: 100%; max-width:' . $width_value
                     : 'width:' . $width_value;
@@ -3224,6 +3224,13 @@ class Explore
                 }
                 ";
             }
+        }
+
+        // Custom CSS.
+        $orbem_studio_custom_css = get_option('explore_custom_css');
+
+        if (false === empty($orbem_studio_custom_css)) {
+            $css .= $orbem_studio_custom_css;
         }
 
         return $css;
