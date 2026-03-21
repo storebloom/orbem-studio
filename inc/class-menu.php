@@ -909,12 +909,12 @@ class Menu
      */
     public function enqueueCustomCssEditorAssets(string $hook_suffix): void
     {
-        $page = isset($_GET['page']) ? sanitize_key(wp_unslash($_GET['page'])) : '';
+        $screen = get_current_screen();
 
-        if ('orbem-custom-css' !== $page) {
+        if (!$screen || 'orbem-studio_page_orbem-custom-css' !== $screen->base) {
             return;
         }
-
+        
         $settings = wp_enqueue_code_editor(
             [
                 'type' => 'text/css',
@@ -958,9 +958,10 @@ class Menu
      */
     public function settingsPage(): void
     {
-        $page = isset($_GET['page']) ? sanitize_key(wp_unslash($_GET['page'])) : '';
+        $screen = get_current_screen();
+        $page   = $screen ? $screen->base : '';
 
-        if ('orbem-custom-css' === $page) {
+        if ('orbem-studio_page_orbem-custom-css' === $page) {
             $page_title    = 'Custom CSS';
             $option_group  = 'custom_css_options';
             $option_page   = 'custom_css_options';
