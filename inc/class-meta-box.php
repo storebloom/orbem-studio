@@ -192,10 +192,10 @@ class Meta_Box {
         $explore_hazard_array = $this->plugin->util->getOrbemArray('explore-point', false, 'explore-interaction-type', 'hazard');
         $default_weapon = get_option('explore_default_weapon', false);
         $explore_value_array = [
-            'point',
-            'mana',
-            'health',
-            'money'
+            'Point' => 'point',
+            'Mana' => 'mana',
+            'Health' => 'health',
+            'Money' => 'money'
         ];
         $character_images = [
             'static-required' => 'upload',
@@ -1277,7 +1277,7 @@ class Meta_Box {
                 'Explainer Placement' => [
                     'explore-area-required' => [
                         [
-                            'select' => $explore_area_array
+                            'select' => array_merge(['Lose Message' => 'lose-message'], $explore_area_array)
                         ],
                         'Select the area where this explainer can be triggered.'
                     ],

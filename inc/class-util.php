@@ -33,6 +33,23 @@ class Util
         $this->plugin->util = $this;
     }
 
+    public static function getLoseMessage() {
+        $lose_message_explainer = get_option('explore_lose_message');
+        $lose_explainer = get_posts([
+            'post_type'      => ['explore-explainer'],
+            'name'           => sanitize_key($lose_message_explainer),
+            'post_status'    => 'any',
+            'posts_per_page' => 1,
+            'no_found_rows'  => true,
+        ]);
+
+        if (!empty($lose_explainer[0]) && $lose_message_explainer === $lose_explainer[0]->post_name) {
+            return do_blocks($lose_explainer[0]->post_content);
+        }
+
+        return 'You lost. <button class="try-again">Try again</button>';
+    }
+
     /**
      * util to get post types.
      * @return string[]

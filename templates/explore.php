@@ -277,6 +277,7 @@ $orbem_studio_signin_screen                = get_option('explore_signin_screen',
 $orbem_studio_signin_screen_mobile         = get_option('explore_signin_screen_mobile', '');
 $orbem_studio_start_music                  = get_option('explore_start_music', false);
 $orbem_studio_main_character               = get_option('explore_main_character', false);
+$orbem_studio_lose_message                 = \OrbemStudio\Util::getLoseMessage();
 $orbem_studio_main_character_info          = Explore::getCharacterImages($orbem_studio_main_character);
 $orbem_studio_direction_images             = $orbem_studio_main_character_info['direction_images'] ?? [];
 $orbem_studio_main_character_id            = $orbem_studio_main_character_info['id'] ?? false;
@@ -457,8 +458,7 @@ include plugin_dir_path(__FILE__) . 'plugin-header.php';
         LOADING...
     </div>
     <div class="game-over-notice" style="z-index: 999999; display: none; position:fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); max-width: 500px; padding: 2rem; border-radius: 6px;">
-        <h2>Awww you died</h2>
-        <button class="try-again">Try again</button>
+        <?php echo wp_kses($orbem_studio_lose_message, $orbem_studio_allowed_tags); ?>
     </div>
     <?php if (false === empty($orbem_studio_intro_video) && true === empty($orbem_studio_coordinates)) : ?>
         <div class="intro-video engage">

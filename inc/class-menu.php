@@ -445,31 +445,34 @@ class Menu
             25
         );
 
-        add_submenu_page(
-            $parent_slug,
-            'Game Options',
-            'Game Options',
-            'edit_posts',
-            $parent_slug,
-            [$this, 'gameOptionsPage']
-        );
+        foreach ($this->getStudioSubmenus($parent_slug) as $submenu) {
+            add_submenu_page(
+                $submenu['parent_slug'],
+                $submenu['page_title'],
+                $submenu['menu_title'],
+                $submenu['capability'],
+                $submenu['menu_slug'],
+                $submenu['callback'] ?? null
+            );
+        }
 
         foreach ($post_types as $cpt) {
             $obj = get_post_type_object($cpt);
-            if (!$obj) continue;
 
-            $cpt_menu_slug = "edit.php?post_type=$cpt";
+            if (!$obj) {
+                continue;
+            }
 
-            // Add CPT as submenu under Orbem Studio.
+            $cpt_menu_slug = "edit.php?post_type={$cpt}";
+
             add_submenu_page(
                 $parent_slug,
                 $obj->labels->menu_name,
                 $obj->labels->menu_name,
                 $obj->cap->edit_posts,
-                $cpt_menu_slug,
+                $cpt_menu_slug
             );
 
-            // Add its taxonomies directly underneath.
             $taxonomies = get_object_taxonomies($cpt, 'objects');
 
             foreach ($taxonomies as $tax) {
@@ -479,30 +482,62 @@ class Menu
 
                 add_submenu_page(
                     $parent_slug,
-                    '— ' . $tax->labels->name, // visually indented
+                    '— ' . $tax->labels->name,
                     '— ' . $tax->labels->menu_name,
                     $tax->cap->manage_terms,
-                    "edit-tags.php?taxonomy=$tax->name&post_type=$cpt"
+                    "edit-tags.php?taxonomy={$tax->name}&post_type={$cpt}"
                 );
             }
 
-            // Remove original top-level CPT menu.
-            remove_menu_page($cpt_menu_slug);
+            $this->removeOriginalCptMenus($cpt_menu_slug, $taxonomies);
+        }
+    }
 
-            // Also remove the CPT's submenu entries that WordPress auto-creates.
-            // This prevents get_admin_page_parent() from finding the wrong parent.
-            remove_submenu_page($cpt_menu_slug, $cpt_menu_slug);
-            remove_submenu_page($cpt_menu_slug, "post-new.php?post_type=$cpt");
+    /**
+     * Central place for static Orbem Studio submenus.
+     * Add future custom pages here.
+     */
+    private function getStudioSubmenus(string $parent_slug): array
+    {
+        return [
+            [
+                'parent_slug' => $parent_slug,
+                'page_title' => 'Game Options',
+                'menu_title' => 'Game Options',
+                'capability' => 'edit_posts',
+                'menu_slug'  => $parent_slug,
+                'callback'   => [$this, 'gameOptionsPage'],
+            ],
+            [
+                'parent_slug' => $parent_slug,
+                'page_title' => 'Custom CSS',
+                'menu_title' => 'Custom CSS',
+                'capability' => 'edit_posts',
+                'menu_slug'  => 'orbem-custom-css',
+                'callback'   => [$this, 'settingsPage'],
+            ],
+        ];
+    }
 
-            // Remove taxonomy submenu items from the original CPT menu.
-            // WordPress auto-creates these and they interfere with parent detection.
-            foreach ($taxonomies as $tax) {
-                if (false === $tax->show_ui || false === $tax->show_in_menu) {
-                    continue;
-                }
+    /**
+     * Remove original CPT/taxonomy menu locations so Orbem Studio is the only parent.
+     */
+    private function removeOriginalCptMenus(string $cpt_menu_slug, array $taxonomies): void
+    {
+        remove_menu_page($cpt_menu_slug);
 
-                remove_submenu_page($cpt_menu_slug, "edit-tags.php?taxonomy=$tax->name&post_type=$cpt");
+        remove_submenu_page($cpt_menu_slug, $cpt_menu_slug);
+        remove_submenu_page($cpt_menu_slug, str_replace('edit.php', 'post-new.php', $cpt_menu_slug));
+
+        foreach ($taxonomies as $tax) {
+            if (false === $tax->show_ui || false === $tax->show_in_menu) {
+                continue;
             }
+
+            remove_submenu_page(
+                $cpt_menu_slug,
+                "edit-tags.php?taxonomy={$tax->name}&post_type={$tax->object_type[0]}"
+            );
         }
     }
 
@@ -611,6 +646,7 @@ class Menu
     public function registerGameOptions(): void
     {
         $settings = self::getGameOptionSettings();
+        $custom_css_settings = self::getCustomCssSettings();
 
         add_settings_section('game_options_section', 'Global Game Options', function () {
             settings_fields('game_options');
@@ -686,6 +722,38 @@ class Menu
                 [$key, $value]
             );
         }
+
+        add_settings_section('custom_css_section', 'Custom CSS', function () {
+            settings_fields('custom_css_options');
+        }, 'custom_css_options');
+
+        foreach ($custom_css_settings as $key => $value) {
+            register_setting('custom_css_options', $key, [
+                'sanitize_callback' => [$this, 'sanitizeCustomCssOption'],
+            ]);
+
+            add_settings_field(
+                $key,
+                $value[1],
+                function($args) use ($key, $value) {
+                    $field_key = $args[0];
+                    $indicator = get_option($field_key, '');
+
+                    if (isset($value[0]) && $value[0] === 'textarea') : ?>
+                        <sub><?php echo esc_html($value[2] ?? ''); ?></sub>
+                        <textarea
+                            id="<?php echo esc_attr($field_key); ?>"
+                            name="<?php echo esc_attr($field_key); ?>"
+                            rows="20"
+                            class="large-text code"
+                        ><?php echo esc_textarea($indicator); ?></textarea>
+                    <?php endif;
+                },
+                'custom_css_options',
+                'custom_css_section',
+                [$key, $value]
+            );
+        }
     }
 
     /**
@@ -696,6 +764,7 @@ class Menu
     public static function getGameOptionSettings(): array
     {
         $pages = get_posts(['post_type' => 'page', 'post_status' => 'any', 'posts_per_page' => -1, 'no_found_rows' => true]);
+        $explainers = get_posts(['post_type' => 'explore-explainer', 'post_status' => 'any', 'posts_per_page' => -1, 'no_found_rows' => true]);
         $areas = get_posts(['post_type' => 'explore-area', 'post_status' => 'publish', 'posts_per_page' => -1, 'no_found_rows' => true]);
         $characters = get_posts(['post_type' => 'explore-character', 'post_status' => 'publish', 'posts_per_page' => -1, 'no_found_rows' => true]);
         $weapons = get_posts(['post_type' => 'explore-weapon', 'post_status' => 'publish', 'posts_per_page' => -1, 'no_found_rows' => true]);
@@ -735,8 +804,21 @@ class Menu
             'explore_start_music' => ['upload', 'Start Screen Music', 'The music that will play after the intro video and on the start screen.'],
             'explore_signin_screen' => ['upload', 'Sign In Screen Background Image', 'The image/video that will show on the start screen.'],
             'explore_signin_screen_mobile' => ['upload', 'Mobile Sign In Screen Background Image', 'The image/video that will show on the start screen on mobile devices.'],
+            'explore_lose_message' => ['select', 'Lose Message', 'The message that pops up when you lose all your health (uses an Explainer)', $explainers],
             'explore_walking_sound' => ['upload', 'Walking Sound Effect', 'The sound that will play when your main character walks.'],
             'explore_points_sound' => ['upload', 'Sound When Points Are Given', 'The sound that will play when you complete a mission or collect something.']
+        ];
+    }
+
+    /**
+     * Helper to get custom CSS settings.
+     *
+     * @return array
+     */
+    public static function getCustomCssSettings(): array
+    {
+        return [
+            'explore_custom_css' => ['textarea', 'Custom CSS', 'Add custom CSS for the explore/game experience.'],
         ];
     }
 
@@ -808,6 +890,101 @@ class Menu
     }
 
     /**
+     * Sanitize function for custom CSS options.
+     *
+     * @param mixed $value
+     * @return string
+     */
+    public function sanitizeCustomCssOption(mixed $value): string
+    {
+        return is_string($value) ? wp_strip_all_tags($value, true) : '';
+    }
+
+    /**
+     * Enqueue admin assets for the Custom CSS page only.
+     *
+     * @action admin_enqueue_scripts
+     * @param string $hook_suffix Current admin hook.
+     * @return void
+     */
+    public function enqueueCustomCssEditorAssets(string $hook_suffix): void
+    {
+        $screen = get_current_screen();
+
+        if (!$screen || 'orbem-studio_page_orbem-custom-css' !== $screen->base) {
+            return;
+        }
+        
+        $settings = wp_enqueue_code_editor(
+            [
+                'type' => 'text/css',
+                'codemirror' => [
+                    'indentUnit' => 4,
+                    'tabSize' => 4,
+                    'lineNumbers' => true,
+                    'lineWrapping' => true,
+                    'matchBrackets' => true,
+                    'autoCloseBrackets' => true,
+                    'styleActiveLine' => true,
+                ],
+            ]
+        );
+
+        wp_enqueue_style('wp-codemirror');
+        wp_enqueue_script('wp-theme-plugin-editor');
+
+        wp_enqueue_script(
+            'orbem-custom-css-editor',
+            $this->plugin->dir_url . '/assets/src/js/admin/custom-css-editor.js',
+            ['jquery', 'code-editor'],
+            defined('ORBEM_STUDIO_VERSION') ? ORBEM_STUDIO_VERSION : null,
+            true
+        );
+
+        wp_localize_script(
+            'orbem-custom-css-editor',
+            'orbemCustomCssEditor',
+            [
+                'selector' => '#explore_custom_css',
+                'settings' => $settings ?: [],
+            ]
+        );
+    }
+
+    /**
+     * Generic settings page renderer.
+     *
+     * @return void
+     */
+    public function settingsPage(): void
+    {
+        $screen = get_current_screen();
+        $page   = $screen ? $screen->base : '';
+
+        if ('orbem-studio_page_orbem-custom-css' === $page) {
+            $page_title    = 'Custom CSS';
+            $option_group  = 'custom_css_options';
+            $option_page   = 'custom_css_options';
+        } else {
+            $page_title    = 'Game Options';
+            $option_group  = 'game_options';
+            $option_page   = 'game_options';
+        }
+        ?>
+        <div class="wrap">
+            <h1><?php echo esc_html($page_title); ?></h1>
+            <form method="post" action="options.php">
+                <?php
+                settings_fields($option_group);
+                do_settings_sections($option_page);
+                submit_button();
+                ?>
+            </form>
+        </div>
+        <?php
+    }
+
+    /**
      * The callback function for game options menu.
      * @return void
      */
@@ -848,5 +1025,6 @@ class Menu
         }
 
         include $this->plugin->dir_path . '/templates/game-options-page.php';
+        $this->settingsPage();
     }
 }
