@@ -1913,7 +1913,7 @@ const hurtTheEnemy = (function () {
                     }
                 }
 
-                if (0 === newHealth && isLoggedIn) {
+                if (0 === newHealth) {
                     clearInterval(window.shooterInt);
                     stopRunnerEnemy(value);
                     value.remove();
