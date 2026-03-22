@@ -790,7 +790,7 @@ function makeNPCWander(npc, walkingSpeed, timeBetween, enemy) {
         startRandomNpcPause();
     }
 
-	setInterval(() => {
+    npc._wanderInt = setInterval(() => {
 		if (
 			'true' !== npc.dataset?.break &&
 			'true' !== npc.dataset?.cutscenebreak
@@ -1402,6 +1402,10 @@ function saveMission(mission, value, position) {
                             cleanClassName(showItem.className)
                         );
                         showItem.classList.add('materialized'); // Use materialize instead of no point because other interactions use no point.
+
+                        if ('explore-enemy' === showItem.dataset.genre) {
+                            engageEnemy(showItem, false);
+                        }
                     });
 
                     saveMaterializedItem(
@@ -3005,12 +3009,12 @@ function startRunnerPunching(enemyEl) {
 function stopRunnerEnemy(enemyEl) {
     'use strict';
 
-    if (!enemyEl || !enemyEl._runnerInt) {
+    if (!enemyEl || !enemyEl._wanderInt) {
         return;
     }
 
-    clearInterval(enemyEl._runnerInt);
-    enemyEl._runnerInt = null;
+    clearInterval(enemyEl._wanderInt);
+    enemyEl._wanderInt = null;
     stopRunnerPunching(enemyEl);
 }
 
