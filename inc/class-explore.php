@@ -1471,6 +1471,7 @@ class Explore
                 $walking_speed                  = $explore_point_meta['explore-speed'] ?? '';
                 $time_between                   = $explore_point_meta['explore-time-between'] ?? '';
                 $remove_after_cutscene          = $explore_point_meta['explore-remove-after-cutscene'] ?? '';
+                $remove_after_mission           = $explore_point_meta['explore-remove-after-mission'] ?? '';
                 $repeat                         = $explore_point_meta['explore-repeat'] ?? '';
                 $disappear                      = $explore_point_meta['explore-disappear'] ?? '';
                 $layer                          = $explore_point_meta['explore-layer'] ?? '';
@@ -1703,6 +1704,10 @@ class Explore
 
 
                         $html .= ' data-removeaftercutscene=\'' . esc_attr($remove_after_cutscene) . '\'';
+                    }
+
+                    if (false === empty($remove_after_mission)) {
+                        $html .= ' data-removeaftermission=\'' . esc_attr($remove_after_mission) . '\'';
                     }
 
                     $pulse_wave = false;
@@ -3203,7 +3208,7 @@ class Explore
         // Explore map points
         if (is_array($explore_points)) {
             foreach ($explore_points as $point) {
-                if (! isset($point->ID) || ! get_post($point->ID) || true === in_array($point->post_type, ['explore-enemy', 'explore-character'], true)) {
+                if (! isset($point->ID) || ! get_post($point->ID) || true === in_array($point->post_type, ['explore-character'], true)) {
                     continue;
                 }
 
@@ -3211,7 +3216,7 @@ class Explore
                 $left    = get_post_meta($point->ID, 'explore-left', true) . 'px';
                 $height  = get_post_meta($point->ID, 'explore-height', true) . 'px';
                 $width   = get_post_meta($point->ID, 'explore-width', true) . 'px';
-                $bg_url  = get_the_post_thumbnail_url($point->ID);
+                $bg_url  = $point->post_type !== 'explore-enemy' ? get_the_post_thumbnail_url($point->ID) : '';
                 $type    = $point->post_type === 'explore-enemy' ? '.enemy-item' : '.map-item';
 
                 $css .= "

@@ -1494,6 +1494,12 @@ class Meta_Box {
                         ],
                         'Select a cutscene that will remove this item after it finishes.'
                     ],
+                    'explore-remove-after-mission' => [
+                        [
+                            'select' => $explore_mission_array
+                        ],
+                        'Select a mission that will remove this item after its complete.'
+                    ],
                     'explore-materialize-after-cutscene' => [
                         [
                             'select' => $explore_cutscene_array
