@@ -936,7 +936,7 @@ class Menu
         wp_enqueue_script(
             'orbem-custom-css-editor',
             $this->plugin->dir_url . '/assets/src/js/admin/custom-css-editor.js',
-            ['jquery', 'code-editor'],
+            ['code-editor'],
             defined('ORBEM_STUDIO_VERSION') ? ORBEM_STUDIO_VERSION : null,
             true
         );
@@ -1025,6 +1025,5 @@ class Menu
         }
 
         include $this->plugin->dir_path . '/templates/game-options-page.php';
-        $this->settingsPage();
     }
 }
