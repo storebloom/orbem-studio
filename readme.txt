@@ -5,7 +5,7 @@ Tags: game engine, rpg, storytelling, gamification, narrative game
 Requires at least: 6.1
 Tested up to: 6.9
 Requires PHP: 8.1
-Stable tag: 1.3.4
+Stable tag: 1.3.5
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -169,6 +169,10 @@ Yes. All systems are designed to be extended using WordPress hooks, filters, and
 We have extensive documentation at https://orbemorder.com/orbem-studio/docs/readme. Tutorials can be found on our channel at https://youtube.com/@orbemorder.
 
 == Changelog ==
+
+= 1.3.5 =
+* Remove item after mission.
+* Fix enemy trigger mission.
 
 = 1.3.4 =
 * Fix duplicate game options menu.

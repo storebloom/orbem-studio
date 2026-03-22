@@ -1391,6 +1391,15 @@ function saveMission(mission, value, position) {
 					enableAbility('transportation');
 				}
 
+                // Remove after cutscene.
+                const removeThings = document.querySelectorAll(
+                    '[data-removeaftermission]'
+                );
+
+                if (removeThings) {
+                    removeMissions(removeThings, mission);
+                }
+
                 // Show after mission.
                 const showItems = document.querySelectorAll(
                     '[data-showaftermission="' + mission + '"]'
@@ -3612,7 +3621,8 @@ function shouldRemoveItemOnload(mapItem) {
 			'no' !== mapItem.dataset?.disappear) ||
 		('true' === mapItem.dataset.draggable &&
 			'yes' === mapItem.dataset?.disappear) ||
-		undefined !== mapItem.dataset?.removeaftercutscene
+        (undefined !== mapItem.dataset?.removeaftercutscene ||
+        undefined !== mapItem.dataset?.removeaftermission)
 	) {
 		return true;
 	}
@@ -6043,6 +6053,29 @@ function removeItems(removeThings, cutsceneName) {
 	});
 }
 
+function removeMissions(removeThings, missionName) {
+    'use strict';
+
+    removeThings.forEach((removeThing) => {
+        if (removeThing.dataset?.removeaftermission && '' !== removeThing.dataset.removeaftermission) {
+            const theRemoveItem = removeThing.dataset.removeaftermission;
+
+            if (missionName === theRemoveItem) {
+                removeThing.remove();
+
+                persistItemRemoval(
+                    cleanClassName(removeThing.className),
+                    'point',
+                    0,
+                    2000,
+                    '',
+                    true
+                );
+            }
+        }
+    });
+}
+
 function resetWalkSound() {
     'use strict';
 
@@ -6464,6 +6497,7 @@ function cleanClassName(classes) {
 			.replace(' start-timer', '')
 			.replace('materialize-item-trigger ', '')
 			.replace('-materialize-item', '')
+            .replace(' materialized', '')
 			.replace('mission-trigger ', '')
 			.replace(' hit', '')
             .replace(' hurt', '')
