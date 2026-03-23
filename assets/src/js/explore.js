@@ -6649,11 +6649,6 @@ function characterHitEvent(event) {
                     (false === isSpell && false === chargeAttackInProgress)
                 ) {
                     weapon.classList.add('engage');
-                    let mobileoffset = 0;
-
-                    if (isOnMobile) {
-                        mobileoffset = window.globalLeftPositionOffset - 50;
-                    }
 
                     // Move weapon based on direction
                     switch (direction) {
@@ -6664,10 +6659,10 @@ function characterHitEvent(event) {
                             weaponPosTop = 500;
                             break;
                         case 'left':
-                            weaponPosLeft = 350 - mobileoffset;
+                            weaponPosLeft = window.globalLeftPositionOffset - 50;
                             break;
                         case 'right':
-                            weaponPosLeft = 450 - mobileoffset;
+                            weaponPosLeft = window.globalLeftPositionOffset + 50;
                             break;
                     }
 
@@ -6738,10 +6733,10 @@ function characterHitEvent(event) {
                                     weaponPosTop = 400;
                                     break;
                                 case 'left':
-                                    weaponPosLeft = ( window.globalLeftPositionOffset - 50 );
+                                    weaponPosLeft = window.globalLeftPositionOffset;
                                     break;
                                 case 'right':
-                                    weaponPosLeft = ( window.globalLeftPositionOffset - 50 );
+                                    weaponPosLeft = window.globalLeftPositionOffset;
                                     break;
                             }
                         }
@@ -6772,10 +6767,10 @@ function characterHitEvent(event) {
                                 weaponPosTop = 400;
                                 break;
                             case 'left':
-                                weaponPosLeft = ( window.globalLeftPositionOffset - 50 );
+                                weaponPosLeft = window.globalLeftPositionOffset;
                                 break;
                             case 'right':
-                                weaponPosLeft = ( window.globalLeftPositionOffset - 50 );
+                                weaponPosLeft = window.globalLeftPositionOffset;
                                 break;
                         }
 

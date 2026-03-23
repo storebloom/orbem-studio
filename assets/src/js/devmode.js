@@ -217,7 +217,34 @@ export function engageDevMode() {
 				if (devModeMenu.classList.contains('engage')) {
 					if (triggers) {
 						triggers.forEach((trigger) => {
-							trigger.style.backgroundColor = 'rgb(0,146,255)';
+                            if ('true' === trigger.dataset?.trigger) {
+                                trigger.style.backgroundColor = 'rgb(27,170,0)';
+                            }
+
+                            if (true === trigger.classList.contains('materialize-item-trigger')) {
+                                trigger.style.backgroundColor = 'rgb(0,146,255)';
+                            }
+
+                            if (true === trigger.classList.contains('explainer-container')) {
+                                trigger.style.backgroundColor = 'rgb(170,0,255)';
+                            }
+
+                            if (true === trigger.classList.contains('cutscene-trigger')) {
+                                trigger.style.backgroundColor = 'rgb(0,255,157)';
+                            }
+
+                            if ('explore-wall' === trigger.dataset.genre) {
+                                trigger.style.backgroundColor = 'rgb(255,203,0)';
+                            }
+
+                            if ('explore-area' === trigger.dataset.genre) {
+                                trigger.style.backgroundColor = 'rgb(220,68,68)';
+                            }
+
+                            if ('blockade' === trigger.dataset.genre) {
+                                trigger.style.backgroundColor = 'rgb(66,66,66)';
+                            }
+
 							trigger.style.opacity = 0.3;
 							trigger.style.zIndex = 1;
 						});
@@ -610,7 +637,7 @@ export function engageDevMode() {
 				wallElement.className = 'wp-block-group map-item';
 				wallElement.style.left = `${mouseX - offsetX}px`;
 				wallElement.style.top = `${mouseY - offsetY}px`;
-				wallElement.style.backgroundColor = 'rgb(0,146,255)';
+				wallElement.style.backgroundColor = 'rgb(255,203,0)';
 				wallElement.style.opacity = '0.3';
 				wallElement.style.zIndex = '1';
 				wallElement.dataset.genre = 'explore-wall';
