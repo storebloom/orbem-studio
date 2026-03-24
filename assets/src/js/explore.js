@@ -806,7 +806,7 @@ function makeNPCWander(npc, walkingSpeed, timeBetween, enemy) {
 
             const targetLeft =
                 parseInt(mapCharacter.style.left.replace('px', ''), 10) +
-                (400 - mapCharacterImage.width / 2);
+                (window.globalLeftPositionOffset - mapCharacterImage.width / 2);
 
             const targetTop =
                 parseInt(mapCharacter.style.top.replace('px', ''), 10) +
@@ -1019,7 +1019,7 @@ function getRandomDir(currentDir, enemy, enemyEl) {
             const enemyTop = parseInt(enemyEl.style.top.replace('px', ''), 10);
             const targetLeft =
                 parseInt(mapCharacter.style.left.replace('px', ''), 10) +
-                (400 - mapCharacterImage.width / 2);
+                (window.globalLeftPositionOffset - mapCharacterImage.width / 2);
             const targetTop =
                 parseInt(mapCharacter.style.top.replace('px', ''), 10) +
                 (400 - mapCharacterImage.height / 2);
@@ -4785,7 +4785,7 @@ function pushCharacter(distanceMult, pushElement, pushee) {
 		const enemyTop = parseInt(pushElement.style.top.replace('px'));
 
 		targetX =
-			targetX + 400 < enemyLeft
+			targetX + window.globalLeftPositionOffset < enemyLeft
 				? targetX - distanceMult
 				: targetX + distanceMult;
 		targetY =
@@ -5787,7 +5787,7 @@ function faceNPC(mapCharacter, npc, cutscene) {
 		const npcBottom = npcTop + npcEl.offsetHeight - 50;
 		const mcLeftCont = parseInt(mapCharacter.style.left.replace('px', ''));
 		const mcTopCont = parseInt(mapCharacter.style.top.replace('px', ''));
-		const mcLeft = mcLeftCont + (400 - mcImage.offsetWidth / 2);
+		const mcLeft = mcLeftCont + (window.globalLeftPositionOffset - mcImage.offsetWidth / 2);
 		const mcRight = mcLeft + mcImage.offsetWidth;
 		const mcTop = mcTopCont + (400 - mcImage.offsetHeight / 2);
 		const mcBottom = mcTop + mcImage.offsetHeight;
@@ -7569,7 +7569,7 @@ function clickTransport(clickE) {
 
 	const container = document.querySelector('.game-container');
 	const rect = container.getBoundingClientRect();
-	const x = clickE.clientX - rect.left - 400;
+	const x = clickE.clientX - rect.left - window.globalLeftPositionOffset;
 	const y = clickE.clientY - rect.top - 400;
 	const mapCharacter = document.getElementById('map-character');
 	const bar = document.querySelector('.power-amount');
@@ -7666,7 +7666,7 @@ function moveCharacter(mapCharacter, newTop, newLeft, gradual, cutscene, areaCut
 							: newLeft + 'px';
 					weapon.style.left =
 						parseInt(mapCharacter.style.left.replace('px', '')) +
-						400 +
+						window.globalLeftPositionOffset +
 						'px';
 					leftRight = 'left';
 				} else {
@@ -7676,7 +7676,7 @@ function moveCharacter(mapCharacter, newTop, newLeft, gradual, cutscene, areaCut
 							: newLeft + 'px';
 					weapon.style.left =
 						parseInt(mapCharacter.style.left.replace('px', '')) +
-						400 +
+						window.globalLeftPositionOffset +
 						'px';
 					leftRight = 'right';
 				}

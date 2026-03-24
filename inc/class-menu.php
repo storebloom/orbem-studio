@@ -935,7 +935,7 @@ class Menu
 
         wp_enqueue_script(
             'orbem-custom-css-editor',
-            $this->plugin->dir_url . '/assets/src/js/admin/custom-css-editor.js',
+            $this->plugin->dir_url . '/assets/build/custom-css-editor.js',
             ['code-editor'],
             defined('ORBEM_STUDIO_VERSION') ? ORBEM_STUDIO_VERSION : null,
             true
