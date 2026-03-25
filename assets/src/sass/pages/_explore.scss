@@ -456,6 +456,7 @@ html {
       .wp-block-orbem-paragraph-mp3 {
         align-self: center;
         background: white;
+        cursor: pointer;
         display: none;
         flex-basis: 70%;
         padding: 0 20px;
@@ -467,6 +468,23 @@ html {
         }
 
         position: relative;
+
+        &:before {
+          content: 'Click to continue';
+          position: absolute;
+          right: 34px;
+          bottom: 6px;
+          font-size: 14px;
+          line-height: 1;
+          color: #000;
+          opacity: 0.85;
+          white-space: nowrap;
+          animation: cutsceneNextTextPulse 1s infinite;
+
+          @media only screen and (max-width: 480px) {
+            content: 'Tap to continue';
+          }
+        }
 
         &:after {
           animation: cutsceneNextArrowBounce .8s infinite;
@@ -1756,6 +1774,15 @@ html {
       }
       50% {
         transform: translateY(4px);
+      }
+    }
+
+    @keyframes cutsceneNextTextPulse {
+      0%, 100% {
+        opacity: 0.55;
+      }
+      50% {
+        opacity: 1;
       }
     }
   }

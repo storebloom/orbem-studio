@@ -5347,7 +5347,7 @@ function playCutscene(position, areaCutscene) {
 			const cutsceneKeys = (event) => {
 				if (true === window.allowCutscene) {
 					if (
-                        (event.code === 'Space' || event.target.classList.contains('action-key') || event.target.classList.contains('wp-block-orbem-paragraph-mp3')) &&
+                        (event.code === 'Space' || event.target.classList.contains('action-key') || event.target.classList.contains('wp-block-orbem-paragraph-mp3') || event.target.parentElement.classList.contains('wp-block-orbem-paragraph-mp3')) &&
 						dialogues &&
 						cutscene.classList.contains('engage')
 					) {
