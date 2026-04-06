@@ -1691,13 +1691,14 @@ html {
 
         img {
           position: absolute;
+          width: 100%;
           z-index: 1;
         }
 
         &.do-mobile {
           @media only screen and (max-width: 480px) {
             display: flex;
-            z-index: 9;
+            z-index: 6;
           }
         }
 

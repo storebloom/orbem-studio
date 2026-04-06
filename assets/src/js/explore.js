@@ -4181,6 +4181,9 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 						window.allowHit = false;
                         const firstExplainerText = triggee.querySelector('p');
 
+                        // Stop walking sound.
+                        resetWalkSound();
+
                         if (firstExplainerText) {
                             const text = Array.from(
                                 firstExplainerText.childNodes
