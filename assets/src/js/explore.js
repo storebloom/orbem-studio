@@ -33,6 +33,9 @@ let hazardCounter = 0;
 const defaultWeapon = OrbemOrder.defaultWeapon;
 let isLoggedIn = false;
 let isOnMobile = false;
+let chargeAttackInProgress = false;
+let weaponTime = 200;
+let heavyAttackInProgress = false;
 
 window.mainCharacter = '';
 window.godMode = false;
@@ -1957,17 +1960,24 @@ const hurtTheEnemy = (function () {
 
 function hurtAnimationEnemy(enemy, pushAmount) {
     if (false === enemy.classList.contains('hurt')) {
-        enemy.classList.add('hurt');
-
-        setTimeout(() => {
-            enemy.classList.remove('hurt');
-        }, 700);
-
         const direction = enemy.dataset.currentDirection || 'down';
         const currentLeft = parseInt(enemy.style.left, 10);
         const currentTop = parseInt(enemy.style.top, 10);
+        const currentImage = enemy.querySelector('.character-icon.engage');
+        const hurtImage = enemy.querySelector('#' + cleanClassName(enemy.className) + direction + '-hurt');
 
-        let newLeft = currentLeft;
+        enemy.classList.add('hurt');
+        currentImage.classList.remove('engage');
+        hurtImage.classList.add('engage');
+        playHurtSound(enemy);
+
+        setTimeout(() => {
+            enemy.classList.remove('hurt');
+            currentImage.classList.add('engage');
+            hurtImage.classList.remove('engage');
+        }, 700);
+
+            let newLeft = currentLeft;
         let newTop = currentTop;
 
         switch (direction) {
@@ -2002,6 +2012,20 @@ function hurtAnimationEnemy(enemy, pushAmount) {
 
         enemy.style.left = pushedPosition.left + 'px';
         enemy.style.top = pushedPosition.top + 'px';
+    }
+}
+
+function playHurtSound(character) {
+    const hurtSound = character.querySelector('.hurt-sound audio');
+
+    if ( hurtSound ) {
+        hurtSound.volume = window.sfxVolume;
+
+        setInterval(() => {
+            hurtSound.volume = window.sfxVolume;
+        }, 1000);
+
+        hurtSound.play();
     }
 }
 
@@ -6575,8 +6599,6 @@ function setStaticMCImage(mapChar, direction, weaponChange) {
 function addCharacterHit() {
 	'use strict';
 
-	let chargeAttackInProgress = false;
-
 	// Reset shiftispressed if you let go of it.
 	document.addEventListener('keydown', (event) => {
 		const weapon = document.querySelector('.map-weapon');
@@ -6604,14 +6626,15 @@ function addCharacterHit() {
 }
 
 function characterHitEvent(event) {
-    let chargeAttackInProgress = false;
-    let weaponTime = 200;
-    let heavyAttackInProgress = false;
     const weapon = document.querySelector('.map-weapon');
     const weaponType =
         defaultWeapon === weapon.dataset.weapon
             ? ''
             : '-' + weapon.dataset.weapon;
+
+    let attackType = shiftIsPressed ? '-heavy' : '';
+    attackType = chargeAttackInProgress ? '-charged' : attackType;
+
     const direction =
         'top' === weapon.dataset.direction
             ? 'up'
@@ -6620,9 +6643,15 @@ function characterHitEvent(event) {
     const currentImageMapCharacter = mapChar.querySelector(
         '.map-character-icon.engage'
     );
-    const weaponAnimation = mapChar.querySelector(
-        `#${window.mainCharacter}-${direction}-punch${weaponType}`
+    let weaponAnimation = mapChar.querySelector(
+        `#${window.mainCharacter}-${direction}-punch${weaponType}${attackType}`
     );
+
+    if (!weaponAnimation) {
+        weaponAnimation = mapChar.querySelector(
+            `#${window.mainCharacter}-${direction}-punch${weaponType}`
+        );
+    }
 
     if (false !== window.allowHit) {
         const manaPoints = document.querySelector(
@@ -6649,7 +6678,7 @@ function characterHitEvent(event) {
                 if (
                     'true' === weapon.dataset.projectile ||
                     (true === isSpell && 0 < currentPoints) ||
-                    (false === isSpell && false === chargeAttackInProgress)
+                    (false === isSpell)
                 ) {
                     weapon.classList.add('engage');
 
@@ -6742,13 +6771,24 @@ function characterHitEvent(event) {
                                     weaponPosLeft = window.globalLeftPositionOffset;
                                     break;
                             }
+
+                            if (true === chargeAttackInProgress) {
+                                chargeAttackInProgress = false;
+                                weapon.classList.remove('charge-engage');
+                                weapon.classList.add('charge-attack-engage');
+
+                                // Remove highlight on point bar.
+                                setTimeout(() => {
+                                    weapon.classList.remove('charge-attack-engage');
+                                    currentImageMapCharacter.classList.remove(
+                                        'punched'
+                                    );
+                                    weaponAnimation.classList.remove('engage');
+                                }, 700);
+                            }
                         }
                     }, weaponTime);
                 } else if (true === shiftIsPressed) {
-                    const weaponAnimation = mapChar.querySelector(
-                        `#${window.mainCharacter}-${direction}-punch${weaponType}`
-                    );
-
                     weapon.classList.add('heavy-engage');
                     heavyAttackInProgress = true;
 
@@ -6824,21 +6864,6 @@ function characterHitEvent(event) {
                         weaponClass,
                         weapon.dataset.projectile
                     );
-                }
-
-                if (true === chargeAttackInProgress) {
-                    chargeAttackInProgress = false;
-                    weapon.classList.remove('charge-engage');
-                    weapon.classList.add('charge-attack-engage');
-
-                    // Remove highlight on point bar.
-                    setTimeout(() => {
-                        weapon.classList.remove('charge-attack-engage');
-                        currentImageMapCharacter.classList.remove(
-                            'punched'
-                        );
-                        weaponAnimation.classList.remove('engage');
-                    }, 700);
                 }
             }
         }
@@ -8249,11 +8274,29 @@ function hurtAnimation() {
 
 	clearTimeout(hurtTimeout);
 	const mapCharacter = document.getElementById('map-character');
+    const direction = mapCharacter.className.replace('-dir', '');
+    const currentImageMapCharacter = mapCharacter.querySelector(
+        '.map-character-icon.engage'
+    );
 
-	if (mapCharacter) {
+    const hurtImage = mapCharacter.querySelector(
+        `#${window.mainCharacter}-${direction}-hurt`
+    );
+
+    if (mapCharacter) {
+        if (hurtImage) {
+            currentImageMapCharacter.classList.remove('engage');
+            hurtImage.classList.add('engage');
+            playHurtSound(mapCharacter);
+        }
+
 		mapCharacter.dataset.hurt = true;
 
 		hurtTimeout = setTimeout(() => {
+            if (hurtImage) {
+                currentImageMapCharacter.classList.add('engage');
+                hurtImage.classList.remove('engage');
+            }
 			mapCharacter.dataset.hurt = false;
 		}, 500);
 	}

@@ -211,12 +211,24 @@ class Meta_Box {
             'left' => 'upload',
             'right' => 'upload',
             'up-punch' => 'upload',
+            'up-punch-heavy' => 'upload',
+            'up-punch-charged' => 'upload',
             'down-punch' => 'upload',
+            'down-punch-heavy' => 'upload',
+            'down-punch-charged' => 'upload',
             'left-punch' => 'upload',
+            'left-punch-heavy' => 'upload',
+            'left-punch-charged' => 'upload',
             'right-punch' => 'upload',
+            'right-punch-heavy' => 'upload',
+            'right-punch-charged' => 'upload',
             'up-drag' => 'upload',
             'left-drag' => 'upload',
             'right-drag' => 'upload',
+            'up-hurt' => 'upload',
+            'down-hurt' => 'upload',
+            'left-hurt' => 'upload',
+            'right-hurt' => 'upload',
         ];
         $weapon_images = [];
 
@@ -776,7 +788,6 @@ class Meta_Box {
 
             ],
             'explore-character' => [
-
                 'Character Placement & Position' => [
                     'explore-area' => [
                         [
@@ -823,6 +834,10 @@ class Meta_Box {
                     'explore-character-name' => [
                         'text',
                         'Optional display name that overrides the character’s default name.'
+                    ],
+                    'explore-character-hurt-sound' => [
+                        'upload',
+                        'The sound that plays when character is hurt.'
                     ],
                     'explore-character-images' => [
                         $character_images,
@@ -996,6 +1011,10 @@ class Meta_Box {
                     'explore-enemy-sound' => [
                         'upload',
                         'The sound the enemy makes when walking used.'
+                    ],
+                    'explore-enemy-hurt-sound' => [
+                        'upload',
+                        'The sound the enemy makes when hurt.'
                     ],
                     'explore-character-images' => [
                         $character_images,
