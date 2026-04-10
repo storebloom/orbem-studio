@@ -281,6 +281,7 @@ $orbem_studio_lose_message                 = \OrbemStudio\Util::getLoseMessage()
 $orbem_studio_main_character_info          = Explore::getCharacterImages($orbem_studio_main_character);
 $orbem_studio_direction_images             = $orbem_studio_main_character_info['direction_images'] ?? [];
 $orbem_studio_main_character_id            = $orbem_studio_main_character_info['id'] ?? false;
+$orbem_studio_hurt_sound                   = $orbem_studio_main_character_info['hurt_sound'] ?? false;
 $orbem_studio_is_admin                     = user_can(get_current_user_id(), 'manage_options');
 $orbem_studio_is_logged_in                 = is_user_logged_in();
 
@@ -423,6 +424,11 @@ include plugin_dir_path(__FILE__) . 'plugin-header.php';
             data-ability="<?php echo esc_attr($orbem_studio_main_character_info['ability'] ?? ''); ?>"
         >
             <span class="misc-gauge-wrap"><span class="misc-gauge"></span></span>
+            <?php if (false === empty($orbem_studio_hurt_sound)) : ?>
+                <span class="hurt-sound">
+                    <audio src="<?php echo esc_url($orbem_studio_hurt_sound); ?>"></audio>
+                </span>
+            <?php endif; ?>
             <?php foreach($orbem_studio_direction_images as $orbem_studio_direction_label => $orbem_studio_direction_image):
                 $orbem_studio_fight_animation = false !== stripos($orbem_studio_direction_label, 'punch') ? ' fight-image' : '';
                 $orbem_studio_dir_image       = 'static-' . $orbem_studio_explore_start_direction . $orbem_studio_explore_weapon_start;

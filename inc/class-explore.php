@@ -1561,6 +1561,16 @@ class Explore
                         $html .= ' data-crewmate="' . esc_attr($crew_mate) . '"';
                     }
 
+                    if ('explore-character' === $explore_point->post_type) {
+                        $character_hurt_sound = $explore_point_meta['explore-character-hurt-sound'] ?? false;
+
+                        if (false === empty($character_hurt_sound)) {
+                            $html .= '<span class="hurt-sound">';
+                            $html .= '<audio src="' . esc_url($character_hurt_sound) . '" id="' . esc_attr($explore_point->post_name) . '-hs"></audio>';
+                            $html .= '</span>';
+                        }
+                    }
+
                     // If hazard, add hazard class.
                     if ($is_hazard) {
                         $html .= ' data-hazard="true"';
@@ -1765,11 +1775,18 @@ class Explore
 
                         if ('explore-enemy' === $explore_point->post_type) {
                             $enemy_sound       = $explore_point_meta['explore-enemy-sound'] ?? false;
+                            $enemy_hurt_sound  = $explore_point_meta['explore-enemy-hurt-sound'] ?? false;
 
                             $html .= '<div class="enemy-health-bar-wrapper"><span class="enemy-health-bar"></span></div>';
 
                             if ($enemy_sound) {
                                 $html .= '<audio src="' . esc_url($enemy_sound) . '" id="' . esc_attr($explore_point->post_name) . '-s" loop></audio>';
+                            }
+
+                            if ($enemy_hurt_sound) {
+                                $html .= '<span class="hurt-sound">';
+                                $html .= '<audio src="' . esc_url($enemy_hurt_sound) . '" id="' . esc_attr($explore_point->post_name) . '-hs"></audio>';
+                                $html .= '</span>';
                             }
                         }
 
@@ -3008,6 +3025,7 @@ class Explore
 
         $images        = $meta['explore-character-images'] ?? [];
         $weapon_images = $meta['explore-weapon-images'] ?? [];
+        $character_hurt_sound = $meta['explore-character-hurt-sound'] ?? false;
 
         if (!is_array($images)) {
             $images = [];
@@ -3030,6 +3048,7 @@ class Explore
             'ability'          => $meta['explore-ability'] ?? '',
             'weapon'           => $meta['explore-weapon-choice'] ?? '',
             'id'               => $main_character->ID,
+            'hurt_sound'       => $character_hurt_sound,
             'name'             => $name,
             'voice'            => $meta['explore-voice'] ?? '',
         ];
