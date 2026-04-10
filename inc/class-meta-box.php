@@ -229,6 +229,7 @@ class Meta_Box {
             'down-hurt' => 'upload',
             'left-hurt' => 'upload',
             'right-hurt' => 'upload',
+            'dead' => 'upload',
         ];
         $weapon_images = [];
 

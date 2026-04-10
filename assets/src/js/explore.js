@@ -1866,6 +1866,7 @@ const hurtTheEnemy = (function () {
                         : 0;
 
                 const weaponType = value.dataset.weapon ?? '';
+				const enemyHealthBar = value.querySelector('.enemy-health-bar-wrapper');
 
                 if (
                     ('' !== weaponType &&
@@ -1874,9 +1875,6 @@ const hurtTheEnemy = (function () {
                 ) {
                     value.dataset.nextAllowedHit = String(now + 1000);
                     value.setAttribute('data-health', newHealth);
-                    hurtAnimationEnemy(value, attackStrength);
-
-                    const enemyHealthBar = value.querySelector('.enemy-health-bar-wrapper');
 
                     if (enemyHealthBar) {
                         if ('block' !== enemyHealthBar.style.display) {
@@ -1919,7 +1917,22 @@ const hurtTheEnemy = (function () {
                 if (0 === newHealth) {
                     clearInterval(window.shooterInt);
                     stopRunnerEnemy(value);
-                    value.remove();
+
+					const enemyName = cleanClassName(value.className);
+					const deadImage = value.querySelector('#' + enemyName + 'dead');
+
+					if (deadImage) {
+						enemyHealthBar.style.display = 'none';
+						const currentEnemyImage = value.querySelector('.character-icon.engage');
+						currentEnemyImage.classList.remove('engage');
+						deadImage.classList.add('engage');
+
+						setTimeout(() => {
+							value.remove();
+						}, 2000);
+					} else {
+						value.remove();
+					}
 
                     const position = cleanClassName(value.className);
                     const filehref = `${OrbemOrder.siteRESTURL}/enemy/`;
@@ -1952,7 +1965,9 @@ const hurtTheEnemy = (function () {
                     ) {
                         saveMission(enemyMission, value, enemyMission);
                     }
-                }
+                } else {
+					hurtAnimationEnemy(value, attackStrength);
+				}
             }
         }
     };
@@ -6955,29 +6970,40 @@ function blockMovement(top, left, box, enemy) {
  * @return {{top: *, left: *, collide: *}}
  */
 function getBlockDirection(
-	collisionWalls,
-	box,
-	finalTop,
-	finalLeft,
-	enemy,
+    collisionWalls,
+    box,
+    finalTop,
+    finalLeft,
+    enemy,
     npc
 ) {
-	'use strict';
+    'use strict';
 
-	const left = finalLeft;
-	const top = finalTop;
-	const final = { top: finalTop, left: finalLeft, collide: false };
-	const mapChar = document.getElementById('map-character');
+    const left = finalLeft;
+    const top = finalTop;
+    const final = { top: finalTop, left: finalLeft, collide: false };
+    const mapChar = document.getElementById('map-character');
     const mapImage = mapChar.querySelector('.map-character-icon.engage');
     const enemyImage = box.querySelector('.character-icon.engage') || box;
-    const enemyHitInset = true === enemy ? 28 : 0;
-    const playerHitInset = true === enemy ? 0 : 0;
+
+    // Movement collision insets.
+    const enemyHitInset = true === enemy ? 20 : 0;
+    const playerHitInset = true === enemy ? 20 : 0;
+
+    // Attack/contact insets.
+    const enemyAttackInset = true === enemy ? 8 : 0;
+    const playerAttackInset = true === enemy ? 8 : 0;
 
     let enemyTargetCorner = 'center';
 
     if (true === enemy) {
         if (!box.dataset.targetCorner) {
-            const corners = ['top-left', 'top-right', 'bottom-left', 'bottom-right'];
+            const corners = [
+                'top-left',
+                'top-right',
+                'bottom-left',
+                'bottom-right',
+            ];
             box.dataset.targetCorner =
                 corners[Math.floor(Math.random() * corners.length)];
         }
@@ -6985,8 +7011,8 @@ function getBlockDirection(
         enemyTargetCorner = box.dataset.targetCorner;
     }
 
-    let cornerOffsetLeft = window.globalLeftPositionOffset - (box.offsetWidth / 2);
-    let cornerOffsetTop = 400 - (box.offsetHeight / 2);
+    let cornerOffsetLeft = window.globalLeftPositionOffset - box.offsetWidth / 2;
+    let cornerOffsetTop = 400 - box.offsetHeight / 2;
 
     if (true === enemy) {
         switch (enemyTargetCorner) {
@@ -7009,12 +7035,15 @@ function getBlockDirection(
         }
     }
 
+    // Destination/target box around the player.
     const mainCharPos = {
         offsetLeft: mapChar.offsetLeft + cornerOffsetLeft,
         offsetWidth: box.offsetWidth,
         offsetTop: mapChar.offsetTop + cornerOffsetTop,
         offsetHeight: box.offsetHeight,
     };
+
+    // Smaller movement collision box for the player's body.
     const mainCharBodyPos = {
         offsetLeft:
             mapChar.offsetLeft +
@@ -7028,115 +7057,158 @@ function getBlockDirection(
         offsetHeight: Math.max(10, mapImage.offsetHeight - playerHitInset * 2),
     };
 
+    // Slightly larger attack/contact box for the player's body.
+    const mainCharAttackPos = {
+        offsetLeft:
+            mapChar.offsetLeft +
+            (window.globalLeftPositionOffset - mapImage.offsetWidth / 2) +
+            playerAttackInset,
+        offsetWidth: Math.max(10, mapImage.offsetWidth - playerAttackInset * 2),
+        offsetTop:
+            mapChar.offsetTop +
+            (400 - mapImage.offsetHeight / 2) +
+            playerAttackInset,
+        offsetHeight: Math.max(10, mapImage.offsetHeight - playerAttackInset * 2),
+    };
+
+    // Movement collision box for the moving object.
     const finalCharPos =
-        (true === npc || true === enemy)
+        true === npc || true === enemy
             ? {
                 offsetLeft: finalLeft + (true === enemy ? enemyHitInset : 0),
                 offsetTop: finalTop + (true === enemy ? enemyHitInset : 0),
                 offsetWidth:
                     true === enemy
-                        ? Math.max(10, enemyImage.offsetWidth - enemyHitInset * 2)
+                        ? Math.max(
+                            10,
+                            enemyImage.offsetWidth - enemyHitInset * 2
+                        )
                         : box.offsetWidth,
                 offsetHeight:
                     true === enemy
-                        ? Math.max(10, enemyImage.offsetHeight - enemyHitInset * 2)
+                        ? Math.max(
+                            10,
+                            enemyImage.offsetHeight - enemyHitInset * 2
+                        )
                         : box.offsetHeight,
             }
             : mainCharPos;
 
+    // Attack/contact box for enemies only.
+    const finalAttackPos =
+        true === enemy
+            ? {
+                offsetLeft: finalLeft + enemyAttackInset,
+                offsetTop: finalTop + enemyAttackInset,
+                offsetWidth: Math.max(
+                    10,
+                    enemyImage.offsetWidth - enemyAttackInset * 2
+                ),
+                offsetHeight: Math.max(
+                    10,
+                    enemyImage.offsetHeight - enemyAttackInset * 2
+                ),
+            }
+            : finalCharPos;
+
     let touchingMainChar = false;
 
-	if (
-		collisionWalls &&
-		((false === window.godMode && (true !== npc && true !== enemy)) || (true === npc || true === enemy))
-	) {
-		collisionWalls.forEach((collisionWallEle) => {
-			let collisionWall = collisionWallEle;
+    if (
+        true === enemy &&
+        elementsOverlap(finalAttackPos, mainCharAttackPos, 0)
+    ) {
+        touchingMainChar = true;
+        startRunnerPunching(box);
+    }
+
+    if (
+        collisionWalls &&
+        ((false === window.godMode && true !== npc && true !== enemy) ||
+            true === npc ||
+            true === enemy)
+    ) {
+        collisionWalls.forEach((collisionWallEle) => {
+            let collisionWall = collisionWallEle;
 
             if (mapImage.id === collisionWall.id) {
                 collisionWall = true === enemy ? mainCharBodyPos : mainCharPos;
             }
 
-			if (
-				box !== collisionWallEle &&
-				elementsOverlap(finalCharPos, collisionWall, 0)
-			) {
-				const collisionWallRight =
-					collisionWall.offsetLeft + collisionWall.offsetWidth;
-				const collisionWallLeft = collisionWall.offsetLeft;
-				const collisionWallTop = collisionWall.offsetTop;
-				const collisionWallBottom =
-					collisionWall.offsetTop + collisionWall.offsetHeight;
-				const characterRight =
-					finalCharPos.offsetLeft + finalCharPos.offsetWidth;
-				const characterLeft = finalCharPos.offsetLeft;
-				const characterTop = finalCharPos.offsetTop;
-				const characterBottom =
-					finalCharPos.offsetTop + finalCharPos.offsetHeight;
+            if (
+                box !== collisionWallEle &&
+                elementsOverlap(finalCharPos, collisionWall, 0)
+            ) {
+                const collisionWallRight =
+                    collisionWall.offsetLeft + collisionWall.offsetWidth;
+                const collisionWallLeft = collisionWall.offsetLeft;
+                const collisionWallTop = collisionWall.offsetTop;
+                const collisionWallBottom =
+                    collisionWall.offsetTop + collisionWall.offsetHeight;
+                const characterRight =
+                    finalCharPos.offsetLeft + finalCharPos.offsetWidth;
+                const characterLeft = finalCharPos.offsetLeft;
+                const characterTop = finalCharPos.offsetTop;
+                const characterBottom =
+                    finalCharPos.offsetTop + finalCharPos.offsetHeight;
 
-				// set collide true since we're overlapping.
-				final.collide = true;
+                final.collide = true;
 
-				const topCollision =
-					collisionWallBottom > characterTop &&
-					collisionWallTop < characterTop &&
-					collisionWallBottom < characterTop + 10;
-				const bottomCollision =
-					collisionWallTop < characterBottom &&
-					collisionWallBottom > characterBottom &&
-					collisionWallTop > characterBottom - 10;
-				const leftCollision =
-					collisionWallRight > characterLeft &&
-					collisionWallLeft < characterLeft;
-				const rightCollision =
-					collisionWallLeft < characterRight &&
-					collisionWallRight > characterRight;
-				let adjust = true === enemy ? 5 : window.moveSpeed;
-				adjust = true === npc ? 1 : adjust;
+                const topCollision =
+                    collisionWallBottom > characterTop &&
+                    collisionWallTop < characterTop &&
+                    collisionWallBottom < characterTop + 10;
+                const bottomCollision =
+                    collisionWallTop < characterBottom &&
+                    collisionWallBottom > characterBottom &&
+                    collisionWallTop > characterBottom - 10;
+                const leftCollision =
+                    collisionWallRight > characterLeft &&
+                    collisionWallLeft < characterLeft;
+                const rightCollision =
+                    collisionWallLeft < characterRight &&
+                    collisionWallRight > characterRight;
 
-                if (true === enemy && collisionWall === mainCharBodyPos) {
-                    touchingMainChar = true;
-                    startRunnerPunching(box);
+                let adjust = true === enemy ? 5 : window.moveSpeed;
+                adjust = true === npc ? 1 : adjust;
+
+                if (
+                    leftCollision &&
+                    !rightCollision &&
+                    !topCollision &&
+                    !bottomCollision
+                ) {
+                    final.left = left + adjust;
+                    final.collide = true;
                 }
 
                 if (
-					leftCollision &&
-					!rightCollision &&
-					!topCollision &&
-					!bottomCollision
-				) {
-					final.left = left + adjust;
-					final.collide = true;
-				}
+                    rightCollision &&
+                    !leftCollision &&
+                    !topCollision &&
+                    !bottomCollision
+                ) {
+                    final.left = left - adjust;
+                    final.collide = true;
+                }
 
-				if (
-					rightCollision &&
-					!leftCollision &&
-					!topCollision &&
-					!bottomCollision
-				) {
-					final.left = left - adjust;
-					final.collide = true;
-				}
+                if (topCollision && !bottomCollision) {
+                    final.top = top + adjust;
+                    final.collide = true;
+                }
 
-				if (topCollision && !bottomCollision) {
-					final.top = top + adjust;
-					final.collide = true;
-				}
-
-				if (bottomCollision && !topCollision) {
-					final.top = top - adjust;
-					final.collide = true;
-				}
-			}
-		});
-	}
+                if (bottomCollision && !topCollision) {
+                    final.top = top - adjust;
+                    final.collide = true;
+                }
+            }
+        });
+    }
 
     if (true === enemy && false === touchingMainChar) {
         stopRunnerPunching(box);
     }
 
-	return final;
+    return final;
 }
 
 /**
