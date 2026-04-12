@@ -5,7 +5,7 @@ Tags: game engine, rpg, storytelling, gamification, narrative game
 Requires at least: 6.1
 Tested up to: 6.9
 Requires PHP: 8.1
-Stable tag: 1.3.12
+Stable tag: 1.3.13
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -169,6 +169,13 @@ Yes. All systems are designed to be extended using WordPress hooks, filters, and
 We have extensive documentation at https://orbemorder.com/orbem-studio/docs/readme. Tutorials can be found on our channel at https://youtube.com/@orbemorder.
 
 == Changelog ==
+
+= 1.3.13 =
+* Send enemy dead image to back layer.
+* Fix save mission on kill enemy.
+* Make dead image optional.
+* Update focus view styles.
+* make charge attack bigger.
 
 = 1.3.12 =
 * Add dead image animation.

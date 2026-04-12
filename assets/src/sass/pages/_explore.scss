@@ -1271,7 +1271,7 @@ html {
               width: 100%;
             }
 
-            &>div, &>p, &>img:not(.sign-image), &>figure {
+            .focus-content {
               height: 100%;
               left: 50%;
               max-height: 60vh;
@@ -1290,7 +1290,7 @@ html {
 
             &:not(.open-up) {
               z-index: 0;
-              &>div, &>p, &>img:not(.sign-image), &>figure {
+              .focus-content {
                 display: none;
               }
             }
@@ -1472,6 +1472,13 @@ html {
             filter: sepia(1) hue-rotate(313deg) saturate(2) contrast(2.5);
             animation: flash .05s infinite alternate;
           }
+        }
+
+        &[data-charge="true"] {
+         .map-character-icon.engage {
+           filter: sepia(1) hue-rotate(227deg) saturate(6) brightness(0.7) contrast(3.5);
+           animation: flashColor 1s infinite alternate;
+         }
         }
 
         @media only screen and (max-width: 480px) {
@@ -1766,6 +1773,15 @@ html {
       }
       100% {
         opacity: 1;
+      }
+    }
+
+    @keyframes flashColor {
+      0% {
+        filter: none;
+      }
+      100% {
+        filter: sepia(1) hue-rotate(227deg) saturate(6) brightness(0.7) contrast(3.5);
       }
     }
 
