@@ -1921,17 +1921,20 @@ const hurtTheEnemy = (function () {
 					const enemyName = cleanClassName(value.className);
 					const deadImage = value.querySelector('#' + enemyName + 'dead');
 
-					if (deadImage) {
+					if (deadImage && deadImage?.src && '' !== deadImage?.src) {
 						enemyHealthBar.style.display = 'none';
 						const currentEnemyImage = value.querySelector('.character-icon.engage');
 						currentEnemyImage.classList.remove('engage');
 						deadImage.classList.add('engage');
+                        value.style.zIndex = '0';
 
 						setTimeout(() => {
 							value.remove();
+                            saveEnemyMission(enemyMission, value);
 						}, 2000);
 					} else {
 						value.remove();
+                        saveEnemyMission(enemyMission, value);
 					}
 
                     const position = cleanClassName(value.className);
@@ -1958,13 +1961,6 @@ const hurtTheEnemy = (function () {
                             }
                         });
                     }
-
-                    if (
-                        enemyMission &&
-                        noOtherItemAttachedToMission(enemyMission)
-                    ) {
-                        saveMission(enemyMission, value, enemyMission);
-                    }
                 } else {
 					hurtAnimationEnemy(value, attackStrength);
 				}
@@ -1988,7 +1984,12 @@ function hurtAnimationEnemy(enemy, pushAmount) {
 
         setTimeout(() => {
             enemy.classList.remove('hurt');
-            currentImage.classList.add('engage');
+			const currentEnemyImage = enemy.querySelector('.character-icon.engage');
+
+			if (currentEnemyImage === hurtImage) {
+				currentImage.classList.add('engage');
+			}
+
             hurtImage.classList.remove('engage');
         }, 700);
 
@@ -2027,6 +2028,15 @@ function hurtAnimationEnemy(enemy, pushAmount) {
 
         enemy.style.left = pushedPosition.left + 'px';
         enemy.style.top = pushedPosition.top + 'px';
+    }
+}
+
+function saveEnemyMission(enemyMission, value) {
+    if (
+        enemyMission &&
+        noOtherItemAttachedToMission(enemyMission)
+    ) {
+        saveMission(enemyMission, value, enemyMission);
     }
 }
 
@@ -6616,8 +6626,6 @@ function addCharacterHit() {
 
 	// Reset shiftispressed if you let go of it.
 	document.addEventListener('keydown', (event) => {
-		const weapon = document.querySelector('.map-weapon');
-
 		if (false !== window.allowHit) {
 			if (true === ['ShiftLeft', 'ShiftRight'].includes(event.code)) {
 				shiftIsPressed = true;
@@ -6628,7 +6636,7 @@ function addCharacterHit() {
 
 				chargeAttackTimeout = setTimeout(() => {
 					if (true === spaceIsPressed) {
-						weapon.classList.add('charge-engage');
+						document.querySelector('#map-character').dataset.charge = 'true';
 						chargeAttackInProgress = true;
 					}
 				}, 1000);
@@ -6688,6 +6696,7 @@ function characterHitEvent(event) {
                 weaponTime = weapon.classList.contains('protection')
                     ? 8000
                     : 100;
+				weaponTime = chargeAttackInProgress ? 1000 : weaponTime;
 
                 // Only engage if not a spell or mana is not 0.
                 if (
@@ -6715,7 +6724,6 @@ function characterHitEvent(event) {
 
                     if (currentImageMapCharacter) {
                         currentImageMapCharacter.classList.add('punched');
-
                         weaponAnimation.classList.add('engage');
 
                         playWeaponSound(weapon);
@@ -6789,7 +6797,7 @@ function characterHitEvent(event) {
 
                             if (true === chargeAttackInProgress) {
                                 chargeAttackInProgress = false;
-                                weapon.classList.remove('charge-engage');
+                                mapChar.dataset.charge = 'false';
                                 weapon.classList.add('charge-attack-engage');
 
                                 // Remove highlight on point bar.
@@ -8366,8 +8374,11 @@ function hurtAnimation() {
 
 		hurtTimeout = setTimeout(() => {
             if (hurtImage) {
-                currentImageMapCharacter.classList.add('engage');
-                hurtImage.classList.remove('engage');
+				if (mapCharacter.querySelector('.map-character-icon.engage') === hurtImage) {
+					currentImageMapCharacter.classList.add('engage');
+				}
+
+				hurtImage.classList.remove('engage');
             }
 			mapCharacter.dataset.hurt = false;
 		}, 500);

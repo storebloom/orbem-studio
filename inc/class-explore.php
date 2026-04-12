@@ -1766,8 +1766,16 @@ class Explore
                         $html .= '<video style="position:absolute;z-index: 1;width: 100%;height:100%;top:0; left:0;" src="' . esc_url($video_override) . '" autoplay loop muted></video>';
                     }
 
+                    if ('explore-sign' === $explore_point->post_type) {
+                        $html .= '<div class="focus-content">';
+                    }
+
                     // Raw content for game engine; do not apply WordPress filters.
                     $html .= true === in_array($explore_point->post_type, ['explore-character', 'explore-sign'], true) ? wp_kses_post($explore_point->post_content) : '';
+
+                    if ('explore-sign' === $explore_point->post_type) {
+                        $html .= '</div>';
+                    }
 
                     if (true === in_array($explore_point->post_type, ['explore-character', 'explore-enemy'], true)) {
                         $character_info = self::getCharacterImages($explore_point, '');
