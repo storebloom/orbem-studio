@@ -6706,6 +6706,10 @@ function characterHitEvent(event) {
                 ) {
                     weapon.classList.add('engage');
 
+					if ( chargeAttackInProgress ) {
+						weapon.classList.add('charge-attack-engage');
+					}
+
                     // Move weapon based on direction
                     switch (direction) {
                         case 'up':
@@ -6798,7 +6802,6 @@ function characterHitEvent(event) {
                             if (true === chargeAttackInProgress) {
                                 chargeAttackInProgress = false;
                                 mapChar.dataset.charge = 'false';
-                                weapon.classList.add('charge-attack-engage');
 
                                 // Remove highlight on point bar.
                                 setTimeout(() => {
@@ -8374,9 +8377,7 @@ function hurtAnimation() {
 
 		hurtTimeout = setTimeout(() => {
             if (hurtImage) {
-				if (mapCharacter.querySelector('.map-character-icon.engage') === hurtImage) {
-					currentImageMapCharacter.classList.add('engage');
-				}
+				currentImageMapCharacter.classList.add('engage');
 
 				hurtImage.classList.remove('engage');
             }
