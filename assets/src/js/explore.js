@@ -798,41 +798,49 @@ function makeNPCWander(npc, walkingSpeed, timeBetween, enemy) {
 			'true' !== npc.dataset?.break &&
 			'true' !== npc.dataset?.cutscenebreak
 		) {
-			if (true === enemy && '' === moveDir) {
-				startDir = getRandomDir(startDir, true, npc);
-			}
-			const currentLeft = npc.style.left.replace('px', '');
-			const currentTop = npc.style.top.replace('px', '');
-			const finalPos = blockMovement(currentTop, currentLeft, npc, enemy);
-            const mapCharacter = document.getElementById('map-character');
-            const mapCharacterImage = document.querySelector('.map-character-icon.engage');
-
-            const targetLeft =
-                parseInt(mapCharacter.style.left.replace('px', ''), 10) +
-                (window.globalLeftPositionOffset - mapCharacterImage.width / 2);
-
-            const targetTop =
-                parseInt(mapCharacter.style.top.replace('px', ''), 10) +
-                (400 - mapCharacterImage.height / 2);
-
-            const horizontalDiff = targetLeft - currentLeft;
-            const verticalDiff = targetTop - currentTop;
-            const absHorizontalDiff = Math.abs(horizontalDiff);
-            const absVerticalDiff = Math.abs(verticalDiff);
-
-            let displayDirection = npc.dataset.currentDirection || 'down';
-            const directionBuffer = 2; // prevents flip-flopping when nearly equal
-
-            if (absVerticalDiff > absHorizontalDiff + directionBuffer) {
-                displayDirection = verticalDiff > 0 ? 'down' : 'up';
-            } else if (absHorizontalDiff > absVerticalDiff + directionBuffer) {
-                displayDirection = horizontalDiff > 0 ? 'right' : 'left';
+            if (true === enemy && '' === moveDir) {
+                startDir = getRandomDir(startDir, true, npc);
             }
+            const currentLeft = npc.style.left.replace('px', '');
+            const currentTop = npc.style.top.replace('px', '');
+            const finalPos = blockMovement(currentTop, currentLeft, npc, enemy);
 
-            // only update if it actually changed
-            if (displayDirection !== npc.dataset.currentDirection) {
-                npc.dataset.currentDirection = displayDirection;
-                setDirectionImage(npc, displayDirection);
+            if (true === enemy) {
+                const mapCharacter = document.getElementById('map-character');
+                const mapCharacterImage = document.querySelector('.map-character-icon.engage');
+
+                const targetLeft =
+                    parseInt(mapCharacter.style.left.replace('px', ''), 10) +
+                    (window.globalLeftPositionOffset - mapCharacterImage.width / 2);
+
+                const targetTop =
+                    parseInt(mapCharacter.style.top.replace('px', ''), 10) +
+                    (400 - mapCharacterImage.height / 2);
+
+                const horizontalDiff = targetLeft - currentLeft;
+                const verticalDiff = targetTop - currentTop;
+                const absHorizontalDiff = Math.abs(horizontalDiff);
+                const absVerticalDiff = Math.abs(verticalDiff);
+
+                let displayDirection = npc.dataset.currentDirection || 'down';
+                const directionBuffer = 2;
+
+                if (absVerticalDiff > absHorizontalDiff + directionBuffer) {
+                    displayDirection = verticalDiff > 0 ? 'down' : 'up';
+                } else if (absHorizontalDiff > absVerticalDiff + directionBuffer) {
+                    displayDirection = horizontalDiff > 0 ? 'right' : 'left';
+                }
+
+                if (displayDirection !== npc.dataset.currentDirection) {
+                    npc.dataset.currentDirection = displayDirection;
+                    setDirectionImage(npc, displayDirection);
+                }
+            } else {
+                const activeDir = moveDir || startDir;
+                if (activeDir && activeDir !== npc.dataset.currentDirection) {
+                    npc.dataset.currentDirection = activeDir;
+                    setDirectionImage(npc, activeDir);
+                }
             }
 
 			switch (startDir) {
@@ -2998,11 +3006,10 @@ function setDirectionImage(enemyEl, direction) {
 		'#' + enemyName + direction
 	);
 
-	allImages.forEach((image) => {
-		image.classList.remove('engage');
-	});
-
     if (directionalImage) {
+        allImages.forEach((image) => {
+            image.classList.remove('engage');
+        });
         enemyEl.dataset.currentDirection = direction;
         directionalImage.classList.add('engage');
     }
@@ -3075,7 +3082,7 @@ function engageEnemy(enemy, trigger) {
 	'use strict';
 
 	const enemyType = enemy.getAttribute('data-enemy-type');
-    const enemySound = enemy.querySelector('audio');
+    const enemySound = enemy.querySelector(':scope > audio');
 
     if (enemySound) {
         enemySound.volume = window.sfxVolume;
@@ -3107,6 +3114,17 @@ function engageEnemy(enemy, trigger) {
 }
 
 function updatePunchImage(enemyEl, showPunch) {
+    const previousImage = enemyEl.querySelector('.character-icon.engage');
+    const lastImage = enemyEl.querySelector('.last-image');
+
+    if (previousImage && !lastImage) {
+        if ((previousImage.id.includes('-hurt') || previousImage.id.includes('-punch')) && false !== showPunch) {
+            updatePunchImage(enemyEl, false);
+        } else {
+            previousImage.classList.add('last-image');
+        }
+    }
+
     const direction = enemyEl.dataset.currentDirection || 'down';
     const enemyName = cleanClassName(enemyEl.className);
     const punchImage = enemyEl.querySelector(
@@ -3114,9 +3132,9 @@ function updatePunchImage(enemyEl, showPunch) {
     );
 
     const baseImage = enemyEl.querySelector('#' + enemyName + direction);
-
+    const finalImage = 'runner' === enemyEl.dataset.enemyType ? baseImage : lastImage;
     const allImages = enemyEl.querySelectorAll('.character-icon');
-    const nextImage = showPunch && punchImage ? punchImage : baseImage;
+    const nextImage = showPunch && punchImage ? punchImage : finalImage;
 
     if (!nextImage) {
         return;
@@ -3127,6 +3145,10 @@ function updatePunchImage(enemyEl, showPunch) {
     });
 
     nextImage.classList.add('engage');
+
+    if (lastImage) {
+        lastImage.classList.remove('last-image');
+    }
 }
 
 /**
@@ -3137,6 +3159,10 @@ function updateBossWave(enemy) {
 	'use strict';
 
 	const bossWaves = enemy.dataset.waves.split(',');
+
+    if (bossWaveCount > (bossWaves.length - 2)) {
+        bossWaveCount = 0;
+    }
 
 	// Remove current wave classes.
 	if (bossWaves) {
@@ -3159,6 +3185,7 @@ function updateBossWave(enemy) {
 			engageShooter(enemy);
 		} else {
 			clearInterval(shooterInterval);
+            updatePunchImage(enemy, false);
 		}
 	}
 
@@ -3169,9 +3196,13 @@ function engageShooter(enemy) {
 	'use strict';
 
 	const projSpeed = enemy.dataset.enemyspeed;
-    const showPunch = false;
+
 	shooterInterval = window.shooterInt = setInterval(() => {
-        updatePunchImage(enemy, showPunch);
+        updatePunchImage(enemy, true);
+
+        setTimeout(() => {
+            updatePunchImage(enemy, false);
+        }, 500)
 		const mapCharacter = document.querySelector(
 			'.map-character-icon.engage'
 		);
@@ -3227,6 +3258,7 @@ function shootProjectile(
 
 	// Move projectile.
 	if (true !== spell && 'no' === isProjectile) {
+        projectile.classList.add('shooting');
 		moveEnemy(
 			projectile,
 			mapCharacterLeft,
@@ -3271,7 +3303,7 @@ function shootProjectile(
 			newProjectile.setAttribute('data-direction', mapCharPos);
 		}
 
-		enemy.appendChild(newProjectile);
+		enemy.prepend(newProjectile);
 		projectile.remove();
 		// Link weapon back to player.
 		window.weaponConnection = true;
@@ -3998,6 +4030,7 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 	const modal = document.querySelectorAll(
 		'.map-item:not(.drag-dest), .projectile, .enemy-item, [data-hazard="true"]'
 	);
+
 	let weaponEl = document.querySelector('.map-weapon');
 	const magicEl = document.querySelector('.magic-weapon');
 	const area = document
@@ -4050,6 +4083,59 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 			};
 
 			// Touching with buffer.
+            if (value && box && 'true' === value.dataset.hazard && bossHazardOverlap(box, value)) {
+                // If in hazard set to true.
+                if (
+                    false === canCharacterInteract(value, mapChar, 'hazard')
+                ) {
+                    if (100 <= hazardCounter || 0 === hazardCounter) {
+                        const hurtAmount = value.dataset.value;
+                        const currentHealth = getCurrentPoints('health');
+                        const newAmount = currentHealth - parseInt(hurtAmount);
+
+                        hurtAnimation();
+
+                        addUserPoints(newAmount, 'health', 'hazard', false, '');
+
+                        // Push character away from hazard center.
+                        pushCharacter(
+                            25,
+                            value.closest('.enemy-item') ?? value,
+                            mapChar
+                        );
+
+                        hazardCounter = 0;
+                    }
+
+                    hazardCounter++;
+                } else if (
+                    true === canCharacterInteract(value, mapChar, 'hazard')
+                ) {
+                    if (hazardGauge) {
+                        hazardGauge.classList.add('engage');
+                    }
+
+                    const hazardGaugeBar =
+                        hazardGauge.querySelector('.misc-gauge');
+
+                    if (window.hazardTime <= hazardCounter) {
+                        inHazard = true;
+                        window.theHazardValue = value.dataset.value;
+                        hazardItem = value.closest('.enemy-item') ?? value;
+                        hazardGaugeBar.style.width = '100%';
+                        hazardGauge.classList.remove('engage');
+                    } else {
+                        hazardGaugeBar.style.width =
+                            ((window.hazardTime - hazardCounter) /
+                                window.hazardTime) *
+                            100 +
+                            '%';
+                    }
+
+                    hazardCounter++;
+                }
+            }
+
 			if (value && box && elementsOverlap(finalCharPos, value, 5)) {
 				// Pause NPC from moving if touching MC.
 				if (
@@ -4110,59 +4196,6 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 					enterExplorePoint(value, 'false');
 
 					return;
-				}
-
-				// If in hazard set to true.
-				if (
-					'true' === value.dataset.hazard &&
-					false === canCharacterInteract(value, mapChar, 'hazard')
-				) {
-					if (100 <= hazardCounter || 0 === hazardCounter) {
-						const hurtAmount = value.dataset.value;
-						const currentHealth = getCurrentPoints('health');
-						const newAmount = currentHealth - parseInt(hurtAmount);
-
-						hurtAnimation();
-
-						addUserPoints(newAmount, 'health', 'hazard', false, '');
-
-						// Push character away from hazard center.
-						pushCharacter(
-							25,
-							value.closest('.enemy-item') ?? value,
-							mapChar
-						);
-
-						hazardCounter = 0;
-					}
-
-					hazardCounter++;
-				} else if (
-					'true' === value.dataset.hazard &&
-					true === canCharacterInteract(value, mapChar, 'hazard')
-				) {
-					if (hazardGauge) {
-						hazardGauge.classList.add('engage');
-					}
-
-					const hazardGaugeBar =
-						hazardGauge.querySelector('.misc-gauge');
-
-					if (window.hazardTime <= hazardCounter) {
-						inHazard = true;
-						window.theHazardValue = value.dataset.value;
-						hazardItem = value.closest('.enemy-item') ?? value;
-						hazardGaugeBar.style.width = '100%';
-						hazardGauge.classList.remove('engage');
-					} else {
-						hazardGaugeBar.style.width =
-							((window.hazardTime - hazardCounter) /
-								window.hazardTime) *
-								100 +
-							'%';
-					}
-
-					hazardCounter++;
 				}
 
 				if (dragDest) {
@@ -4630,6 +4663,8 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 		let direction;
 		let newCharacterImage;
 
+        const allImages = document.querySelectorAll('.map-character-icon:not(.fight-image)');
+
 		if (
 			false === box.classList.contains('fight-image') &&
 			true === window.allowMovement
@@ -4637,6 +4672,9 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 			switch (goThisWay) {
 				case 38:
 					box.classList.remove('engage');
+                    allImages.forEach((image) => {
+                        image.classList.remove('engage');
+                    });
 					direction =
 						'' !== isDragging ? window.draggingDirection : 'up';
 					newCharacterImage = document.getElementById(
@@ -4658,6 +4696,9 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 					break;
 				case 37:
 					box.classList.remove('engage');
+                    allImages.forEach((image) => {
+                        image.classList.remove('engage');
+                    });
 					direction =
 						'' !== isDragging ? window.draggingDirection : 'left';
 					newCharacterImage = document.getElementById(
@@ -4678,6 +4719,9 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 					break;
 				case 39:
 					box.classList.remove('engage');
+                    allImages.forEach((image) => {
+                        image.classList.remove('engage');
+                    });
 					direction =
 						'' !== isDragging ? window.draggingDirection : 'right';
 					newCharacterImage = document.getElementById(
@@ -4698,6 +4742,9 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 					break;
 				case 40:
 					box.classList.remove('engage');
+                    allImages.forEach((image) => {
+                        image.classList.remove('engage');
+                    });
 					direction =
 						'' !== isDragging ? window.draggingDirection : 'down';
 					newCharacterImage = document.getElementById(
@@ -4718,6 +4765,9 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 					break;
 				case 87:
 					box.classList.remove('engage');
+                    allImages.forEach((image) => {
+                        image.classList.remove('engage');
+                    });
 					direction =
 						'' !== isDragging ? window.draggingDirection : 'up';
 					newCharacterImage = document.getElementById(
@@ -4739,6 +4789,9 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 					break;
 				case 65:
 					box.classList.remove('engage');
+                    allImages.forEach((image) => {
+                        image.classList.remove('engage');
+                    });
 					direction =
 						'' !== isDragging ? window.draggingDirection : 'left';
 					newCharacterImage = document.getElementById(
@@ -4759,6 +4812,9 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 					break;
 				case 68:
 					box.classList.remove('engage');
+                    allImages.forEach((image) => {
+                        image.classList.remove('engage');
+                    });
 					direction =
 						'' !== isDragging ? window.draggingDirection : 'right';
 					newCharacterImage = document.getElementById(
@@ -4779,6 +4835,9 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 					break;
 				case 83:
 					box.classList.remove('engage');
+                    allImages.forEach((image) => {
+                        image.classList.remove('engage');
+                    });
 					direction =
 						'' !== isDragging ? window.draggingDirection : 'down';
 					newCharacterImage = document.getElementById(
@@ -5080,8 +5139,8 @@ function storeExploreItem(item) {
 		('health' === type || 'mana' === type) &&
 		100 > currentPoints
 	) {
+        runPointAnimation(item, name, false, (parseInt(currentPoints) + parseInt(value)), '' )
 
-        addUserPoints((parseInt(currentPoints) + parseInt(value)), type, name, false, '');
 		return;
 	}
 
@@ -6565,6 +6624,7 @@ function cleanClassName(classes) {
             .replace( ' passable', '')
 			.replace('minigame ', '')
 			.replace(' pulse-wave-engage', '')
+            .replace(' pulse-wave-wave-engage pulse-in', '')
 			.replace(' barage-wave-engage', '')
             .replace( ' projectile-wave-engage', '')
 			.replace(' selected', '')
@@ -6728,10 +6788,10 @@ function characterHitEvent(event) {
                             weaponPosTop = 500;
                             break;
                         case 'left':
-                            weaponPosLeft = window.globalLeftPositionOffset - 50;
+                            weaponPosLeft = window.globalLeftPositionOffset - ((currentImageMapCharacter.offsetWidth / 2) + 5);
                             break;
                         case 'right':
-                            weaponPosLeft = window.globalLeftPositionOffset + 50;
+                            weaponPosLeft = window.globalLeftPositionOffset + ((currentImageMapCharacter.offsetWidth / 2) + 5);
                             break;
                     }
 
@@ -7135,6 +7195,7 @@ function getBlockDirection(
 
     if (
         true === enemy &&
+        'runner' === box.dataset.enemyType &&
         elementsOverlap(finalAttackPos, mainCharAttackPos, 0)
     ) {
         touchingMainChar = true;
@@ -7258,6 +7319,51 @@ function elementsOverlap(rect1, rect2, buffer) {
 			rect1Bottom + buffer < rect2Top - buffer ||
 			rect1Top - buffer > rect2Bottom + buffer)
 	);
+}
+
+function bossHazardOverlap(el1, el2) {
+    'use strict';
+
+    const container = document.querySelector('.game-container');
+    const containerRect = container.getBoundingClientRect();
+
+    const getRect = (el) => {
+        if (el?.dataset?.hazard) {
+            const bossRect = el.offsetParent.getBoundingClientRect();
+            const waveRect = el.getBoundingClientRect();
+
+            const bossCenterX = bossRect.left + bossRect.width  / 2;
+            const bossCenterY = bossRect.top  + bossRect.height / 2;
+            const halfW = waveRect.width  / 2;
+            const halfH = waveRect.height / 2;
+
+            return {
+                left:   bossCenterX - halfW - containerRect.left,
+                right:  bossCenterX + halfW - containerRect.left,
+                top:    bossCenterY - halfH - containerRect.top,
+                bottom: bossCenterY + halfH - containerRect.top,
+            };
+        }
+
+        const r = el.getBoundingClientRect();
+        return {
+            left:   r.left   - containerRect.left,
+            right:  r.right  - containerRect.left,
+            top:    r.top    - containerRect.top,
+            bottom: r.bottom - containerRect.top,
+        };
+    };
+
+    const rect1 = getRect(el1);
+    const rect2 = getRect(el2);
+
+    return (
+        false ===
+        (rect1.right  < rect2.left  ||
+            rect1.left   > rect2.right ||
+            rect1.bottom < rect2.top   ||
+            rect1.top    > rect2.bottom)
+    );
 }
 
 /**

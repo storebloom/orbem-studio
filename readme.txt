@@ -5,7 +5,7 @@ Tags: game engine, rpg, storytelling, gamification, narrative game
 Requires at least: 6.1
 Tested up to: 6.9
 Requires PHP: 8.1
-Stable tag: 1.3.15
+Stable tag: 1.3.16
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -169,6 +169,13 @@ Yes. All systems are designed to be extended using WordPress hooks, filters, and
 We have extensive documentation at https://orbemorder.com/orbem-studio/docs/readme. Tutorials can be found on our channel at https://youtube.com/@orbemorder.
 
 == Changelog ==
+
+= 1.3.16 =
+* Fix enemy sound on engage.
+* Fix collection point animation.
+* Fix pulse wave hazard hurt.
+* Fix projectile position boss.
+* Fix enemy walking direction.
 
 = 1.3.15 =
 * Fix health/mana collection logic.

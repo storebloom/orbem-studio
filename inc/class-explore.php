@@ -1777,6 +1777,19 @@ class Explore
                         $html .= '</div>';
                     }
 
+                    // Projectile html for enemy.
+                    if ('explore-enemy' === $explore_point->post_type && ('shooter' === $explore_enemy_type || true === $barrage_wave)) {
+                        $projectile = $explore_point_meta['explore-projectile'] ?? '';
+
+                        if (false !== $projectile) {
+                            $projectile_width = $projectile['width'] ?? '0';
+                            $projectile_height = $projectile['height'] ?? '0';
+                            $projectile_image_url = $projectile['image-url'] ?? '';
+
+                            $html .= '<div class="projectile" data-value="' . esc_attr($value) . '"><img alt="projectile" style="width:' . esc_attr($projectile_width) . 'px; height: ' . esc_attr($projectile_height) . 'px;" src="' . esc_url($projectile_image_url) . '" /></div>';
+                        }
+                    }
+
                     if (true === in_array($explore_point->post_type, ['explore-character', 'explore-enemy'], true)) {
                         $character_info = self::getCharacterImages($explore_point, '');
                         $direction_images = $character_info['direction_images'] ?? false;
@@ -1813,19 +1826,6 @@ class Explore
                                 $html .= '" src = "';
                                 $html .= esc_url($direction_image) . '" />';
                             }
-                        }
-                    }
-
-                    // Projectile html for enemy.
-                    if ('explore-enemy' === $explore_point->post_type && ('shooter' === $explore_enemy_type || true === $barrage_wave)) {
-                        $projectile = $explore_point_meta['explore-projectile'] ?? '';
-
-                        if (false !== $projectile) {
-                            $projectile_width = $projectile['width'] ?? '0';
-                            $projectile_height = $projectile['height'] ?? '0';
-                            $projectile_image_url = $projectile['image-url'] ?? '';
-
-                            $html .= '<div class="projectile" data-value="' . esc_attr($value) . '"><img alt="projectile" style="width:' . esc_attr($projectile_width) . 'px; height: ' . esc_attr($projectile_height) . 'px;" src="' . esc_url($projectile_image_url) . '" /></div>';
                         }
                     }
 
