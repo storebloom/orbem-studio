@@ -1914,6 +1914,8 @@ const hurtTheEnemy = (function () {
                     }
                 }
 
+                playHurtSound(value);
+
                 if (0 === newHealth) {
                     clearInterval(window.shooterInt);
                     stopRunnerEnemy(value);
@@ -1978,9 +1980,12 @@ function hurtAnimationEnemy(enemy, pushAmount) {
         const hurtImage = enemy.querySelector('#' + cleanClassName(enemy.className) + direction + '-hurt');
 
         enemy.classList.add('hurt');
-        currentImage.classList.remove('engage');
-        hurtImage.classList.add('engage');
-        playHurtSound(enemy);
+
+        if ( hurtImage && currentImage ) {
+            currentImage.classList.remove('engage');
+            hurtImage.classList.add('engage');
+        }
+
 
         setTimeout(() => {
             enemy.classList.remove('hurt');
@@ -1990,10 +1995,12 @@ function hurtAnimationEnemy(enemy, pushAmount) {
 				currentImage.classList.add('engage');
 			}
 
-            hurtImage.classList.remove('engage');
+            if ( hurtImage ) {
+                hurtImage.classList.remove('engage');
+            }
         }, 700);
 
-            let newLeft = currentLeft;
+        let newLeft = currentLeft;
         let newTop = currentTop;
 
         switch (direction) {
@@ -3022,26 +3029,9 @@ function startRunnerPunching(enemyEl) {
     let showPunch = false;
 
     enemyEl._runnerPunchInt = setInterval(() => {
-        const direction = enemyEl.dataset.currentDirection || 'down';
-        const enemyName = cleanClassName(enemyEl.className);
-        const baseImage = enemyEl.querySelector('#' + enemyName + direction);
         const strength = enemyEl.dataset.value;
-        const punchImage = enemyEl.querySelector(
-            '#' + enemyName + direction + '-punch'
-        );
 
-        const allImages = enemyEl.querySelectorAll('.character-icon');
-        const nextImage = showPunch && punchImage ? punchImage : baseImage;
-
-        if (!nextImage) {
-            return;
-        }
-
-        allImages.forEach((image) => {
-            image.classList.remove('engage');
-        });
-
-        nextImage.classList.add('engage');
+        updatePunchImage(enemyEl, showPunch);
 
         if (showPunch) {
             // Hurt main.
@@ -3109,20 +3099,34 @@ function engageEnemy(enemy, trigger) {
     if ('runner' === enemyType) {
         makeNPCWander(enemy, enemy.dataset.speed, 0, true);
 	}
+
+    // Boss type.
+    if ('boss' === enemyType) {
+        updateBossWave(enemy);
+    }
 }
 
-function enemyOverlapInset(a, b, container, inset) {
-    'use strict';
-
-    const ar = getRelativeRect(a, container);
-    const br = getRelativeRect(b, container);
-
-    return !(
-        ar.right - inset < br.left + inset ||
-        ar.left + inset > br.right - inset ||
-        ar.bottom - inset < br.top + inset ||
-        ar.top + inset > br.bottom - inset
+function updatePunchImage(enemyEl, showPunch) {
+    const direction = enemyEl.dataset.currentDirection || 'down';
+    const enemyName = cleanClassName(enemyEl.className);
+    const punchImage = enemyEl.querySelector(
+        '#' + enemyName + direction + '-punch'
     );
+
+    const baseImage = enemyEl.querySelector('#' + enemyName + direction);
+
+    const allImages = enemyEl.querySelectorAll('.character-icon');
+    const nextImage = showPunch && punchImage ? punchImage : baseImage;
+
+    if (!nextImage) {
+        return;
+    }
+
+    allImages.forEach((image) => {
+        image.classList.remove('engage');
+    });
+
+    nextImage.classList.add('engage');
 }
 
 /**
@@ -3165,7 +3169,9 @@ function engageShooter(enemy) {
 	'use strict';
 
 	const projSpeed = enemy.dataset.enemyspeed;
+    const showPunch = false;
 	shooterInterval = window.shooterInt = setInterval(() => {
+        updatePunchImage(enemy, showPunch);
 		const mapCharacter = document.querySelector(
 			'.map-character-icon.engage'
 		);
@@ -5055,8 +5061,8 @@ function triggerIndicator(indicateMe, isCutscene, trigger, isMinigame) {
 function storeExploreItem(item) {
 	'use strict';
 
-	const type = item.getAttribute('data-type');
-	const value = item.getAttribute('data-value');
+	const type = item.dataset.type
+	const value = item.dataset.value
 	const id = item.id;
 	const name = cleanClassName(item.className);
 	const menuItem = document.createElement('span');
@@ -5074,6 +5080,8 @@ function storeExploreItem(item) {
 		('health' === type || 'mana' === type) &&
 		100 > currentPoints
 	) {
+
+        addUserPoints((parseInt(currentPoints) + parseInt(value)), type, name, false, '');
 		return;
 	}
 
@@ -5892,7 +5900,7 @@ function afterCutscene(cutscene, areaCutscene, character) {
 	const cutsceneName = cleanClassName(cutscene.className).replace(' ', '');
 	const bossFight = cutscene.dataset.boss;
     const selectedCutsceneCharacter = cutscene.dataset?.character ?? character;
-	const cutsceneCharacter = selectedCutsceneCharacter
+	const cutsceneCharacter = selectedCutsceneCharacter && 0 === parseInt(selectedCutsceneCharacter)
 		? document.querySelector('.' + selectedCutsceneCharacter + '-map-item')
 		: false;
 	const indicator = document.querySelector('.indicator-icon');
@@ -6558,6 +6566,7 @@ function cleanClassName(classes) {
 			.replace('minigame ', '')
 			.replace(' pulse-wave-engage', '')
 			.replace(' barage-wave-engage', '')
+            .replace( ' projectile-wave-engage', '')
 			.replace(' selected', '')
 			.replace('-cutscene-trigger', '')
 			.replace('cutscene-trigger ', '')
