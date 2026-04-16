@@ -170,6 +170,10 @@ We have extensive documentation at https://orbemorder.com/orbem-studio/docs/read
 
 == Changelog ==
 
+= 1.3.17 =
+* Implement landscape mobile mode.
+* Update pulse wave style.
+
 = 1.3.16 =
 * Fix enemy sound on engage.
 * Fix collection point animation.
