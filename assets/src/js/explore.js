@@ -33,6 +33,7 @@ let hazardCounter = 0;
 const defaultWeapon = OrbemOrder.defaultWeapon;
 let isLoggedIn = false;
 let isOnMobile = false;
+let isOnTablet = false;
 let chargeAttackInProgress = false;
 let weaponTime = 200;
 let heavyAttackInProgress = false;
@@ -43,6 +44,7 @@ window.noTouch = false;
 window.isDragging = '';
 window.hazardTime = 600;
 window.globalLeftPositionOffset = 400;
+window.globalTopPositionOffset = 400;
 window.nextDialogue = false;
 window.crewCharacters = [];
 window.playerName = '';
@@ -55,6 +57,11 @@ document.addEventListener('DOMContentLoaded', function () {
         window.globalLeftPositionOffset = 150;
         weaponPosLeft = window.globalLeftPositionOffset;
         isOnMobile = true;
+    }
+
+    if (1025 > window.innerWidth && 500 < window.innerWidth) {
+        window.globalTopPositionOffset = 150;
+        isOnTablet = true
     }
 
 	currentLocation = document.querySelector('.game-container');
@@ -815,7 +822,7 @@ function makeNPCWander(npc, walkingSpeed, timeBetween, enemy) {
 
                 const targetTop =
                     parseInt(mapCharacter.style.top.replace('px', ''), 10) +
-                    (400 - mapCharacterImage.height / 2);
+                    (window.globalTopPositionOffset - mapCharacterImage.height / 2);
 
                 const horizontalDiff = targetLeft - currentLeft;
                 const verticalDiff = targetTop - currentTop;
@@ -1033,7 +1040,7 @@ function getRandomDir(currentDir, enemy, enemyEl) {
                 (window.globalLeftPositionOffset - mapCharacterImage.width / 2);
             const targetTop =
                 parseInt(mapCharacter.style.top.replace('px', ''), 10) +
-                (400 - mapCharacterImage.height / 2);
+                (window.globalTopPositionOffset - mapCharacterImage.height / 2);
             const horizontalDiff = targetLeft - enemyLeft;
             const verticalDiff = targetTop - enemyTop;
             const absHorizontalDiff = Math.abs(horizontalDiff);
@@ -3802,7 +3809,7 @@ export function engageExploreGame() {
 	}
 	document.body.style.position = 'unset';
 
-	if (touchButtons && isOnMobile) {
+	if (touchButtons && ( isOnTablet || isOnMobile )) {
 		touchButtons.classList.add('do-mobile');
 	}
 
@@ -4078,12 +4085,12 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 			const finalCharPos = {
 				offsetLeft: mapChar.offsetLeft + (window.globalLeftPositionOffset - box.offsetWidth / 2),
 				offsetWidth: box.offsetWidth,
-				offsetTop: mapChar.offsetTop + (400 - box.offsetHeight / 2),
+				offsetTop: mapChar.offsetTop + (window.globalTopPositionOffset - box.offsetHeight / 2),
 				offsetHeight: box.offsetHeight,
 			};
 
 			// Touching with buffer.
-            if (value && box && 'true' === value.dataset.hazard && bossHazardOverlap(box, value)) {
+            if (value && box && 'true' === value.dataset.hazard && (value?.offsetParent && 'boss' === value.offsetParent.dataset.enemyType && bossHazardOverlap(box, value))) {
                 // If in hazard set to true.
                 if (
                     false === canCharacterInteract(value, mapChar, 'hazard')
@@ -4906,7 +4913,7 @@ function pushCharacter(distanceMult, pushElement, pushee) {
 				? targetX - distanceMult
 				: targetX + distanceMult;
 		targetY =
-			targetY + 400 < enemyTop
+			targetY + window.globalTopPositionOffset < enemyTop
 				? targetY - distanceMult
 				: targetY + distanceMult;
 
@@ -5079,7 +5086,7 @@ function triggerIndicator(indicateMe, isCutscene, trigger, isMinigame) {
         let leftPosition = indicateMe.style.left.replace('px', '');
         let topPosition = indicateMe.style.top.replace('px', '');
         if (true === indicateMe.classList.contains('map-character-icon')) {
-            topPosition = (parseInt(indicateMe.parentElement.style.top.replace('px', '')) + 400) - (indicateMe.offsetHeight / 2);
+            topPosition = (parseInt(indicateMe.parentElement.style.top.replace('px', '')) + window.globalTopPositionOffset) - (indicateMe.offsetHeight / 2);
             leftPosition = (parseInt(indicateMe.parentElement.style.left.replace('px', '')) + window.globalLeftPositionOffset) - (indicateMe.offsetWidth / 2);
         }
 
@@ -5908,7 +5915,7 @@ function faceNPC(mapCharacter, npc, cutscene) {
 		const mcTopCont = parseInt(mapCharacter.style.top.replace('px', ''));
 		const mcLeft = mcLeftCont + (window.globalLeftPositionOffset - mcImage.offsetWidth / 2);
 		const mcRight = mcLeft + mcImage.offsetWidth;
-		const mcTop = mcTopCont + (400 - mcImage.offsetHeight / 2);
+		const mcTop = mcTopCont + (window.globalTopPositionOffset - mcImage.offsetHeight / 2);
 		const mcBottom = mcTop + mcImage.offsetHeight;
 
 		let direction;
@@ -6782,10 +6789,10 @@ function characterHitEvent(event) {
                     // Move weapon based on direction
                     switch (direction) {
                         case 'up':
-                            weaponPosTop = 300;
+                            weaponPosTop = window.globalTopPositionOffset - ((currentImageMapCharacter.offsetHeight / 2) + 5);
                             break;
                         case 'down':
-                            weaponPosTop = 500;
+                            weaponPosTop = window.globalTopPositionOffset + ((currentImageMapCharacter.offsetHeight / 2) + 5);
                             break;
                         case 'left':
                             weaponPosLeft = window.globalLeftPositionOffset - ((currentImageMapCharacter.offsetWidth / 2) + 5);
@@ -6855,10 +6862,10 @@ function characterHitEvent(event) {
                             // Reset weapon based on direction
                             switch (direction) {
                                 case 'up':
-                                    weaponPosTop = 400;
+                                    weaponPosTop = window.globalTopPositionOffset;
                                     break;
                                 case 'down':
-                                    weaponPosTop = 400;
+                                    weaponPosTop = window.globalTopPositionOffset;
                                     break;
                                 case 'left':
                                     weaponPosLeft = window.globalLeftPositionOffset;
@@ -6899,10 +6906,10 @@ function characterHitEvent(event) {
                         // Reset weapon based on direction
                         switch (direction) {
                             case 'up':
-                                weaponPosTop = 400;
+                                weaponPosTop = window.globalTopPositionOffset;
                                 break;
                             case 'down':
-                                weaponPosTop = 400;
+                                weaponPosTop = window.globalTopPositionOffset;
                                 break;
                             case 'left':
                                 weaponPosLeft = window.globalLeftPositionOffset;
@@ -7092,7 +7099,7 @@ function getBlockDirection(
     }
 
     let cornerOffsetLeft = window.globalLeftPositionOffset - box.offsetWidth / 2;
-    let cornerOffsetTop = 400 - box.offsetHeight / 2;
+    let cornerOffsetTop = window.globalTopPositionOffset - box.offsetHeight / 2;
 
     if (true === enemy) {
         switch (enemyTargetCorner) {
@@ -7132,7 +7139,7 @@ function getBlockDirection(
         offsetWidth: Math.max(10, mapImage.offsetWidth - playerHitInset * 2),
         offsetTop:
             mapChar.offsetTop +
-            (400 - mapImage.offsetHeight / 2) +
+            (window.globalTopPositionOffset - mapImage.offsetHeight / 2) +
             playerHitInset,
         offsetHeight: Math.max(10, mapImage.offsetHeight - playerHitInset * 2),
     };
@@ -7146,7 +7153,7 @@ function getBlockDirection(
         offsetWidth: Math.max(10, mapImage.offsetWidth - playerAttackInset * 2),
         offsetTop:
             mapChar.offsetTop +
-            (400 - mapImage.offsetHeight / 2) +
+            (window.globalTopPositionOffset - mapImage.offsetHeight / 2) +
             playerAttackInset,
         offsetHeight: Math.max(10, mapImage.offsetHeight - playerAttackInset * 2),
     };
@@ -7796,7 +7803,7 @@ function clickTransport(clickE) {
 	const container = document.querySelector('.game-container');
 	const rect = container.getBoundingClientRect();
 	const x = clickE.clientX - rect.left - window.globalLeftPositionOffset;
-	const y = clickE.clientY - rect.top - 400;
+	const y = clickE.clientY - rect.top - window.globalTopPositionOffset;
 	const mapCharacter = document.getElementById('map-character');
 	const bar = document.querySelector('.power-amount');
 	const gauge = bar.querySelector('.gauge');
@@ -7870,7 +7877,7 @@ function moveCharacter(mapCharacter, newTop, newLeft, gradual, cutscene, areaCut
 							: newTop + 'px';
 					weapon.style.top =
 						parseInt(mapCharacter.style.top.replace('px', '')) +
-						400 +
+                        window.globalTopPositionOffset +
 						'px';
 					topDown = 'up';
 				} else {
@@ -7880,7 +7887,7 @@ function moveCharacter(mapCharacter, newTop, newLeft, gradual, cutscene, areaCut
 							: newTop + 'px';
 					weapon.style.top =
 						parseInt(mapCharacter.style.top.replace('px', '')) +
-						400 +
+                        window.globalTopPositionOffset +
 						'px';
 					topDown = 'down';
 				}

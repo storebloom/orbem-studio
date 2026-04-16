@@ -14,6 +14,20 @@ html {
       cursor: pointer;
     }
 
+    .orbem-tablet-show {
+      display: none;
+
+      @media only screen and (max-width: 1025px) {
+        display: block;
+      }
+    }
+
+    .orbem-tablet-hide {
+      @media only screen and (max-width: 1025px) {
+        display: none;
+      }
+    }
+
     .orbem-mobile-show {
       display: none;
 
@@ -244,7 +258,7 @@ html {
       overflow: hidden;
       overscroll-behavior: none;
 
-      @media only screen and (max-width: 480px) {
+      @media only screen and (max-width: 1025px) {
         height: 100dvh;
         left: 0;
         position: fixed;
@@ -481,7 +495,7 @@ html {
           white-space: nowrap;
           animation: cutsceneNextTextPulse 1s infinite;
 
-          @media only screen and (max-width: 480px) {
+          @media only screen and (max-width: 1025px) {
             content: 'Tap to continue';
           }
         }
@@ -1330,7 +1344,7 @@ html {
             .pulse-wave-container {
               background: rgba(0, 0, 255, 0.17);
               border: 3px solid blue;
-              border-radius: 10000px;
+              border-radius: 20px;
               left: 8px;
               opacity: 0;
               position: absolute;
@@ -1343,8 +1357,8 @@ html {
               .pulse-wave-container {
                 left: unset;
                 opacity: 1;
-                padding: 1000px;
-                transform: translate(-1000px, -1000px);
+                padding: 400px;
+                transform: translate(-400px, -500px);
                 z-index: 99999999;
               }
             }
@@ -1494,6 +1508,10 @@ html {
 
         @media only screen and (max-width: 480px) {
           width: 300px;
+        }
+
+        @media only screen and (max-width: 1025px) and (min-width: 481px) {
+          height: 300px;
         }
 
         .misc-gauge-wrap {
@@ -1678,6 +1696,19 @@ html {
       .mobile-action-key {
         display: none;
 
+        @media only screen and (max-width: 1025px) {
+          bottom: 8%;
+          display: block;
+          position: fixed;
+          right: 3rem;
+          width: 15vw;
+          z-index: 7;
+
+          img {
+            width: 100%;
+          }
+        }
+
         @media only screen and (max-width: 480px) {
           bottom: 25%;
           display: block;
@@ -1694,14 +1725,28 @@ html {
 
       .touch-buttons {
         display: none;
-        flex-wrap: wrap;
-        height: 30vw;
-        left: 1rem;
-        max-width: 100% !important;
-        position: fixed;
-        bottom: 25%;
-        transition: all .5s;
-        width: 30vw;
+
+        @media (max-width: 1025px) {
+          flex-wrap: wrap;
+          position: fixed;
+          transition: all .5s;
+          bottom: 8%;
+          height: 15vw;
+          left: 3rem;
+          max-width: 100% !important;
+          width: 15vw;
+        }
+
+        @media (max-width: 480px) {
+          flex-wrap: wrap;
+          height: 30vw;
+          left: 1rem;
+          max-width: 100% !important;
+          position: fixed;
+          bottom: 25%;
+          transition: all .5s;
+          width: 30vw;
+        }
 
         span {
           z-index: 2;
@@ -1714,14 +1759,14 @@ html {
         }
 
         &.do-mobile {
-          @media only screen and (max-width: 480px) {
+          @media only screen and (max-width: 1025px) {
             display: flex;
             z-index: 6;
           }
         }
 
         &.engage {
-          @media only screen and (max-width: 480px) {
+          @media only screen and (max-width: 1025px) {
             opacity: .4;
             z-index: 99;
           }

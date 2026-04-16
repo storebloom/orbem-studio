@@ -950,7 +950,7 @@ class Meta_Box {
                     ],
                     'explore-remove-after-cutscene' => [
                         [
-                            'select' => $explore_cutscene_array
+                            'multiselect' => $explore_cutscene_array
                         ],
                         'Select a cutscene that will remove this character after it finishes.'
                     ],
@@ -1113,7 +1113,7 @@ class Meta_Box {
                     ],
                     'explore-remove-after-cutscene' => [
                         [
-                            'select' => $explore_cutscene_array
+                            'multiselect' => $explore_cutscene_array
                         ],
                         'Select a cutscene that will remove this enemy after it finishes.'
                     ],
@@ -1273,7 +1273,7 @@ class Meta_Box {
                     ],
                     'explore-remove-after-cutscene' => [
                         [
-                            'select' => $explore_cutscene_array
+                            'multiselect' => $explore_cutscene_array
                         ],
                         'Select a cutscene that will remove this communication after it finishes.'
                     ],
