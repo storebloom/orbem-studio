@@ -828,6 +828,10 @@ class Meta_Box {
                             ]
                         ],
                         'Choose whether this character can be walked over.'
+                    ],
+                    'explore-hitbox-inset' => [
+                        'number',
+                        'How many pixels smaller should the character\'s hitbox be. Affects all sides.'
                     ]
                 ],
 

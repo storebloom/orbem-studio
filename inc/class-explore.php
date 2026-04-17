@@ -1478,6 +1478,7 @@ class Explore
                 $passable                       = (($explore_point_meta['explore-passable'] ?? '') === 'yes');
                 $interacted_with                = $explore_point_meta['explore-interacted'] ?? '';
                 $crew_mate                      = $explore_point_meta['explore-crew-mate'] ?? '';
+                $hitbox_inset                   = $explore_point_meta['explore-hitbox-inset'] ?? '';
                 $path_trigger                   = $explore_point_meta['explore-path-trigger'] ?? '';
                 $path_trigger                   = false === empty($path_trigger) ? $path_trigger : '';
                 $path_trigger_left              = false === empty($path_trigger['left']) ? $path_trigger['left'] : '';
@@ -1512,7 +1513,6 @@ class Explore
                         true !== $breakable &&
                         true !== $collectable &&
                         true !== $draggable &&
-                        true !== $is_hazard &&
                         $passable &&
                         'explore-point' === $explore_point->post_type &&
                         true === empty($materialize_after_cutscene)
@@ -1559,6 +1559,11 @@ class Explore
                     // Explore character crew mate.
                     if ('explore-character' === $explore_point->post_type && 'yes' === $crew_mate) {
                         $html .= ' data-crewmate="' . esc_attr($crew_mate) . '"';
+                    }
+
+                    // Explore character crew mate.
+                    if ('explore-character' === $explore_point->post_type && '' !== $hitbox_inset) {
+                        $html .= ' data-hitbox-inset="' . esc_attr($hitbox_inset) . '"';
                     }
 
                     if ('explore-character' === $explore_point->post_type) {
@@ -3056,6 +3061,7 @@ class Explore
             'width'            => $meta['explore-width'] ?? '',
             'ability'          => $meta['explore-ability'] ?? '',
             'weapon'           => $meta['explore-weapon-choice'] ?? '',
+            'hitbox-inset'     => $meta['explore-hitbox-inset'] ?? '',
             'id'               => $main_character->ID,
             'hurt_sound'       => $character_hurt_sound,
             'name'             => $name,

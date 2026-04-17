@@ -422,6 +422,7 @@ include plugin_dir_path(__FILE__) . 'plugin-header.php';
             data-name="<?php echo esc_attr(true !== $orbem_studio_player_name ? $orbem_studio_main_character_info['name'] ?? '' : '{{playerName}}'); ?>"
             data-voice="<?php echo esc_attr($orbem_studio_main_character_info['voice'] ?? '');?>"
             data-ability="<?php echo esc_attr($orbem_studio_main_character_info['ability'] ?? ''); ?>"
+            data-hitbox-inset="<?php echo esc_attr($orbem_studio_main_character_info['hitbox-inset'] ?? ''); ?>"
         >
             <span class="misc-gauge-wrap"><span class="misc-gauge"></span></span>
             <?php if (false === empty($orbem_studio_hurt_sound)) : ?>
