@@ -57,11 +57,36 @@ document.addEventListener('DOMContentLoaded', function () {
         window.globalLeftPositionOffset = 150;
         weaponPosLeft = window.globalLeftPositionOffset;
         isOnMobile = true;
+
+        detectDeviceOrientationChange();
     }
 
     if (1025 > window.innerWidth && 500 < window.innerWidth) {
         window.globalTopPositionOffset = 150;
         isOnTablet = true
+
+        detectDeviceOrientationChange();
+    }
+
+    function detectDeviceOrientationChange() {
+        let lastWidth = window.innerWidth;
+        let lastHeight = window.innerHeight;
+
+        window.addEventListener('resize', () => {
+            const newWidth = window.innerWidth;
+            const newHeight = window.innerHeight;
+
+            // Only reload if orientation actually changed
+            const wasLandscape = lastWidth > lastHeight;
+            const isLandscape = newWidth > newHeight;
+
+            if (wasLandscape !== isLandscape) {
+                location.reload();
+            }
+
+            lastWidth = newWidth;
+            lastHeight = newHeight;
+        });
     }
 
 	currentLocation = document.querySelector('.game-container');
@@ -1148,6 +1173,9 @@ function addUserPoints(amount, type, position, collectable, missionName) {
 	) {
 		persistItemRemoval(position, type, amount, 2000, '', false);
 	}
+
+    // Update scores.
+    replaceScoresInBody();
 }
 
 /**
@@ -1201,9 +1229,34 @@ function triggerGameOver() {
 function persistItemRemoval(item, type, amount, timeoutTime, reset, direct) {
 	'use strict';
 
-	if (false === isLoggedIn) {
-		return;
-	}
+    if ('' !== item && type) {
+        const storageKey = `orbem_local_${type}`;
+        const current = JSON.parse(localStorage.getItem(storageKey) || '{}');
+
+        if (true === direct) {
+            amount = 'health' !== type
+                ? (current.current || 0) + amount
+                : (current.current || 0) - amount;
+        }
+
+        const items = Array.isArray(item) ? item : [item];
+        const existingItems = Array.isArray(current.positions) ? current.positions : [];
+        const newHigh = amount > (current.high || 0) ? amount : (current.high || 0);
+
+        const updated = {
+            type,
+            current: amount,
+            high: newHigh,
+            reset,
+            positions: Array.from(new Set(existingItems.concat(items))),
+        };
+
+        localStorage.setItem(storageKey, JSON.stringify(updated));
+    }
+
+    if (false === isLoggedIn) {
+        return;
+    }
 
 	const filehref = `${OrbemOrder.siteRESTURL}/add-explore-points/`;
 
@@ -1988,69 +2041,127 @@ const hurtTheEnemy = (function () {
 
 function hurtAnimationEnemy(enemy, pushAmount) {
     if (false === enemy.classList.contains('hurt')) {
-        const direction = enemy.dataset.currentDirection || 'down';
+        const mapChar = document.querySelector('#map-character');
+        const direction = mapChar.className.replace('-dir', '');
         const currentLeft = parseInt(enemy.style.left, 10);
         const currentTop = parseInt(enemy.style.top, 10);
         const currentImage = enemy.querySelector('.character-icon.engage');
-        const hurtImage = enemy.querySelector('#' + cleanClassName(enemy.className) + direction + '-hurt');
+        let hurtDirection = 'down';
 
         enemy.classList.add('hurt');
+
+        let newLeft = currentLeft;
+        let newTop = currentTop;
+
+        pushAmount = pushAmount * 2;
+
+        if ('boss' === enemy.dataset.enemyType) {
+            pushAmount = 0 !== pushAmount ? pushAmount - 10 : 0;
+        }
+
+        switch (direction) {
+            case 'right':
+                newLeft = currentLeft + pushAmount;
+                hurtDirection = 'left';
+                break;
+            case 'left':
+                newLeft = currentLeft - pushAmount ;
+                hurtDirection = 'right';
+                break;
+            case 'down':
+                newTop = currentTop + pushAmount;
+                hurtDirection = 'up';
+                break;
+            case 'up':
+                newTop = currentTop - pushAmount;
+                hurtDirection = 'down';
+                break;
+        }
+
+        const hurtImage = enemy.querySelector('#' + cleanClassName(enemy.className) + hurtDirection + '-hurt');
 
         if ( hurtImage && currentImage ) {
             currentImage.classList.remove('engage');
             hurtImage.classList.add('engage');
         }
 
-
         setTimeout(() => {
             enemy.classList.remove('hurt');
-			const currentEnemyImage = enemy.querySelector('.character-icon.engage');
+            const currentEnemyImage = enemy.querySelector('.character-icon.engage');
 
-			if (currentEnemyImage === hurtImage) {
-				currentImage.classList.add('engage');
-			}
+            if (currentEnemyImage === hurtImage) {
+                currentImage.classList.add('engage');
+            }
 
             if ( hurtImage ) {
                 hurtImage.classList.remove('engage');
             }
         }, 700);
 
-        let newLeft = currentLeft;
-        let newTop = currentTop;
-
-        switch (direction) {
-            case 'left':
-                newLeft = currentLeft + (pushAmount * 2);
-                break;
-            case 'right':
-                newLeft = currentLeft - (pushAmount * 2);
-                break;
-            case 'up':
-                newTop = currentTop + (pushAmount * 2);
-                break;
-            case 'down':
-                newTop = currentTop - (pushAmount * 2);
-                break;
-        }
-
-        // Respect collision
+        // After computing newTop/newLeft from the hit force...
         const collisionWalls = document.querySelectorAll(
             '.map-character-icon.engage, .default-map svg rect, .map-item' +
             ':not([data-wanderer="yes"]):not(.explainer-container):not(.materialize-item-trigger):not(.drag-dest):not([data-trigger="true"]):not(.currently-dragging):not([data-passable="true"].no-point):not(.passable):not([data-genre="explore-sign"]):not([data-foreground="true"]):not([data-background="true"])'
         );
 
-        const pushedPosition = getBlockDirection(
-            collisionWalls,
-            enemy,
-            newTop,
-            newLeft,
-            true,
-            false
-        );
-
-        enemy.style.left = pushedPosition.left + 'px';
-        enemy.style.top = pushedPosition.top + 'px';
+        const clampedPosition = clampToWalls(collisionWalls, enemy, newTop, newLeft);
+        enemy.style.left = clampedPosition.left + 'px';
+        enemy.style.top  = clampedPosition.top  + 'px';
     }
+}
+
+function clampToWalls(collisionWalls, enemy, newTop, newLeft) {
+    const enemyImage = enemy.querySelector('.character-icon.engage') || enemy;
+    const inset = 20; // must match enemyHitInset
+
+    let clampedLeft = newLeft;
+    let clampedTop  = newTop;
+
+    // The enemy's collision box at the proposed new position
+    const eLeft   = newLeft  + inset;
+    const eTop    = newTop   + inset;
+    const eRight  = newLeft  + enemyImage.offsetWidth  - inset;
+    const eBottom = newTop   + enemyImage.offsetHeight - inset;
+
+    collisionWalls.forEach((wall) => {
+        // Skip self
+        if (wall === enemy) return;
+
+        // Get wall bounds — handle both DOM elements and plain objects
+        const wLeft   = wall.offsetLeft;
+        const wTop    = wall.offsetTop;
+        const wRight  = wall.offsetLeft + wall.offsetWidth;
+        const wBottom = wall.offsetTop  + wall.offsetHeight;
+
+        // No overlap — nothing to clamp
+        if (eRight <= wLeft || eLeft >= wRight ||
+            eBottom <= wTop || eTop >= wBottom) return;
+
+        // Compute penetration depth on each axis
+        const overlapLeft   = eRight  - wLeft;   // enemy's right into wall's left
+        const overlapRight  = wRight  - eLeft;   // enemy's left into wall's right
+        const overlapTop    = eBottom - wTop;     // enemy's bottom into wall's top
+        const overlapBottom = wBottom - eTop;     // enemy's top into wall's bottom
+
+        // Push out along the axis of least penetration
+        const minOverlap = Math.min(overlapLeft, overlapRight, overlapTop, overlapBottom);
+
+        if (minOverlap === overlapLeft) {
+            // Came from the right — push left
+            clampedLeft -= overlapLeft;
+        } else if (minOverlap === overlapRight) {
+            // Came from the left — push right
+            clampedLeft += overlapRight;
+        } else if (minOverlap === overlapTop) {
+            // Came from below — push down
+            clampedTop -= overlapTop;
+        } else {
+            // Came from above — push up
+            clampedTop += overlapBottom;
+        }
+    });
+
+    return { left: clampedLeft, top: clampedTop };
 }
 
 function saveEnemyMission(enemyMission, value) {
@@ -2466,6 +2577,10 @@ const enterNewArea = (function () {
                             newMapItems['start-left'] = parseInt(newMapItems['start-left']) + 240;
                         }
 
+                        if (isOnTablet) {
+                            newMapItems['start-top'] = parseInt(newMapItems['start-top']) + 240;
+                        }
+
 						characterItem.style.top =
 							newMapItems['start-top'] + 'px';
 						characterItem.style.left =
@@ -2513,6 +2628,10 @@ const enterNewArea = (function () {
                         const mainCharName = document.querySelector('#map-character .map-character-icon').alt.replace(' static', '');
                         const currentPlayerName = '' !== window.playerName ? window.playerName : mainCharName;
                         replaceNameInBody('{{playerName}}', currentPlayerName);
+
+                        // Update current scores for realtime / high score counters.
+                        replaceScoreTokens();
+                        replaceScoresInBody();
 					}, 100);
 				});
 
@@ -2525,6 +2644,55 @@ const enterNewArea = (function () {
 		}
 	};
 })();
+
+function replaceScoreTokens() {
+    'use strict';
+
+    const tokens = {
+        '{{currentMoney}}': '<span class="current-money-element" data-amount="0">0</span>',
+        '{{highMoney}}':    '<span class="high-money-element" data-amount="0">0</span>',
+        '{{currentPoints}}': '<span class="current-point-element" data-amount="0">0</span>',
+        '{{highPoints}}':    '<span class="high-point-element" data-amount="0">0</span>',
+    };
+
+    Object.entries(tokens).forEach(([token, html]) => {
+        document.querySelectorAll('*').forEach((el) => {
+            if (el.children.length === 0 && el.innerHTML.includes(token)) {
+                el.innerHTML = el.innerHTML.replace(token, html);
+            }
+        });
+    });
+}
+
+function replaceScoresInBody() {
+    'use strict';
+
+    const types = ['money', 'point'];
+
+    types.forEach((type) => {
+        const storageKey = `orbem_local_${type}`;
+        const stored = JSON.parse(localStorage.getItem(storageKey) || '{}');
+
+        const current = stored.current || 0;
+        const high = stored.high || 0;
+
+        updateScoreElements(type, current, high);
+    });
+}
+
+function updateScoreElements(type, current, high) {
+    'use strict';
+
+    document.querySelectorAll(`.current-${type}-element`).forEach((el) => {
+        el.textContent = current;
+        el.dataset.amount = current;
+    });
+
+    document.querySelectorAll(`.high-${type}-element`).forEach((el) => {
+        el.textContent = high;
+        el.dataset.amount = high;
+    });
+}
 
 /**
  * Pull item description content.
@@ -3736,6 +3904,11 @@ export function engageExploreGame() {
 	const touchButtons = document.querySelector('.touch-buttons');
 	window.previousCutsceneArea = OrbemOrder.previousCutsceneArea ?? '';
 
+    // Reset any local game stats.
+    resetLocalGameState();
+    replaceScoreTokens();
+    replaceScoresInBody();
+
     if (playerName && '' !== playerName.value) {
         const playerNameString = playerName.value;
         window.playerName = playerNameString;
@@ -3863,9 +4036,11 @@ export function engageExploreGame() {
 	// Update explore position if on explore page.
 	movementIntFunc();
 
+    const defaultMap =  document.querySelector('.default-map');
+
 	// Trigger cutscene if area is cutscene.
 	const isAreaCutscene =
-		'yes' === document.querySelector('.default-map').dataset.iscutscene;
+		'yes' === defaultMap.dataset.iscutscene;
 
 	if (isAreaCutscene && currentLocation) {
 		const cutSceneName = cleanClassName(
@@ -3908,8 +4083,16 @@ export function engageExploreGame() {
 	const mapChar = document.getElementById('map-character');
 
 	if (mapChar) {
-        if (isOnMobile && mapChar.style.left.replace('px', '') === mapChar.dataset.startLeft) {
+        if (isOnMobile && mapChar.style.left.replace('px', '') === defaultMap.dataset.startleft) {
             mapChar.style.left = (parseInt(mapChar.style.left.replace('px', '')) + 240) + 'px';
+
+            enterFullscreen();
+        }
+
+        if (isOnTablet && mapChar.style.top.replace('px', '') === defaultMap.dataset.starttop) {
+            mapChar.style.top = (parseInt(mapChar.style.top.replace('px', '')) + 240) + 'px';
+
+            enterFullscreen();
         }
 
 		mapChar.scrollIntoView({
@@ -3922,6 +4105,36 @@ export function engageExploreGame() {
 	setTimeout(() => {
 		fadeInScene();
 	}, 1000);
+}
+
+function resetLocalGameState() {
+    'use strict';
+
+    const types = ['point', 'health', 'money', 'communicate'];
+
+    types.forEach((type) => {
+        const storageKey = `orbem_local_${type}`;
+        const current = JSON.parse(localStorage.getItem(storageKey) || '{}');
+
+        const reset = {
+            type,
+            current: 0,
+            high: current.high || 0,
+            positions: [],
+        };
+
+        localStorage.setItem(storageKey, JSON.stringify(reset));
+    });
+}
+
+function enterFullscreen() {
+    const el = document.documentElement;
+
+    if (el.requestFullscreen) {
+        el.requestFullscreen();
+    } else if (el.webkitRequestFullscreen) { // iOS Safari
+        el.webkitRequestFullscreen();
+    }
 }
 
 /**
@@ -4090,7 +4303,7 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 			};
 
 			// Touching with buffer.
-            if (value && box && 'true' === value.dataset.hazard && (value?.offsetParent && 'boss' === value.offsetParent.dataset.enemyType && bossHazardOverlap(box, value))) {
+            if (value && box && 'true' === value.dataset.hazard && theHazardOverlap(box, value, (value?.offsetParent && 'boss' === value.offsetParent.dataset.enemyType))) {
                 // If in hazard set to true.
                 if (
                     false === canCharacterInteract(value, mapChar, 'hazard')
@@ -7199,6 +7412,7 @@ function getBlockDirection(
             : finalCharPos;
 
     let touchingMainChar = false;
+    box.dataset.collide = 'false';
 
     if (
         true === enemy &&
@@ -7240,6 +7454,7 @@ function getBlockDirection(
                     finalCharPos.offsetTop + finalCharPos.offsetHeight;
 
                 final.collide = true;
+                box.dataset.collide = 'true';
 
                 const topCollision =
                     collisionWallBottom > characterTop &&
@@ -7267,6 +7482,7 @@ function getBlockDirection(
                 ) {
                     final.left = left + adjust;
                     final.collide = true;
+                    box.dataset.collide = 'true';
                 }
 
                 if (
@@ -7277,16 +7493,19 @@ function getBlockDirection(
                 ) {
                     final.left = left - adjust;
                     final.collide = true;
+                    box.dataset.collide = 'true';
                 }
 
                 if (topCollision && !bottomCollision) {
                     final.top = top + adjust;
                     final.collide = true;
+                    box.dataset.collide = 'true';
                 }
 
                 if (bottomCollision && !topCollision) {
                     final.top = top - adjust;
                     final.collide = true;
+                    box.dataset.collide = 'true';
                 }
             }
         });
@@ -7308,35 +7527,41 @@ function getBlockDirection(
  * @return {boolean}
  */
 function elementsOverlap(rect1, rect2, buffer) {
-	'use strict';
+    'use strict';
 
-	const rect1Right = rect1.offsetLeft + rect1.offsetWidth;
-	const rect1Left = rect1.offsetLeft;
-	const rect1Top = rect1.offsetTop;
-	const rect1Bottom = rect1.offsetTop + rect1.offsetHeight;
-	const rect2Right = rect2.offsetLeft + rect2.offsetWidth;
-	const rect2Left = rect2.offsetLeft;
-	const rect2Top = rect2.offsetTop;
-	const rect2Bottom = rect2.offsetTop + rect2.offsetHeight;
+    const isMainCharacter = rect2?.classList ? rect2.classList.contains('map-character-icon') : false;
+    const isEnemy = rect1?.classList ? rect1.classList.contains('enemy-item') : false;
+    const hitboxInset = (isMainCharacter && isEnemy) ? (parseFloat(rect2.offsetParent.dataset.hitboxInset) || 0) : 0;
 
-	return (
-		false ===
-		(rect1Right + buffer < rect2Left - buffer ||
-			rect1Left + buffer > rect2Right - buffer ||
-			rect1Bottom + buffer < rect2Top - buffer ||
-			rect1Top - buffer > rect2Bottom + buffer)
-	);
+    const rect1Right  = rect1.offsetLeft + rect1.offsetWidth;
+    const rect1Left   = rect1.offsetLeft;
+    const rect1Top    = rect1.offsetTop;
+    const rect1Bottom = rect1.offsetTop  + rect1.offsetHeight;
+
+    const rect2Right  = rect2.offsetLeft + rect2.offsetWidth  - hitboxInset;
+    const rect2Left   = rect2.offsetLeft                      + hitboxInset;
+    const rect2Top    = rect2.offsetTop                       + hitboxInset;
+    const rect2Bottom = rect2.offsetTop  + rect2.offsetHeight - hitboxInset;
+
+    return (
+        false ===
+        (rect1Right  + buffer < rect2Left   - buffer ||
+            rect1Left   + buffer > rect2Right  - buffer ||
+            rect1Bottom + buffer < rect2Top    - buffer ||
+            rect1Top    - buffer > rect2Bottom + buffer)
+    );
 }
 
-function bossHazardOverlap(el1, el2) {
+function theHazardOverlap(el1, el2, isParent) {
     'use strict';
 
     const container = document.querySelector('.game-container');
     const containerRect = container.getBoundingClientRect();
+    const hitboxInset = parseFloat(el1.offsetParent.dataset.hitboxInset) || 0;
 
-    const getRect = (el) => {
+    const getRect = (el, applyInset = false) => {
         if (el?.dataset?.hazard) {
-            const bossRect = el.offsetParent.getBoundingClientRect();
+            const bossRect = isParent ? el.offsetParent.getBoundingClientRect() : el.getBoundingClientRect();
             const waveRect = el.getBoundingClientRect();
 
             const bossCenterX = bossRect.left + bossRect.width  / 2;
@@ -7353,16 +7578,18 @@ function bossHazardOverlap(el1, el2) {
         }
 
         const r = el.getBoundingClientRect();
+        const inset = applyInset ? hitboxInset : 0;
+
         return {
-            left:   r.left   - containerRect.left,
-            right:  r.right  - containerRect.left,
-            top:    r.top    - containerRect.top,
-            bottom: r.bottom - containerRect.top,
+            left:   r.left   - containerRect.left + inset,
+            right:  r.right  - containerRect.left - inset,
+            top:    r.top    - containerRect.top  + inset,
+            bottom: r.bottom - containerRect.top  - inset,
         };
     };
 
-    const rect1 = getRect(el1);
-    const rect2 = getRect(el2);
+    const rect1 = getRect(el1, true);
+    const rect2 = getRect(el2, false);
 
     return (
         false ===
@@ -8595,13 +8822,10 @@ function escapeRegExp(str) {
     return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-function replaceNameInBody(search, replacement, {
-    caseInsensitive = false,
-    includeEventHandlerAttributes = false, // set true if you REALLY want to touch onclick="", etc.
-} = {}) {
+function replaceNameInBody(search, replacement) {
     if (search == null || search === "") return;
 
-    const flags = "g" + (caseInsensitive ? "i" : "");
+    const flags = "g";
     const re = new RegExp(escapeRegExp(String(search)), flags);
 
     // 1) Replace in text nodes
@@ -8634,7 +8858,7 @@ function replaceNameInBody(search, replacement, {
             const value = attr.value;
 
             // Optional safety: skip inline event handler attributes like onclick=""
-            if (!includeEventHandlerAttributes && /^on/i.test(name)) continue;
+            if (/^on/i.test(name)) continue;
 
             if (value && re.test(value)) {
                 el.setAttribute(name, value.replace(re, replacement));
