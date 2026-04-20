@@ -54,6 +54,26 @@ class Menu
         ]);
     }
 
+
+    /**
+     * Add orbem studio menu link to admin bar.
+     *
+     * @action admin_bar_menu
+     * @param $wp_admin_bar
+     * @return void
+     */
+    public function adminBarMenu($wp_admin_bar): void
+    {
+        $wp_admin_bar->add_node([
+            'id'    => 'orbem-studio-link',
+            'title' => '<span class="ab-icon dashicons dashicons-games" style="top:2px;"></span> Orbem Studio',
+            'href'  => admin_url('admin.php?page=orbem-studio'),
+            'meta'  => [
+                'title' => 'Go to Orbem Studio',
+            ],
+        ]);
+    }
+
     /**
      * Call back function for rest route that saves the setup type choice and creates game if generate type chosen.
      * @param \WP_REST_Request $request
@@ -85,7 +105,7 @@ class Menu
                 [
                     'title' => 'Rovanar forest',
                     'meta'  => [
-                        'explore-map'        => $this->plugin->dir_url . '/assets/src/images/starter-game/Rovanar_Forest.jpg',
+                        'explore-map'        => $this->plugin->dir_url . '/assets/src/images/starter-game/rovanar-forest.jpg',
                         'explore-start-top'  => 2900,
                         'explore-start-left' => 2276,
                     ]
@@ -128,11 +148,12 @@ class Menu
                 [
                     'title' => 'Wall 1',
                     'meta'  => [
-                        'explore-area'   => 'rovanar-forest',
-                        'explore-top'    => 2684,
-                        'explore-left'   => 2982,
-                        'explore-height' => 733,
-                        'explore-width'  => 104
+                        'explore-area'     => 'rovanar-forest',
+                        'explore-top'      => 2684,
+                        'explore-left'     => 2982,
+                        'explore-height'   => 733,
+                        'explore-width'    => 104,
+                        'explore-passable' => 'yes'
                     ]
                 ]
             );
@@ -246,7 +267,7 @@ class Menu
                     'title'         => 'Collect the key',
                     'meta'          => [
                         'explore-area'             => 'rovanar-forest',
-                        'explore-top'              => 2834,
+                        'explore-top'              => 2815,
                         'explore-left'             => 2436,
                         'explore-height'           => 10,
                         'explore-width'            => 550,
@@ -261,13 +282,15 @@ class Menu
                 'explore-explainer',
                 [
                     'title'         => 'You win',
-                    'content'       => '<!-- wp:paragraph {"align":"center","fontSize":"x-large"} -->
+                    'content'       => '<!-- wp:group {"style":{"color":{"background":"#ffffff"},"spacing":{"padding":{"top":"var:preset|spacing|30","bottom":"var:preset|spacing|30","left":"var:preset|spacing|30","right":"var:preset|spacing|30"}},"border":{"radius":{"topLeft":"10px","topRight":"10px","bottomLeft":"10px","bottomRight":"10px"}}},"layout":{"type":"constrained"}} -->
+<div class="wp-block-group has-background" style="border-top-left-radius:10px;border-top-right-radius:10px;border-bottom-left-radius:10px;border-bottom-right-radius:10px;background-color:#ffffff;padding-top:var(--wp--preset--spacing--30);padding-right:var(--wp--preset--spacing--30);padding-bottom:var(--wp--preset--spacing--30);padding-left:var(--wp--preset--spacing--30)"><!-- wp:paragraph {"align":"center","fontSize":"x-large"} -->
 <p class="has-text-align-center has-x-large-font-size"><strong>Congratulations! You completed the game!</strong></p>
 <!-- /wp:paragraph -->
 
 <!-- wp:paragraph {"align":"center"} -->
 <p class="has-text-align-center"><strong>Learn more about game building at <a href="https://orbem.studio/" target="_blank" rel="noreferrer noopener">Orbem.Studio</a></strong></p>
-<!-- /wp:paragraph -->',
+<!-- /wp:paragraph --></div>
+<!-- /wp:group -->',
                     'meta'          => [
                         'explore-area'             => 'rovanar-forest',
                         'explore-width'            => 700,
