@@ -5,97 +5,126 @@ Tags: game engine, rpg, storytelling, gamification, narrative game
 Requires at least: 6.1
 Tested up to: 6.9
 Requires PHP: 8.1
-Stable tag: 1.4.0
+Stable tag: 1.4.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Build fully interactive, story-driven games directly inside WordPress. No external engines required!
+Build fully playable, browser-based games directly inside WordPress. No canvas. No external engine. Just a plugin.
 
 == Description ==
 
-**Orbem Studio** turns WordPress into a fully featured, browser-based game engine.
+**Orbem Studio** is a no-code browser game engine that runs entirely inside WordPress.
 
-Design immersive, map-driven experiences with characters, missions, cutscenes, items, abilities, and progression systems all managed through WordPress’ familiar admin interface.
+Build real games with combat, NPCs, missions, inventory, cutscenes, boss fights. Publish them as a URL on your own site. No Unity. No canvas. No downloads. Your game lives on a WordPress page.
 
-Orbem Studio is built for developers and creators who want real gameplay, not just gamified UI. It provides structured systems, performance-focused architecture, and developer tooling that allows complete games to be authored, played, and extended entirely within WordPress.
+The engine handles movement, collision, triggers, progression, and state entirely through WordPress systems. If you can install a plugin, you can build a game.
 
-Whether you’re building a narrative RPG, an educational experience, or an experimental interactive world, Orbem Studio gives you the tools to ship.
+= Why Developers Use Orbem Studio =
 
-== Key Features ==
+Most browser game tools require canvas, external libraries, or separate hosting. Orbem Studio runs inside WordPress itself. Your game is a page on your site and shareable as a URL, playable in any browser, no app store required.
 
-= 🎮 Full Front-End Game Engine =
-* Real-time player movement
-* Interactive maps and collision-aware elements
-* Directional character asset and animations assignments
-* Trigger-based interactions
+The simultaneous build and playtest workflow means you place an object and immediately walk your character into it to test. No mode switching. No recompiling. Just build and play.
 
-= 🧩 Modular Game Objects =
-* Areas, missions, cutscenes, enemies, items, explainer popups, focus view items, weapons, and characters
-* All content managed as WordPress custom post types using proprietary custom fields
-* Fully extensible metadata-driven design
+= What You Can Build =
 
-= 🧠 Mission & Progression System =
-* Branching mission chains
-* Conditional triggers and unlocks
-* Persistent player state
-* Health, mana, power, experience, currency, and leveling
+Orbem Studio ships with systems for:
 
-= 🛠 Developer Mode (Admin-Only) =
-* Live in-game object/character placement
-* Visual trigger overlays
-* Admin-only editing tools
-* Level selector for easy level building
-* Rapid iteration without page reloads
-* Front end wall-builder
+* Combat with directional attacks, heavy attacks, charged attacks, and boss fight mechanics
+* Enemies with wander, runner, and projectile behaviors, health bars, and hurt animations
+* Missions and progression with branching chains, conditional triggers, and persistent player state
+* Cutscenes and scripted events with per-area music, sound effects, and cinematic playback
+* Inventory with weapons, gear, consumables, and equip logic
+* Mobile controls with d-pad support and landscape mode
+* Developer mode with live object placement, visual trigger overlays, and a front end wall builder
 
-= 📦 Inventory & Equipment System =
-* Storage limits
-* Weapons, gear, and consumables
-* Equip / unequip logic
-* Character-bound equipment support
+= Proven in Production =
 
-= 🔊 Media-Rich Storytelling =
-* Cutscenes and scripted events
-* Per-area & per-cutscene music
+Games built with Orbem Studio:
+
+* [One Wizard Wrong Forest](https://orbemstudio.itch.io/one-wizard-wrong-forest) -- fantasy brawler with goblin combat and a tree golem boss
+* [Cemetery Showdown](https://orbemstudio.itch.io/cemetery-showdown) -- zombie combat game
+* [30 minute build demo](https://youtu.be/TS3HI2M5vH0) -- watch a complete game built from scratch
+
+= Getting Started =
+
+Install the plugin, click Generate a Starter Game, and you have a playable game running on your WordPress site in under 60 seconds. No configuration required to get started.
+
+Or sign up at [orbem.studio](https://orbem.studio) to build and host your game without your own WordPress site.
+
+= Key Features =
+
+**Game Engine**
+
+* Full browser game engine running inside WordPress with no external dependencies
+* Real-time player movement and collision
+* Simultaneous build and playtest -- no mode switching or recompiling
+
+**Combat System**
+
+* Directional attacks, heavy attacks, and charged attacks
+* Boss fight mechanics with phase transitions and pulse wave attacks
+* Enemy AI with wander, chase, runner, and projectile behaviors
+* Enemy health bars, hurt animations, and death states
+
+**Missions and Progression**
+
+* Branching mission chains with conditional triggers
+* Persistent player state across sessions
+* Health, mana, power, experience, currency, and leveling systems
+* Unlock and materialize triggers
+
+**Cutscenes and Storytelling**
+
+* Scripted cutscene events with dialogue and voice
+* Per-area and per-cutscene music
 * Sound effects and audio triggers
 * Intro videos and cinematic playback
+* Google Text-to-Speech integration for voiced dialogue
 
-= 🔐 Secure & Performant =
-* REST API–based architecture
-* Permission-aware custom endpoints
+**Inventory and Equipment**
+
+* Weapons, gear, and consumables
+* Equip and unequip logic
+* Character-bound equipment support
+* Storage limits
+
+**Mobile Support**
+
+* D-pad controls for touch devices
+* Landscape mode support
+* Mobile-optimized combat hitbox
+
+**Developer Mode**
+
+* Live in-game object and character placement
+* Visual trigger overlays
+* Front end wall builder
+* Level selector for rapid iteration
+* Admin-only editing tools
+
+**Architecture**
+
+* REST API based architecture with permission-aware endpoints
 * Subscriber-safe gameplay routes
-* Optimized meta access and caching strategies
+* Optimized meta access and caching
+* Extensible via WordPress hooks and filters
+* Google OAuth support for player login
 
-= 🧑‍💻 Built for Developers =
-* Clean, modern PHP architecture
-* Environment-aware behavior (local vs production)
-* Extensible via hooks and filters
-* No hard dependency on third-party services
+= Use Cases =
 
-== Use Cases ==
-
-* Narrative RPGs
-* Interactive fiction
-* Educational games
-* Gamified onboarding
-* Experimental storytelling
-* Browser-based adventure games
-
-If it can be represented spatially and interactively, Orbem Studio can power it.
-
-== Screenshots ==
-
-1. Live gameplay view showing player movement, HUD, missions, and interactive map elements.
-2. Developer Mode overlay with visual triggers and in-game editing tools.
-3. Inventory and character management panels.
-4. Global config options.
+* Browser-based action games
+* Narrative RPGs and interactive fiction
+* Educational games and gamified experiences
+* Playable demos and interactive product experiences
+* Experimental web-native game projects
 
 == Installation ==
 
 1. Upload the `orbem-studio` folder to `/wp-content/plugins/`
 2. Activate the plugin through the **Plugins** menu in WordPress
-3. Follow setup steps in the global game settings under **Orbem Studio** in the admin menu
-4. Publish the page or auto generate one and begin building your game world
+3. Navigate to **Orbem Studio** in the admin menu
+4. Click **Generate a Starter Game** to create a playable game instantly
+5. Or follow the manual setup steps in Global Game Options to build from scratch
 
 == External Services ==
 
@@ -110,21 +139,16 @@ The service is used to convert in-game cutscene and explainer popup text content
 
 What data is sent and when:
 When text-to-speech is enabled by the site administrator and triggered by player interaction, the plugin sends the following data to Google:
-- The text content to be synthesized
-- The configured language and voice parameters
-- The API key provided by the site administrator
+
+* The text content to be synthesized
+* The configured language and voice parameters
+* The API key provided by the site administrator
 
 No personal user data is sent by default. The text content is only sent at the moment audio generation is requested.
 
-Service provider:
-Google LLC
-
-Terms of Service:
-https://cloud.google.com/terms
-
-Privacy Policy:
-https://policies.google.com/privacy
-
+Service provider: Google LLC
+[Terms of Service](https://cloud.google.com/terms)
+[Privacy Policy](https://policies.google.com/privacy)
 
 = Google OAuth / Token Verification =
 
@@ -134,41 +158,46 @@ What the service is used for:
 The service is used to verify the authenticity of a Google ID token during login.
 
 What data is sent and when:
-When a user logs in using Google Sign-In, the plugin sends:
-- The Google ID token provided by the user’s browser
+When a user logs in using Google Sign-In, the plugin sends the Google ID token provided by the user's browser. This request is made once per login attempt to verify the token's validity. The plugin does not store Google credentials.
 
-This request is made once per login attempt to verify the token’s validity. The plugin does not store Google credentials.
-
-Service provider:
-Google LLC
-
-Terms of Service:
-https://developers.google.com/identity/terms
-
-Privacy Policy:
-https://policies.google.com/privacy
+Service provider: Google LLC
+[Terms of Service](https://developers.google.com/identity/terms)
+[Privacy Policy](https://policies.google.com/privacy)
 
 == Frequently Asked Questions ==
 
 = Does this require an external game engine? =
-No. Orbem Studio runs entirely inside WordPress.
+No. Orbem Studio runs entirely inside WordPress. No canvas, no external libraries, no separate hosting required.
 
 = Is this plugin for developers only? =
-Developers can extend the game engine if desired, but non-technical creators can build complete experiences using the admin interface alone.
+Developers can extend the engine via hooks and filters, but non-technical creators can build complete games using the visual admin interface alone.
 
 = Can subscribers play the game? =
 Yes. Gameplay routes are designed to support subscribers and logged-in users safely.
 
 = Can guests play without logging in? =
-This is configurable. You can require login or allow guest gameplay depending on your settings. (Note: logged-out users will not have persisted game play data)
+This is configurable. You can require login or allow guest gameplay depending on your settings. Note that logged-out users will not have persisted gameplay data, but local score tracking is supported.
 
 = Is Orbem Studio extensible? =
 Yes. All systems are designed to be extended using WordPress hooks, filters, and custom metadata.
 
-= Where can I find documentation for Orbem Studio? =
-We have extensive documentation at https://orbemorder.com/orbem-studio/docs/readme. Tutorials can be found on our channel at https://youtube.com/@orbemorder.
+= Do I need my own WordPress site? =
+No. You can sign up at orbem.studio to build and host your game without your own WordPress installation.
+
+= Where can I find documentation? =
+Documentation is available at https://orbemorder.com/orbem-studio/docs/readme
+
+Tutorials are available on the Orbem Studio YouTube channel at https://youtube.com/@orbemstudio
 
 == Changelog ==
+
+= 1.4.1 =
+* Add admin bar link.
+* Tighten npc wander stuck logic.
+* Fix boss shooting after wave end.
+* Update site generator map image.
+* Update site generator specs.
+
 
 = 1.4.0 =
 * Add local current/high score tracker.

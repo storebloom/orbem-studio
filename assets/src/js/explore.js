@@ -1010,17 +1010,18 @@ function makeNPCWander(npc, walkingSpeed, timeBetween, enemy) {
 				}
 			}
 
-			if (collisionCount > 100) {
-				if (false === enemy) {
-					pauseNpc(timeBetween, npc);
-				}
-				moveDir = '';
-				triedDown = false;
-				triedUp = false;
-				triedLeft = false;
-				triedRight = false;
-				swap++;
-			}
+            if (collisionCount > 20) {
+                pauseNpc(timeBetween, npc);
+
+                npc.dataset.stuck = 'true';
+                moveDir = '';
+                triedDown = false;
+                triedUp = false;
+                triedLeft = false;
+                triedRight = false;
+                swap++;
+                collisionCount = 0;
+            }
 
 			if (noCollideCount > 20) {
 				collisionCount = 0;
@@ -1052,6 +1053,15 @@ function getRandomDir(currentDir, enemy, enemyEl) {
     const dirs = ['up', 'down', 'left', 'right'];
 
     if (true === enemy && enemyEl) {
+        // If flagged as stuck, pick a random direction to escape
+        if ('true' === enemyEl.dataset.stuck) {
+            enemyEl.dataset.stuck = 'false';
+            const excludeDirs = Array.isArray(currentDir) ? currentDir : [currentDir];
+            const filteredDirs = dirs.filter((dir) => !excludeDirs.includes(dir));
+            const randomIndex = Math.floor(Math.random() * filteredDirs.length);
+            return filteredDirs[randomIndex];
+        }
+
         const mapCharacter = document.getElementById('map-character');
         const mapCharacterImage = document.querySelector(
             '.map-character-icon.engage'
@@ -1187,9 +1197,6 @@ function triggerGameOver() {
 	const gameOver = document.querySelector('.game-over-notice');
 
 	if (gameOver) {
-		// Clear shooter interval.
-		clearInterval(shooterInterval);
-
 		const tryAgain = document.querySelector('.try-again');
 		const defaultMap = document.querySelector('.default-map');
 
@@ -1985,7 +1992,7 @@ const hurtTheEnemy = (function () {
                 playHurtSound(value);
 
                 if (0 === newHealth) {
-                    clearInterval(window.shooterInt);
+                    stopShooterEnemy(value);
                     stopRunnerEnemy(value);
 
 					const enemyName = cleanClassName(value.className);
@@ -2219,8 +2226,13 @@ const enterNewArea = (function () {
             });
         }
 
-		// Clear enemy interval.
-		clearInterval(window.shooterInt);
+        const enemyShooters = document.querySelectorAll('.enemy-item[data-enemy-type="shooter"]');
+
+        if (enemyShooters) {
+            enemyShooters.forEach((enemyItem) => {
+                stopShooterEnemy(enemyItem);
+            });
+        }
 
 		// Remove menu explainers.
 		const menuExplainers = document.querySelectorAll(
@@ -3248,6 +3260,17 @@ function stopRunnerEnemy(enemyEl) {
     stopRunnerPunching(enemyEl);
 }
 
+function stopShooterEnemy(enemyEl) {
+    'use strict';
+
+    if (!enemyEl || !enemyEl._shooterInt) {
+        return;
+    }
+
+    clearInterval(enemyEl._shooterInt);
+    enemyEl._shooterInt = null;
+}
+
 /**
  * Start enemies.
  * @param enemy
@@ -3359,7 +3382,7 @@ function updateBossWave(enemy) {
 		if ('projectile' === bossWaves[bossWaveCount]) {
 			engageShooter(enemy);
 		} else {
-			clearInterval(shooterInterval);
+            stopShooterEnemy(enemy);
             updatePunchImage(enemy, false);
 		}
 	}
@@ -3372,7 +3395,7 @@ function engageShooter(enemy) {
 
 	const projSpeed = enemy.dataset.enemyspeed;
 
-	shooterInterval = window.shooterInt = setInterval(() => {
+    enemy._shooterInt = setInterval(() => {
         updatePunchImage(enemy, true);
 
         setTimeout(() => {
@@ -3453,7 +3476,7 @@ function shootProjectile(
 	}
 
 	// check projectile position and remove if its wall.
-	const projMovement = setInterval(function () {
+	enemy._projMovement = setInterval(function () {
 		const projectile = enemy.querySelector(projectileClass);
 		let collisionWalls = document.querySelectorAll(
 			'.default-map svg rect, .protection, .map-character-icon.engage, #map-weapon img'
@@ -3483,7 +3506,7 @@ function shootProjectile(
 		// Link weapon back to player.
 		window.weaponConnection = true;
 
-		clearInterval(projMovement);
+		clearInterval(enemy._projMovement);
 	}, 4500);
 }
 
