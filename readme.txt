@@ -5,7 +5,7 @@ Tags: game engine, rpg, storytelling, gamification, narrative game
 Requires at least: 6.1
 Tested up to: 6.9
 Requires PHP: 8.1
-Stable tag: 1.4.1
+Stable tag: 1.4.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -191,13 +191,19 @@ Tutorials are available on the Orbem Studio YouTube channel at https://youtube.c
 
 == Changelog ==
 
+= 1.4.2 =
+* Add alternate message for no area.
+* Remove game page content addition.
+* Fix logged in no login required button.
+* Update game generated metadata format.
+* Remove orbem studio pro business logic.
+
 = 1.4.1 =
 * Add admin bar link.
 * Tighten npc wander stuck logic.
 * Fix boss shooting after wave end.
 * Update site generator map image.
 * Update site generator specs.
-
 
 = 1.4.0 =
 * Add local current/high score tracker.

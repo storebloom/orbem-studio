@@ -18,16 +18,16 @@ class Util
     /**
      * Theme instance.
      *
-     * @var Plugin
+     * @var object
      */
-    public Plugin $plugin;
+    public object $plugin;
 
     /**
      * Class constructor.
      *
-     * @param Plugin $plugin Plugin class.
+     * @param object $plugin Plugin class.
      */
-    public function __construct(Plugin $plugin)
+    public function __construct(object $plugin)
     {
         $this->plugin = $plugin;
         $this->plugin->util = $this;
