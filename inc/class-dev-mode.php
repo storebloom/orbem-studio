@@ -71,13 +71,6 @@ class Dev_Mode
             'permission_callback' => $permission_callback
         ));
 
-        // Get addition fields by post type.
-        register_rest_route($namespace, '/get-new-fields/', array(
-            'methods' => 'POST',
-            'callback' => [$this, 'getNewFields'],
-            'permission_callback' => $permission_callback
-        ));
-
         // Create new whatever orbem studio post type. Requires administrator access.
         register_rest_route($namespace, '/add-new/', [
             'methods' => 'POST',
@@ -214,47 +207,6 @@ class Dev_Mode
                 'success' => true,
                 'data'    => esc_html__('success', 'orbem-studio'),
             ]);
-    }
-
-    /**
-     * Get fields.
-     * @param \WP_REST_Request $request
-     * @return \WP_REST_Response
-     */
-    public function getNewFields(\WP_REST_Request $request): \WP_REST_Response
-    {
-        $user   = wp_get_current_user();
-        $userid = (int) $user->ID;
-
-        // Endpoint intentionally accessible to all authenticated users.
-        if (0 === $userid) {
-            return rest_ensure_response([
-                'success' => false,
-                'data'    => esc_html__('User not authenticated', 'orbem-studio'),
-            ]);
-        }
-
-        // Get request data.
-        $data      = $request->get_json_params();
-        $post_type = isset($data['type']) ? sanitize_text_field(wp_unslash($data['type'])) : '';
-
-        if (!str_starts_with($post_type, 'explore-')) {
-            return rest_ensure_response([
-                'success' => false,
-                'data'    => esc_html__('Invalid post type', 'orbem-studio'),
-            ]);
-        }
-
-        ob_start();
-
-        $this->meta_box->explore_point_box($post_type);
-
-        $newFields = ob_get_clean();
-        
-        return rest_ensure_response([
-            'success' => true,
-            'data'    => $newFields,
-        ]);
     }
 
     /**

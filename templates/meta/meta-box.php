@@ -121,7 +121,7 @@ $orbem_studio_allowed_tags['option'] = [
     );
 
     if (true === $orbem_studio_front_end) :?>
-        <button type="submit" id="submit-new">Submit</button>
+        <button type="button" id="submit-new">Submit</button>
         </form>
     <?php endif;?>
 </div>
