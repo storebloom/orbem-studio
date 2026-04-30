@@ -699,9 +699,6 @@ function engageSettingsMenus() {
     'use strict';
 
     // Settings.
-    const settingCog = document.querySelector('#new-addition');
-
-    // Settings.
     const settingCogs = document.querySelectorAll(
         '#settings, #storage, #characters',
     );
