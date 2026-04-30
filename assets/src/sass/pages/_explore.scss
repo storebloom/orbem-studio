@@ -697,7 +697,7 @@ html {
     .right-bottom-devmode {
       bottom: 1rem;
       cursor: pointer;
-      display: flex;
+      display: none;
       flex-direction: column;
       gap: 1.5rem;
       right: 1rem;
@@ -705,15 +705,31 @@ html {
       z-index: 9;
 
       &.engage {
-        color: blue;
-        font-weight: bold;
+        display: flex;
       }
-    }
 
-    .dev-mode-menu-toggle {
-      background: #ffffff47;
-      padding: .5rem;
-      border-radius: 6px;
+      button {
+        border: none;
+        border-radius: 6px;
+        color: white;
+        padding: .5rem;
+        background: #0095c8;
+        cursor: pointer;
+        display: block;
+        font-size: 1.2rem;
+
+        &.engage {
+          background: white;
+          border: 1px solid #0095c8;
+          color: #0095c8;
+        }
+      }
+
+
+      #engage-wallbuilder.engage {
+        animation: glowPulse .5s infinite alternate;
+        box-shadow: 0 0 5px #0ff, 0 0 10px #0ff, 0 0 15px #0ff;
+      }
     }
 
     .dev-mode-menu {
@@ -723,135 +739,10 @@ html {
         display: block;
       }
 
-      #new-addition {
-        position: fixed;
-        left: 50%;
-        max-width: 700px;
-        top: 50%;
-        transform: translate(-50%, -50%);
-        width: max-content;
-
-        &:not(.engage) {
-          left: unset;
-          right: 1rem;
-          top: 6rem;
-          transform: unset;
-          width: 50px;
-          z-index: 9;
-
-          &:hover {
-            &:before {
-              font-size: 50px;
-            }
-          }
-
-          &:before {
-            content: url('../../src/images/toolbox.svg');
-            cursor: pointer;
-            position: absolute;
-            width: 50px;
-          }
-        }
-
-        &.engage {
-          z-index: 10;
-          overflow: scroll;
-          max-height: 95vh;
-
-          .add-new-fields {
-            width: 50%;
-            input {
-              border: 1px solid grey;
-            }
-          }
-
-          .addition-content {
-            display: block;
-
-            ul {
-              background: #c8c8c8;
-              padding: 01.5rem;
-              width: 40%;
-              min-width: 171px;
-              border-radius: 8px;
-              li {
-                padding-left: 0;
-                cursor: pointer;
-
-                &.engage {
-                  color: blue;
-                }
-
-                &:hover {
-                  font-weight: bold;
-                }
-              }
-            }
-          }
-        }
-
-        .addition-content {
-          background: white;
-          border: 1px solid black;
-          border-radius: 10px;
-          display: none;
-          padding: 1rem;
-
-          h2 {
-            margin-top: 0;
-          }
-
-          .add-new-form {
-            color: black;
-            display: flex;
-            flex-wrap: wrap;
-            flex-direction: row;
-            gap: 1rem;
-            position: relative;
-            width: 100%;
-
-            .close-settings {
-              cursor: pointer;
-              position: absolute;
-              right: .25rem;
-              top: .25rem;
-            }
-
-            h2 {
-              width: 100%;
-            }
-
-            a {
-              margin-top: 1rem;
-            }
-          }
-        }
-      }
-
-      .wallbuilder-container {
-        top: 15rem;
-        left: 1rem;
-        position: fixed;
-        z-index: 9;
-
-        #engage-wallbuilder {
-          cursor: pointer;
-          display: block;
-          font-size: 40px;
-        }
-
-        &.engage {
-          #engage-wallbuilder {
-            border-radius: 8px;
-            animation: glowPulse .5s infinite alternate;
-            box-shadow: 0 0 5px #0ff, 0 0 10px #0ff, 0 0 15px #0ff;
-          }
-        }
-      }
       .pinpoint-container {
         background: #ffffff47;
         border-radius: 6px;
-        bottom: 13rem;
+        bottom: 1rem;
         left: 1rem;
         padding: 0 .5rem .5rem;
         position: fixed;
@@ -871,8 +762,8 @@ html {
         }
 
         input {
-          border: 1px solid #00cee3;
-          border-radius: 4px;
+          border: 1px solid #00cee3!important;
+          border-radius: 6px!important;
         }
       }
     }

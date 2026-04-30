@@ -696,94 +696,97 @@ function engageStorageMenus() {
 }
 
 function engageSettingsMenus() {
-	'use strict';
+    'use strict';
 
-	// Settings.
-	const settingCogs = document.querySelectorAll(
-		'#settings, #storage, #characters'
-	);
+    // Settings.
+    const settingCog = document.querySelector('#new-addition');
 
-	if (settingCogs) {
-		settingCogs.forEach((settingCog) => {
-			if ('storage' === settingCog.id) {
-				// Show item description in storage menu.
-				const menuItems = document.querySelectorAll(
-					'.retrieval-points .storage-item'
-				);
+    // Settings.
+    const settingCogs = document.querySelectorAll(
+        '#settings, #storage, #characters',
+    );
 
-				if (menuItems) {
-					menuItems.forEach((menuItem) => {
-						menuItem.addEventListener('click', () => {
-							if ('true' !== menuItem.dataset.empty) {
-								showItemDescription(menuItem);
-							}
-						});
-					});
-				}
-			}
+    if (settingCogs) {
+        settingCogs.forEach((settingCog) => {
+            if ('storage' === settingCog.id) {
+                // Show item description in storage menu.
+                const menuItems = document.querySelectorAll(
+                    '.retrieval-points .storage-item',
+                );
 
-			settingCog.addEventListener('click', (e) => {
-				if (
-					false === e.target.classList.contains('close-settings') &&
-					!e.target.closest('.character-item')
-				) {
-					settingCog.classList.add('engage');
-				}
-			});
+                if (menuItems) {
+                    menuItems.forEach((menuItem) => {
+                        menuItem.addEventListener('click', () => {
+                            if ('true' !== menuItem.dataset.empty) {
+                                showItemDescription(menuItem);
+                            }
+                        });
+                    });
+                }
+            }
 
-			settingCog
-				.querySelector('.close-settings')
-				.addEventListener('click', () => {
-					const description = document.querySelector(
-						'.retrieval-points #item-description'
-					);
-					settingCog.classList.remove('engage');
+            settingCog.addEventListener('click', (e) => {
+                if (
+                    false === e.target.classList.contains('close-settings') &&
+                    !e.target.closest('.character-item')
+                ) {
+                    settingCog.classList.add('engage');
+                }
+            });
 
-					if (description) {
-						description.innerHTML = '';
-					}
-				});
-		});
-	}
+            settingCog
+                .querySelector('.close-settings')
+                .addEventListener('click', () => {
+                    const description = document.querySelector(
+                        '.retrieval-points #item-description',
+                    );
+                    settingCog.classList.remove('engage');
 
-	const updateSettings = document.getElementById('update-settings');
+                    if (description) {
+                        description.innerHTML = '';
+                    }
+                });
+        });
+    }
 
-	// Save settings.
-	const musicSettings = document.getElementById('music-volume');
-	const sfxSettings = document.getElementById('sfx-volume');
-	const talkingSettings = document.getElementById('talking-volume');
+    const updateSettings = document.getElementById('update-settings');
 
-	if (updateSettings) {
-		if (sfxSettings && musicSettings && talkingSettings) {
-			window.sfxVolume = sfxSettings.value / 100;
-			window.talkingVolume = talkingSettings.value;
+    // Save settings.
+    const musicSettings = document.getElementById('music-volume');
+    const sfxSettings = document.getElementById('sfx-volume');
+    const talkingSettings = document.getElementById('talking-volume');
 
-			// Volume listeners.
-			musicSettings.addEventListener('input', (event) => {
-				window.currentMusic.volume = event.target.value / 100;
-			});
+    if (updateSettings) {
+        if (sfxSettings && musicSettings && talkingSettings) {
+            window.sfxVolume = sfxSettings.value / 100;
+            window.talkingVolume = talkingSettings.value;
 
-			// Volume listeners.
-			talkingSettings.addEventListener('input', (event) => {
-				window.talkingVolume = event.target.value;
-			});
+            // Volume listeners.
+            musicSettings.addEventListener('input', (event) => {
+                window.currentMusic.volume = event.target.value / 100;
+            });
 
-			// Volume listeners.
-			sfxSettings.addEventListener('input', (event) => {
-				window.sfxVolume = event.target.value / 100;
-			});
-		}
+            // Volume listeners.
+            talkingSettings.addEventListener('input', (event) => {
+                window.talkingVolume = event.target.value;
+            });
 
-		updateSettings.addEventListener('click', () => {
-			if (musicSettings && sfxSettings && talkingSettings) {
-				saveSettings(
-					musicSettings.value,
-					sfxSettings.value,
-					talkingSettings.value
-				);
-			}
-		});
-	}
+            // Volume listeners.
+            sfxSettings.addEventListener('input', (event) => {
+                window.sfxVolume = event.target.value / 100;
+            });
+        }
+
+        updateSettings.addEventListener('click', () => {
+            if (musicSettings && sfxSettings && talkingSettings) {
+                saveSettings(
+                    musicSettings.value,
+                    sfxSettings.value,
+                    talkingSettings.value,
+                );
+            }
+        });
+    }
 }
 
 function setStaticNPCImage(moveDirection, npc) {
@@ -3936,6 +3939,15 @@ export function engageExploreGame() {
 	const container = document.querySelector('.game-container');
 	const touchButtons = document.querySelector('.touch-buttons');
 	window.previousCutsceneArea = OrbemOrder.previousCutsceneArea ?? '';
+
+    // Show Devmode.
+    const devModeMenus = document.querySelectorAll('.right-bottom-devmode, .dev-mode-menu, .right-bottom-devmode-pro');
+
+    if (devModeMenus) {
+        devModeMenus.forEach(devModeMenu => {
+            devModeMenu.classList.add('engage');
+        })
+    }
 
     // Reset any local game stats.
     resetLocalGameState();

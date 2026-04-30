@@ -113,34 +113,6 @@ export function engageDevMode() {
 		}
 	}
 
-	// Settings.
-	const settingCog = document.querySelector('#new-addition');
-
-	if (settingCog) {
-		settingCog.addEventListener('click', (e) => {
-			if (
-				false === e.target.classList.contains('close-settings') &&
-				false ===
-					e.target.parentNode.classList.contains('character-item')
-			) {
-				settingCog.classList.add('engage');
-			}
-		});
-
-		settingCog
-			.querySelector('.close-settings')
-			.addEventListener('click', () => {
-				const description = document.querySelector(
-					'.retrieval-points #item-description'
-				);
-				settingCog.classList.remove('engage');
-
-				if (description) {
-					description.innerHTML = '';
-				}
-			});
-	}
-
 	// Select level
 	const levels = document.querySelector('.level-selector');
 	const levelButton = document.getElementById('select-level');
@@ -163,57 +135,56 @@ export function engageDevMode() {
 
 	if (devmodeMenuToggle) {
 		devmodeMenuToggle.addEventListener('click', () => {
-			const devModeMenu = document.querySelector('.dev-mode-menu');
+            devmodeMenuToggle.classList.toggle('engage');
 
-			if (devModeMenu) {
-				devModeMenu.classList.toggle('engage');
-				devmodeMenuToggle.classList.toggle('engage');
-				const triggers = document.querySelectorAll(
-					'.explainer-container, .materialize-item-trigger, [data-genre="explore-wall"], [data-trigger="true"], [data-genre="explore-area"], [data-genre="blockade"]'
-				);
+            const triggers = document.querySelectorAll(
+                '.explainer-container, .materialize-item-trigger, [data-genre="explore-wall"], [data-trigger="true"], [data-genre="explore-area"], [data-genre="blockade"]'
+            );
 
-				if (devModeMenu.classList.contains('engage')) {
-					if (triggers) {
-						triggers.forEach((trigger) => {
-                            if ('true' === trigger.dataset?.trigger) {
-                                trigger.style.backgroundColor = 'rgb(27,170,0)';
-                            }
+            if (devmodeMenuToggle.classList.contains('engage')) {
+                devmodeMenuToggle.textContent = devmodeMenuToggle.textContent.replace('Show', 'Hide');
+                if (triggers) {
+                    triggers.forEach((trigger) => {
+                        if ('true' === trigger.dataset?.trigger) {
+                            trigger.style.backgroundColor = 'rgb(27,170,0)';
+                        }
 
-                            if (true === trigger.classList.contains('materialize-item-trigger')) {
-                                trigger.style.backgroundColor = 'rgb(0,146,255)';
-                            }
+                        if (true === trigger.classList.contains('materialize-item-trigger')) {
+                            trigger.style.backgroundColor = 'rgb(0,146,255)';
+                        }
 
-                            if (true === trigger.classList.contains('explainer-container')) {
-                                trigger.style.backgroundColor = 'rgb(170,0,255)';
-                            }
+                        if (true === trigger.classList.contains('explainer-container')) {
+                            trigger.style.backgroundColor = 'rgb(170,0,255)';
+                        }
 
-                            if (true === trigger.classList.contains('cutscene-trigger')) {
-                                trigger.style.backgroundColor = 'rgb(0,255,157)';
-                            }
+                        if (true === trigger.classList.contains('cutscene-trigger')) {
+                            trigger.style.backgroundColor = 'rgb(0,255,157)';
+                        }
 
-                            if ('explore-wall' === trigger.dataset.genre) {
-                                trigger.style.backgroundColor = 'rgb(255,203,0)';
-                            }
+                        if ('explore-wall' === trigger.dataset.genre) {
+                            trigger.style.backgroundColor = 'rgb(255,203,0)';
+                        }
 
-                            if ('explore-area' === trigger.dataset.genre) {
-                                trigger.style.backgroundColor = 'rgb(220,68,68)';
-                            }
+                        if ('explore-area' === trigger.dataset.genre) {
+                            trigger.style.backgroundColor = 'rgb(220,68,68)';
+                        }
 
-                            if ('blockade' === trigger.dataset.genre) {
-                                trigger.style.backgroundColor = 'rgb(66,66,66)';
-                            }
+                        if ('blockade' === trigger.dataset.genre) {
+                            trigger.style.backgroundColor = 'rgb(66,66,66)';
+                        }
 
-							trigger.style.opacity = 0.3;
-							trigger.style.zIndex = 1;
-						});
-					}
-				} else if (triggers) {
-					triggers.forEach((trigger) => {
-						trigger.style.backgroundColor = '';
-						trigger.style.opacity = '';
-					});
-				}
-			}
+                        trigger.style.opacity = 0.3;
+                        trigger.style.zIndex = 1;
+                    });
+                }
+            } else if (triggers) {
+                devmodeMenuToggle.textContent =
+                    devmodeMenuToggle.textContent.replace('Hide', 'Show');
+                triggers.forEach((trigger) => {
+                    trigger.style.backgroundColor = '';
+                    trigger.style.opacity = '';
+                });
+            }
 		});
 	}
 
@@ -269,19 +240,35 @@ export function engageDevMode() {
 		window.noTouch = false;
 
 		if (godMode && noTouch) {
-			godMode.addEventListener('change', () => {
-				if (godMode.checked) {
+			godMode.addEventListener('click', () => {
+                godMode.classList.toggle('engage');
+
+				if (godMode.classList.contains('engage')) {
 					window.godMode = true;
+                    godMode.textContent = godMode.textContent.replace('Disable', 'Enable');
 				} else {
 					window.godMode = false;
+                    godMode.textContent = godMode.textContent.replace(
+                        'Enable',
+                        'Disable',
+                    );
 				}
 			});
 
-			noTouch.addEventListener('change', () => {
-				if (noTouch.checked) {
+			noTouch.addEventListener('click', () => {
+                noTouch.classList.toggle('engage');
+				if (noTouch.classList.contains('engage')) {
+                    noTouch.textContent = noTouch.textContent.replace(
+                        'Disable',
+                        'Enable',
+                    );
 					window.noTouch = true;
 					mainCharacter.style.zIndex = '0';
 				} else {
+                    noTouch.textContent = noTouch.textContent.replace(
+                        'Enable',
+                        'Disable',
+                    );
 					window.noTouch = false;
 				}
 			});
@@ -304,9 +291,9 @@ export function engageDevMode() {
 
 		if (engageWallBuilder) {
 			engageWallBuilder.addEventListener('click', () => {
-				wallBuilderContainer.classList.toggle('engage');
+				engageWallBuilder.classList.toggle('engage');
 
-				if (wallBuilderContainer.classList.contains('engage')) {
+				if (engageWallBuilder.classList.contains('engage')) {
 					document.body.style.cursor = 'cell';
 
 					document.addEventListener('mousedown', handleWallDragStart);
