@@ -18,7 +18,6 @@ let bossWaveCount = 0;
 let secondWaveHit = false;
 let thirdWaveHit = false;
 let fourthWaveHit = false;
-let shooterInterval;
 let inHazard = false;
 let hazardItem = false;
 let pulsewaveInterval;
@@ -92,9 +91,6 @@ document.addEventListener('DOMContentLoaded', function () {
 	currentLocation = document.querySelector('.game-container');
 	window.mainCharacter = currentLocation.dataset?.main;
 	currentLocation = currentLocation.className.replace('game-container ', '');
-
-	// Explore page functions.
-	window.history.pushState({}, document.title, window.location.pathname);
 
 	// Detect and close intro video if finished.
 	const introVideo = document.getElementById('intro-video');
@@ -320,6 +316,19 @@ document.addEventListener('DOMContentLoaded', function () {
 			}, 1000);
 		});
 	}
+
+    const skipStartId = window.localStorage.getItem('skip-start');
+    const providedSkipIp = new URLSearchParams(window.location.search).get(
+        'skid',
+    );
+
+    // Explore page functions.
+    window.history.pushState({}, document.title, window.location.pathname);
+
+    if (null !== providedSkipIp && skipStartId === providedSkipIp) {
+        engageExploreGame();
+        window.localStorage.removeItem('skip-start');
+    }
 });
 
 function unlockAbilities(pointAmount) {
@@ -514,10 +523,6 @@ function moveNPC(npc, cutscene, areaCutscene, cutPosition) {
 								pathCount > position ||
 								(firstRun && pathCount === position)
 							) {
-								if (currentImage) {
-									currentImage.classList.remove('engage');
-								}
-
 								// Get user direction of movement path.
 								moveDirection = regulateTransitionSpeed(
 									pathArray[position].left,
@@ -538,7 +543,11 @@ function moveNPC(npc, cutscene, areaCutscene, cutPosition) {
 									'#' + npcName + moveDirection
 								);
 
-								if (newImage) {
+								if (newImage && '' !== newImage.getAttribute('src')) {
+                                    if (currentImage) {
+                                        currentImage.classList.remove('engage');
+                                    }
+
 									newImage.classList.add('engage');
 									npcIsStopped = false;
 								}
@@ -783,14 +792,15 @@ function setStaticNPCImage(moveDirection, npc) {
 	const currentImage = npc.querySelector('.character-icon.engage');
 	const npcName = cleanClassName(npc.className);
 
-	if (currentImage) {
-		currentImage.classList.remove('engage');
-	}
-
 	const newImage = document.getElementById(
 		npcName + 'static-' + moveDirection
 	);
-	if (newImage) {
+
+	if (newImage && '' !== newImage.getAttribute('src')) {
+        if (currentImage) {
+            currentImage.classList.remove('engage');
+        }
+
 		newImage.classList.add('engage');
 	}
 }
@@ -1998,7 +2008,7 @@ const hurtTheEnemy = (function () {
 					const enemyName = cleanClassName(value.className);
 					const deadImage = value.querySelector('#' + enemyName + 'dead');
 
-					if (deadImage && deadImage?.src && '' !== deadImage?.src) {
+					if (deadImage && deadImage?.src && '' !== deadImage.getAttribute('src')) {
 						enemyHealthBar.style.display = 'none';
 						const currentEnemyImage = value.querySelector('.character-icon.engage');
 						currentEnemyImage.classList.remove('engage');
@@ -2087,7 +2097,7 @@ function hurtAnimationEnemy(enemy, pushAmount) {
 
         const hurtImage = enemy.querySelector('#' + cleanClassName(enemy.className) + hurtDirection + '-hurt');
 
-        if ( hurtImage && currentImage ) {
+        if ( hurtImage && '' !== hurtImage.getAttribute('src') && currentImage ) {
             currentImage.classList.remove('engage');
             hurtImage.classList.add('engage');
         }
@@ -2096,11 +2106,11 @@ function hurtAnimationEnemy(enemy, pushAmount) {
             enemy.classList.remove('hurt');
             const currentEnemyImage = enemy.querySelector('.character-icon.engage');
 
-            if (currentEnemyImage === hurtImage) {
+            if (currentEnemyImage === hurtImage && '' !== hurtImage.getAttribute('src')) {
                 currentImage.classList.add('engage');
             }
 
-            if ( hurtImage ) {
+            if (hurtImage && '' !== hurtImage.getAttribute('src') ) {
                 hurtImage.classList.remove('engage');
             }
         }, 700);
@@ -3193,7 +3203,7 @@ function setDirectionImage(enemyEl, direction) {
 		'#' + enemyName + direction
 	);
 
-    if (directionalImage) {
+    if (directionalImage && '' !== directionalImage.getAttribute('src')) {
         allImages.forEach((image) => {
             image.classList.remove('engage');
         });
@@ -3334,7 +3344,7 @@ function updatePunchImage(enemyEl, showPunch) {
     const allImages = enemyEl.querySelectorAll('.character-icon');
     const nextImage = showPunch && punchImage ? punchImage : finalImage;
 
-    if (!nextImage) {
+    if (!nextImage || (nextImage && '' === nextImage.getAttribute('src')) ) {
         return;
     }
 
@@ -4914,10 +4924,6 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 		) {
 			switch (goThisWay) {
 				case 38:
-					box.classList.remove('engage');
-                    allImages.forEach((image) => {
-                        image.classList.remove('engage');
-                    });
 					direction =
 						'' !== isDragging ? window.draggingDirection : 'up';
 					newCharacterImage = document.getElementById(
@@ -4927,7 +4933,11 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 							isDragging +
 							window.currentWeapon
 					);
-					if (newCharacterImage) {
+					if (newCharacterImage && '' !== newCharacterImage.getAttribute('src')) {
+                        box.classList.remove('engage');
+                        allImages.forEach((image) => {
+                            image.classList.remove('engage');
+                        });
 						newCharacterImage.classList.add('engage');
 					}
 
@@ -4938,10 +4948,6 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 					}
 					break;
 				case 37:
-					box.classList.remove('engage');
-                    allImages.forEach((image) => {
-                        image.classList.remove('engage');
-                    });
 					direction =
 						'' !== isDragging ? window.draggingDirection : 'left';
 					newCharacterImage = document.getElementById(
@@ -4951,9 +4957,16 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 							isDragging +
 							window.currentWeapon
 					);
-					if (newCharacterImage) {
-						newCharacterImage.classList.add('engage');
-					}
+					if (
+                        newCharacterImage &&
+                        '' !== newCharacterImage.getAttribute('src')
+                    ) {
+                        box.classList.remove('engage');
+                        allImages.forEach((image) => {
+                            image.classList.remove('engage');
+                        });
+                        newCharacterImage.classList.add('engage');
+                    }
 					mapChar.className = '';
 					mapChar.classList.add('left-dir');
 					if (weaponEl) {
@@ -4961,10 +4974,6 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 					}
 					break;
 				case 39:
-					box.classList.remove('engage');
-                    allImages.forEach((image) => {
-                        image.classList.remove('engage');
-                    });
 					direction =
 						'' !== isDragging ? window.draggingDirection : 'right';
 					newCharacterImage = document.getElementById(
@@ -4974,7 +4983,11 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 							isDragging +
 							window.currentWeapon
 					);
-					if (newCharacterImage) {
+					if (newCharacterImage && '' !== newCharacterImage.getAttribute('src')) {
+                        box.classList.remove('engage');
+                        allImages.forEach((image) => {
+                            image.classList.remove('engage');
+                        });
 						newCharacterImage.classList.add('engage');
 					}
 					mapChar.className = '';
@@ -4984,10 +4997,6 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 					}
 					break;
 				case 40:
-					box.classList.remove('engage');
-                    allImages.forEach((image) => {
-                        image.classList.remove('engage');
-                    });
 					direction =
 						'' !== isDragging ? window.draggingDirection : 'down';
 					newCharacterImage = document.getElementById(
@@ -4997,7 +5006,11 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 							isDragging +
 							window.currentWeapon
 					);
-					if (newCharacterImage) {
+					if (newCharacterImage && '' !== newCharacterImage.getAttribute('src')) {
+                        box.classList.remove('engage');
+                        allImages.forEach((image) => {
+                            image.classList.remove('engage');
+                        });
 						newCharacterImage.classList.add('engage');
 					}
 					mapChar.className = '';
@@ -5007,10 +5020,6 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 					}
 					break;
 				case 87:
-					box.classList.remove('engage');
-                    allImages.forEach((image) => {
-                        image.classList.remove('engage');
-                    });
 					direction =
 						'' !== isDragging ? window.draggingDirection : 'up';
 					newCharacterImage = document.getElementById(
@@ -5020,7 +5029,11 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 							isDragging +
 							window.currentWeapon
 					);
-					if (newCharacterImage) {
+					if (newCharacterImage && '' !== newCharacterImage.getAttribute('src')) {
+                        box.classList.remove('engage');
+                        allImages.forEach((image) => {
+                            image.classList.remove('engage');
+                        });
 						newCharacterImage.classList.add('engage');
 					}
 
@@ -5031,10 +5044,6 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 					}
 					break;
 				case 65:
-					box.classList.remove('engage');
-                    allImages.forEach((image) => {
-                        image.classList.remove('engage');
-                    });
 					direction =
 						'' !== isDragging ? window.draggingDirection : 'left';
 					newCharacterImage = document.getElementById(
@@ -5044,7 +5053,11 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 							isDragging +
 							window.currentWeapon
 					);
-					if (newCharacterImage) {
+					if (newCharacterImage && '' !== newCharacterImage.getAttribute('src')) {
+                        box.classList.remove('engage');
+                        allImages.forEach((image) => {
+                            image.classList.remove('engage');
+                        });
 						newCharacterImage.classList.add('engage');
 					}
 					mapChar.className = '';
@@ -5054,10 +5067,6 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 					}
 					break;
 				case 68:
-					box.classList.remove('engage');
-                    allImages.forEach((image) => {
-                        image.classList.remove('engage');
-                    });
 					direction =
 						'' !== isDragging ? window.draggingDirection : 'right';
 					newCharacterImage = document.getElementById(
@@ -5067,7 +5076,11 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 							isDragging +
 							window.currentWeapon
 					);
-					if (newCharacterImage) {
+					if (newCharacterImage && '' !== newCharacterImage.getAttribute('src')) {
+                        box.classList.remove('engage');
+                        allImages.forEach((image) => {
+                            image.classList.remove('engage');
+                        });
 						newCharacterImage.classList.add('engage');
 					}
 					mapChar.className = '';
@@ -5077,10 +5090,6 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 					}
 					break;
 				case 83:
-					box.classList.remove('engage');
-                    allImages.forEach((image) => {
-                        image.classList.remove('engage');
-                    });
 					direction =
 						'' !== isDragging ? window.draggingDirection : 'down';
 					newCharacterImage = document.getElementById(
@@ -5090,7 +5099,11 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 							isDragging +
 							window.currentWeapon
 					);
-					if (newCharacterImage) {
+					if (newCharacterImage && '' !== newCharacterImage.getAttribute('src')) {
+                        box.classList.remove('engage');
+                        allImages.forEach((image) => {
+                            image.classList.remove('engage');
+                        });
 						newCharacterImage.classList.add('engage');
 					}
 					mapChar.className = '';
@@ -6468,7 +6481,7 @@ function playWalkSound() {
 	if (
 		walkingSound &&
 		undefined !== walkingSound?.src &&
-		'' !== walkingSound.src
+		'' !== walkingSound.getAttribute('src')
 	) {
 		walkingSound.loop = true;
 
@@ -6921,7 +6934,7 @@ function setStaticMCImage(mapChar, direction, weaponChange) {
 				: '';
 		const staticVersion = document.getElementById(staticId + thisIsWeapon);
 
-		if (staticVersion) {
+		if (staticVersion && '' !== staticVersion.getAttribute('src')) {
 			currentCharacterImage.classList.remove('engage');
 			staticVersion.classList.add('engage');
 
@@ -7038,7 +7051,7 @@ function characterHitEvent(event) {
                             break;
                     }
 
-                    if (currentImageMapCharacter) {
+                    if (currentImageMapCharacter && '' !== weaponAnimation.getAttribute('src')) {
                         currentImageMapCharacter.classList.add('punched');
                         weaponAnimation.classList.add('engage');
 
@@ -8091,6 +8104,8 @@ function clickTransport(clickE) {
  * @param newLeft
  * @param gradual
  * @param cutscene
+ * @param areaCutscene
+ * @param position
  */
 function moveCharacter(mapCharacter, newTop, newLeft, gradual, cutscene, areaCutscene, position) {
 	'use strict';
@@ -8117,98 +8132,95 @@ function moveCharacter(mapCharacter, newTop, newLeft, gradual, cutscene, areaCut
 		// Top move.
 		const moveInt = setInterval(() => {
 			if (moveCount <= biggestDiff) {
-				let topDown = '';
-				let leftRight = '';
+                let topDown = '';
+                let leftRight = '';
 
-				if (topBigger) {
-					mapCharacter.style.top =
-						moveCount <= topDiff
-							? currentTop - moveCount + 'px'
-							: newTop + 'px';
-					weapon.style.top =
-						parseInt(mapCharacter.style.top.replace('px', '')) +
+                if (topBigger) {
+                    mapCharacter.style.top =
+                        moveCount <= topDiff
+                            ? currentTop - moveCount + 'px'
+                            : newTop + 'px';
+                    weapon.style.top =
+                        parseInt(mapCharacter.style.top.replace('px', '')) +
                         window.globalTopPositionOffset +
-						'px';
-					topDown = 'up';
-				} else {
-					mapCharacter.style.top =
-						moveCount <= topDiff
-							? currentTop + moveCount + 'px'
-							: newTop + 'px';
-					weapon.style.top =
-						parseInt(mapCharacter.style.top.replace('px', '')) +
+                        'px';
+                    topDown = 'up';
+                } else {
+                    mapCharacter.style.top =
+                        moveCount <= topDiff
+                            ? currentTop + moveCount + 'px'
+                            : newTop + 'px';
+                    weapon.style.top =
+                        parseInt(mapCharacter.style.top.replace('px', '')) +
                         window.globalTopPositionOffset +
-						'px';
-					topDown = 'down';
-				}
+                        'px';
+                    topDown = 'down';
+                }
 
-				if (leftBigger) {
-					mapCharacter.style.left =
-						moveCount <= leftDiff
-							? currentLeft - moveCount + 'px'
-							: newLeft + 'px';
-					weapon.style.left =
-						parseInt(mapCharacter.style.left.replace('px', '')) +
-						window.globalLeftPositionOffset +
-						'px';
-					leftRight = 'left';
-				} else {
-					mapCharacter.style.left =
-						moveCount <= leftDiff
-							? currentLeft + moveCount + 'px'
-							: newLeft + 'px';
-					weapon.style.left =
-						parseInt(mapCharacter.style.left.replace('px', '')) +
-						window.globalLeftPositionOffset +
-						'px';
-					leftRight = 'right';
-				}
+                if (leftBigger) {
+                    mapCharacter.style.left =
+                        moveCount <= leftDiff
+                            ? currentLeft - moveCount + 'px'
+                            : newLeft + 'px';
+                    weapon.style.left =
+                        parseInt(mapCharacter.style.left.replace('px', '')) +
+                        window.globalLeftPositionOffset +
+                        'px';
+                    leftRight = 'left';
+                } else {
+                    mapCharacter.style.left =
+                        moveCount <= leftDiff
+                            ? currentLeft + moveCount + 'px'
+                            : newLeft + 'px';
+                    weapon.style.left =
+                        parseInt(mapCharacter.style.left.replace('px', '')) +
+                        window.globalLeftPositionOffset +
+                        'px';
+                    leftRight = 'right';
+                }
 
-				// Change character image based on direction;
-				directCharacter(topDown, leftRight, mapCharacter);
-			} else {
-				// Reenable cutscene click events.
-				window.allowCutscene = true;
+                // Change character image based on direction;
+                directCharacter(topDown, leftRight, mapCharacter);
+            } else {
+                // Reenable cutscene click events.
+                window.allowCutscene = true;
 
-				// Change character to static.
-				const currentMovementImage = mapCharacter.querySelector(
-					'.map-character-icon.engage'
-				);
+                // Change character to static.
+                const currentMovementImage = mapCharacter.querySelector(
+                    '.map-character-icon.engage',
+                );
 
-				if (
-					currentMovementImage &&
-					false === currentMovementImage.id.includes('static')
-				) {
-					currentMovementImage.classList.remove('engage');
+                const newStaticImage = document.getElementById(
+                    currentMovementImage.id.replace(
+                        window.mainCharacter,
+                        window.mainCharacter + '-static' + window.currentWeapon,
+                    ),
+                );
 
-					const newStaticImage = document.getElementById(
-						currentMovementImage.id.replace(
-							window.mainCharacter,
-							window.mainCharacter +
-								'-static' +
-								window.currentWeapon
-						)
-					);
+                if (
+                    currentMovementImage &&
+                    false === currentMovementImage.id.includes('static') &&
+                    newStaticImage &&
+                    '' !== newStaticImage.getAttribute('src')
+                ) {
+                    currentMovementImage.classList.remove('engage');
+                    newStaticImage.classList.add('engage');
+                }
 
-					if (newStaticImage) {
-						newStaticImage.classList.add('engage');
+                // Reset so you can use static image swap again.
+                window.currentCharacterAutoDirection = '';
 
-						// Reset so you can use static image swap again.
-						window.currentCharacterAutoDirection = '';
-					}
-				}
-
-				// Once cutscene is over reinstate walking privileges. Also only clear this interval after cutscene is over so you know when to walk again.
-				if (
-					false === cutscene ||
-					false === cutscene.classList.contains('engage')
-				) {
-					clearInterval(moveInt);
-					movementIntFunc();
-				}
+                // Once cutscene is over reinstate walking privileges. Also only clear this interval after cutscene is over so you know when to walk again.
+                if (
+                    false === cutscene ||
+                    false === cutscene.classList.contains('engage')
+                ) {
+                    clearInterval(moveInt);
+                    movementIntFunc();
+                }
 
                 playCutscene(position, areaCutscene);
-			}
+            }
 
 			moveCount++;
 		}, window.moveSpeed);
@@ -8234,13 +8246,10 @@ function directCharacter(topDown, leftRight, mapCharacter) {
 		window.currentCharacterAutoDirection = direction;
 		mapCharacter.classList.add(direction + '-dir');
 
-		if (currentImage) {
-			currentImage.classList.remove('engage');
-		}
-
-		if (newImage) {
-			newImage.classList.add('engage');
-		}
+		if (currentImage && newImage && '' !== newImage.getAttribute('src')) {
+            currentImage.classList.remove('engage');
+            newImage.classList.add('engage');
+        }
 
 		mapCharacter.className = '';
 	}
@@ -8739,7 +8748,7 @@ function hurtAnimation() {
     );
 
     if (mapCharacter) {
-        if (hurtImage) {
+        if (hurtImage && '' !== hurtImage.getAttribute('src')) {
             currentImageMapCharacter.classList.remove('engage');
             hurtImage.classList.add('engage');
             playHurtSound(mapCharacter);
@@ -8748,7 +8757,7 @@ function hurtAnimation() {
 		mapCharacter.dataset.hurt = true;
 
 		hurtTimeout = setTimeout(() => {
-            if (hurtImage) {
+            if (hurtImage && '' !== hurtImage.getAttribute('src')) {
 				currentImageMapCharacter.classList.add('engage');
 
 				hurtImage.classList.remove('engage');
