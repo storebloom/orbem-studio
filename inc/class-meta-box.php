@@ -83,7 +83,6 @@ class Meta_Box {
             }
         }
 
-		// Include the meta box template.
         // Include the meta box template.
         include "{$this->plugin->dir_path}/templates/meta/meta-box.php";
     }

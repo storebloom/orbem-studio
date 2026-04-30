@@ -64,13 +64,6 @@ class Dev_Mode
             'permission_callback' => $permission_callback
         ));
 
-        // Set item size.
-        register_rest_route($namespace, '/set-item-size/', array(
-            'methods' => 'POST',
-            'callback' => [$this, 'setItemSize'],
-            'permission_callback' => $permission_callback
-        ));
-
         // Create new whatever orbem studio post type. Requires administrator access.
         register_rest_route($namespace, '/add-new/', [
             'methods' => 'POST',
@@ -146,61 +139,6 @@ class Dev_Mode
         } else {
             update_post_meta($item, 'explore-top', $top);
             update_post_meta($item, 'explore-left', $left);
-        }
-
-        return rest_ensure_response([
-                'success' => true,
-                'data'    => esc_html__('success', 'orbem-studio'),
-            ]);
-    }
-
-    /**
-     * Set item size front end.
-     * @param \WP_REST_Request $request
-     * @return \WP_REST_Response
-     */
-    public function setItemSize(\WP_REST_Request $request): \WP_REST_Response
-    {
-        $user   = wp_get_current_user();
-        $userid = (int) $user->ID;
-
-        // Endpoint intentionally accessible to all authenticated users.
-        if (0 === $userid) {
-            return rest_ensure_response([
-                'success' => false,
-                'data'    => esc_html__('User not authenticated', 'orbem-studio'),
-            ]);
-        }
-
-        // Get request data.
-        $data   = $request->get_json_params();
-        $height = isset($data['height']) ? intval($data['height']) : '';
-        $width  = isset($data['width']) ? intval($data['width']) : '';
-        $meta   = isset($data['meta']) ? sanitize_text_field($data['meta']) : '';
-        $item   = isset($data['id']) ? absint($data['id']) : 0;
-
-        if ('' === $width || '' === $height || $item <= 0 || ! get_post($item) || !current_user_can('edit_post', $item)) {
-            return rest_ensure_response([
-                'success' => false,
-                'data'    => esc_html__('Invalid item ID or missing data param', 'orbem-studio'),
-            ]);
-        }
-
-        if (false === empty($meta)) {
-            if (!str_starts_with($meta, 'explore-')) {
-                return rest_ensure_response([
-                    'success' => false,
-                    'data'    => esc_html__('Invalid meta key', 'orbem-studio'),
-                ]);
-            }
-
-            $current_meta           = get_post_meta($item, $meta, true);
-            $current_meta['height'] = $height;
-            $current_meta['width']  = $width;
-            update_post_meta($item, $meta, $current_meta);
-        } else {
-            update_post_meta($item, 'explore-height', $height);
-            update_post_meta($item, 'explore-width', $width);
         }
 
         return rest_ensure_response([
@@ -352,33 +290,29 @@ class Dev_Mode
 
         ob_start();
         ?>
-        <div class="right-bottom-devmode">
-            <div class="dev-mode-menu-toggle">DEVMODE</div>
-        </div>
-
         <div class="dev-mode-menu">
-            <div id="new-addition">
-                <div class="addition-content">
-                    <?php
-                    $template = plugin_dir_path(__FILE__) . '../templates/components/new-additions.php';
-                    if (file_exists($template)) {
-                        include $template;
-                    }
-                    ?>
-                </div>
-            </div>
+            <?php
+            $pinpoint = plugin_dir_path(__FILE__) . '../templates/components/pinpoint.php';
+            if (file_exists($pinpoint)) {
+                include $pinpoint;
+            }?>
+        </div>
+        <div class="right-bottom-devmode">
+            <?php
+            $template = plugin_dir_path(__FILE__) . '../templates/components/interaction-collision.php';
+            if (file_exists($template)) {
+                include $template;
+            }
+            ?>
 
             <?php
             $wall_builder = plugin_dir_path(__FILE__) . '../templates/components/wall-builder.php';
             if ( file_exists($wall_builder) ) {
                 include $wall_builder;
             }
-
-            $pinpoint = plugin_dir_path(__FILE__) . '../templates/components/pinpoint.php';
-            if (file_exists($pinpoint)) {
-                include $pinpoint;
-            }
             ?>
+
+            <button class="dev-mode-menu-toggle">Show Hidden</button>
         </div>
         <?php
         return ob_get_clean();
