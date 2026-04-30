@@ -699,17 +699,13 @@ function engageSettingsMenus() {
     'use strict';
 
     // Settings.
-    const settingCogs = document.querySelectorAll(
-        '#settings, #storage, #characters',
-    );
+    const settingCogs = document.querySelectorAll('#settings, #storage, #characters');
 
     if (settingCogs) {
         settingCogs.forEach((settingCog) => {
             if ('storage' === settingCog.id) {
                 // Show item description in storage menu.
-                const menuItems = document.querySelectorAll(
-                    '.retrieval-points .storage-item',
-                );
+                const menuItems = document.querySelectorAll('.retrieval-points .storage-item');
 
                 if (menuItems) {
                     menuItems.forEach((menuItem) => {
@@ -734,9 +730,7 @@ function engageSettingsMenus() {
             settingCog
                 .querySelector('.close-settings')
                 .addEventListener('click', () => {
-                    const description = document.querySelector(
-                        '.retrieval-points #item-description',
-                    );
+                    const description = document.querySelector('.retrieval-points #item-description');
                     settingCog.classList.remove('engage');
 
                     if (description) {
