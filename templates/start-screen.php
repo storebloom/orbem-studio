@@ -38,8 +38,6 @@ $orbem_studio_new_game = 'No' === $orbem_studio_require_login ? 'Start Game' : '
     <?php endif; ?>
     <div class="greeting-message engage">
         <div class="greeting-buttons">
-            <?php the_content(); ?>
-
             <?php if (true === $orbem_studio_player_name) : ?>
                 <label for="orbem-studio-player-name">
                     Choose your character name

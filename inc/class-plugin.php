@@ -446,9 +446,9 @@ class Plugin extends Plugin_Base {
     public function saveGamePageOption(): void
     {
         // Mark tutorial complete.
-        $game_page = get_option('explore_game_page', '');
+        $start_area = get_option('explore_first_area', '');
 
-        if (false === empty($game_page)) {
+        if (false === empty($start_area)) {
             update_option( 'orbem_studio_setup_triggered', 'false' );
         }
     }

@@ -881,6 +881,7 @@ html {
       background-size: cover;
       background-repeat: no-repeat;
       background-position: left top;
+      contain: layout;
       display: none;
       height: 4517px;
       overflow: hidden;
@@ -1057,6 +1058,7 @@ html {
             }
           }
 
+
           &.money-amount {
             border: none;
             font-weight: 600;
@@ -1172,6 +1174,8 @@ html {
         .map-item,
         .enemy-item {
           position: absolute;
+          transform: translateZ(0);
+          will-change: transform;
           z-index: 1;
 
           .character-icon {
@@ -1403,6 +1407,8 @@ html {
       #map-character {
         height: 800px;
         position: absolute;
+        will-change: transform;
+        transform: translateZ(0);
         width: 800px;
         z-index: 1;
 

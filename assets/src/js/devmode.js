@@ -9,6 +9,7 @@ export function engageDevMode() {
 	let recordThePath = false;
 
 	window.devmode = false;
+    window.devZoom = window?.devZoom ?? 1;
 
 	// Drag logic.
 	let draggedContainer = null;
@@ -56,8 +57,8 @@ export function engageDevMode() {
 					: event.clientY - mapRect.top;
 
 			// Update container position based on mouse position relative to the container
-			draggedContainer.style.left = `${mouseX / devZoom - offsetX}px`;
-			draggedContainer.style.top = `${mouseY / devZoom - offsetY}px`;
+			draggedContainer.style.left = `${mouseX / window.devZoom - offsetX}px`;
+			draggedContainer.style.top = `${mouseY / window.devZoom - offsetY}px`;
 		}
 	}
 
@@ -333,8 +334,8 @@ export function engageDevMode() {
 					.querySelector('.game-container')
 					.getBoundingClientRect();
 
-				const mouseX = (event.clientX - mapRect.left) / devZoom;
-				const mouseY = (event.clientY - mapRect.top) / devZoom;
+				const mouseX = (event.clientX - mapRect.left) / window.devZoom;
+				const mouseY = (event.clientY - mapRect.top) / window.devZoom;
 
 				// Set the starting position of the wall basedon when you began to drag the mouse.
 				wallElement.className = 'wp-block-group map-item';
@@ -358,8 +359,8 @@ export function engageDevMode() {
 							.querySelector('.game-container')
 							.getBoundingClientRect();
 
-						const mouseX = (event.clientX - mapRect.left) / devZoom;
-						const mouseY = (event.clientY - mapRect.top) / devZoom;
+						const mouseX = (event.clientX - mapRect.left) / window.devZoom;
+						const mouseY = (event.clientY - mapRect.top) / window.devZoom;
 						const wallElementLeft = parseFloat(
 							wallElement.style.left.replace('px', '')
 						);

@@ -11,8 +11,13 @@ use OrbemStudio\Dev_Mode;
 
 $orbem_studio_first_area = get_option('explore_first_area', false);
 
-if (false === $orbem_studio_first_area) {
+if (false === $orbem_studio_first_area && is_user_logged_in()) {
     echo '<h1>A first area selection is required to play a game. Select one <strong><a href="/wp-admin/admin.php?page=orbem-studio">here</a></strong></h1>';
+    return;
+}
+
+if (false === $orbem_studio_first_area && !is_user_logged_in()) {
+    echo '<h1>This Orbem Studio game is coming soon! Build your game at <strong><a href="https://orbem.studio/">Orbem.Studio</a></strong> today!</h1>';
     return;
 }
 
@@ -251,7 +256,7 @@ $orbem_studio_explore_area_map             = $orbem_studio_explore_area ? get_po
 $orbem_studio_explore_area_start_top       = $orbem_studio_explore_area ? get_post_meta($orbem_studio_explore_area->ID, 'explore-start-top', true) : '';
 $orbem_studio_explore_area_start_left      = $orbem_studio_explore_area ? get_post_meta($orbem_studio_explore_area->ID, 'explore-start-left', true) : '';
 $orbem_studio_explore_start_direction      = $orbem_studio_explore_area ? get_post_meta($orbem_studio_explore_area->ID, 'explore-start-direction', true) : '';
-$orbem_studio_explore_start_direction      = false === empty($orbem_studio_explore_start_direction) ? $orbem_studio_explore_start_direction : 'down';
+$orbem_studio_explore_start_direction      = false === empty($orbem_studio_explore_start_direction) ? '-' . $orbem_studio_explore_start_direction : '';
 $orbem_studio_explore_area_start_direction = $orbem_studio_explore_start_direction . '-dir';
 $orbem_studio_explore_weapon_start         = true === isset($orbem_studio_equipped_weapon) && $orbem_studio_default_weapon !== $orbem_studio_equipped_weapon->post_name ? '-' . $orbem_studio_equipped_weapon->post_name : '';
 $orbem_studio_explore_points               = Explore::getExplorePoints($orbem_studio_location);
@@ -293,6 +298,7 @@ if ( $orbem_studio_is_admin ) {
 
 $orbem_studio_new_type   = false === empty($orbem_studio_coordinates) ? 'new-explore' : 'try-engage-explore';
 $orbem_studio_new_type   = is_user_logged_in() && false !== empty($orbem_studio_coordinates) || 'No' === $orbem_studio_require_login ? 'engage-explore' : $orbem_studio_new_type;
+$orbem_studio_new_type   = is_user_logged_in() && 'No' === $orbem_studio_require_login && false === empty($orbem_studio_coordinates) ? 'new-explore' : $orbem_studio_new_type;
 $orbem_studio_health_bar = $orbem_studio_hud_bars['health'] ?? '';
 $orbem_studio_mana_bar   = $orbem_studio_hud_bars['mana'] ?? '';
 $orbem_studio_power_bar  = $orbem_studio_hud_bars['power'] ?? '';
@@ -432,7 +438,7 @@ include plugin_dir_path(__FILE__) . 'plugin-header.php';
             <?php endif; ?>
             <?php foreach($orbem_studio_direction_images as $orbem_studio_direction_label => $orbem_studio_direction_image):
                 $orbem_studio_fight_animation = false !== stripos($orbem_studio_direction_label, 'punch') ? ' fight-image' : '';
-                $orbem_studio_dir_image       = 'static-' . $orbem_studio_explore_start_direction . $orbem_studio_explore_weapon_start;
+                $orbem_studio_dir_image       = 'static' . $orbem_studio_explore_start_direction . $orbem_studio_explore_weapon_start;
                 ?>
                 <img
                     alt="<?php echo esc_attr($orbem_studio_main_character_info['name'] . ' ' . $orbem_studio_direction_label); ?>"

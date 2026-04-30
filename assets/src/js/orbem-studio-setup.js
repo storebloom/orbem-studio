@@ -52,24 +52,25 @@ document.addEventListener('DOMContentLoaded', function () {
 		if (pageSelectOption) {
 			pageSelectOption.classList.add('engage');
 
-			const pageSelectSelect = pageSelectOption.querySelector('select');
+            const pageSelectSelect = pageSelectOption.querySelector('select');
 
-			if (pageSelectSelect) {
-				pageSelectSelect.addEventListener('change', () => {
-					pageSelectOption.classList.remove('engage');
-					areaSelectOption.classList.add('engage');
-					areaSelectOption.scrollIntoView({
-						behavior: 'instant',
-						block: 'center',
-						inline: 'center',
-					});
+            if (pageSelectSelect) {
+                const selectedValue = pageSelectSelect.value;
 
-					if (tutorialStep4) {
-						tutorialStep.classList.remove('engage');
-						tutorialStep4.classList.add('engage');
-					}
-				});
-			}
+                console.log(selectedValue);
+
+                if (selectedValue === '') {
+                    pageSelectSelect.addEventListener('change', () => {
+                        moveTo4(
+                            pageSelectOption,
+                            tutorialStep4,
+                            areaSelectOption,
+                        );
+                    });
+                } else {
+                    moveTo4(pageSelectOption, tutorialStep4, areaSelectOption);
+                }
+            }
 
 			if (areaSelectOption) {
 				areaSelectOption.addEventListener('change', () => {
@@ -147,7 +148,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 if ('manual' === type) {
                     starterTutorial.classList.remove('engage');
-                    starterTutorial.nextElementSibling.classList.add('engage');
                 }
 
                 if ('generate' === type) {
@@ -170,5 +170,20 @@ document.addEventListener('DOMContentLoaded', function () {
             }).then((data) => {
                 window.location.href = data.data;
         });
+    }
+
+    function moveTo4(pageSelectOption, tutorialStep4, areaSelectOption) {
+        pageSelectOption.classList.remove('engage');
+        areaSelectOption.classList.add('engage');
+        areaSelectOption.scrollIntoView({
+            behavior: 'instant',
+            block: 'center',
+            inline: 'center',
+        });
+
+        if (tutorialStep4) {
+            tutorialStep.classList.remove('engage');
+            tutorialStep4.classList.add('engage');
+        }
     }
 });
