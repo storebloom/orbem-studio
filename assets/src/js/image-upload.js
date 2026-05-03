@@ -57,6 +57,18 @@ function initExploreUploadButton(button) {
 				);
 				if (imageUploadPoint && 'image' === attachment.type) {
 					imageUploadPoint.value = attachment.url;
+
+                    const imageUploadParent = imageUploadPoint.closest(
+                        '.explore-image-field',
+                    );
+
+                    if (imageUploadParent) {
+                        const preview = imageUploadParent.querySelector('img');
+
+                        if (preview) {
+                            preview.src = attachment.url;
+                        }
+                    }
 				} else {
 					const imageUploadParent = e.target.closest(
 						'.explore-image-field'
@@ -70,6 +82,18 @@ function initExploreUploadButton(button) {
 
 				if (imageUploadPoint) {
 					imageUploadPoint.value = attachment.url;
+
+                    const imageUploadParent = imageUploadPoint.closest(
+                        '.explore-image-field',
+                    );
+
+                    if (imageUploadParent) {
+                        const preview = imageUploadParent.querySelector('img');
+
+                        if ( preview ) {
+                            preview.src = attachment.url;
+                        }
+                    }
 				}
 
 				// product video

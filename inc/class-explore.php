@@ -2510,6 +2510,7 @@ class Explore
 
             $explainer_type = $explainer_meta['explore-explainer-type'] ?? '';
             $sound_byte     = $explainer_meta['explore-sound-byte'] ?? '';
+            $mute_music     = $explainer_meta['explore-mute-music'] ?? '';
 
             if ($type === $explainer_type) {
                 $trigger                    = $explainer_meta['explore-explainer-trigger'] ?? '';
@@ -2544,6 +2545,11 @@ class Explore
                     // Materialize this item after this cutscene.
                     if (false === empty($materialize_after_cutscene)) {
                         $html .= ' data-showaftercutscene="' . esc_attr($materialize_after_cutscene) . '"';
+                    }
+
+                    // Mute current area music.
+                    if (false === empty($mute_music)) {
+                        $html .= ' data-mute-music="' . esc_attr($mute_music) . '"';
                     }
 
                     // Materialize this item after this mission.

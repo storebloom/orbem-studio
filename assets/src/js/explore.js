@@ -317,7 +317,9 @@ document.addEventListener('DOMContentLoaded', function () {
 		});
 	}
 
-    const skipStartId = window.localStorage.getItem('skip-start');
+    let skipStartId = document.cookie.match(/(?:^|;\s*)skip-start=([^;]+)/);
+    skipStartId = skipStartId ? skipStartId[1] : null;
+
     const providedSkipIp = new URLSearchParams(window.location.search).get(
         'skid',
     );
@@ -1201,31 +1203,33 @@ function triggerGameOver() {
 	const gameOver = document.querySelector('.game-over-notice');
 
 	if (gameOver) {
-		const tryAgain = document.querySelector('.try-again');
-		const defaultMap = document.querySelector('.default-map');
+        const tryAgain = document.querySelector('.try-again');
+        const defaultMap = document.querySelector('.default-map');
 
-		gameOver.style.display = 'block';
+        window.currentMusic.pause();
 
-		window.allowMovement = false;
-		inHazard = false;
-		hazardItem = false;
+        gameOver.style.display = 'block';
 
-		persistItemRemoval('projectile', 'health', 100, 0, 'true', false);
+        window.allowMovement = false;
+        inHazard = false;
+        hazardItem = false;
 
-		if (defaultMap) {
-			// Reset user position.
-			addUserCoordianate(
-				defaultMap.dataset.startleft,
-				defaultMap.dataset.starttop
-			);
-		}
+        persistItemRemoval('projectile', 'health', 100, 0, 'true', false);
 
-		if (tryAgain) {
-			tryAgain.addEventListener('click', () => {
-				window.location.reload();
-			});
-		}
-	}
+        if (defaultMap) {
+            // Reset user position.
+            addUserCoordianate(
+                defaultMap.dataset.startleft,
+                defaultMap.dataset.starttop,
+            );
+        }
+
+        if (tryAgain) {
+            tryAgain.addEventListener('click', () => {
+                window.location.reload();
+            });
+        }
+    }
 }
 
 /**
@@ -4515,6 +4519,14 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
                             if (cutscene) {
                                 cutscene.classList.add('enable');
                             }
+
+                            if (
+                                'yes' === value.dataset?.muteMusic &&
+                                window.currentMusic
+                            ) {
+                                window.currentMusic.play();
+                            }
+
 						}
 					};
 
@@ -4541,6 +4553,13 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 
                             // Do text to speech.
                             makeTalk(text, mcVoice, providedAudio, true);
+                        }
+
+                        if (
+                            'yes' === value.dataset?.muteMusic &&
+                            window.currentMusic
+                        ) {
+                            window.currentMusic.pause();
                         }
 
 						const arrow = triggee.querySelector('img');
@@ -4641,20 +4660,22 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
                     // Remove cutscene if item trigger.
                     removeCutscene(value);
 
-					// If just points. store it.
+					// If just points or money. store it.
 					if (
-						'point' === value.dataset.type &&
-						value.dataset?.value &&
-						0 < value.dataset.value
-					) {
-						runPointAnimation(
-							value,
-							cleanClassName(value.className),
-							false,
-							value.dataset.value,
-							''
-						);
-					}
+                        ('point' === value.dataset.type ||
+                            'money' === value.dataset.type) &&
+                        value.dataset?.value &&
+                        0 < value.dataset.value &&
+                        false === value.classList.contains('interacted-with')
+                    ) {
+                        runPointAnimation(
+                            value,
+                            cleanClassName(value.className),
+                            false,
+                            value.dataset.value,
+                            '',
+                        );
+                    }
 				}
 
 				// Trigger mission complete if mission trigger overlapped with.
@@ -4874,17 +4895,18 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 						storeExploreItem(value);
 
 						// If just points. store it.
-						if ('point' === value.dataset.type) {
-							runPointAnimation(
-								value,
-								cleanClassName(value.className),
-								false,
-								value.dataset.value,
-								''
-							);
-						}
-
-						value.classList.add('interacted-with');
+						if (
+                            'point' === value.dataset.type ||
+                            'money' === value.dataset.type
+                        ) {
+                            runPointAnimation(
+                                value,
+                                cleanClassName(value.className),
+                                false,
+                                value.dataset.value,
+                                '',
+                            );
+                        }
 					}
 
 					// Don't remove item if it's a sign.
@@ -5256,6 +5278,8 @@ function swapInteractedImage(item) {
 		if ('true' === item.dataset.passable) {
 			item.classList.add('passable');
 		}
+
+        item.classList.add('interacted-with');
 	}
 }
 
@@ -8751,10 +8775,11 @@ function hurtAnimation() {
     );
 
     if (mapCharacter) {
+        playHurtSound(mapCharacter);
+
         if (hurtImage && '' !== hurtImage.getAttribute('src')) {
             currentImageMapCharacter.classList.remove('engage');
             hurtImage.classList.add('engage');
-            playHurtSound(mapCharacter);
         }
 
 		mapCharacter.dataset.hurt = true;
