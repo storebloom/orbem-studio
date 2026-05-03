@@ -349,16 +349,6 @@ class Meta_Box {
                         ],
                 ],
                 'explore-wall' => [
-
-                        'Wall Area' => [
-                                'explore-area-required' => [
-                                        [
-                                                'multiselect' => $explore_area_array
-                                        ],
-                                        'Select the area(s) where this wall will exist.'
-                                ],
-                        ],
-
                         'Wall Position & Size' => [
                                 'explore-top-required' => [
                                         'number',
@@ -377,15 +367,17 @@ class Meta_Box {
                                         'The width of this wall.'
                                 ],
                         ],
+                        'Wall Area' => [
+                                'explore-area-required' => [
+                                        [
+                                                'multiselect' => $explore_area_array
+                                        ],
+                                        'Select the area(s) where this wall will exist.'
+                                ],
+                        ],
                 ],
                 'explore-mission' => [
                         'Mission Area' => [
-                                'explore-area-required' => [
-                                        [
-                                                'select' => $explore_area_array
-                                        ],
-                                        'Select the area where this mission will be available.'
-                                ],
                                 'explore-value' => [
                                         'number',
                                         'The amount of points or currency awarded when this mission is completed.'
@@ -449,6 +441,12 @@ class Meta_Box {
                         ],
 
                         'Mission Blockade' => [
+                                'explore-area-required' => [
+                                        [
+                                                'select' => $explore_area_array
+                                        ],
+                                        'Select the area where this mission will be available.'
+                                ],
                                 'explore-top' => [
                                         'number',
                                         'The top position of the mission blockade. The blockade is removed when the mission is completed.'
@@ -688,12 +686,6 @@ class Meta_Box {
                 'explore-weapon' => [
 
                         'Weapon Placement & Position' => [
-                                'explore-area' => [
-                                        [
-                                                'select' => $explore_area_array
-                                        ],
-                                        'Select the area where this weapon can be found.'
-                                ],
                                 'explore-top' => [
                                         'number',
                                         'The top position of this weapon within the area when it is placed for collection.'
@@ -751,6 +743,12 @@ class Meta_Box {
                         ],
 
                         'Weapon Materialization & Visibility' => [
+                                'explore-area' => [
+                                        [
+                                                'select' => $explore_area_array
+                                        ],
+                                        'Select the area where this weapon can be found.'
+                                ],
                                 'explore-materialize-item-trigger' => [
                                         [
                                                 'top' => 'number',
@@ -806,12 +804,6 @@ class Meta_Box {
                         ],
 
                         'Character Identity & Visuals' => [
-                                'explore-area' => [
-                                        [
-                                                'multiselect' => $explore_area_array
-                                        ],
-                                        'Select the area(s) where this character will appear.'
-                                ],
                                 'explore-rotation' => [
                                         'number',
                                         'The visual rotation of this character.'
@@ -936,6 +928,12 @@ class Meta_Box {
                         ],
 
                         'Materialization & Visibility' => [
+                                'explore-area' => [
+                                        [
+                                                'multiselect' => $explore_area_array
+                                        ],
+                                        'Select the area(s) where this character will appear.'
+                                ],
                                 'explore-materialize-item-trigger' => [
                                         [
                                                 'top' => 'number',
@@ -969,12 +967,6 @@ class Meta_Box {
                 'explore-enemy' => [
 
                         'Enemy Placement & Position' => [
-                                'explore-area-required' => [
-                                        [
-                                                'multiselect' => $explore_area_array
-                                        ],
-                                        'Select the area(s) where this enemy will appear.'
-                                ],
                                 'explore-top-required' => [
                                         'number',
                                         'The top position of this enemy within the area.'
@@ -1099,6 +1091,12 @@ class Meta_Box {
                         ],
 
                         'Materialization & Visibility' => [
+                                'explore-area-required' => [
+                                        [
+                                                'multiselect' => $explore_area_array
+                                        ],
+                                        'Select the area(s) where this enemy will appear.'
+                                ],
                                 'explore-materialize-item-trigger' => [
                                         [
                                                 'top' => 'number',
@@ -1174,12 +1172,6 @@ class Meta_Box {
                 'explore-minigame' => [
 
                         'Minigame Placement & Access' => [
-                                'explore-area-required' => [
-                                        [
-                                                'select' => $explore_area_array
-                                        ],
-                                        'Select the area where this minigame can be accessed.'
-                                ],
                                 'explore-mission' => [
                                         [
                                                 'select' => $explore_mission_array
@@ -1189,6 +1181,12 @@ class Meta_Box {
                         ],
 
                         'Minigame Configuration' => [
+                                'explore-area-required' => [
+                                        [
+                                                'select' => $explore_area_array
+                                        ],
+                                        'Select the area where this minigame can be accessed.'
+                                ],
                                 'explore-minigame-type-required' => [
                                         [
                                                 'select' => ['Draggable' => 'draggable']
@@ -1349,6 +1347,15 @@ class Meta_Box {
                                         'upload',
                                         'Audio that plays when the explainer appears, typically voice narration.'
                                 ],
+                                'explore-mute-music' => [
+                                        [
+                                                'radio' => [
+                                                        'yes',
+                                                        'no'
+                                                ]
+                                        ],
+                                        'Choose whether the current area music should be muted during this explainer popup.'
+                                ],
                         ],
 
                         'Trigger & Visibility' => [
@@ -1402,12 +1409,6 @@ class Meta_Box {
                 ],
                 'explore-point' => [
                         'Placement & Size' => [
-                                'explore-area-required' => [
-                                        [
-                                                'multiselect' => $explore_area_array
-                                        ],
-                                        'Select the area(s) where this item will appear.'
-                                ],
                                 'explore-top-required' => [
                                         'number',
                                         'The top position of this item within the area.'
@@ -1495,6 +1496,12 @@ class Meta_Box {
                         ],
 
                         'Triggers & Visibility' => [
+                                'explore-area-required' => [
+                                        [
+                                                'multiselect' => $explore_area_array
+                                        ],
+                                        'Select the area(s) where this item will appear.'
+                                ],
                                 'explore-materialize-item-trigger' => [
                                         [
                                                 'top' => 'number',

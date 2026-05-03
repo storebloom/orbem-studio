@@ -5,7 +5,7 @@ Tags: game engine, rpg, storytelling, gamification, narrative game
 Requires at least: 6.1
 Tested up to: 6.9
 Requires PHP: 8.1
-Stable tag: 1.4.4
+Stable tag: 1.4.5
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -190,6 +190,12 @@ Documentation is available at https://orbemorder.com/orbem-studio/docs/readme
 Tutorials are available on the Orbem Studio YouTube channel at https://youtube.com/@orbemstudio
 
 == Changelog ==
+
+= 1.4.5 =
+* Add sound controls to explainer.
+* Update meta fields.
+* Fix preview update on img select.
+* Update devmode hud.
 
 = 1.4.4 =
 * Redesign devmode menu.
