@@ -1203,7 +1203,6 @@ function triggerGameOver() {
 	const gameOver = document.querySelector('.game-over-notice');
 
 	if (gameOver) {
-        const tryAgain = document.querySelector('.try-again');
         const defaultMap = document.querySelector('.default-map');
 
         window.currentMusic.pause();
@@ -1224,11 +1223,21 @@ function triggerGameOver() {
             );
         }
 
-        if (tryAgain) {
-            tryAgain.addEventListener('click', () => {
-                window.location.reload();
-            });
-        }
+        const types = ['money', 'point'];
+
+        types.forEach((type) => {
+            const storageKey = `orbem_local_${type}`;
+            const current = JSON.parse(localStorage.getItem(storageKey) || '{}');
+            const updated = {
+                type,
+                current: current.current,
+                phigh: 0,
+                high: current.high,
+                positions: current.positions,
+            };
+
+            localStorage.setItem(storageKey, JSON.stringify(updated));
+        });
     }
 }
 
@@ -1261,8 +1270,8 @@ function persistItemRemoval(item, type, amount, timeoutTime, reset, direct) {
         const updated = {
             type,
             current: amount,
-            high: newHigh,
-            reset,
+            phigh: newHigh,
+            high: current.high,
             positions: Array.from(new Set(existingItems.concat(items))),
         };
 
@@ -2620,7 +2629,7 @@ const enterNewArea = (function () {
 						);
 
 						container.className = 'game-container ' + position;
-						container.style.backgroundImage = 'url(' + mapUrl + ')';
+						container.querySelector('.container-image').src = mapUrl;
 						currentLocation = position;
 
 						playSong(newMusic, position);
@@ -2694,7 +2703,7 @@ function replaceScoresInBody() {
         const stored = JSON.parse(localStorage.getItem(storageKey) || '{}');
 
         const current = stored.current || 0;
-        const high = stored.high || 0;
+        const high = stored.phigh || 0;
 
         updateScoreElements(type, current, high);
     });
@@ -3935,6 +3944,15 @@ export function engageExploreGame() {
 	const touchButtons = document.querySelector('.touch-buttons');
 	window.previousCutsceneArea = OrbemOrder.previousCutsceneArea ?? '';
 
+    const tryAgain = document.querySelectorAll('.try-again');
+    if (tryAgain) {
+        tryAgain.forEach((tryAgainButton) => {
+            tryAgainButton.addEventListener('click', () => {
+                window.location.reload();
+            });
+        });
+    }
+
     // Show Devmode.
     const devModeMenus = document.querySelectorAll('.right-bottom-devmode, .dev-mode-menu, .right-bottom-devmode-pro');
 
@@ -4155,6 +4173,11 @@ function resetLocalGameState() {
     types.forEach((type) => {
         const storageKey = `orbem_local_${type}`;
         const current = JSON.parse(localStorage.getItem(storageKey) || '{}');
+
+        if (current.phigh > current.high) {
+            current.high = current.phigh;
+            current.phigh = 0;
+        }
 
         const reset = {
             type,
@@ -6098,8 +6121,8 @@ function engageSign(signname) {
 
 /**
  * Stuff that happens before a cutscene.
- * @param cutscene
- * @param character
+ * @param position
+ * @param areaCutscene
  */
 function engageCutscene(position, areaCutscene) {
 	'use strict';
@@ -6242,9 +6265,12 @@ function afterCutscene(cutscene, areaCutscene, character) {
 	const cutsceneName = cleanClassName(cutscene.className).replace(' ', '');
 	const bossFight = cutscene.dataset.boss;
     const selectedCutsceneCharacter = cutscene.dataset?.character ?? character;
-	const cutsceneCharacter = selectedCutsceneCharacter && 0 === parseInt(selectedCutsceneCharacter)
-		? document.querySelector('.' + selectedCutsceneCharacter + '-map-item')
-		: false;
+	const cutsceneCharacter =
+        selectedCutsceneCharacter && false === Number.isFinite(Number(selectedCutsceneCharacter))
+            ? document.querySelector(
+                  '.' + selectedCutsceneCharacter + '-map-item',
+              )
+            : false;
 	const indicator = document.querySelector('.indicator-icon');
 	const communicateDevice = cutscene.dataset?.communicate;
 	const materializeCutscenes = document.querySelectorAll(
@@ -6437,9 +6463,21 @@ function removeItems(removeThings, cutsceneName) {
 
 	removeThings.forEach((removeThing) => {
         if (removeThing.dataset?.removeaftercutscene && '' !== removeThing.dataset.removeaftercutscene) {
-            const theRemoveCutscenes = JSON.parse(removeThing.dataset.removeaftercutscene);
+            let theRemoveCutscenes;
+            let removeTheThing = false;
 
-            if (theRemoveCutscenes[cutsceneName]) {
+            try {
+                theRemoveCutscenes = JSON.parse(
+                    removeThing.dataset.removeaftercutscene,
+                );
+
+                removeTheThing = theRemoveCutscenes[cutsceneName];
+            } catch (e) {
+                theRemoveCutscenes = removeThing.dataset.removeaftercutscene; // fallback to raw string
+                removeTheThing = cutsceneName === theRemoveCutscenes;
+            }
+
+            if (removeTheThing) {
                 removeThing.remove();
 
                 persistItemRemoval(
@@ -7620,7 +7658,11 @@ function theHazardOverlap(el1, el2, isParent) {
 
     const container = document.querySelector('.game-container');
     const containerRect = container.getBoundingClientRect();
-    const hitboxInset = parseFloat(el1.offsetParent.dataset.hitboxInset) || 0;
+    const hitboxInset =
+        el1.offsetParent &&
+        el1.offsetParent.dataset?.hitboxInset
+            ? parseFloat(el1.offsetParent.dataset.hitboxInset)
+            : 0;
 
     const getRect = (el, applyInset = false) => {
         if (el?.dataset?.hazard) {

@@ -459,6 +459,10 @@ html {
           top: 0;
           width: 100%;
 
+          figure.wp-block-video {
+            margin: 0;
+          }
+
           video {
             height: 100vh;
             object-fit: cover;
@@ -780,6 +784,12 @@ html {
       position: relative;
       width: 5000px;
 
+      .container-image {
+        will-change: transform;
+        transform: translateZ(0);
+        backface-visibility: hidden;
+      }
+
       &::after {
         content: "";
         position: absolute;
@@ -1095,7 +1105,6 @@ html {
             }
 
             .focus-content {
-              height: 100%;
               left: 50%;
               max-height: 60vh;
               max-width: 70vw;
@@ -1104,7 +1113,7 @@ html {
               position: fixed;
               top: 50%;
               transform: translate(-50%, -50%);
-              width: 95%;
+              width: max-content;
 
               img {
                 max-width: unset;

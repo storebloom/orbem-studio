@@ -321,9 +321,11 @@ include plugin_dir_path(__FILE__) . 'plugin-header.php';
     <?php if (true === $orbem_studio_is_admin) : ?>
         <?php echo wp_kses(html_entity_decode(Dev_Mode::getDevModeHTML()), $orbem_studio_allowed_tags); ?>
     <?php endif; ?>
-    <div class="game-container <?php echo esc_attr($orbem_studio_location); ?>" data-main="<?php echo esc_attr($orbem_studio_main_character); ?>" data-fadeout="true" style="background: url(<?php echo esc_url($orbem_studio_explore_area_map ?? ''); ?>) no-repeat left top; background-size: cover;">
+    <div class="game-container <?php echo esc_attr($orbem_studio_location); ?>" data-main="<?php echo esc_attr($orbem_studio_main_character); ?>" data-fadeout="true">
         <?php if ((false === empty($orbem_studio_explore_area_map) && false !== stripos($orbem_studio_explore_area_map, '.webm')) || (false === empty($orbem_studio_explore_area_map) && false !== stripos($orbem_studio_explore_area_map, '.mp4'))): ?>
             <video style="position:absolute;z-index: 1;width: 100%;height:100%;top:0; left:0;" src="<?php echo esc_attr($orbem_studio_explore_area_map); ?>" autoplay loop muted></video>
+        <?php else : ?>
+            <img class="container-image" style="position:absolute;z-index: -1;width: 100%;height:100%;top:0; left:0;object-fit: cover;" src="<?php echo str_replace([], [], esc_url($orbem_studio_explore_area_map) ?? ''); ?>" decoding="async" fetchpriority="high" loading="eager" />
         <?php endif; ?>
         <div id="explore-points<?php echo false === in_array('on', [
             $orbem_studio_health_bar,
