@@ -5,7 +5,7 @@ Tags: game engine, rpg, storytelling, gamification, narrative game
 Requires at least: 6.1
 Tested up to: 6.9
 Requires PHP: 8.1
-Stable tag: 1.4.5
+Stable tag: 1.4.6
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -190,6 +190,13 @@ Documentation is available at https://orbemorder.com/orbem-studio/docs/readme
 Tutorials are available on the Orbem Studio YouTube channel at https://youtube.com/@orbemstudio
 
 == Changelog ==
+
+= 1.4.6 =
+* Fix move npc after cutscene logic.
+* Fix remove after cutscene backcompat.
+* Fix try-again if multiple.
+* Fix score saving logic.
+* Optimize background logic.
 
 = 1.4.5 =
 * Add sound controls to explainer.
