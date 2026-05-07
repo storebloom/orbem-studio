@@ -474,6 +474,7 @@ html {
       .wp-block-orbem-paragraph-mp3 {
         align-self: center;
         background: white;
+        color: black;
         cursor: pointer;
         display: none;
         flex-basis: 70%;
@@ -525,6 +526,8 @@ html {
           p {
             display: block;
             font-size: 20px;
+            padding: 1rem;
+            color: black;
           }
         }
       }
@@ -551,6 +554,7 @@ html {
       }
       .character-name {
         background: white;
+        color: black;
         padding: 0 5px;
         border-radius: 20px;
         display: none;
@@ -788,6 +792,10 @@ html {
         will-change: transform;
         transform: translateZ(0);
         backface-visibility: hidden;
+
+        @media (max-width: 480px) {
+          content-visibility: auto;
+        }
       }
 
       &::after {
