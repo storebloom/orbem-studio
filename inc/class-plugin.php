@@ -403,7 +403,7 @@ class Plugin extends Plugin_Base {
         $post_type = $editor_context->post->post_type;
 
         // Only target explore-* post types
-        if (!str_starts_with($post_type, 'explore-') || 'explore-explainer' === $post_type || 'explore-sign') {
+        if (!str_starts_with($post_type, 'explore-') || 'explore-explainer' === $post_type || 'explore-sign' === $post_type) {
             return $allowed_blocks;
         }
 
