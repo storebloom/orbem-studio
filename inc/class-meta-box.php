@@ -261,6 +261,14 @@ class Meta_Box {
                                         'number',
                                         'The horizontal (left) position where the player character will appear when entering this area.'
                                 ],
+                                'explore-area-height' => [
+                                        'number',
+                                        'The height of the area image (leave empty for full size 4517px)'
+                                ],
+                                'explore-area-width' => [
+                                        'number',
+                                        'The width of the area image (leave empty for full size 5000px)'
+                                ],
                         ],
 
                         'Area Entry Trigger' => [
