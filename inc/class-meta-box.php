@@ -266,9 +266,9 @@ class Meta_Box {
                         'Area Entry Trigger' => [
                                 'explore-area' => [
                                         [
-                                                'select' => $explore_area_array
+                                                'multiselect' => $explore_area_array
                                         ],
-                                        'Select the destination area the player will be sent to when this area\'s trigger is activated.'
+                                        'Select the area(s) where this area trigger will appear.'
                                 ],
                                 'explore-top' => [
                                         'number',
@@ -325,9 +325,9 @@ class Meta_Box {
                         'Trigger Area' => [
                                 'explore-area-required' => [
                                         [
-                                                'select' => $explore_area_array
+                                                'multiselect' => $explore_area_array
                                         ],
-                                        'Select the area where this focus view trigger will appear.'
+                                        'Select the area(s) where this focus view will appear.'
                                 ],
 
                                 'explore-top-required' => [
@@ -443,9 +443,9 @@ class Meta_Box {
                         'Mission Blockade' => [
                                 'explore-area-required' => [
                                         [
-                                                'select' => $explore_area_array
+                                                'multiselect' => $explore_area_array
                                         ],
-                                        'Select the area where this mission will be available.'
+                                        'Select the area(s) where this blockade will appear.'
                                 ],
                                 'explore-top' => [
                                         'number',
@@ -477,9 +477,9 @@ class Meta_Box {
                         'Cutscene Area & Trigger' => [
                                 'explore-area-required' => [
                                         [
-                                                'select' => $explore_area_array
+                                                'multiselect' => $explore_area_array
                                         ],
-                                        'Select the area where this cutscene trigger will appear.'
+                                        'Select the area(s) where this cutscene trigger will appear.'
                                 ],
                                 'explore-cutscene-trigger' => [
                                         [
@@ -1183,9 +1183,9 @@ class Meta_Box {
                         'Minigame Configuration' => [
                                 'explore-area-required' => [
                                         [
-                                                'select' => $explore_area_array
+                                                'multiselect' => $explore_area_array
                                         ],
-                                        'Select the area where this minigame can be accessed.'
+                                        'Select the area(s) where this minigame will appear.'
                                 ],
                                 'explore-minigame-type-required' => [
                                         [
@@ -1222,9 +1222,9 @@ class Meta_Box {
                         'Communication Trigger Placement' => [
                                 'explore-area-required' => [
                                         [
-                                                'select' => $explore_area_array
+                                                'multiselect' => $explore_area_array
                                         ],
-                                        'Select the area where this communication trigger will appear.'
+                                        'Select the area(s) where this communication trigger will appear.'
                                 ],
                                 'explore-top-required' => [
                                         'number',
@@ -1292,9 +1292,9 @@ class Meta_Box {
                         'Explainer Placement' => [
                                 'explore-area-required' => [
                                         [
-                                                'select' => array_merge(['Lose Message' => 'lose-message'], $explore_area_array)
+                                                'multiselect' => array_merge(['Lose Message' => 'lose-message'], $explore_area_array)
                                         ],
-                                        'Select the area where this explainer can be triggered.'
+                                        'Select the area(s) where this explainer trigger will appear.'
                                 ],
                                 'explore-top-required' => [
                                         'number',

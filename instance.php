@@ -20,5 +20,6 @@ require_once __DIR__ . '/inc/class-meta-box.php';
 require_once __DIR__ . '/inc/class-dev-mode.php';
 require_once __DIR__ . '/inc/class-util.php';
 require_once __DIR__ . '/inc/class-menu.php';
+require_once __DIR__ . '/inc/class-export-import.php';
 
 $orbem_studio_studio = new Plugin();

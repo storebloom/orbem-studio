@@ -539,7 +539,20 @@ class Menu
                 'menu_slug'  => 'orbem-custom-css',
                 'callback'   => [$this, 'settingsPage'],
             ],
+            [
+                'parent_slug' => $parent_slug,
+                'page_title' => 'Export / Import',
+                'menu_title' => 'Export / Import',
+                'capability' => 'edit_posts',
+                'menu_slug' => 'orbem-studio-export-import',
+                'callback' => [$this, 'renderExportPage']
+            ]
         ];
+    }
+
+    public function renderExportPage(): void
+    {
+        include $this->plugin->dir_path . '/templates/export-import.php';
     }
 
     /**

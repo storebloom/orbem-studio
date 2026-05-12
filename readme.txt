@@ -1,11 +1,11 @@
 === Orbem Studio ===
 Contributors: orbemorder, scottstorebloom, scottmweaver
 Donate link: https://www.patreon.com/c/OrbemOrder
-Tags: game engine, rpg, storytelling, gamification, narrative game
+Tags: game engine, rpg, video game, game-dev, narrative game
 Requires at least: 6.1
 Tested up to: 6.9
 Requires PHP: 8.1
-Stable tag: 1.4.7
+Stable tag: 1.4.8
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -190,6 +190,13 @@ Documentation is available at https://orbemorder.com/orbem-studio/docs/readme
 Tutorials are available on the Orbem Studio YouTube channel at https://youtube.com/@orbemstudio
 
 == Changelog ==
+
+= 1.4.8 =
+* Add export/import feature.
+* Updates for dev mode menu.
+* Exclude main character from query.
+* Convert all area fields to multiselect.
+
 
 = 1.4.7 =
 * Starter cutscene style updates.
