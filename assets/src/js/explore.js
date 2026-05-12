@@ -2335,8 +2335,19 @@ const enterNewArea = (function () {
 					}
 
 					if ('' !== devMode) {
-						mainCont.innerHTML = devMode + mainCont.innerHTML;
-					}
+                        mainCont.innerHTML = devMode + mainCont.innerHTML;
+
+                        // Show Devmode.
+                        const devModeMenus = document.querySelectorAll(
+                            '.right-bottom-devmode, .dev-mode-menu, .right-bottom-devmode-pro',
+                        );
+
+                        if (devModeMenus) {
+                            devModeMenus.forEach((devModeMenu) => {
+                                devModeMenu.classList.add('engage');
+                            });
+                        }
+                    }
 
 					// Delete old area styles/maps.
 					if (mapItemStyles) {
@@ -2661,6 +2672,7 @@ const enterNewArea = (function () {
                         // Update current scores for realtime / high score counters.
                         replaceScoreTokens();
                         replaceScoresInBody();
+                        window.orbemAreaChanged = position;
 					}, 100);
 				});
 

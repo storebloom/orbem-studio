@@ -1253,7 +1253,44 @@ class Explore
             'post_status'    => 'publish',
         ];
 
+        $main_character_slug = get_option('explore_main_character');
+
+        if (false === empty($main_character_slug)) {
+            $cache_key         = 'orbem_main_char_id_' . $main_character_slug;
+            $main_character_id = wp_cache_get($cache_key, 'orbem_studio');
+
+            if (false === $main_character_id) {
+                global $wpdb;
+                $main_character_id = $wpdb->get_var($wpdb->prepare(
+                        "SELECT ID FROM {$wpdb->posts} WHERE post_name = %s AND post_type = 'explore-character' AND post_status = 'publish' LIMIT 1",
+                        $main_character_slug
+                ));
+
+                wp_cache_set($cache_key, $main_character_id ?? 0, 'orbem_studio', HOUR_IN_SECONDS);
+            }
+
+            if ($main_character_id) {
+                $args['post__not_in'] = [(int) $main_character_id];
+            }
+        }
+
         return get_posts($args);
+    }
+
+    /**
+     * Clear main character ID cache when option updates.
+     *
+     * @action update_option_explore_main_character
+     */
+    public function clearMainCharacterCache(string $old_value, string $new_value): void
+    {
+        if (!empty($old_value)) {
+            wp_cache_delete('orbem_main_char_id_' . sanitize_key($old_value), 'orbem_studio');
+        }
+
+        if (!empty($new_value)) {
+            wp_cache_delete('orbem_main_char_id_' . sanitize_key($new_value), 'orbem_studio');
+        }
     }
 
     /**
@@ -1566,16 +1603,6 @@ class Explore
                         $html .= ' data-hitbox-inset="' . esc_attr($hitbox_inset) . '"';
                     }
 
-                    if ('explore-character' === $explore_point->post_type) {
-                        $character_hurt_sound = $explore_point_meta['explore-character-hurt-sound'] ?? false;
-
-                        if (false === empty($character_hurt_sound)) {
-                            $html .= '<span class="hurt-sound">';
-                            $html .= '<audio src="' . esc_url($character_hurt_sound) . '" id="' . esc_attr($explore_point->post_name) . '-hs"></audio>';
-                            $html .= '</span>';
-                        }
-                    }
-
                     // If hazard, add hazard class.
                     if ($is_hazard) {
                         $html .= ' data-hazard="true"';
@@ -1765,6 +1792,16 @@ class Explore
                     }
 
                     $html .= '>';
+
+                    if ('explore-character' === $explore_point->post_type) {
+                        $character_hurt_sound = $explore_point_meta['explore-character-hurt-sound'] ?? false;
+
+                        if (false === empty($character_hurt_sound)) {
+                            $html .= '<span class="hurt-sound">';
+                            $html .= '<audio src="' . esc_url($character_hurt_sound) . '" id="' . esc_attr($explore_point->post_name) . '-hs"></audio>';
+                            $html .= '</span>';
+                        }
+                    }
 
                     // If item is video.
                     if (false === empty($video_override)) {

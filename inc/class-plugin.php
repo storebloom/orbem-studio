@@ -44,6 +44,7 @@ class Plugin extends Plugin_Base {
             $meta_box,
             new Dev_Mode( $this, $meta_box ),
             new Menu( $this, $telemetry ),
+            new Export_Import( $this ),
             $telemetry
 		);
 
