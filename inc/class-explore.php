@@ -974,6 +974,8 @@ class Explore
 
         $start_direction = false !== $area_id ? get_post_meta($area_id, 'explore-start-direction', true) : '';
         $start_direction = false === empty($start_direction) ? $start_direction : 'down';
+        $area_width = get_post_meta($area_id, 'explore-area-width', true);
+        $area_height = get_post_meta($area_id, 'explore-area-height', true);
 
         return rest_ensure_response([
             'success' => true,
@@ -992,6 +994,8 @@ class Explore
                 'map-item-styles-scripts' => $area_item_styles_scripts,
                 'start-top'               => false !== $area_id ? get_post_meta($area_id, 'explore-start-top', true) : '',
                 'start-left'              => false !== $area_id ? get_post_meta($area_id, 'explore-start-left', true) : '',
+                'area-height'             => false !== $area_id ? false === empty($area_height) ? $area_height . 'px' : '100%' : '100%',
+                'area-width'              => false !== $area_id ? false === empty($area_width) ? $area_width . 'px' : '100%' : '100%',
                 'start-direction'         => $start_direction,
                 'map-svg'                 => self::getMapSVG($area[0]),
                 'is-cutscene'             => $is_area_cutscene,

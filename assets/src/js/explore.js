@@ -2640,7 +2640,16 @@ const enterNewArea = (function () {
 						);
 
 						container.className = 'game-container ' + position;
-						container.querySelector('.container-image').src = mapUrl;
+						const mapImage = container.querySelector('.container-image');
+
+                        if (mapImage) {
+                            mapImage.src = mapUrl;
+                            mapImage.style.height =
+                                newMapItems['area-height'];
+                            mapImage.style.width =
+                                newMapItems['area-width'];
+                        }
+
 						currentLocation = position;
 
 						playSong(newMusic, position);
