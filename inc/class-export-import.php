@@ -87,6 +87,9 @@ class Export_Import
             return;
         }
 
+        set_time_limit(0);
+        ini_set('memory_limit', '512M');
+
         $file = $_FILES['orbem_import_file'];
 
         if (UPLOAD_ERR_OK !== $file['error']) {
@@ -94,7 +97,7 @@ class Export_Import
             exit;
         }
 
-        $json = file_get_contents($file['tmp_naxme']);
+        $json = file_get_contents($file['tmp_name']);
 
         if (false === $json) {
             wp_safe_redirect(add_query_arg('import_error', urlencode('Could not read file.'), admin_url('admin.php?page=orbem-studio-export-import')));
