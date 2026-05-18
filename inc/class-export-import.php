@@ -55,6 +55,7 @@ class Export_Import
             'site_url'    => get_site_url(),
             'options'     => $this->exportOptions(),
             'posts'       => $this->exportPosts(),
+            'css'         => get_option('explore_custom_css', ''),
         ];
 
         $filename = 'orbem-game-' . sanitize_title(get_bloginfo('name')) . '-' . gmdate('Y-m-d') . '.json';
@@ -113,6 +114,7 @@ class Export_Import
 
         $this->importOptions($data['options']);
         $this->importPosts($data['posts']);
+        $this->importCss($data['css']);
 
         wp_safe_redirect(add_query_arg('import_success', '1', admin_url('admin.php?page=orbem-studio-export-import')));
         exit;
@@ -228,6 +230,16 @@ class Export_Import
             if (in_array($key, $game_options, true) && 'explore_game_page' !== $key) {
                 update_option(sanitize_key($key), $value);
             }
+        }
+    }
+
+    /**
+     * Import game options -- overrides existing.
+     */
+    private function importCss(array $css): void
+    {
+        if (false === empty($css)) {
+            update_option('explore_custom_css', $css);
         }
     }
 
