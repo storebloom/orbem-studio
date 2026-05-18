@@ -1155,7 +1155,7 @@ html {
             z-index: 0;
           }
 
-          &[data-enemy-type="boss"] {
+          &[data-enemy-type="boss"], &[data-enemy-type="shooter"] {
             margin: 0 1rem;
 
             .projectile {

@@ -1205,7 +1205,9 @@ function triggerGameOver() {
 	if (gameOver) {
         const defaultMap = document.querySelector('.default-map');
 
-        window.currentMusic.pause();
+        if ( window.currentMusic ) {
+            window.currentMusic.pause();
+        }
 
         gameOver.style.display = 'block';
 

@@ -1432,7 +1432,8 @@ class Explore
         $dead_ones          = false === empty($dead_ones) ? $dead_ones : [];
         $health             = '';
         $explore_enemy_type = '';
-        $all_missions       = get_posts(
+        $area             = sanitize_key($current_location);
+        $all_missions     = get_posts(
             [
                 'post_type'      => 'explore-mission',
                 'posts_per_page' => -1,
@@ -1440,10 +1441,16 @@ class Explore
                 'post_status'    => 'publish',
                 // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
                 'meta_query'     => [
+                    'relation' => 'OR',
                     [
                         'key'     => 'explore-area',
-                        'value'   => sanitize_key($current_location),
+                        'value'   => $area,
                         'compare' => '='
+                    ],
+                    [
+                        'key'     => 'explore-area',
+                        'value'   => '"' . $area . '"',
+                        'compare' => 'LIKE'
                     ]
                 ]
             ]
@@ -1654,6 +1661,11 @@ class Explore
                     if (0 < count($all_missions)) {
                         foreach ($all_missions as $mission) {
                             $trigger_item       = get_post_meta($mission->ID, 'explore-trigger-item', true);
+
+                            if ('clicker' === $explore_point->post_name) {
+                                var_dump($mission);
+                                var_dump($trigger_item);
+                            }
                             $trigger_focus      = get_post_meta($mission->ID, 'explore-trigger-focus', true);
                             $trigger_item       = is_array($trigger_item) && false === empty($trigger_item) ? array_keys($trigger_item)[0] : $trigger_item;
                             $trigger_item       = is_array($trigger_item) ? '' : $trigger_item;
@@ -1661,15 +1673,17 @@ class Explore
                             $trigger_focus      = is_array($trigger_focus) ? '' : $trigger_focus;
                             $enemy_trigger_item = get_post_meta($mission->ID, 'explore-trigger-enemy', true);
 
-                            if ((false === empty($trigger_item) && is_array($trigger_item) && true === in_array($explore_point->post_name, $trigger_item, true)) || (false === empty($trigger_item) && false === is_array($trigger_item) && str_contains($explore_point->post_name, $trigger_item))) {
+                            $point = $explore_point->post_name;
+
+                            if (!empty($trigger_item) && str_contains($point, $trigger_item)) {
                                 $missions[] = $mission;
                             }
 
-                            if ((false === empty($trigger_focus) && is_array($trigger_focus) && true === in_array($explore_point->post_name, $trigger_focus, true)) || (false === empty($trigger_focus) && false === is_array($trigger_focus) && str_contains($explore_point->post_name, $trigger_focus))) {
+                            if (!empty($trigger_focus) && str_contains($point, $trigger_focus)) {
                                 $missions[] = $mission;
                             }
 
-                            if ((is_array($enemy_trigger_item) && in_array($explore_point->post_name, array_keys($enemy_trigger_item), true)) || (false === is_array($enemy_trigger_item) && $explore_point->post_name === $enemy_trigger_item)) {
+                            if (is_array($enemy_trigger_item) ? array_key_exists($point, $enemy_trigger_item) : $point === $enemy_trigger_item) {
                                 $enemy_missions[] = $mission;
                             }
                         }

@@ -9,6 +9,10 @@ if ( ! defined( 'ABSPATH' ) ) exit;
  */
 $orbem_studio_final_value = false === empty($orbem_studio_meta_values[$orbem_studio_key]) ? $orbem_studio_meta_values[$orbem_studio_key] : '';
 ?>
+<?php if (false !== $orbem_studio_main_key): ?>
+    <?php echo esc_html(ucfirst(str_replace(['explore-', '-'], ['', ' '], $orbem_studio_key))); ?>
+    <br>
+<?php endif; ?>
 <?php foreach ($orbem_studio_sub_value as $orbem_studio_sub_value_value) : ?>
 <p>
 <label>

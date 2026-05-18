@@ -278,7 +278,7 @@ $orbem_studio_current_level                = Explore::getCurrentLevel();
 $orbem_studio_max_points                   = Explore::getLevelMap();
 $orbem_studio_explore_attack               = false === empty($orbem_studio_equipped_weapon) ? get_post_meta($orbem_studio_equipped_weapon->ID, 'explore-attack', true) : false;
 $orbem_studio_weapon_sound                 = false === empty($orbem_studio_equipped_weapon) ? get_post_meta($orbem_studio_equipped_weapon->ID, 'explore-weapon-sound', true) : false;
-$orbem_studio_weapon_strength              = false === empty($orbem_studio_explore_attack) ? wp_json_encode($orbem_studio_explore_attack) : '""';
+$orbem_studio_weapon_strength              = false === empty($orbem_studio_explore_attack) ? wp_json_encode($orbem_studio_explore_attack) : '{&quot;normal&quot;:&quot;20&quot;,&quot;heavy&quot;:&quot;20&quot;,&quot;charged&quot;:&quot;20&quot;}';
 $orbem_studio_intro_video                  = get_option('explore_intro_video', false);
 $orbem_studio_signin_screen                = get_option('explore_signin_screen', '');
 $orbem_studio_signin_screen_mobile         = get_option('explore_signin_screen_mobile', '');
