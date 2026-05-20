@@ -328,7 +328,7 @@ include plugin_dir_path(__FILE__) . 'plugin-header.php';
     <?php endif; ?>
     <div class="game-container <?php echo esc_attr($orbem_studio_location); ?>" data-main="<?php echo esc_attr($orbem_studio_main_character); ?>" data-fadeout="true">
         <?php if ((false === empty($orbem_studio_explore_area_map) && false !== stripos($orbem_studio_explore_area_map, '.webm')) || (false === empty($orbem_studio_explore_area_map) && false !== stripos($orbem_studio_explore_area_map, '.mp4'))): ?>
-            <video style="position:absolute;z-index: 1;<?php echo esc_attr('height:' . $orbem_studio_explore_area_height . ';' . 'width:' . $orbem_studio_explore_area_width . ';'); ?>top:0; left:0;" src="<?php echo esc_attr($orbem_studio_explore_area_map); ?>" autoplay loop muted></video>
+            <video class="container-image" style="position:absolute;z-index: 1;<?php echo esc_attr('height:' . $orbem_studio_explore_area_height . ';' . 'width:' . $orbem_studio_explore_area_width . ';'); ?>" src="<?php echo esc_attr($orbem_studio_explore_area_map); ?>" autoplay loop muted></video>
         <?php else : ?>
             <img class="container-image" style="position:absolute;z-index: -1;object-fit: cover;<?php echo esc_attr('height:' . $orbem_studio_explore_area_height . ';' . 'width:' . $orbem_studio_explore_area_width . ';'); ?>" src="<?php echo esc_url($orbem_studio_explore_area_map) ?? ''; ?>" decoding="async" fetchpriority="high" loading="eager" />
         <?php endif; ?>

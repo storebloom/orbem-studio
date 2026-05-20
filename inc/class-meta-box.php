@@ -1147,6 +1147,10 @@ class Meta_Box {
                                         'number',
                                         'The speed at which this enemy’s projectiles move.'
                                 ],
+                                'explore-projectile-rate' => [
+                                     'number',
+                                     'The rate the projectiles will fire (1000 = 1 second)'
+                                ],
                                 'explore-projectile-trigger' => [
                                         [
                                                 'top' => 'number',
