@@ -14,13 +14,8 @@ let typeWriterTimeout;
 let shiftIsPressed = false;
 let spaceIsPressed = false;
 let chargeAttackTimeout;
-let bossWaveCount = 0;
-let secondWaveHit = false;
-let thirdWaveHit = false;
-let fourthWaveHit = false;
 let inHazard = false;
 let hazardItem = false;
-let pulsewaveInterval;
 let getOutOfHazard;
 let hurtTimeout;
 let timerCountDownInterval;
@@ -1203,10 +1198,13 @@ function triggerGameOver() {
 	const gameOver = document.querySelector('.game-over-notice');
 
 	if (gameOver) {
+        const gameOverMusic = gameOver.querySelector( 'audio' );
         const defaultMap = document.querySelector('.default-map');
 
-        if ( window.currentMusic ) {
+        if ( window.currentMusic && gameOverMusic && '' !== gameOverMusic.src ) {
             window.currentMusic.pause();
+            gameOverMusic.loop = false;
+            gameOverMusic.play();
         }
 
         gameOver.style.display = 'block';
@@ -1989,21 +1987,21 @@ const hurtTheEnemy = (function () {
                 if ('boss' === value.getAttribute('data-enemy-type')) {
                     if (
                         newHealth <= enemyFullHealth * 0.75 &&
-                        false === secondWaveHit
+                        !value._secondWaveHit
                     ) {
-                        secondWaveHit = true;
+                        value._secondWaveHit = true;
                         updateBossWave(value);
                     } else if (
                         newHealth <= enemyFullHealth * 0.5 &&
-                        false === thirdWaveHit
+                        !value._thirdWaveHit
                     ) {
-                        thirdWaveHit = true;
+                        value._thirdWaveHit = true;
                         updateBossWave(value);
                     } else if (
                         newHealth <= enemyFullHealth * 0.25 &&
-                        false === fourthWaveHit
+                        !value._fourthWaveHit
                     ) {
-                        fourthWaveHit = true;
+                        value._fourthWaveHit = true;
                         updateBossWave(value);
                     }
                 }
@@ -2013,6 +2011,11 @@ const hurtTheEnemy = (function () {
                 if (0 === newHealth) {
                     stopShooterEnemy(value);
                     stopRunnerEnemy(value);
+
+                    if (value._pulsewaveInterval) {
+                        clearInterval(value._pulsewaveInterval);
+                        value._pulsewaveInterval = null;
+                    }
 
 					const enemyName = cleanClassName(value.className);
 					const deadImage = value.querySelector('#' + enemyName + 'dead');
@@ -3398,9 +3401,11 @@ function updateBossWave(enemy) {
 
 	const bossWaves = enemy.dataset.waves.split(',');
 
-    if (bossWaveCount > (bossWaves.length - 2)) {
-        bossWaveCount = 0;
-    }
+	enemy._bossWaveCount ??= 0;
+
+	if (enemy._bossWaveCount > (bossWaves.length - 2)) {
+		enemy._bossWaveCount = 0;
+	}
 
 	// Remove current wave classes.
 	if (bossWaves) {
@@ -3408,51 +3413,57 @@ function updateBossWave(enemy) {
 			enemy.classList.remove(bossWave + '-wave-engage');
 		});
 
-		enemy.classList.add(bossWaves[bossWaveCount] + '-wave-engage');
+		enemy.classList.add(bossWaves[enemy._bossWaveCount] + '-wave-engage');
 
-		if ('pulse-wave' === bossWaves[bossWaveCount]) {
-			pulsewaveInterval = setInterval(() => {
+		if ('pulse-wave' === bossWaves[enemy._bossWaveCount]) {
+			enemy._pulsewaveInterval = setInterval(() => {
 				enemy.classList.toggle('pulse-in');
 			}, 13000);
-		} else if (pulsewaveInterval) {
-			clearInterval(pulsewaveInterval);
+		} else if (enemy._pulsewaveInterval) {
+			clearInterval(enemy._pulsewaveInterval);
+			enemy._pulsewaveInterval = null;
 			enemy.classList.remove('pulse-in');
 		}
 
-		if ('projectile' === bossWaves[bossWaveCount]) {
+		if ('projectile' === bossWaves[enemy._bossWaveCount]) {
 			engageShooter(enemy);
 		} else {
-            stopShooterEnemy(enemy);
-            updatePunchImage(enemy, false);
+			stopShooterEnemy(enemy);
+			updatePunchImage(enemy, false);
 		}
 	}
 
-	bossWaveCount++;
+	enemy._bossWaveCount++;
 }
 
 function engageShooter(enemy) {
 	'use strict';
 
+	stopShooterEnemy(enemy);
+
 	const projSpeed = enemy.dataset.enemyspeed;
+	const projectileTemplate = enemy.querySelector('.projectile');
 
-    enemy._shooterInt = setInterval(() => {
-        updatePunchImage(enemy, true);
+	if (projectileTemplate) {
+		projectileTemplate.style.display = 'none';
+	}
 
-        setTimeout(() => {
-            updatePunchImage(enemy, false);
-        }, 500)
-		const mapCharacter = document.querySelector(
-			'.map-character-icon.engage'
-		);
+	enemy._shooterInt = setInterval(() => {
+		updatePunchImage(enemy, true);
+
+		setTimeout(() => {
+			updatePunchImage(enemy, false);
+		}, 500);
+
+		const mapCharacter = document.querySelector('.map-character-icon.engage');
 		const mapCharacterLeft =
 			mapCharacter.getBoundingClientRect().left + mapCharacter.width / 2;
 		const mapCharacterTop =
 			mapCharacter.getBoundingClientRect().top + mapCharacter.width / 2;
-		const projectile = enemy.querySelector('.projectile');
 
-		if (projectile) {
+		if (projectileTemplate) {
 			shootProjectile(
-				projectile,
+				projectileTemplate,
 				mapCharacterLeft,
 				mapCharacterTop,
 				enemy,
@@ -3462,7 +3473,7 @@ function engageShooter(enemy) {
 				'no'
 			);
 		}
-	}, 5000);
+	}, parseInt(enemy.dataset.rate, 10) || 5000);
 }
 
 /**
@@ -3490,64 +3501,41 @@ function shootProjectile(
 
 	const newProjectile = projectile.cloneNode(true);
 
-	// Remove engage class and transition style before using new projectile.
 	newProjectile.classList.remove('engage');
 	newProjectile.style.transition = '';
+	newProjectile.style.transform = '';
+	newProjectile.style.display = '';
 
-	// Move projectile.
+    console.log(projectile);
+
+	let collisionWalls;
+
 	if (true !== spell && 'no' === isProjectile) {
-        projectile.classList.add('shooting');
-		moveEnemy(
-			projectile,
-			mapCharacterLeft,
-			mapCharacterTop,
-			projSpeed,
-			enemy
+		newProjectile.classList.add('shooting');
+		enemy.prepend(newProjectile);
+		moveEnemy(newProjectile, mapCharacterLeft, mapCharacterTop, projSpeed, enemy);
+		collisionWalls = document.querySelectorAll(
+			'.default-map svg rect, .protection, .map-character-icon.engage, #map-weapon img, [data-genre="explore-point"], [data-genre="explore-wall"]'
 		);
 	} else if (true === spell) {
-		projectile.classList.remove('map-weapon');
-		projectile.classList.add('magic-weapon');
-
-		moveSpell(projectile, mapCharacterLeft, mapCharacterTop);
-		enemy = document.querySelector('.game-container');
+		newProjectile.classList.remove('map-weapon');
+		newProjectile.classList.add('magic-weapon');
+		const gameContainer = document.querySelector('.game-container');
+		gameContainer.prepend(newProjectile);
+		moveSpell(newProjectile, mapCharacterLeft, mapCharacterTop);
+		collisionWalls = document.querySelectorAll(
+			'.default-map svg rect, .enemy-item, .map-item'
+		);
 	} else if ('yes' === isProjectile) {
-		moveSpell(projectile, mapCharacterLeft, mapCharacterTop);
-		enemy = document.querySelector('.game-container');
+		const gameContainer = document.querySelector('.game-container');
+		gameContainer.prepend(newProjectile);
+		moveSpell(newProjectile, mapCharacterLeft, mapCharacterTop);
+		collisionWalls = document.querySelectorAll(
+			'.default-map svg rect, .enemy-item, .map-item'
+		);
 	}
 
-	// check projectile position and remove if its wall.
-	enemy._projMovement = setInterval(function () {
-		const projectile = enemy.querySelector(projectileClass);
-		let collisionWalls = document.querySelectorAll(
-			'.default-map svg rect, .protection, .map-character-icon.engage, #map-weapon img'
-		);
-
-		if (true === spell || 'yes' === isProjectile) {
-			collisionWalls = document.querySelectorAll(
-				'.default-map svg rect, .enemy-item, .map-item'
-			);
-		}
-
-		if (collisionWalls && projectile) {
-			trackProjectile(projectile, collisionWalls, true);
-		}
-	}, 20);
-
-	setTimeout(() => {
-		if (true === spell || 'true' === isProjectile) {
-			const mapCharPos = document
-				.getElementById('map-character')
-				.className.replace('-dir', '');
-			newProjectile.setAttribute('data-direction', mapCharPos);
-		}
-
-		enemy.prepend(newProjectile);
-		projectile.remove();
-		// Link weapon back to player.
-		window.weaponConnection = true;
-
-		clearInterval(enemy._projMovement);
-	}, 4500);
+	trackProjectile(newProjectile, collisionWalls, true);
 }
 
 function trackProjectile(projectile, collisionWalls, isProjectile) {
@@ -3558,10 +3546,23 @@ function trackProjectile(projectile, collisionWalls, isProjectile) {
 	function tick() {
 		if (!document.body.contains(projectile)) {
 			return;
-		} // stop if removed
+		}
+
+		// Remove projectile once it leaves the game container bounds.
+		const pr = getRelativeRect(projectile, container);
+		const margin = 200;
+		if (
+			pr.right < -margin ||
+			pr.left > container.offsetWidth + margin ||
+			pr.bottom < -margin ||
+			pr.top > container.offsetHeight + margin
+		) {
+			projectile.remove();
+			return;
+		}
 
 		for (const wall of collisionWalls) {
-			if (enemyOverlap(projectile, wall, container)) {
+			if (enemyOverlap(projectile, wall, container) && false === wall.className.includes('trigger')) {
 				// If projectile collides with player than take health of player.
 				if (
 					true === wall.classList.contains('map-character-icon') &&
@@ -3701,8 +3702,6 @@ function moveEnemy(
  */
 function moveSpell(projectile, mapCharacterLeft, mapCharacterTop) {
 	'use strict';
-
-	window.weaponConnection = false;
 
 	// Set the transition speed dynamically.
 	projectile.style.transition = 'all 3s';

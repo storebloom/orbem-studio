@@ -42,9 +42,16 @@ class Util
             'posts_per_page' => 1,
             'no_found_rows'  => true,
         ]);
+        $sound_html = '';
 
         if (!empty($lose_explainer[0]) && $lose_message_explainer === $lose_explainer[0]->post_name) {
-            return do_blocks($lose_explainer[0]->post_content);
+            $sound_byte = get_post_meta($lose_explainer[0]->ID, 'explore-sound-byte', true);
+
+            if (false === empty($sound_byte)) {
+                $sound_html = '<audio id="' . esc_attr($lose_explainer[0]->ID) . '-s" src="' . esc_url($sound_byte) . '"></audio>';
+            }
+
+            return do_blocks($lose_explainer[0]->post_content) . $sound_html;
         }
 
         return 'You lost. <button class="try-again">Try again</button>';

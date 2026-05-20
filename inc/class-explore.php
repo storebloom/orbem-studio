@@ -1777,10 +1777,15 @@ class Explore
                     if ('explore-enemy' === $explore_point->post_type) {
                         $speed             = $explore_point_meta['explore-speed'] ?? '';
                         $enemy_speed       = $explore_point_meta['explore-enemy-speed'] ?? '';
+                        $projectile_rate   = $explore_point_meta['explore-projectile-rate'] ?? '5000';
                         $enemy_weapon_type = $explore_point_meta['explore-weapon-weakness'] ?? '';
 
                         if (false === empty($enemy_weapon_type)) {
                             $html .= ' data-weapon="' . esc_attr($enemy_weapon_type) . '"';
+                        }
+
+                        if (false === empty($projectile_rate)) {
+                            $html .= ' data-rate="' . esc_attr($projectile_rate) . '"';
                         }
 
                         $html .= ' data-health="' . esc_attr($health) . '" data-healthamount="' . esc_attr($health) . '" data-enemyspeed="' . esc_attr($enemy_speed) . '" data-speed="' . esc_attr($speed) . '" data-enemy-type="' . esc_attr($explore_enemy_type) . '"';
