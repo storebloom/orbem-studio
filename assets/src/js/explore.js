@@ -1276,6 +1276,16 @@ function persistItemRemoval(item, type, amount, timeoutTime, reset, direct) {
         };
 
         localStorage.setItem(storageKey, JSON.stringify(updated));
+
+        if (OrbemOrder.explorePoints) {
+            const itemList = Array.isArray(item) ? item : [item];
+            if (!OrbemOrder.explorePoints[type]) {
+                OrbemOrder.explorePoints[type] = { positions: [] };
+            }
+            OrbemOrder.explorePoints[type].positions = Array.from(
+                new Set((OrbemOrder.explorePoints[type].positions || []).concat(itemList))
+            );
+        }
     }
 
     if (false === isLoggedIn) {
@@ -1543,6 +1553,16 @@ function saveMission(mission, value, position) {
 			}
 		}
 
+		if (false === isLoggedIn) {
+			const missionArea = document.querySelector('.missions-content')?.dataset?.area || currentLocation;
+			const storedMissions = JSON.parse(localStorage.getItem('orbem_local_missions') || '{}');
+			if (!storedMissions[missionArea]) storedMissions[missionArea] = [];
+			if (!storedMissions[missionArea].includes(mission)) {
+				storedMissions[missionArea].push(mission);
+			}
+			localStorage.setItem('orbem_local_missions', JSON.stringify(storedMissions));
+		}
+
 		const filehref = `${OrbemOrder.siteRESTURL}/mission/`;
 
 		const jsonString = {
@@ -1597,13 +1617,17 @@ function showNextMission(theMission) {
 						'' !== nextMissionBlockade &&
 						'0' !== JSON.parse(nextMissionBlockade).top
 					) {
-						document.querySelector(
+						const blockadeEl = document.querySelector(
 							'.' +
 								nextMissionEl.className
 									.replace('mission-item ', '')
 									.replace('next-mission ', '') +
 								'-blockade'
-						).style.display = 'block';
+						);
+
+						if (blockadeEl) {
+							blockadeEl.style.display = 'block';
+						}
 					}
 
 					nextMissionEl.classList.add('engage');
@@ -2232,7 +2256,7 @@ const enterNewArea = (function () {
 
 		window.previousCutsceneArea =
 			'' === window.previousCutsceneArea
-				? (OrbemOrder.previousCutsceneArea ?? '')
+				? (OrbemOrder.previousCutsceneArea || localStorage.getItem('orbem_local_previousCutsceneArea') || '')
 				: window.previousCutsceneArea;
 
 		// Incase using level selector.
@@ -2370,6 +2394,7 @@ const enterNewArea = (function () {
 
 					if (missionList) {
 						missionList.innerHTML = newMapItems['map-missions'];
+						missionList.dataset.area = position;
 
 						if ('' !== window.nextAreaMissionComplete) {
 							const completeMission = document.querySelector(
@@ -2387,6 +2412,18 @@ const enterNewArea = (function () {
 									completeMission.remove();
 								}, 500);
 							}
+						}
+
+						if (false === isLoggedIn) {
+							const storedMissions = JSON.parse(localStorage.getItem('orbem_local_missions') || '{}');
+							const completedMissions = storedMissions[position] || [];
+							completedMissions.forEach((completedMission) => {
+								const completedEl = missionList.querySelector('.' + completedMission + '-mission-item');
+								if (completedEl) {
+									showNextMission(completedEl);
+									completedEl.remove();
+								}
+							});
 						}
 					}
 
@@ -2601,6 +2638,10 @@ const enterNewArea = (function () {
 
 							// Run no point class adder again
 							addNoPoints();
+
+							if (false === isLoggedIn) {
+								applyLocalDragPositions(position);
+							}
 						}, 700);
 					}
 
@@ -2995,22 +3036,24 @@ function updatePointBars(unequip) {
 	);
 	const healthBar = document.querySelector(`#explore-points .health-amount`);
 	const manaBar = document.querySelector(`#explore-points .mana-amount`);
-	let manaAmount = parseInt(manaBar.dataset.amount);
-	let healthAmount = parseInt(healthBar.dataset.amount);
-	let manaWidth = parseInt(manaBar.style.width.replace('px', ''));
-	let healthWidth = parseInt(healthBar.style.width.replace('px', ''));
+
+    let manaAmount = manaBar ? parseInt(manaBar.dataset.amount) : 100;
+    let manaWidth = manabar ? parseInt(manaBar.style.width.replace('px', '')) : 100;
+
+    let healthAmount = healthBar ? parseInt(healthBar.dataset.amount) : 100;
+    let healthWidth = healthBar ? parseInt(healthBar.style.width.replace('px', '')) : 100;
 
 	// Calculate the gear modifiers.
 	if (gear && false === unequip) {
 		const gearAmount = gear.getAttribute('data-value');
 		const gearSubtype = gear.getAttribute('data-subtype');
 
-		if ('health' === gearSubtype) {
+		if ('health' === gearSubtype && healthBar) {
 			healthAmount += parseInt(gearAmount);
 			healthWidth += parseInt(gearAmount);
 		}
 
-		if ('mana' === gearSubtype) {
+		if ('mana' === gearSubtype && manaBar) {
 			manaAmount += parseInt(gearAmount);
 			manaWidth += parseInt(gearAmount);
 		}
@@ -3033,14 +3076,18 @@ function updatePointBars(unequip) {
 	}
 
 	if (gear) {
-		// update the points bars to new width.
-		healthBar.style.width = healthWidth + 'px';
-		healthBar.setAttribute('data-amount', healthAmount);
-		healthBar.querySelector('.gauge').style.width = healthAmount + 'px';
+        if (healthBar) {
+            // update the points bars to new width.
+            healthBar.style.width = healthWidth + 'px';
+            healthBar.setAttribute('data-amount', healthAmount);
+            healthBar.querySelector('.gauge').style.width = healthAmount + 'px';
+        }
 
-		manaBar.style.width = manaWidth + 'px';
-		manaBar.setAttribute('data-amount', manaAmount);
-		manaBar.querySelector('.gauge').style.width = manaAmount + 'px';
+        if (manaBar) {
+            manaBar.style.width = manaWidth + 'px';
+            manaBar.setAttribute('data-amount', manaAmount);
+            manaBar.querySelector('.gauge').style.width = manaAmount + 'px';
+        }
 	}
 
 	// Remove extra classes:
@@ -3964,7 +4011,7 @@ export function engageExploreGame() {
     const playerName = document.querySelector('#orbem-studio-play-name');
 	const container = document.querySelector('.game-container');
 	const touchButtons = document.querySelector('.touch-buttons');
-	window.previousCutsceneArea = OrbemOrder.previousCutsceneArea ?? '';
+	window.previousCutsceneArea = OrbemOrder.previousCutsceneArea || localStorage.getItem('orbem_local_previousCutsceneArea') || '';
 
     const tryAgain = document.querySelectorAll('.try-again');
     if (tryAgain) {
@@ -4107,8 +4154,27 @@ export function engageExploreGame() {
 		});
 	}
 
+	const missionListEl = document.querySelector('.missions-content');
+	if (missionListEl) missionListEl.dataset.area = currentLocation;
+
+	if (false === isLoggedIn) {
+		const storedMissions = JSON.parse(localStorage.getItem('orbem_local_missions') || '{}');
+		const completedMissions = storedMissions[currentLocation] || [];
+		completedMissions.forEach((completedMission) => {
+			const completedEl = document.querySelector('.' + completedMission + '-mission-item');
+			if (completedEl) {
+				showNextMission(completedEl);
+				completedEl.remove();
+			}
+		});
+	}
+
 	// Load blockades.
 	loadMissionBlockades();
+
+	if (false === isLoggedIn) {
+		applyLocalDragPositions(currentLocation);
+	}
 
 	// Add character hit button.
 	addCharacterHit();
@@ -4187,6 +4253,21 @@ export function engageExploreGame() {
 	}, 1000);
 }
 
+function applyLocalDragPositions(area) {
+    'use strict';
+
+    const dragStorage = JSON.parse(localStorage.getItem('orbem_local_drag') || '{}');
+    const positions = dragStorage[area] || {};
+
+    Object.entries(positions).forEach(([slug, coords]) => {
+        const el = document.querySelector('.' + slug + '-map-item');
+        if (el) {
+            el.style.top = coords.top;
+            el.style.left = coords.left;
+        }
+    });
+}
+
 function resetLocalGameState() {
     'use strict';
 
@@ -4210,6 +4291,13 @@ function resetLocalGameState() {
 
         localStorage.setItem(storageKey, JSON.stringify(reset));
     });
+
+    if (false === isLoggedIn) {
+        localStorage.removeItem('orbem_local_missions');
+        localStorage.removeItem('orbem_local_previousCutsceneArea');
+        localStorage.removeItem('orbem_local_drag');
+        localStorage.removeItem('orbem_local_points');
+    }
 }
 
 function enterFullscreen() {
@@ -5556,6 +5644,7 @@ function setPreviousCutsceneArea(cutsceneName) {
 	'use strict';
 
 	if (false === isLoggedIn) {
+		localStorage.setItem('orbem_local_previousCutsceneArea', cutsceneName);
 		return;
 	}
 
@@ -8035,7 +8124,15 @@ function dragItemEvent(e) {
                 left: dragmeitem.style.left.replace('px', ''),
             };
 
-			if (false !== isLoggedIn) {
+			if (false === isLoggedIn) {
+				const dragStorage = JSON.parse(localStorage.getItem('orbem_local_drag') || '{}');
+				if (!dragStorage[currentLocation]) dragStorage[currentLocation] = {};
+				dragStorage[currentLocation][cleanClass] = {
+					top: dragmeitem.style.top,
+					left: dragmeitem.style.left,
+				};
+				localStorage.setItem('orbem_local_drag', JSON.stringify(dragStorage));
+			} else {
 				// Save position of item.
 				fetch(filehref, {
 					method: 'POST', // Specify the HTTP method
