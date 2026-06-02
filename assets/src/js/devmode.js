@@ -56,9 +56,16 @@ export function engageDevMode() {
                     ? event.clientY
                     : event.clientY - mapRect.top;
 
-            // Update container position based on mouse position relative to the container
-            draggedContainer.style.left = `${mouseX / window.devZoom - offsetX}px`;
-            draggedContainer.style.top = `${mouseY / window.devZoom - offsetY}px`;
+            // Update container position based on mouse position relative to the container.
+            // offsetX/offsetY are in screen pixels; divide the whole expression by devZoom
+            // so positions stay in unscaled CSS-pixel space. Menu items are not inside the
+            // scaled container so they use zoom=1.
+            const zoom =
+                'menu' === draggedContainer.dataset.type
+                    ? 1
+                    : window.devZoom || 1;
+            draggedContainer.style.left = `${(mouseX - offsetX) / zoom}px`;
+            draggedContainer.style.top = `${(mouseY - offsetY) / zoom}px`;
         }
     }
 
