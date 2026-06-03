@@ -12,7 +12,6 @@ Missions drive player progression through objectives, rewards, and unlockable co
 
 ### Basic Setup
 
-- **Area** (`explore-area`): Where this mission is active
 - **Reward Value** (`explore-value`): Amount of reward points
 - **Reward Type** (`explore-value-type`): Type of reward (`point`, `mana`, `health`, `money`)
 
@@ -26,9 +25,13 @@ Missions drive player progression through objectives, rewards, and unlockable co
 - Select one or more items (multiselect)
 - Mission completes when player interacts with all selected items
 
-**Enemy Trigger** (`explore-trigger-enemy`):
-- Select specific enemy
-- Mission completes when enemy is defeated
+**Focus View Triggers** (`explore-trigger-focus`):
+- Select one or more signs/focus view items (multiselect)
+- Mission completes when player examines all selected focus views
+
+**Enemy Triggers** (`explore-trigger-enemy`):
+- Select one or more enemies (multiselect)
+- Mission completes when all selected enemies are defeated
 
 ### Mission Rewards
 
@@ -51,13 +54,15 @@ Value Type: point
 
 ### Blockades
 
+**Blockade Area** (`explore-area`): Multiselect — area(s) where the blockade appears
+
 **Mission Blockade** (top, left, height, width):
 - Invisible wall that disappears when mission completes
 - Gates areas or content behind mission completion
 
 **Hazard Removal** (`explore-hazard-remove`):
-- Select a hazard item
-- Hazard is removed when mission completes
+- Select a hazard-type item
+- That hazard item is removed from the map when this mission completes
 
 ## Mission Flow
 

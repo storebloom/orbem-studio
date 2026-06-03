@@ -45,9 +45,9 @@ Enemies provide challenge and combat scenarios in your game. They share many con
 #### Area Placement
 
 **Field:** `explore-area`  
-**Type:** Select
+**Type:** Multiselect
 
-The area where this enemy appears.
+The area(s) where this enemy appears. Multiple areas can be selected.
 
 **Example:** Select "dark-forest" to place the enemy in that area.
 
@@ -103,6 +103,18 @@ Display name shown to players during combat or interactions.
 Post Title: wolf-enemy-01
 Character Name: "Corrupted Wolf"
 ```
+
+### Sound Configuration
+
+**Field:** `explore-enemy-sound`  
+**Type:** Upload (audio file)
+
+Sound that plays while this enemy is walking or moving.
+
+**Field:** `explore-enemy-hurt-sound`  
+**Type:** Upload (audio file)
+
+Sound that plays when this enemy takes damage.
 
 ### Enemy Images
 
@@ -280,6 +292,97 @@ Time Between: 2000 (2 second pause)
 - Brief pauses at corners (realistic patrol)
 - Long pauses create windows for players to pass
 
+#### Path Trigger
+
+**Field:** `explore-path-trigger`  
+**Type:** Complex object
+
+Define a trigger zone and optional condition that causes this enemy to begin moving.
+
+**Subfields:**
+- `top` - Trigger top position
+- `left` - Trigger left position
+- `height` - Trigger height
+- `width` - Trigger width
+- `cutscene` - Cutscene that activates movement
+- `item` - Item interaction that activates movement
+
+### Projectile and Attack Configuration
+
+For `shooter` and `boss` type enemies.
+
+#### Projectile
+
+**Field:** `explore-projectile`  
+**Type:** Complex object
+
+Configure the projectile this enemy fires.
+
+**Subfields:**
+- `image-url` - Upload: the projectile's visual image
+- `width` - Projectile width in pixels
+- `height` - Projectile height in pixels
+
+#### Projectile Speed
+
+**Field:** `explore-enemy-speed`  
+**Type:** Number
+
+The speed at which this enemy's projectiles travel.
+
+#### Projectile Rate
+
+**Field:** `explore-projectile-rate`  
+**Type:** Number  
+**Unit:** Milliseconds
+
+How frequently this enemy fires (e.g., `1000` = once per second).
+
+#### Projectile Trigger
+
+**Field:** `explore-projectile-trigger`  
+**Type:** Trigger zone
+
+Define the area that, when the player enters it, causes this enemy to start firing or charging.
+
+**Subfields:**
+- `top` - Trigger top position
+- `left` - Trigger left position
+- `height` - Trigger height
+- `width` - Trigger width
+
+### Weakness and Boss Configuration
+
+#### Weapon Weakness
+
+**Field:** `explore-weapon-weakness`  
+**Type:** Select (list of weapons)
+
+If set, only this weapon can damage the enemy. All other weapons deal no damage.
+
+**Example:**
+```
+Weapon Weakness: silver-sword
+(Only the silver-sword can harm this enemy)
+```
+
+#### Boss Waves
+
+**Field:** `explore-boss-waves`  
+**Type:** Multiselect
+
+Select the attack patterns this boss uses during combat.
+
+**Options:**
+- `projectile` - Boss fires projectiles
+- `pulse-wave` - Boss emits a spreading pulse wave
+
+**Example:**
+```
+Boss Waves: projectile, pulse-wave
+(Boss alternates between firing projectiles and pulse attacks)
+```
+
 ### Voice Configuration
 
 **Field:** `explore-voice`  
@@ -329,9 +432,9 @@ Materialize After Mission: open-the-gate
 #### Remove After Cutscene
 
 **Field:** `explore-remove-after-cutscene`  
-**Type:** Select (list of cutscenes)
+**Type:** Multiselect (list of cutscenes)
 
-Enemy disappears after a cutscene.
+Enemy disappears after any of the selected cutscenes complete.
 
 **Example:**
 ```

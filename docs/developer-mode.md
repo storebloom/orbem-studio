@@ -24,7 +24,7 @@ Developer Mode activates when an administrator user plays the game, adding power
 - Wall builder for collision boundaries
 - Pin-point coordinate display tool
 - God / No touch modes for main character
-- In-game object creation (Pro feature)
+- In-game object creation
 - Instant updates without page reloads
 
 ### Access Requirements
@@ -81,27 +81,26 @@ Triggers (cutscene triggers, mission triggers, etc.) can be positioned visually:
 
 ## Trigger Visualization
 
-Developer Mode shows all trigger zones as colored overlays:
+Developer Mode shows all trigger zones as colored overlays when the "Show Hidden" button is clicked.
 
-### Trigger Types
+### Color Coding
 
-**Cutscene Triggers:**
-- Visual indicator shows trigger zone
-
-**Mission Triggers:**
-- Shows completion trigger zones
-- Indicates blockade areas
-
-**Item Triggers:**
-- Materialization triggers
-- Interaction zones
+| Color | Trigger Type |
+|-------|-------------|
+| Green | General interaction triggers (`data-trigger="true"`) |
+| Cyan | Cutscene triggers |
+| Blue | Materialization item triggers |
+| Purple | Explainer popup containers |
+| Yellow | Walls |
+| Red | Area transition triggers |
+| Dark gray | Mission blockades |
 
 ### Using Trigger Overlays
 
-1. Open Developer Mode menu
-2. Enable trigger visualization
-3. All triggers appear as colored boxes
-4. Drag as needed
+1. Click the **Show Hidden** button in the Developer Mode menu
+2. All trigger zones appear as color-coded overlay boxes
+3. Drag to reposition as needed
+4. Click **Show Hidden** again to hide the overlays
 
 ## Wall Builder
 
@@ -140,46 +139,53 @@ The wall builder creates invisible collision boundaries directly in-game.
 - Leave clear pathways for player navigation
 - Use walls on items in part of the map image instead of defining stationary item posts
 
-## Creating Objects In-Game (Pro feature)
+## Creating Objects In-Game
 
-Developer Mode allows creating new game objects without leaving the game.
+Developer Mode allows creating new game objects without leaving the game using the `/add-new/` REST endpoint.
 
 ### New Addition Menu
 
 1. Open Developer Mode menu
 2. Select "New Addition"
 3. Choose object type from dropdown
-4. Fill in configuration fields
-5. Submit and page will refresh
-6. Continue game to see your new object
+4. Fill in configuration fields (title, images, coordinates)
+5. Submit — the page refreshes and the new object appears
 
 ### Supported Object Types
 
+All 13 `explore-*` post types can be created:
+
+- Areas
 - Characters
 - Enemies
 - Weapons
-- Items
-- Focus view items
+- Points (items)
+- Signs (focus view items)
 - Explainers
 - Walls
 - Cutscenes
+- Missions
+- Minigames
+- Magic/Abilities
+- Communication items
 
 ### Workflow
 
 ```mermaid
 graph LR
     Menu[Open Dev Menu] --> Select[Select Object Type]
-    Select --> Fields[Get Configuration Fields]
-    Fields --> Fill[Fill in Details]
-    Fill --> Place[Click Map to Place]
-    Place --> Save[Object Created]
+    Select --> Fields[Fill in Configuration]
+    Fields --> Submit[Submit Form]
+    Submit --> Save[Object Created in WordPress]
+    Save --> Refresh[Area Reloads to Show Object]
 ```
+
 ### Creating the Object
 
 1. Fill in required fields (title, images, etc.)
-2. Use pin-point tool to get top/left coordinates
-3. REST endpoint: `/add-new/`
-4. Object appears immediately in-game upon refresh
+2. Use the pin-point tool to find top/left coordinates on the map
+3. Submit the form — calls `/add-new/` via REST
+4. Area reloads and the object appears immediately
 
 ## Best Practices
 
@@ -229,53 +235,33 @@ graph LR
 
 ## Developer Mode API Endpoints
 
-Developer Mode uses dedicated REST endpoints:
+Developer Mode uses two dedicated REST endpoints that require the `manage_options` capability (Administrator role):
 
 ### Set Item Position
 
 **Endpoint:** `POST /wp-json/orbemorder/v1/set-item-position/`
 
-Updates object coordinates.
+Updates object coordinates, trigger zone coordinates, or appends a waypoint to a walking path.
 
 **Parameters:**
-- `id` - Post ID
+- `id` - Post ID of the game object
 - `top` - Y coordinate
 - `left` - X coordinate
-- `meta` - Meta key (for trigger positioning)
+- `height` - Height (used when `meta` is set for trigger resizing)
+- `width` - Width (used when `meta` is set for trigger resizing)
+- `meta` - Optional. Meta key for trigger positioning (must start with `explore-`)
+- `walkingPath` - `"true"` to append a new waypoint to the path instead of replacing position
 
-### Set Item Size (Pro feature)
-
-**Endpoint:** `POST /wp-json/orbemorder/v1/set-item-size/`
-
-Updates object dimensions.
-
-**Parameters:**
-- `id` - Post ID
-- `height` - Object height
-- `width` - Object width
-- `meta` - Meta key (for trigger sizing)
-
-### Get New Fields (Pro feature)
-
-**Endpoint:** `POST /wp-json/orbemorder/v1/get-new-fields/`
-
-Retrieves configuration fields for object type.
-
-**Parameters:**
-- `type` - Post type (e.g., `explore-character`)
-
-**Returns:** HTML form fields for that object type
-
-### Add New (Pro feature)
+### Add New
 
 **Endpoint:** `POST /wp-json/orbemorder/v1/add-new/`
 
-Creates a new game object.
+Creates a new `explore-*` post from within the game interface.
 
 **Parameters:**
-- `type` - Post type
-- `area` - Area slug
-- `values` - Object configuration data
+- `type` - Post type (must start with `explore-`)
+- `area` - Area slug to assign the object to
+- `values` - Object configuration data including `title` and optional meta fields
 
 **Returns:** New post ID
 

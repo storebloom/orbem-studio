@@ -58,12 +58,27 @@ The starting weapon for your main character.
 
 ### Require Login
 
-**Type:** Checkbox
+**Type:** Select
 
 Control whether players must log in to play.
 
-- **Checked:** Users must create accounts (progress is saved)
-- **Unchecked:** Anyone can play (progress not persisted for logged-out users)
+- **Yes:** Users must log in before the game loads (progress is saved)
+- **No:** Anyone can play without an account (progress not persisted for guests)
+- **Both:** Offers a guest option alongside login on the start screen
+
+**Note:** Games with multiple areas require login because area transitions rely on saved player state.
+
+### Add Player Name Input
+
+**Type:** Select (`Yes` / `No`)
+
+Display a text input field on the start screen so players can enter their name. The entered name is used in character dialogue and cutscenes when a `[player_name]` placeholder is present.
+
+### Autoplay Cutscene Dialogue
+
+**Type:** Select (`Yes` / `No`)
+
+When set to `Yes`, cutscene dialogue lines automatically advance to the next line as each line finishes speaking (requires Google TTS). When set to `No`, the player must press the action key to advance dialogue.
 
 ## HUD Configuration
 
@@ -82,6 +97,23 @@ Choose which stat bars to display in the heads-up display.
 
 **Tip:** Only show bars relevant to your game design to avoid UI clutter.
 
+### Storage Tabs
+
+**Type:** Multiselect
+
+Choose which tabs are shown in the player's storage/inventory menu.
+
+**Options:**
+- `items` - Collectible items
+- `weapons` - Weapons collected during gameplay
+- `gear` - Equipped gear items
+
+### Hide Storage Menu
+
+**Type:** Checkbox
+
+If checked, the storage/inventory menu icon is hidden from the HUD entirely. Useful for games that do not use inventory mechanics.
+
 ### Custom HUD Icons
 
 Override default interface icons with your own designs.
@@ -89,36 +121,34 @@ Override default interface icons with your own designs.
 **Settings Icon**
 - **Type:** Upload
 - **Use:** Gear/settings menu icon
-- **Recommended size:** 32×32px to 64×64px PNG
 
 **Storage Menu Icon**
 - **Type:** Upload
 - **Use:** Inventory icon
-- **Recommended size:** 32×32px to 64×64px PNG
-
-**Hide Storage Menu**
-- **Type:** Checkbox
-- **Effect:** Completely hide inventory UI if checked
 
 **Crewmate Menu Icon**
 - **Type:** Upload
 - **Use:** Character switcher icon
-- **Recommended size:** 32×32px to 64×64px PNG
 
 **Money Icon**
 - **Type:** Upload
 - **Use:** Currency symbol in HUD
-- **Recommended size:** 24×24px to 48×48px PNG
 
 **Indicator Icon**
 - **Type:** Upload
 - **Use:** Interaction prompt (shows when objects are interactable)
-- **Recommended size:** 32×32px to 64×64px PNG
+
+**Mobile D-pad**
+- **Type:** Upload
+- **Use:** Override the on-screen directional pad displayed on mobile devices
+
+**Mobile Action Key**
+- **Type:** Upload
+- **Use:** Override the on-screen action/interact button displayed on mobile devices
 
 **Arrow Icon**
 - **Type:** Upload
-- **Use:** Directional arrows in explainer popups
-- **Recommended size:** 32×32px to 64×64px PNG
+- **Use:** Directional arrow in explainer popups (points to the element being explained)
 
 ## Visual Customization
 
@@ -236,11 +266,23 @@ Music that plays on the start/login screen (after intro video).
 
 **Type:** Upload (Image or Video)
 
-Background image or video for the start/login screen.
+Background image or video for the start/login screen (desktop).
 
 **Specifications:**
 - Image: JPG or PNG, 1920×1080 recommended
 - Video: MP4 or WEBM
+
+### Mobile Sign In Screen Background Image
+
+**Type:** Upload (Image or Video)
+
+Separate background image or video used for the start/login screen on mobile devices. Allows you to provide a portrait-oriented or differently cropped version optimised for smaller screens.
+
+### Lose Message
+
+**Type:** Select (Explainer posts)
+
+The explainer popup shown when the player loses all their health. Select an existing `explore-explainer` post. If none is configured, a default "You lost. Try again" message is used.
 
 ### Walking Sound Effect
 
