@@ -40,28 +40,15 @@ After activation, Orbem Studio will verify your server meets the minimum require
 
 Upon first activation, Orbem Studio will trigger a setup wizard to help you configure essential settings.
 
-### Setup Flow
+### Setup Options
 
-```mermaid
-graph LR
-    Activate[Plugin Activated] --> Setup[Setup Wizard]
-    Setup --> Page[Create Game Page]
-    Page --> Area[Create First Area]
-    Area --> Character[Create Main Character]
-    Character --> Weapon[Create Starting Weapon]
-    Weapon --> Options[Configure Global Options]
-    Options --> Ready[Ready to Build]
-```
+When you first activate the plugin and visit **Orbem Studio** → **Game Options**, a setup wizard appears that offers three paths:
 
-The setup wizard will guide you through:
+1. **Generate Starter Game** — Automatically creates a sample area ("Rovanar Forest"), a main character ("Trek"), several walls, collectible items, and starter missions so you can see a working game immediately.
+2. **Manual Setup** — Skip the starter content and build everything yourself from scratch.
+3. **Create Game Page** — Automatically creates a new WordPress page called "My Orbem Studio Game" and sets it as your game page.
 
-1. Creating a dedicated page for your game
-2. Setting up your first area/level
-3. Creating your main character
-4. Selecting a default weapon
-5. Configuring essential game options
-
-You can access the setup wizard anytime from **Orbem Studio** → **Game Options** in your WordPress admin.
+You can access the setup wizard anytime by visiting **Orbem Studio** → **Game Options** before a starting area has been configured.
 
 ## Creating Your First Area
 
@@ -223,10 +210,13 @@ Choose the starting weapon for your main character. Many games use "fist" or "un
 
 #### Require Login
 
-Choose whether players must create an account to play:
+Choose whether players must log in to play:
 
-- **Checked:** Players must log in (game progress is saved)
-- **Unchecked:** Anyone can play (progress is not persisted for logged-out users. Note: GAMES WITH MULTIPLE AREAS REQUIRE LOGIN)
+- **Yes:** Players must log in before the game loads (progress is saved per user)
+- **No:** Anyone can play without logging in (progress is not persisted for guests)
+- **Both:** Provides a "play as guest" option on the start screen in addition to login
+
+**Note:** Games with multiple areas require login because area transitions rely on saved player state.
 
 ### HUD Customization
 

@@ -51,24 +51,27 @@ Extend the frontend game engine with custom JavaScript.
 
 ### Adding Custom Meta Fields
 
+The recommended approach is to add a standard WordPress meta box to the relevant `explore-*` post type(s) and save the data with `save_post`:
+
 ```php
-add_filter('orbem_meta_fields_explore-character', function($fields) {
-    $fields['custom-stat'] = [
-        'number',
-        'Custom stat for this character'
-    ];
-    return $fields;
+add_action('add_meta_boxes', function() {
+    add_meta_box(
+        'custom-character-data',
+        'Custom Character Data',
+        function($post) {
+            $value = get_post_meta($post->ID, 'my_custom_stat', true);
+            echo '<input type="number" name="my_custom_stat" value="' . esc_attr($value) . '">';
+        },
+        'explore-character',
+        'side'
+    );
 });
-```
 
-### Modifying Game Data
-
-```php
-add_filter('orbem_area_data', function($data, $area) {
-    // Add custom data to area response
-    $data['custom_info'] = get_option('area_' . $area . '_custom');
-    return $data;
-}, 10, 2);
+add_action('save_post_explore-character', function($post_id) {
+    if (isset($_POST['my_custom_stat'])) {
+        update_post_meta($post_id, 'my_custom_stat', absint($_POST['my_custom_stat']));
+    }
+});
 ```
 
 ### Custom REST Endpoints
@@ -155,19 +158,6 @@ add_action('rest_api_init', function() {
 });
 ```
 
-### Example: Custom Game Stat
-
-```php
-// Add custom stat to HUD
-add_filter('orbem_hud_stats', function($stats) {
-    $stats['energy'] = [
-        'label' => 'Energy',
-        'max' => 100,
-        'current' => get_user_meta(get_current_user_id(), 'energy', true) ?: 100
-    ];
-    return $stats;
-});
-```
 
 ## Testing Your Extensions
 

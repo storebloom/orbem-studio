@@ -77,17 +77,16 @@ Developer Mode endpoints require the `manage_options` capability (Administrator 
 - Mission progression
 - Character recruitment
 - Enemy interactions
+- Google OAuth login
 
 See [Gameplay Endpoints](gameplay-endpoints.md) for complete documentation.
 
 ### Developer Mode Endpoints
 
-4 endpoints for admin-only in-game editing:
+2 endpoints for admin-only in-game editing (require `manage_options` capability):
 
-- Object positioning
-- Object resizing
-- Dynamic field generation
-- Object creation
+- Object and trigger positioning / path recording (`/set-item-position/`)
+- In-game object creation (`/add-new/`)
 
 See [Developer Mode Endpoints](devmode-endpoints.md) for complete documentation.
 

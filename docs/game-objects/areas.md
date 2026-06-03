@@ -72,6 +72,16 @@ Dimensions: 6000px × 5000px
 File size: ~2MB (optimized)
 ```
 
+### Area Dimensions
+
+**Fields:** `explore-area-height`, `explore-area-width`  
+**Type:** Number  
+**Unit:** Pixels
+
+Override the rendered dimensions of the area image. Leave empty to use the defaults (height: 4517px, width: 5000px).
+
+**Use Case:** If your map image is a non-standard size, set these fields to match your actual image dimensions so the coordinate system is accurate.
+
 ### Background Music
 
 **Field:** `explore-music`  
@@ -137,22 +147,22 @@ Which direction the character faces when appearing in this area.
 
 **Fields:** `explore-area`, `explore-top`, `explore-left`, `explore-height`, `explore-width`
 
-Create a zone that transports the player to another area when touched.
+Create a trigger zone in another area that transports the player to THIS area when touched.
 
-#### Destination Area
+#### Source Area(s)
 
 **Field:** `explore-area`  
-**Type:** Select (list of all areas)
+**Type:** Multiselect (list of all areas)
 
-Which area the player will be sent to when touching this trigger.
+The area(s) where this transition trigger will appear. When a player in one of these areas touches the trigger zone, they are transported to THIS area (the area post being edited).
 
-**Example:** Select "Level 2 - Mountain Pass" from the dropdown
+**Example:** If you're editing "Level 2 - Mountain Pass" and you select "Level 1 - Forest" here, a trigger zone will appear in Level 1 that transports players to Level 2.
 
 #### Trigger Position
 
 **Fields:**
-- `explore-top` - Top coordinate of the trigger zone
-- `explore-left` - Left coordinate of the trigger zone
+- `explore-top` - Top coordinate of the trigger zone (within the source area)
+- `explore-left` - Left coordinate of the trigger zone (within the source area)
 - `explore-height` - Height of the trigger zone
 - `explore-width` - Width of the trigger zone
 
@@ -222,7 +232,7 @@ Areas can be connected to create a seamless game world. There are several ways t
 
 ### Simple Transition
 
-Create a trigger in Area A that sends the player to Area B:
+Transport players from Area A to Area B:
 
 ```mermaid
 graph LR
@@ -230,14 +240,14 @@ graph LR
 ```
 
 **Configuration:**
-1. Edit Area A
-2. Set `explore-area` to "Area B"
-3. Configure trigger position and size
-4. Player starts at Area B's `explore-start-top` and `explore-start-left`
+1. Edit the **Area B** post
+2. Set `explore-area` (source area) to "Area A"
+3. Configure the trigger position and size — this is where the trigger zone will appear in Area A
+4. When the player in Area A steps on the trigger, they are transported to Area B at its `explore-start-top` and `explore-start-left` coordinates
 
 ### Two-Way Transition
 
-Create triggers in both areas for back-and-forth travel:
+Allow travel in both directions:
 
 ```mermaid
 graph LR
@@ -245,9 +255,9 @@ graph LR
 ```
 
 **Configuration:**
-1. In Area A: Create trigger pointing to Area B
-2. In Area B: Create trigger pointing to Area A
-3. Position triggers where visual exits appear
+1. Edit **Area B**: set source area to "Area A", configure the trigger position in Area A
+2. Edit **Area A**: set source area to "Area B", configure the trigger position in Area B
+3. Players can now move between both areas
 
 ### Hub-and-Spoke World
 

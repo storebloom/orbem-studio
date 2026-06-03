@@ -19,8 +19,8 @@ Items players can collect/break/get damaged by/drag throughout the game world, p
 
 ### Configuration
 
-- **Area** (`explore-area`): Where the item appears
-- **Position**: top, left, height, width coordinates
+- **Area** (`explore-area`): Multiselect — area(s) where this item appears
+- **Position**: top, left, height, width — required
 - **Rotation** (`explore-rotation`): Sprite rotation in degrees
 - **Layer** (`explore-layer`): Z-index for visual layering
 - **Featured Image**: Visual representation of the item
@@ -30,8 +30,17 @@ Items players can collect/break/get damaged by/drag throughout the game world, p
 **Interaction Type** (`explore-interaction-type`):
 - `collectable` - Collects when touched
 - `breakable` - Breaks when interacted with
-- `draggable` - Can be dragged
+- `draggable` - Can be dragged to a destination
 - `hazard` - Damages player on touch
+- `clickable` - Activates when clicked
+
+### Item Behavior
+
+- **Video Override** (`explore-video-override`): Upload a video that replaces the featured image when displayed
+- **Interacted Image** (`explore-interacted`): Image shown after the item is interacted with, if it does not disappear
+- **Passable** (`explore-passable`): Radio (`yes`/`no`) — whether the player can walk over this item after interaction
+- **Disappear** (`explore-disappear`): Radio (`yes`/`no`) — whether this item is removed from the map after interaction
+- **Is Strong** (`explore-is-strong`): Radio (`yes`/`no`) — require the Strength ability to interact with this item
 
 ### Rewards
 
@@ -40,10 +49,36 @@ Items players can collect/break/get damaged by/drag throughout the game world, p
 
 ### Materialization
 
-Items can appear after conditions are met:
-- **Materialize Trigger**: Physical trigger zone
-- **Materialize After Cutscene**: Appears after cutscene
-- **Materialize After Mission**: Appears after mission
+Items can appear or disappear based on conditions:
+- **Materialize Trigger** (`explore-materialize-item-trigger`): Physical trigger zone
+- **Materialize After Cutscene**: Appears after a specific cutscene
+- **Materialize After Mission**: Appears after a specific mission
+- **Remove After Cutscene** (`explore-remove-after-cutscene`): Multiselect — removed after any selected cutscene completes
+- **Remove After Mission** (`explore-remove-after-mission`): Removed after a specific mission completes
+
+### Draggable Configuration
+
+**Drag Destination** (`explore-drag-dest`): Define the target zone and outcome for a draggable item.
+
+**Subfields:**
+- `top`, `left`, `width`, `height` — destination zone coordinates
+- `image` — optional image shown at the destination
+- `mission` — mission completed when item is dragged here
+- `remove-after` — radio (`yes`/`no`): whether the item is removed on successful drop
+- `offset` — pixel offset applied to placement
+- `materialize-after-cutscene` — makes the destination appear after a cutscene
+
+### Timer Configuration
+
+**Timer** (`explore-timer`): Configure this item as part of a timed interaction sequence.
+
+**Subfields:**
+- `time` — duration in milliseconds
+- `trigger` — another item that this timer references
+
+### Minigame Association
+
+**Minigame** (`explore-minigame`): Select a minigame that starts when this item is interacted with.
 
 ### Example
 
@@ -58,6 +93,7 @@ Width: 50
 Interaction Type: collectable
 Value: 25
 Value Type: health
+Disappear: yes
 ```
 
 ## Signs and Focus View
@@ -68,10 +104,10 @@ Objects players can examine closely, displaying detailed images or text.
 
 ### Configuration
 
-- **Area** (`explore-area`): Where the sign appears
-- **Position**: top, left, height, width
+- **Area** (`explore-area`): Multiselect — area(s) where this sign appears
+- **Position**: top, left, height, width — required; defines the trigger zone the player interacts with
 - **Featured Image**: Trigger image (what appears on the map)
-- **Post Content**: What displays when examined (use Image blocks for readable documents)
+- **Post Content**: What displays when examined (supports all WordPress blocks — use Image blocks for readable documents, artwork, or detailed visuals)
 
 ### Use Cases
 
@@ -102,21 +138,47 @@ Tutorial popups that provide information and instructions to players.
 
 ### Configuration
 
-- **Area** (`explore-area`): Where the explainer appears
-- **Explainer Trigger**: Trigger zone (top, left, height, width)
-- **Explainer Arrow**: Pointing arrow configuration (top, left, direction)
-- **Trigger Type** (`explore-trigger-type`):
-  - `auto` - Shows immediately when triggered
-  - `engagement` - Requires action key press
+- **Area** (`explore-area`): Multiselect — area(s) where the explainer appears. Also supports the special value `lose-message` to display this explainer as the game-over message.
+- **Explainer Trigger** (`explore-explainer-trigger`): Required trigger zone (top, left, height, width) that activates the explainer
+- **Position** (top, left, height, width): The explainer's display position and size (used for `map` and `menu` types; width acts as max-width for `fullscreen`)
+
+### Display Type
+
+**Explainer Type** (`explore-explainer-type`): Required radio field.
+
+- `map` - Fixed in the game map at the configured position
+- `menu` - Floating in the HUD overlay
+- `fullscreen` - Centered overlay across the screen
+
+### Arrow Configuration
+
+**Explainer Arrow** (`explore-explainer-arrow`): Configure a pointer arrow that highlights what the explainer refers to.
+
+**Subfields:**
+- `orientation` — radio: `top` or `bottom` (arrow faces up or down)
+- `side` — radio: `left` or `right` (arrow is on left or right side)
+- `rotate` — number: additional rotation in degrees
+
+### Sound and Music
+
+- **Sound Byte** (`explore-sound-byte`): Upload an audio file (voice narration or sound) that plays when the explainer appears
+- **Mute Music** (`explore-mute-music`): Radio (`yes`/`no`) — mute area music while this explainer is displayed
+
+### Behavior
+
+- **Click to Close** (`explore-click-close`): Radio (`yes`/`no`) — allow clicking the explainer to dismiss it
+
+### Materialization
+
+- **Materialize Trigger** (`explore-materialize-item-trigger`): Physical trigger zone that reveals this explainer
+- **Remove After Cutscene** (`explore-remove-after-cutscene`): Multiselect — removed after any selected cutscene completes
+- **Materialize After Cutscene**: Revealed after a specific cutscene
+- **Materialize After Mission**: Revealed after a specific mission
 
 ### Content
 
-- **Post Content**: Explanation text (supports blocks)
+- **Post Content**: Explanation text (supports WordPress blocks)
 - **Featured Image**: Optional illustration
-
-### Voice over
-
-Use the MP3 field to upload a voice over or other sound when explainer is triggered
 
 ### Use Cases
 
@@ -124,6 +186,7 @@ Use the MP3 field to upload a voice over or other sound when explainer is trigge
 - Gameplay hints
 - Control explanations
 - Story context
+- Game-over / lose message (set area to `lose-message`)
 
 ### Example
 
@@ -131,17 +194,26 @@ Use the MP3 field to upload a voice over or other sound when explainer is trigge
 Title: Combat Tutorial
 Area: training-grounds
 
+Explainer Type: map
 Explainer Trigger:
   Top: 2200
   Left: 2600
   Height: 100
   Width: 100
-Trigger Type: auto
+
+Position:
+  Top: 2300
+  Left: 2600
+  Height: 120
+  Width: 300
 
 Explainer Arrow:
-  Top: 2300
-  Left: 2700
-  Direction: down
+  Orientation: top
+  Side: left
+  Rotate: 0
+
+Sound Byte: combat-tutorial-voice.mp3
+Click to Close: yes
 
 Content: "Press SPACE to attack enemies!"
 ```
@@ -154,8 +226,8 @@ Invisible collision boundaries that prevent character movement through specific 
 
 ### Configuration
 
-- **Area** (`explore-area`): Where the wall exists
-- **Position**: top, left, height, width (defines the blocked rectangle)
+- **Area** (`explore-area`): Multiselect — area(s) where this wall exists
+- **Position**: top, left, height, width — required; defines the blocked rectangle
 
 ### Use Cases
 
@@ -186,49 +258,49 @@ Width: 50
 
 **Post Type:** `explore-minigame`
 
-Interactive game-within-game experiences with custom rules.
+Interactive draggable puzzle experiences.
 
 ### Configuration
 
-- **Area** (`explore-area`): Where minigame trigger appears
-- **Minigame Trigger**: Trigger zone (top, left, height, width)
-- **Trigger Type**: `auto` or `engagement`
+- **Area** (`explore-area`): Multiselect — area(s) where this minigame appears
+- **Minigame Type** (`explore-minigame-type`): Required. Currently only `draggable` is supported.
+- **Mission** (`explore-mission`): The mission that completes when this minigame is successfully finished
 
-### Content
+### Draggable Items
 
-- **Post Content**: Minigame interface (use blocks to design layout)
-- **Images**: Minigame assets
-- **Groups**: Organize minigame UI elements
+**Draggable Items** (`explore-draggable-items`): Repeater defining the objects the player must drag.
 
-### Rewards
+**Subfields per item:**
+- `draggable-item` — Upload: the draggable image
+- `width` — width in pixels
+- `height` — height in pixels
 
-- **Value** (`explore-value`): Completion reward
-- **Value Type**: Reward type
+The featured image is used as the minigame background.
 
-### Use Cases
+### Binary Translation
 
-- Puzzle challenges
-- Quick-time events
-- Memory games
-- Custom interactions
+**Translate Binary Word** (`explore-translate-binary-word`): Optional text field. If set, the player must translate this word into binary as a step in completing the minigame.
+
+### Audio
+
+**Minigame Music** (`explore-minigame-music`): Background music that plays while the minigame is active.
 
 ### Example
 
 ```
-Title: Lock Picking
-Area: vault-door
+Title: Circuit Puzzle
+Area: lab-room
 
-Minigame Trigger:
-  Top: 1800
-  Left: 2400
-  Height: 100
-  Width: 100
-Trigger Type: engagement
+Minigame Type: draggable
+Featured Image: circuit-board-background.png
 
-Value: 50
-Value Type: point
+Draggable Items:
+  Item 1: resistor.png, 40×40
+  Item 2: capacitor.png, 40×40
 
-Content: [Custom lock-picking interface]
+Mission: repair-circuit
+
+Minigame Music: puzzle-music.mp3
 ```
 ## Communication Items
 
@@ -238,13 +310,26 @@ Messages delivered to the player's in-game communication device.
 
 ### Configuration
 
-- **Post Content**: Message text
+- **Area** (`explore-area`): Multiselect — area(s) where this communication trigger appears
+- **Trigger Position**: top, left, height, width — the trigger zone in the area
+- **Communication Type** (`explore-communicate-type`): Required radio field
+  - `text` — delivered as a text message
+  - `voicemail` — delivered as a voice message
+- **Post Content**: Message text or content
 - **Featured Image**: Sender avatar or icon
-- **Communication Type Taxonomy**: Categorize by device type
 
 ### Triggering
 
-Communications are triggered by cutscenes using the `explore-engage-communicate` field.
+Communications can be triggered in two ways:
+1. By a cutscene: set the `explore-engage-communicate` field on the cutscene to this communication item
+2. By a trigger zone in the area (position fields above)
+
+### Materialization
+
+- **Materialize Trigger** (`explore-materialize-item-trigger`): Physical trigger zone to reveal this communication
+- **Remove After Cutscene** (`explore-remove-after-cutscene`): Multiselect — removed after any selected cutscene
+- **Materialize After Cutscene**: Revealed after a specific cutscene
+- **Materialize After Mission**: Revealed after a specific mission
 
 ### Use Cases
 
@@ -253,23 +338,71 @@ Communications are triggered by cutscenes using the `explore-engage-communicate`
 - Character messages
 - World lore delivery
 
-### Communication Devices
-
-Define device types through the `explore-communication-type` taxonomy:
-- Radio
-- Computer Terminal
-- Smartphone
-- Hologram
-
 ### Example
 
 ```
 Title: Distress Signal
-Communication Type: Radio
+Area: space-station
 
-Content: "This is Captain Jones. We need immediate assistance at coordinates 42, 17."
+Trigger Position:
+  Top: 2000
+  Left: 2500
+  Height: 100
+  Width: 100
 
-(Triggered by cutscene)
+Communication Type: voicemail
+Featured Image: captain-avatar.png
+
+Content: "This is Captain Jones. We need immediate assistance."
+```
+
+## Magic and Abilities
+
+**Post Type:** `explore-magic`
+
+Special powers (spells) the player can unlock. Abilities are categorized using the `magic-type` taxonomy.
+
+### Configuration
+
+- **Post Title**: The spell name (used as identifier)
+- **Post Slug**: Used as the spell identifier in the `/addspell/` REST endpoint
+- **Post Content**: Spell description and imagery (supports `core/paragraph` and `core/image` blocks)
+- **Featured Image**: Spell icon
+
+### Categorization
+
+Assign a `magic-type` taxonomy term to each spell:
+- `offense` — Offensive spells
+- `defense` — Defensive spells
+
+Custom terms can be added through **Orbem Studio** → **Magic Types** in the admin.
+
+### Unlocking Spells
+
+Spells are granted to players via the REST endpoint:
+
+```
+POST /wp-json/orbemorder/v1/addspell/
+{ "spellid": "fireball" }
+```
+
+See the [API documentation](../api/gameplay-endpoints.md) for full details.
+
+### Use Cases
+
+- Combat spells unlocked after story events
+- Defensive abilities granted as mission rewards
+- Special powers tied to crew mate recruitment
+
+### Example
+
+```
+Title: Fireball
+Slug: fireball
+Magic Type: offense
+
+Featured Image: fireball-icon.png
+Content: "Launches a ball of fire at enemies."
 ```
 
 ## Object Materialization Patterns

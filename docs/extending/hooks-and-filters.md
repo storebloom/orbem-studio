@@ -106,16 +106,14 @@ add_action('admin_enqueue_scripts', function() {
 
 #### `wp_enqueue_scripts`
 
-Enqueues frontend scripts and styles.
+Enqueues frontend scripts and styles on the game page.
 
-**Locations:**
-- `Plugin::enqueueFrontAssets()`
-- `Explore::addAllInlineStyles()`
+**Location:** `Plugin::enqueueFrontAssets()`
 
 **Example:**
 ```php
 add_action('wp_enqueue_scripts', function() {
-    if (is_game_page()) {
+    if (is_page(get_option('explore_game_page'))) {
         wp_enqueue_script('custom-game-script', plugins_url('game.js', __FILE__));
     }
 });
@@ -123,14 +121,16 @@ add_action('wp_enqueue_scripts', function() {
 
 #### `wp_head`
 
-Outputs content in the `<head>` section.
+Outputs inline styles and scripts in the `<head>` section of the game page (e.g., custom CSS from the Custom CSS editor).
 
-**Location:** `Explore::gameHeadStyles()`
+**Location:** `Explore::inlineExploreStyles()`
 
 **Example:**
 ```php
 add_action('wp_head', function() {
-    echo '<meta name="game-version" content="1.0.0">';
+    if (is_page(get_option('explore_game_page'))) {
+        echo '<meta name="game-version" content="1.0.0">';
+    }
 });
 ```
 
@@ -170,61 +170,18 @@ add_action('save_post', function($post_id) {
 }, 10, 1);
 ```
 
-### Block Editor
-
-#### `enqueue_block_editor_assets`
-
-Enqueues assets for the block editor.
-
-**Location:** `Explore::registerCustomBlock()`
-
-**Example:**
-```php
-add_action('enqueue_block_editor_assets', function() {
-    wp_enqueue_script('custom-block', plugins_url('block.js', __FILE__));
-});
-```
-
-### Taxonomy
-
-#### `{taxonomy}_edit_form_fields`
-
-Adds fields to taxonomy edit forms.
-
-**Location:** `Meta_Box` (for `explore-communication-type`)
-
-**Example:**
-```php
-add_action('explore-area-point_edit_form_fields', function($term) {
-    // Add custom term fields
-});
-```
-
-#### `edited_{taxonomy}`
-
-Fires after a term is updated.
-
-**Location:** `Meta_Box` (for `explore-communication-type`)
-
-**Example:**
-```php
-add_action('edited_explore-area-point', function($term_id) {
-    // Save custom term meta
-});
-```
-
 ### Options
 
-#### `update_option_{option_name}`
+#### `update_option_explore_main_character`
 
-Fires after a specific option is updated.
+Fires after the `explore_main_character` option is updated. Orbem Studio uses this internally to clear its character ID cache. You can also hook in to react to a main character change.
 
-**Location:** `Plugin::saveGamePageOption()` (for `explore_game_page`)
+**Location:** `Explore::clearMainCharacterCache()`
 
 **Example:**
 ```php
-add_action('update_option_explore_game_page', function($old_value, $value) {
-    // React to game page change
+add_action('update_option_explore_main_character', function($old_value, $new_value) {
+    // React to main character change
 }, 10, 2);
 ```
 
@@ -351,19 +308,6 @@ add_action('save_post_explore-character', function($post_id) {
 });
 ```
 
-### Modify Game Area Data
-
-```php
-// Add custom data to area REST response
-add_filter('orbem_area_data', function($data, $area_slug) {
-    $area = get_page_by_path($area_slug, OBJECT, 'explore-area');
-    if ($area) {
-        $data['weather'] = get_post_meta($area->ID, 'area_weather', true);
-    }
-    return $data;
-}, 10, 2);
-```
-
 ### Custom REST Endpoint
 
 ```php
@@ -388,7 +332,7 @@ add_action('rest_api_init', function() {
 
 ```php
 add_action('wp_head', function() {
-    if (is_game_page()) {
+    if (is_page(get_option('explore_game_page'))) {
         ?>
         <style>
             .custom-hud-element {

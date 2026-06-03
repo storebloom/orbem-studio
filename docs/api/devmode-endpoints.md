@@ -8,7 +8,7 @@ All endpoints are under: `/wp-json/orbemorder/v1/`
 
 ## Authentication
 
-All Developer Mode endpoints require `manage_options` capability (Administrator role).
+All Developer Mode endpoints require the `manage_options` capability (Administrator role). Requests that fail this check receive a WordPress `403 Forbidden` response.
 
 ---
 
@@ -16,21 +16,38 @@ All Developer Mode endpoints require `manage_options` capability (Administrator 
 
 ### POST `/set-item-position/`
 
-Update object position coordinates.
+Update an object's position on the map, a trigger's coordinates, or append a waypoint to a walking path. This is called automatically when you drag an object in Developer Mode.
 
-**Method:** `POST`  
-**Permission:** Administrator
+**Method:** `POST`
+**Permission:** Administrator (`manage_options`)
 
 **Request:**
 ```json
 {
-  "id": 123,              // Post ID
-  "top": 2500,            // Y coordinate
-  "left": 3000,           // X coordinate
-  "meta": "",             // Optional: meta key for trigger positioning
-  "walkingPath": "false"  // "true" for path recording
+  "id": 123,
+  "top": 2500,
+  "left": 3000,
+  "height": 100,
+  "width": 80,
+  "meta": "",
+  "walkingPath": "false"
 }
 ```
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `id` | int | Post ID of the game object to update |
+| `top` | int | New Y coordinate (pixels from top of map) |
+| `left` | int | New X coordinate (pixels from left of map) |
+| `height` | int | Height of the trigger/object (used when `meta` is set) |
+| `width` | int | Width of the trigger/object (used when `meta` is set) |
+| `meta` | string | Optional. If provided, updates a nested trigger meta key (e.g., `explore-cutscene-trigger`). Must start with `explore-`. |
+| `walkingPath` | string | `"true"` to append this coordinate as a new waypoint to the object's `explore-path` array instead of replacing the position. |
+
+**Behavior:**
+- If `meta` is provided and is not `"true"`, the `top`, `left`, `height`, and `width` values are merged into the existing meta array for that key.
+- If `walkingPath` is `"true"`, the coordinate is appended to `explore-path` meta.
+- Otherwise, `explore-top` and `explore-left` post meta are updated directly.
 
 **Response:**
 ```json
@@ -39,107 +56,17 @@ Update object position coordinates.
   "data": "success"
 }
 ```
-
-**Use Cases:**
-- Drag-drop object positioning
-- Trigger zone repositioning
-- Walking path recording
-
-**Path Recording:**
-When `walkingPath` is set to `"true"`, coordinates are added to the object's `explore-path` meta array instead of replacing position.
-
----
-
-## Object Sizing (Pro feature)
-
-### POST `/set-item-size/`
-
-Update object dimensions.
-
-**Method:** `POST`  
-**Permission:** Administrator
-
-**Request:**
-```json
-{
-  "id": 123,      // Post ID
-  "height": 100,  // Height in pixels
-  "width": 80,    // Width in pixels
-  "meta": ""      // Optional: meta key for trigger sizing
-}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": "success"
-}
-```
-
-**Use Cases:**
-- Resize objects visually
-- Adjust trigger zones
-- Fine-tune collision boxes
-
----
-
-## Dynamic Field Loading (Pro feature)
-
-### POST `/get-new-fields/`
-
-Retrieve configuration fields for a post type.
-
-**Method:** `POST`  
-**Permission:** Administrator
-
-**Request:**
-```json
-{
-  "type": "explore-character"
-}
-```
-
-**Response:**
-```json
-{
-  "success": true,
-  "data": "<form fields HTML>"
-}
-```
-
-**Returns:** HTML form fields for the specified post type's meta box.
-
-**Use Cases:**
-- Load forms dynamically in Developer Mode UI
-- Display appropriate fields when creating objects in-game
-- Support for all 13 custom post types
-
-**Supported Types:**
-- `explore-area`
-- `explore-character`
-- `explore-enemy`
-- `explore-weapon`
-- `explore-mission`
-- `explore-cutscene`
-- `explore-point`
-- `explore-sign`
-- `explore-explainer`
-- `explore-wall`
-- `explore-minigame`
-- `explore-magic`
-- `explore-communicate`
 
 ---
 
 ## Object Creation
 
-### POST `/add-new/` (Pro feature)
+### POST `/add-new/`
 
-Create a new game object from Developer Mode.
+Create a new game object of any `explore-*` post type from within Developer Mode, without leaving the game page.
 
-**Method:** `POST`  
-**Permission:** Administrator
+**Method:** `POST`
+**Permission:** Administrator (`manage_options`)
 
 **Request:**
 ```json
@@ -148,44 +75,44 @@ Create a new game object from Developer Mode.
   "area": "level-1",
   "values": {
     "title": "New NPC",
-    "featured-image": "https://...",
+    "featured-image": "https://yoursite.com/wp-content/uploads/sprite.png",
     "explore-top": 2500,
     "explore-left": 3000,
     "explore-height": 100,
-    "explore-width": 80,
-    // ... other meta fields
+    "explore-width": 80
   }
 }
 ```
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `type` | string | Post type to create. Must start with `explore-`. |
+| `area` | string | Area slug to assign the object to. Falls back to the user's `current_location` user meta if omitted. |
+| `values` | object | Key/value pairs for the new object. `title` is required. `featured-image` sets the featured image. All other keys must be valid meta keys for the post type. |
+
+**Validation:**
+- `type` must begin with `explore-`
+- `values` must be a non-empty object and include a `title`
+- Meta keys are checked against the allowed list from `Meta_Box::getMetaData()` — only recognised keys are saved
+- `featured-image` must be an existing attachment URL; it is converted to an attachment ID and set as the featured image
 
 **Response:**
 ```json
 {
   "success": true,
-  "data": 456  // New post ID
+  "data": 456
 }
 ```
 
-**Validation:**
-- Verifies post type starts with `explore-`
-- Validates meta keys against allowed list
-- Sanitizes all input values
-- Requires `title` in values
-- Auto-assigns to specified area
-
-**Created Post:**
-- Status: `publish`
-- Type: As specified
-- Meta: All provided values
-- Area: Auto-assigned from request or user's current location
+`data` is the new post ID.
 
 ---
 
-## Security Considerations
+## Security Notes
 
-### Permission Checks
+### Permission Check
 
-All endpoints verify `manage_options` capability:
+Both endpoints verify `manage_options` before processing:
 
 ```php
 $permission_callback = function () {
@@ -193,9 +120,9 @@ $permission_callback = function () {
 };
 ```
 
-### Meta Key Validation
+### Meta Key Validation (`/set-item-position/`)
 
-Only meta keys starting with `explore-` can be modified:
+When `meta` is provided, the key must begin with `explore-`:
 
 ```php
 if (!str_starts_with($meta, 'explore-')) {
@@ -203,116 +130,65 @@ if (!str_starts_with($meta, 'explore-')) {
 }
 ```
 
-### Post Type Validation
+### Post Ownership (`/set-item-position/`)
 
-Only `explore-*` post types can be created:
-
-```php
-if (!str_starts_with($post_type, 'explore-')) {
-    return error_response('Invalid post type');
-}
-```
-
-### Post Access
-
-Endpoints verify user can edit the specified post:
+The endpoint additionally verifies that the current user can edit the specified post:
 
 ```php
-if (!current_user_can('edit_post', $post_id)) {
+if (!current_user_can('edit_post', $item)) {
     return error_response('Invalid item ID');
 }
 ```
 
+### Post Type Validation (`/add-new/`)
+
+Only `explore-*` post types may be created:
+
+```php
+if (!str_starts_with($post_type, 'explore-')) {
+    return error_response('Invalid data point');
+}
+```
+
+---
+
 ## Usage in Developer Mode
 
-### Position Update Flow
+### Drag-and-Drop Position Update
 
 ```mermaid
 sequenceDiagram
     participant UI as Dev Mode UI
     participant API as REST API
     participant DB as Database
-    
-    UI->>UI: User drags object
+
+    UI->>UI: Admin drags object
     UI->>API: POST /set-item-position/
-    API->>DB: Update post meta
+    API->>DB: update_post_meta (explore-top / explore-left)
     DB->>API: Confirm
-    API->>UI: Success response
-    UI->>UI: Visual confirmation
+    API->>UI: { success: true }
+    UI->>UI: Position persisted
 ```
 
-### Object Creation Flow
+### In-Game Object Creation
 
 ```mermaid
 sequenceDiagram
     participant UI as Dev Mode UI
-    participant Fields as Field Loader
     participant API as REST API
     participant DB as Database
-    
-    UI->>Fields: POST /get-new-fields/
-    Fields->>UI: Return form HTML
-    UI->>UI: User fills form
+
+    UI->>UI: Admin fills creation form
     UI->>API: POST /add-new/
-    API->>DB: Create post
-    DB->>API: Return post ID
-    API->>UI: Success + ID
-    UI->>UI: Display new object
+    API->>DB: wp_insert_post + update_post_meta
+    DB->>API: Return new post ID
+    API->>UI: { success: true, data: postId }
+    UI->>UI: Refresh area to show new object
 ```
 
-## Error Responses
+---
 
-### Common Errors
-
-**Not Authenticated:**
-```json
-{
-  "success": false,
-  "data": "User not authenticated"
-}
-```
-
-**Invalid Post Type:**
-```json
-{
-  "success": false,
-  "data": "Invalid post type"
-}
-```
-
-**Invalid Meta Key:**
-```json
-{
-  "success": false,
-  "data": "Invalid meta key"
-}
-```
-
-**Invalid Post ID:**
-```json
-{
-  "success": false,
-  "data": "Invalid item ID"
-}
-```
-
-**Missing Data:**
-```json
-{
-  "success": false,
-  "data": "Invalid data point"
-}
-```
-
-**Post Creation Failed:**
-```json
-{
-  "success": false,
-  "data": "Post creation failed."
-}
-```
-
-## Example Usage
+## JavaScript Examples
 
 ### Update Object Position
 
@@ -324,13 +200,26 @@ async function updatePosition(postId, top, left) {
       'X-WP-Nonce': OrbemOrder.orbemNonce,
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify({
-      id: postId,
-      top: top,
-      left: left
-    })
+    body: JSON.stringify({ id: postId, top, left })
   });
-  
+
+  return await response.json();
+}
+```
+
+### Append Walking Path Waypoint
+
+```javascript
+async function addWaypoint(postId, top, left) {
+  const response = await fetch('/wp-json/orbemorder/v1/set-item-position/', {
+    method: 'POST',
+    headers: {
+      'X-WP-Nonce': OrbemOrder.orbemNonce,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ id: postId, top, left, walkingPath: 'true' })
+  });
+
   return await response.json();
 }
 ```
@@ -351,9 +240,21 @@ async function createCharacter(characterData) {
       values: characterData
     })
   });
-  
+
   return await response.json();
 }
+```
+
+---
+
+## Error Responses
+
+```json
+{ "success": false, "data": "User not authenticated" }
+{ "success": false, "data": "Invalid item ID" }
+{ "success": false, "data": "Invalid meta key" }
+{ "success": false, "data": "Invalid data point" }
+{ "success": false, "data": "Post creation failed." }
 ```
 
 ## Related Documentation

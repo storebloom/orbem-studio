@@ -81,9 +81,9 @@ All game objects in Orbem Studio are managed as WordPress custom post types with
 - Can provide rewards upon completion
 
 **[Magic/Abilities](items-and-triggers.md#magic-and-abilities)** (`explore-magic`)
-- Special powers unlocked by the player
-- Tied to character progression and leveling
-- Currently supports "transportation" ability
+- Special powers (spells) unlocked by the player
+- Categorized as `offense` or `defense` via the `magic-type` taxonomy
+- Unlocked via the `/addspell/` REST endpoint
 
 ## Object Relationships
 

@@ -43,7 +43,7 @@ graph TB
 - **WordPress:** 6.1 or higher
 - **PHP:** 8.1 or higher
 - **Node.js:** 22.4.0 or higher (for development)
-- **npm:** 10.5.0 or higher (for development)
+- **pnpm:** (for development)
 
 ## Quick Start
 
@@ -76,6 +76,8 @@ Complete reference documentation for all game object types:
 
 - **[Global Options](global-options.md)** - Configure HUD, styling, integrations, and game settings
 - **[Developer Mode](developer-mode.md)** - In-game visual editing and rapid iteration tools
+- **[Export / Import](export-import.md)** - Backup and migrate your game data
+- **[Custom CSS](custom-css.md)** - Add custom CSS to the game experience
 
 ### API Reference
 
@@ -105,13 +107,13 @@ Orbem Studio registers 13 custom post types to manage game content:
 - `explore-weapon` - Weapons and combat items
 - `explore-mission` - Quests and objectives
 - `explore-cutscene` - Story sequences
-- `explore-point` - Collectible items
-- `explore-sign` - Focus view items
-- `explore-explainer` - Popup explanations
-- `explore-wall` - Collision boundaries
+- `explore-point` - Collectible items and interactive triggers
+- `explore-sign` - Focus view (close-up inspection) items
+- `explore-explainer` - Popup explanations (map, menu, or fullscreen)
+- `explore-wall` - Invisible collision boundaries
 - `explore-minigame` - Interactive minigames
-- `explore-magic` - Abilities and powers
-- `explore-communicate` - Communication devices
+- `explore-magic` - Abilities and spells
+- `explore-communicate` - In-game communication messages
 
 ### Metadata-Driven Design
 
@@ -128,12 +130,14 @@ The game engine communicates with WordPress through a secure REST API at `/wp-js
 
 ### Developer Mode
 
-Administrator users can enable Developer Mode to access in-game editing tools:
+Administrator users can access Developer Mode in-game editing tools automatically when visiting the game page while logged in as an administrator:
 
 - Visual object positioning with drag-and-drop
-- Trigger overlay visualization
+- Trigger overlay visualization with color-coded indicators
 - Wall builder for collision boundaries
 - In-game object creation
+- Pin-point coordinate display tool
+- God Mode / No Touch modes for the main character
 - Real-time updates without page reloads
 
 ## Support and Community
@@ -141,7 +145,7 @@ Administrator users can enable Developer Mode to access in-game editing tools:
 - **Plugin Homepage:** [https://orbem.studio/](https://orbem.studio/)
 - **Author:** [Orbem Order](https://orbemorder.com/)
 - **Support:** [Patreon](https://www.patreon.com/c/OrbemOrder)
-- **Version:** 1.0.2
+- **Version:** 1.4.15
 
 ## License
 

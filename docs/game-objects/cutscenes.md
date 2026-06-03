@@ -28,12 +28,13 @@ Cutscenes provide storytelling through text/voice dialogue, character interactio
 
 - **Cutscene Music** (`explore-cutscene-music`): Audio file that plays during cutscene
 - **Mute Music** (`explore-mute-music`): Mute area music during cutscene (`yes`/`no`)
+- **Communication** (`explore-engage-communicate`): Send a communication item to the player's communicator after this cutscene
 
 ### Character Integration
 
 - **Character** (`explore-character`): NPC involved in this cutscene
 - **NPC Face Me** (`explore-npc-face-me`): NPC turns to face player (`yes`/`no`)
-- **Character Position** (`explore-cutscene-character-position`): Where player moves (top, left)
+- **Character Position** (`explore-cutscene-character-position`): Position (top, left) where the main character moves before or after the cutscene
 
 ### NPC Movement
 
@@ -57,7 +58,6 @@ Cutscenes provide storytelling through text/voice dialogue, character interactio
 
 - **Value** (`explore-value`): Reward amount
 - **Value Type** (`explore-value-type`): Reward type (`point`, `mana`, `health`, `money`)
-- **Communication** (`explore-engage-communicate`): Send message to player's communicator
 
 ### Mission Integration
 
@@ -70,10 +70,15 @@ Cutscenes provide storytelling through text/voice dialogue, character interactio
 
 ### Materialization
 
-- **Materialize Trigger** (`explore-materialize-item-trigger`): Physical trigger to reveal this cutscene
-- **Remove After Cutscene** (`explore-remove-after-cutscene`): Remove this cutscene after another completes
-- **Materialize After Cutscene** (`explore-materialize-after-cutscene`): Reveal after cutscene completes
-- **Materialize After Mission** (`explore-materialize-after-mission`): Reveal after mission completes
+- **Materialize Trigger** (`explore-materialize-item-trigger`): Physical trigger zone to reveal this cutscene
+- **Remove After Cutscene** (`explore-remove-after-cutscene`): Multiselect — remove this cutscene after any selected cutscene completes
+- **Materialize After Cutscene** (`explore-materialize-after-cutscene`): Reveal after a specific cutscene completes
+- **Materialize After Mission** (`explore-materialize-after-mission`): Reveal after a specific mission completes
+- **Remove After Focus** (`explore-remove-after-focus`): Remove after a specific focus view (sign) is examined
+- **Materialize After Focus** (`explore-materialize-after-focus`): Reveal after a specific focus view is closed
+- **Materialize After Item** (`explore-materialize-after-item`): Reveal after a specific item is interacted with
+- **Remove After Item** (`explore-remove-after-item`): Remove after a specific item is interacted with
+- **Materialize After Explainer** (`explore-materialize-after-explainer`): Reveal after a specific explainer is closed
 
 ## Cutscene Flow
 

@@ -159,6 +159,13 @@ Weapon fires projectiles that travel across the screen.
 Projectile: yes (This is a laser gun)
 ```
 
+### Weapon Sound
+
+**Field:** `explore-weapon-sound`  
+**Type:** Upload (audio file)
+
+Sound that plays when this weapon is used in combat.
+
 ### Value Type
 
 **Field:** `explore-value-type`  
@@ -169,7 +176,7 @@ Categorizes the item type for inventory management.
 **Current Options:**
 - `weapons` - Standard weapon type
 
-**Note:** This field is primarily for internal categorization and future extensibility.
+**Note:** This field is required and is used for inventory categorization.
 
 ### Map Placement (Optional)
 

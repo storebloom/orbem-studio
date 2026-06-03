@@ -41,7 +41,7 @@ For external applications, use WordPress Application Passwords (WP 5.6+).
 curl -X POST \
   -u "username:application_password" \
   -H "Content-Type: application/json" \
-  -d '{"area":"level-1"}' \
+  -d '{"position":"level-1"}' \
   https://yoursite.com/wp-json/orbemorder/v1/area/
 ```
 
@@ -84,7 +84,7 @@ async function loadArea(areaSlug) {
       'Authorization': 'Basic ' + btoa('username:app_password'),
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify({ area: areaSlug })
+    body: JSON.stringify({ position: areaSlug })
   });
   
   const result = await response.json();
@@ -92,61 +92,69 @@ async function loadArea(areaSlug) {
 }
 ```
 
-**2. Parse Game Objects:**
-```javascript
-function parseGameObjects(areaData) {
-  const characters = areaData.posts.filter(p => p.post_type === 'explore-character');
-  const enemies = areaData.posts.filter(p => p.post_type === 'explore-enemy');
-  const items = areaData.posts.filter(p => p.post_type === 'explore-point');
-  
-  return { characters, enemies, items };
+The `/area/` endpoint returns pre-rendered HTML strings for each object category, not raw post objects. The response shape is:
+
+```json
+{
+  "success": true,
+  "data": {
+    "map-items": "<HTML>",
+    "map-characters": "<HTML>",
+    "map-cutscenes": "<HTML>",
+    "map-missions": "<HTML>",
+    "map-explainers": "<HTML>",
+    "map-communicate": "<HTML>",
+    "minigames": "<HTML>",
+    "start-top": "2500",
+    "start-left": "3000",
+    "start-direction": "down",
+    "area-height": "100%",
+    "area-width": "100%"
+  }
 }
 ```
 
-**3. Render Game State:**
+**2. Inject Rendered HTML:**
 ```javascript
-function renderGame(areaData) {
-  const canvas = document.getElementById('game-canvas');
-  const ctx = canvas.getContext('2d');
+function renderArea(areaData) {
+  // Area data comes as pre-rendered HTML strings
+  document.getElementById('map-items').innerHTML = areaData['map-items'];
+  document.getElementById('map-characters').innerHTML = areaData['map-characters'];
+  document.getElementById('map-cutscenes').innerHTML = areaData['map-cutscenes'];
   
-  // Load and draw map
-  const map = new Image();
-  map.src = areaData.meta['explore-map'];
-  map.onload = () => {
-    ctx.drawImage(map, 0, 0);
-    
-    // Render game objects
-    renderObjects(ctx, areaData.posts);
-  };
+  // Position player at starting location
+  positionPlayer(areaData['start-top'], areaData['start-left']);
 }
 ```
+
+**Note:** The `/area/` endpoint does not return raw post data or post meta. To query game objects as structured data, use the standard WordPress REST API at `/wp/v2/explore-character`, `/wp/v2/explore-enemy`, etc.
 
 ### Player State Management
 
 **Save Player Position:**
 ```javascript
-async function savePosition(area, top, left) {
+async function savePosition(top, left) {
   await fetch('/wp-json/orbemorder/v1/coordinates/', {
     method: 'POST',
     headers: {
       'Authorization': 'Basic ' + credentials,
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify({ area, top, left })
+    body: JSON.stringify({ top, left })
   });
 }
 ```
 
 **Update Player Stats:**
 ```javascript
-async function updateStat(type, value, add = true) {
+async function updateStat(type, amount, item) {
   await fetch('/wp-json/orbemorder/v1/add-explore-points/', {
     method: 'POST',
     headers: {
       'Authorization': 'Basic ' + credentials,
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify({ type, value, add })
+    body: JSON.stringify({ type, amount, item })
   });
 }
 ```
@@ -190,7 +198,7 @@ class OrbemGameClient {
           'Authorization': `Basic ${this.credentials}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ area: areaSlug })
+        body: JSON.stringify({ position: areaSlug })
       });
       
       const result = await response.json();
@@ -231,7 +239,7 @@ public class OrbemAPIClient : MonoBehaviour
     public IEnumerator LoadArea(string areaSlug)
     {
         string url = $"{baseUrl}/wp-json/orbemorder/v1/area/";
-        string jsonData = $"{{\"area\":\"{areaSlug}\"}}";
+        string jsonData = $"{{\"position\":\"{areaSlug}\"}}";
         
         using (UnityWebRequest request = UnityWebRequest.Post(url, jsonData))
         {
@@ -350,8 +358,8 @@ analytics.trackAreaVisit('level-1');
 ```javascript
 // Instead of multiple individual requests
 const updates = [
-  savePosition(area, top, left),
-  updateStat('health', 25, true),
+  savePosition(top, left),
+  updateStat('health', 25, 'health-item'),
   completeMission('mission-1')
 ];
 
@@ -422,8 +430,8 @@ const TEST_CONFIG = {
 describe('Orbem API Integration', () => {
   test('should load area data', async () => {
     const data = await loadArea('test-area');
-    expect(data).toHaveProperty('posts');
-    expect(data).toHaveProperty('meta');
+    expect(data).toHaveProperty('map-items');
+    expect(data).toHaveProperty('start-top');
   });
   
   test('should save player position', async () => {

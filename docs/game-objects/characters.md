@@ -45,9 +45,9 @@ Characters bring life to your game world. The system supports sophisticated char
 #### Area Placement
 
 **Field:** `explore-area`  
-**Type:** Select
+**Type:** Multiselect
 
-The area where this character appears in the game world.
+The area(s) where this character appears in the game world. Multiple areas can be selected.
 
 **Example:** Select "starting-village" to place the character in that area.
 
@@ -56,8 +56,8 @@ The area where this character appears in the game world.
 **Fields:**
 - `explore-top` - Vertical position in pixels
 - `explore-left` - Horizontal position in pixels
-- `explore-height` - Character height in pixels
-- `explore-width` - Character width in pixels
+- `explore-height` - Character height in pixels (required)
+- `explore-width` - Character width in pixels (required)
 
 **Example:**
 ```
@@ -80,10 +80,22 @@ Rotate the character sprite (useful for angled starting poses).
 
 Z-index for layering. Higher numbers appear in front of lower numbers.
 
+**Field:** `explore-passable`  
+**Type:** Radio (`yes` or `no`)
+
+Whether the player can walk over this character.
+
+**Field:** `explore-hitbox-inset`  
+**Type:** Number  
+**Unit:** Pixels
+
+Shrinks the character's collision hitbox on all sides by this many pixels. Useful for characters with large transparent borders.
+
 **Example:**
 ```
 Rotation: 0 (no rotation)
 Layer: 5 (appears above objects with layer < 5)
+Hitbox Inset: 10 (collision box is 10px smaller on each side)
 ```
 
 ### Character Name Override
@@ -137,10 +149,25 @@ The core visual representation of your character. You must upload images for all
 - `right-drag` - Walking while carrying, right
 
 **Combat Poses (for playable characters):**
-- `up-punch` - Attacking upward
-- `down-punch` - Attacking downward
-- `left-punch` - Attacking left
-- `right-punch` - Attacking right
+- `up-punch` - Attacking upward (normal)
+- `up-punch-heavy` - Heavy attack upward
+- `up-punch-charged` - Charged attack upward
+- `down-punch` - Attacking downward (normal)
+- `down-punch-heavy` - Heavy attack downward
+- `down-punch-charged` - Charged attack downward
+- `left-punch` - Attacking left (normal)
+- `left-punch-heavy` - Heavy attack left
+- `left-punch-charged` - Charged attack left
+- `right-punch` - Attacking right (normal)
+- `right-punch-heavy` - Heavy attack right
+- `right-punch-charged` - Charged attack right
+
+**Hurt and Death Poses:**
+- `up-hurt` - Hit while facing up
+- `down-hurt` - Hit while facing down
+- `left-hurt` - Hit while facing left
+- `right-hurt` - Hit while facing right
+- `dead` - Defeated/death pose
 
 #### Image Specifications
 
@@ -230,7 +257,7 @@ The weapon this character starts with when first recruited or played.
 Weapon Choice: energy-sword
 ```
 
-### Voice Configuration
+### Voice and Sound Configuration
 
 **Field:** `explore-voice`  
 **Type:** Select (Google TTS voices)
@@ -243,15 +270,20 @@ Assign a text-to-speech voice for cutscene dialogue.
 
 **Available Voice Types:**
 - Male and female voices
-- Multiple languages
-- Different voice styles (standard, wavenet, neural)
+- Multiple languages and regions
+- Standard, Wavenet, Neural2, Studio, and Journey voice qualities
 
 **Example:**
 ```
-Voice: en-US-Wavenet-D (Female voice)
+Voice: en-US-Wavenet-D
 ```
 
 See [Cutscenes](cutscenes.md) for how voices are used in dialogue.
+
+**Field:** `explore-character-hurt-sound`  
+**Type:** Upload (audio file)
+
+Sound that plays when this character takes damage.
 
 ### NPC Configuration
 
@@ -447,9 +479,9 @@ Materialize After Mission: find-the-key
 #### Remove After Cutscene
 
 **Field:** `explore-remove-after-cutscene`  
-**Type:** Select (list of cutscenes)
+**Type:** Multiselect (list of cutscenes)
 
-Character disappears after a specific cutscene completes.
+Character disappears after any of the selected cutscenes complete.
 
 **Example:**
 ```
