@@ -289,6 +289,10 @@ $orbem_studio_main_character_info          = Explore::getCharacterImages($orbem_
 $orbem_studio_direction_images             = $orbem_studio_main_character_info['direction_images'] ?? [];
 $orbem_studio_main_character_id            = $orbem_studio_main_character_info['id'] ?? false;
 $orbem_studio_hurt_sound                   = $orbem_studio_main_character_info['hurt_sound'] ?? false;
+$orbem_studio_jump_sound                   = $orbem_studio_main_character_info['jump-sound'] ?? false;
+$orbem_studio_jump                         = $orbem_studio_main_character_info['jump'] ?? '';
+$orbem_studio_double_jump                  = $orbem_studio_main_character_info['double-jump'] ?? '';
+$orbem_studio_area_physics                 = $orbem_studio_explore_area ? get_post_meta($orbem_studio_explore_area->ID, 'explore-physics', true) : '';
 $orbem_studio_is_admin                     = user_can(get_current_user_id(), 'manage_options');
 $orbem_studio_is_logged_in                 = is_user_logged_in();
 
@@ -326,7 +330,7 @@ include plugin_dir_path(__FILE__) . 'plugin-header.php';
     <?php if (true === $orbem_studio_is_admin) : ?>
         <?php echo wp_kses(html_entity_decode(Dev_Mode::getDevModeHTML()), $orbem_studio_allowed_tags); ?>
     <?php endif; ?>
-    <div class="game-container <?php echo esc_attr($orbem_studio_location); ?>" data-main="<?php echo esc_attr($orbem_studio_main_character); ?>" data-fadeout="true">
+    <div class="game-container <?php echo esc_attr($orbem_studio_location); ?>" data-main="<?php echo esc_attr($orbem_studio_main_character); ?>" data-fadeout="true" data-physics="<?php echo esc_attr($orbem_studio_area_physics); ?>">
         <?php if ((false === empty($orbem_studio_explore_area_map) && false !== stripos($orbem_studio_explore_area_map, '.webm')) || (false === empty($orbem_studio_explore_area_map) && false !== stripos($orbem_studio_explore_area_map, '.mp4'))): ?>
             <video class="container-image" style="position:absolute;z-index: 1;<?php echo esc_attr('height:' . $orbem_studio_explore_area_height . ';' . 'width:' . $orbem_studio_explore_area_width . ';'); ?>" src="<?php echo esc_attr($orbem_studio_explore_area_map); ?>" autoplay loop muted></video>
         <?php else : ?>
@@ -436,11 +440,18 @@ include plugin_dir_path(__FILE__) . 'plugin-header.php';
             data-voice="<?php echo esc_attr($orbem_studio_main_character_info['voice'] ?? '');?>"
             data-ability="<?php echo esc_attr($orbem_studio_main_character_info['ability'] ?? ''); ?>"
             data-hitbox-inset="<?php echo esc_attr($orbem_studio_main_character_info['hitbox-inset'] ?? ''); ?>"
+            data-jump="<?php echo esc_attr($orbem_studio_jump); ?>"
+            data-double-jump="<?php echo esc_attr($orbem_studio_double_jump); ?>"
         >
             <span class="misc-gauge-wrap"><span class="misc-gauge"></span></span>
             <?php if (false === empty($orbem_studio_hurt_sound)) : ?>
                 <span class="hurt-sound">
                     <audio src="<?php echo esc_url($orbem_studio_hurt_sound); ?>"></audio>
+                </span>
+            <?php endif; ?>
+            <?php if (false === empty($orbem_studio_jump_sound)) : ?>
+                <span class="jump-sound">
+                    <audio src="<?php echo esc_url($orbem_studio_jump_sound); ?>"></audio>
                 </span>
             <?php endif; ?>
             <?php foreach($orbem_studio_direction_images as $orbem_studio_direction_label => $orbem_studio_direction_image):

@@ -999,6 +999,7 @@ class Explore
                 'start-direction'         => $start_direction,
                 'map-svg'                 => self::getMapSVG($area[0]),
                 'is-cutscene'             => $is_area_cutscene,
+                'area-physics'            => false !== $area_id ? get_post_meta($area_id, 'explore-physics', true) : '',
                 'dev-mode'                => $dev_mode,
             ],
         ] );
@@ -1661,11 +1662,6 @@ class Explore
                     if (0 < count($all_missions)) {
                         foreach ($all_missions as $mission) {
                             $trigger_item       = get_post_meta($mission->ID, 'explore-trigger-item', true);
-
-                            if ('clicker' === $explore_point->post_name) {
-                                var_dump($mission);
-                                var_dump($trigger_item);
-                            }
                             $trigger_focus      = get_post_meta($mission->ID, 'explore-trigger-focus', true);
                             $trigger_item       = is_array($trigger_item) && false === empty($trigger_item) ? array_keys($trigger_item)[0] : $trigger_item;
                             $trigger_item       = is_array($trigger_item) ? '' : $trigger_item;
@@ -3132,6 +3128,9 @@ class Explore
             'hurt_sound'       => $character_hurt_sound,
             'name'             => $name,
             'voice'            => $meta['explore-voice'] ?? '',
+            'jump'             => $meta['explore-jump'] ?? '',
+            'double-jump'      => $meta['explore-double-jump'] ?? '',
+            'jump-sound'       => $meta['explore-jump-sound'] ?? false,
         ];
     }
 
@@ -3318,6 +3317,13 @@ class Explore
                 $width   = get_post_meta($point->ID, 'explore-width', true) . 'px';
                 $bg_url  = $point->post_type !== 'explore-enemy' ? get_the_post_thumbnail_url($point->ID) : '';
                 $type    = $point->post_type === 'explore-enemy' ? '.enemy-item' : '.map-item';
+
+                if ($bg_url && in_array($point->post_type, ['explore-weapon', 'explore-point', 'explore-sign'], true)) {
+                    $thumb_id = get_post_thumbnail_id($point->ID);
+                    if ($thumb_id) {
+                        $bg_url .= '?v=' . get_post_modified_time('U', false, $thumb_id);
+                    }
+                }
 
                 $css .= "
                 body .game-container .default-map {$type}.{$point->post_name}-map-item[data-genre='" . esc_attr($point->post_type) . "'] {
