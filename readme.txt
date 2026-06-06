@@ -5,7 +5,7 @@ Tags: game engine, rpg, video game, game-dev, narrative game
 Requires at least: 6.1
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.4.15
+Stable tag: 1.5.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -41,9 +41,9 @@ Orbem Studio ships with systems for:
 
 Games built with Orbem Studio:
 
-* [One Wizard Wrong Forest](https://orbemstudio.itch.io/one-wizard-wrong-forest) -- fantasy brawler with goblin combat and a tree golem boss
-* [Cemetery Showdown](https://orbemstudio.itch.io/cemetery-showdown) -- zombie combat game
-* [30 minute build demo](https://youtu.be/TS3HI2M5vH0) -- watch a complete game built from scratch
+* [One Wizard Wrong Forest](https:one-wizard-wrong-forest.orbem.studio) -- fantasy brawler with goblin combat and a tree golem boss
+* [Cemetery Showdown](https://cemetery-showdown.orbem.studio) -- zombie combat game
+* [Learn how to use Orbem Studio](https://orbem.studio/learn) -- watch turtorials and learn the basics
 
 = Getting Started =
 
@@ -57,7 +57,7 @@ Or sign up at [orbem.studio](https://orbem.studio) to build and host your game w
 
 * Full browser game engine running inside WordPress with no external dependencies
 * Real-time player movement and collision
-* Simultaneous build and playtest -- no mode switching or recompiling
+* Simultaneous build and playtest, no mode switching or recompiling
 
 **Combat System**
 
@@ -190,6 +190,12 @@ Documentation is available at https://orbemorder.com/orbem-studio/docs/readme
 Tutorials are available on the Orbem Studio YouTube channel at https://youtube.com/@orbemstudio
 
 == Changelog ==
+
+= 1.5.0 =
+* Add wall delete feature.
+* Add translation feature to text blocks.
+* Add jump and double jump to character.
+* Add gravity physics to areas.
 
 = 1.4.15 =
 * Fix orbem studio button show.

@@ -297,6 +297,15 @@ class Meta_Box {
                         ],
 
                         'Area Flow & Behavior' => [
+                                'explore-physics' => [
+                                        [
+                                                'select' => [
+                                                        'Standard' => 'standard',
+                                                        'Gravity' => 'gravity',
+                                                ]
+                                        ],
+                                        'Should the game have gravity or be normal non-jumping movement.'
+                                ],
                                 'explore-start-direction' => [
                                         [
                                                 'select' => [
@@ -886,6 +895,18 @@ class Meta_Box {
                                 'explore-speed' => [
                                         'number',
                                         'The movement speed of this NPC.'
+                                ],
+                                'explore-jump' => [
+                                    'number',
+                                    'The height of the character\'s jump. (requires gravity area)'
+                                ],
+                                'explore-double-jump' => [
+                                        'number',
+                                        'If set, the amount of jump height the double jump with give.'
+                                ],
+                                'explore-jump-sound' => [
+                                    'upload',
+                                    'The sound that plays when character jumps.'
                                 ],
                                 'explore-wanderer' => [
                                         [

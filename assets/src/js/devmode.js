@@ -17,6 +17,113 @@ export function engageDevMode() {
     let offsetY = 0;
     let sendItemCoodinateTimeout;
 
+    // Wall click-to-delete state.
+    let wallClickTarget = null;
+    let wallMouseStartX = 0;
+    let wallMouseStartY = 0;
+    let selectedWall = null;
+
+    // If the mouse moves more than 5px after mousedown, treat it as a drag, not a click.
+    document.addEventListener('mousemove', function (e) {
+        if (wallClickTarget) {
+            if (
+                Math.abs(e.clientX - wallMouseStartX) > 5 ||
+                Math.abs(e.clientY - wallMouseStartY) > 5
+            ) {
+                wallClickTarget = null;
+            }
+        }
+    });
+
+    // Clicking outside any wall deselects the current one.
+    document.addEventListener('mousedown', function (e) {
+        if (selectedWall && ! e.target.closest('[data-genre="explore-wall"]')) {
+            deselectWall();
+        }
+    });
+
+    function deselectWall() {
+        if (selectedWall) {
+            selectedWall.style.opacity = '0.3';
+            selectedWall.style.outline = '';
+            selectedWall.style.zIndex = '1';
+            const btn = selectedWall.querySelector('.wall-delete-btn');
+            if (btn) {
+                btn.remove();
+            }
+            selectedWall = null;
+        }
+    }
+
+    function handleWallSelect(wallEl) {
+        if (selectedWall === wallEl) {
+            return;
+        }
+        deselectWall();
+        selectedWall = wallEl;
+        wallEl.style.opacity = '0.65';
+        wallEl.style.outline = '2px solid rgba(255,60,60,0.9)';
+        wallEl.style.zIndex = '9998';
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'wall-delete-btn';
+        deleteBtn.textContent = '✕';
+        deleteBtn.style.cssText =
+            'position:absolute;top:2px;right:2px;width:20px;height:20px;' +
+            'background:rgba(220,40,40,0.9);color:#fff;border:none;border-radius:3px;' +
+            'cursor:pointer;font-size:11px;line-height:1;padding:0;z-index:9999;';
+
+        deleteBtn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            // eslint-disable-next-line no-alert
+            if (window.confirm('Are you sure you want to remove this wall?')) {
+                fetch(`${OrbemOrder.siteRESTURL}/delete-item/`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-WP-Nonce': OrbemOrder.orbemNonce,
+                    },
+                    body: JSON.stringify({ id: wallEl.id }),
+                })
+                    .then(function (response) {
+                        if (! response.ok) {
+                            throw new Error(
+                                'Network response was not ok ' +
+                                    response.statusText,
+                            );
+                        }
+                        return response.json();
+                    })
+                    .then(function (data) {
+                        if (data.success) {
+                            wallEl.remove();
+                            selectedWall = null;
+                        }
+                    });
+            }
+        });
+
+        wallEl.appendChild(deleteBtn);
+    }
+
+    function attachWallClickBehavior(wallEl) {
+        wallEl.addEventListener('mousedown', function (e) {
+            wallClickTarget = wallEl;
+            wallMouseStartX = e.clientX;
+            wallMouseStartY = e.clientY;
+        });
+
+        wallEl.addEventListener('mouseup', function () {
+            const wallBuilderActive = document
+                .getElementById('engage-wallbuilder')
+                ?.classList.contains('engage');
+            if (wallClickTarget === wallEl && ! wallBuilderActive) {
+                handleWallSelect(wallEl);
+            }
+            wallClickTarget = null;
+        });
+    }
+
     // Handle the dragstart event
     function handleDragStart(event) {
         clearTimeout(sendItemCoodinateTimeout);
@@ -312,6 +419,10 @@ export function engageDevMode() {
             });
         }
 
+        document
+            .querySelectorAll('[data-genre="explore-wall"]')
+            .forEach(attachWallClickBehavior);
+
         const engageWallBuilder = document.getElementById('engage-wallbuilder');
         const wallBuilderContainer = document.querySelector(
             '.wallbuilder-container',
@@ -470,6 +581,7 @@ export function engageDevMode() {
                                     'mouseup',
                                     handleDragEnd,
                                 );
+                                attachWallClickBehavior(wallElement);
                             });
                     } else {
                         wallElement.addEventListener(

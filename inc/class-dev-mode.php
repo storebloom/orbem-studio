@@ -70,6 +70,13 @@ class Dev_Mode
             'callback' => [$this, 'addNew'],
             'permission_callback' => $permission_callback
         ]);
+
+        // Delete an orbem studio post. Requires administrator access.
+        register_rest_route($namespace, '/delete-item/', [
+            'methods' => 'DELETE',
+            'callback' => [$this, 'deleteItem'],
+            'permission_callback' => $permission_callback
+        ]);
     }
 
     /**
@@ -216,6 +223,49 @@ class Dev_Mode
         return rest_ensure_response([
             'success' => true,
             'data'    => $post_id,
+        ]);
+    }
+
+    /**
+     * Permanently delete an explore-wall post.
+     * @param \WP_REST_Request $request
+     * @return \WP_REST_Response
+     */
+    public function deleteItem(\WP_REST_Request $request): \WP_REST_Response
+    {
+        $data    = $request->get_json_params();
+        $post_id = isset($data['id']) ? absint($data['id']) : 0;
+
+        if ($post_id <= 0 || ! get_post($post_id)) {
+            return rest_ensure_response([
+                'success' => false,
+                'data'    => esc_html__('Invalid item ID', 'orbem-studio'),
+            ]);
+        }
+
+        $post = get_post($post_id);
+
+        if ('explore-wall' !== $post->post_type) {
+            return rest_ensure_response([
+                'success' => false,
+                'data'    => esc_html__('Invalid post type', 'orbem-studio'),
+            ]);
+        }
+
+        if (! current_user_can('delete_post', $post_id)) {
+            return rest_ensure_response([
+                'success' => false,
+                'data'    => esc_html__('Permission denied', 'orbem-studio'),
+            ]);
+        }
+
+        $result = wp_delete_post($post_id, true);
+
+        return rest_ensure_response([
+            'success' => false !== $result,
+            'data'    => false !== $result
+                ? esc_html__('Deleted', 'orbem-studio')
+                : esc_html__('Delete failed', 'orbem-studio'),
         ]);
     }
 

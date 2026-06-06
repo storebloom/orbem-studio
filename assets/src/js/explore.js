@@ -43,6 +43,12 @@ window.nextDialogue = false;
 window.crewCharacters = [];
 window.playerName = '';
 window.mcHurtCooldown = false;
+window.gravityMode = false;
+window.jumpVelocity = 0;
+window.isGrounded = false;
+window.canDoubleJump = false;
+window._jumpKeyActive = false;
+window._touchJumpActive = false;
 
 document.addEventListener('DOMContentLoaded', function () {
 	'use strict';
@@ -2464,8 +2470,19 @@ const enterNewArea = (function () {
 								container.innerHTML +
 								newDefaultMap.outerHTML;
 
+                            // Set new area physics before movementIntFunc so
+                            // gravity mode is correct from tick 1.
+                            container.dataset.physics = newMapItems['area-physics'] || '';
+                            window.gravityMode = 'gravity' === container.dataset.physics;
+                            if (window.gravityMode) {
+                                window.jumpVelocity = 0;
+                                window.isGrounded = false;
+                                window.canDoubleJump = false;
+                            }
+
                             // Engage walking.
                             movementIntFunc();
+                            window.allowMovement = true;
 
                             // Engage action.
                             document.querySelector('.action-key').addEventListener('click', dragItemEvent);
@@ -2550,6 +2567,9 @@ const enterNewArea = (function () {
 
 							// Engage communicate click.
 							communicateParentClick();
+
+							// Swap dialogue text/audio to match visitor's browser language before engaging.
+							applyLanguageTranslations();
 
 							// Set all first cutscene dialogues to engage.
 							const allFirstDialogues = document.querySelectorAll(
@@ -2686,6 +2706,13 @@ const enterNewArea = (function () {
 						);
 
 						container.className = 'game-container ' + position;
+						container.dataset.physics = newMapItems['area-physics'] || '';
+						window.gravityMode = 'gravity' === container.dataset.physics;
+						if (window.gravityMode) {
+							window.jumpVelocity = 0;
+							window.isGrounded = false;
+							window.canDoubleJump = false;
+						}
 						const mapImage = container.querySelector('.container-image');
 
                         if (mapImage) {
@@ -2699,7 +2726,6 @@ const enterNewArea = (function () {
 						currentLocation = position;
 
 						playSong(newMusic, position);
-						window.allowMovement = true;
 						theWeapon.style.display = 'block';
 
                         // Engage clickables.
@@ -3553,8 +3579,6 @@ function shootProjectile(
 	newProjectile.style.transform = '';
 	newProjectile.style.display = '';
 
-    console.log(projectile);
-
 	let collisionWalls;
 
 	if (true !== spell && 'no' === isProjectile) {
@@ -4045,6 +4069,9 @@ export function engageExploreGame() {
         const mainCharName = document.querySelector('#map-character .map-character-icon').alt.replace(' static', '');
         replaceNameInBody('{{playerName}}', mainCharName);
     }
+
+	// Swap dialogue text/audio to match visitor's browser language before engaging.
+	applyLanguageTranslations();
 
 	// Set all first cutscene dialogues to engage.
 	const allFirstDialogues = document.querySelectorAll(
@@ -6237,6 +6264,105 @@ function engageSign(signname) {
 }
 
 /**
+ * Swap dialogue text/audio to match the visitor's browser language.
+ * Handles three cases:
+ *   1. orbem/paragraph-mp3 — translation spans are direct children of the
+ *      outer <span>; swaps the inner <p> text and <audio> src.
+ *   2. core/paragraph — translation spans are inside the <p>; swaps text nodes.
+ *   3. core/heading — same pattern as core/paragraph but for h1–h6.
+ *
+ * Only runs when a non-English language is detected AND a matching translation
+ * span exists. Safe to call multiple times — untranslated blocks are untouched.
+ *
+ * @param {Element|Document} [root] - Scope to search within. Defaults to document.
+ */
+function applyLanguageTranslations(root) {
+	'use strict';
+
+	const lang = (navigator.language || 'en').split('-')[0].toLowerCase();
+
+	if ('en' === lang) {
+		return;
+	}
+
+	const container = root || document;
+
+	// Case 1: orbem/paragraph-mp3 — translation spans are direct children of
+	// the outer span wrapper, not inside the <p>.
+	container
+		.querySelectorAll('.wp-block-orbem-paragraph-mp3')
+		.forEach(function (block) {
+			const translation = block.querySelector(
+				':scope > .lang-translation[data-lang="' + lang + '"]'
+			);
+
+			if (!translation) {
+				return;
+			}
+
+			const defaultP = block.querySelector(':scope > p');
+			const translatedP = translation.querySelector('p');
+
+			if (defaultP && translatedP && translatedP.textContent) {
+				defaultP.textContent = translatedP.textContent;
+			}
+
+			const translatedAudio = translation.querySelector('audio');
+
+			if (translatedAudio && translatedAudio.src) {
+				const defaultAudio = block.querySelector(':scope > audio');
+
+				if (defaultAudio) {
+					defaultAudio.src = translatedAudio.src;
+				} else {
+					const newAudio = document.createElement('audio');
+					newAudio.controls = true;
+					newAudio.src = translatedAudio.src;
+					newAudio.style.position = 'absolute';
+					newAudio.style.left = '-56000px';
+					block.insertBefore(
+						newAudio,
+						block.querySelector('.lang-translation')
+					);
+				}
+			}
+		});
+
+	// Case 2 & 3: core/paragraph and core/heading — translation spans live
+	// inside the element itself as direct children.
+	container
+		.querySelectorAll('p, h1, h2, h3, h4, h5, h6')
+		.forEach(function (el) {
+			// Skip anything already handled by Case 1.
+			if (el.closest('.wp-block-orbem-paragraph-mp3')) {
+				return;
+			}
+
+			const translation = el.querySelector(
+				':scope > .lang-translation[data-lang="' + lang + '"]'
+			);
+
+			if (!translation || !translation.textContent.trim()) {
+				return;
+			}
+
+			const translatedText = translation.textContent.trim();
+			let replaced = false;
+
+			Array.from(el.childNodes).forEach(function (node) {
+				if (node.nodeType === Node.TEXT_NODE) {
+					if (!replaced) {
+						node.textContent = translatedText;
+						replaced = true;
+					} else {
+						node.textContent = '';
+					}
+				}
+			});
+		});
+}
+
+/**
  * Stuff that happens before a cutscene.
  * @param position
  * @param areaCutscene
@@ -6716,6 +6842,15 @@ function stopWalkSound() {
 	return false;
 }
 
+function playJumpSound() {
+	'use strict';
+	const jumpAudio = document.querySelector('#map-character .jump-sound audio');
+	if (jumpAudio) {
+		jumpAudio.currentTime = 0;
+		jumpAudio.play().catch(() => {});
+	}
+}
+
 /**
  * Enter an explore position if it is enterable.
  * @param value
@@ -6755,6 +6890,34 @@ function movementIntFunc() {
 
 	clearInterval(window.movementInt);
 
+	// Detect gravity mode from the current area's data-physics attribute.
+	const _gameContainer = document.querySelector('.game-container');
+	window.gravityMode = 'gravity' === (_gameContainer?.dataset.physics || '');
+	if (window.gravityMode) {
+		window.jumpVelocity = 0;
+		window.isGrounded = false;
+		window.canDoubleJump = false;
+	}
+
+	function triggerJump() {
+		const mapChar = document.getElementById('map-character');
+		const jumpHeight = parseFloat(mapChar?.dataset.jump || '0');
+		if (jumpHeight <= 0) return;
+		if (window.isGrounded) {
+			window.jumpVelocity = -Math.sqrt(2 * 0.5 * jumpHeight);
+			window.isGrounded = false;
+			window.canDoubleJump = 0 < parseFloat(mapChar?.dataset.doubleJump || '0');
+			playJumpSound();
+		} else if (window.canDoubleJump) {
+			const djHeight = parseFloat(mapChar?.dataset.doubleJump || '0');
+			if (djHeight > 0) {
+				window.jumpVelocity = -Math.sqrt(2 * 0.5 * djHeight);
+				window.canDoubleJump = false;
+				playJumpSound();
+			}
+		}
+	}
+
 	// Add listeners for explore keyboard movement.
 	document.addEventListener('keydown', function (e) {
 		d[e.which] = true;
@@ -6764,13 +6927,26 @@ function movementIntFunc() {
 		// Turn off arrow flash if character moved.
 		clearInterval(window.buttonShow);
 		clearTimeout(window.coordinateTimeout);
+
+		// Gravity mode: Up / W triggers a jump instead of moving upward.
+		if (window.gravityMode && window.allowMovement && (38 === e.which || 87 === e.which)) {
+			e.preventDefault();
+			if (!window._jumpKeyActive) {
+				window._jumpKeyActive = true;
+				triggerJump();
+			}
+		}
 	});
 
 	document.addEventListener('keyup', function (e) {
+		if (38 === e.which || 87 === e.which) {
+			window._jumpKeyActive = false;
+		}
 		stopWalkingFunction(e, false);
 	});
 
 	document.addEventListener('touchend', function (e) {
+		window._touchJumpActive = false;
 		stopWalkingFunction(e, true);
 	});
 
@@ -6813,6 +6989,9 @@ function movementIntFunc() {
 		.querySelector('.top-left')
 		.addEventListener('touchstart', function (e) {
 			e.preventDefault();
+			if (window.gravityMode) {
+				if (!window._touchJumpActive) { window._touchJumpActive = true; triggerJump(); }
+			}
 			d[37] = true;
 			d[38] = true;
 
@@ -6842,6 +7021,9 @@ function movementIntFunc() {
 		.querySelector('.top-middle')
 		.addEventListener('touchstart', function (e) {
 			e.preventDefault();
+			if (window.gravityMode) {
+				if (!window._touchJumpActive) { window._touchJumpActive = true; triggerJump(); }
+			}
 			d[38] = true;
 
 			// Turn off arrow flash if character moved.
@@ -6860,6 +7042,9 @@ function movementIntFunc() {
 		.querySelector('.top-right')
 		.addEventListener('touchstart', function (e) {
 			e.preventDefault();
+			if (window.gravityMode) {
+				if (!window._touchJumpActive) { window._touchJumpActive = true; triggerJump(); }
+			}
 			d[38] = true;
 			d[39] = true;
 
@@ -6986,14 +7171,59 @@ function movementIntFunc() {
 				window.keyDown = true;
 			}
 
-			const myTop = miroExplorePosition(
-				finalPos.top,
-				d[87] ? 87 : 38,
-				d[83] ? 83 : 40,
-				d,
-				window.moveSpeed,
-				$newest
-			);
+			let myTop;
+			if (window.gravityMode) {
+				const GRAVITY = 0.5;
+				const MAX_FALL = 12;
+				const MAX_STEP = 3;
+				window.jumpVelocity = Math.min(window.jumpVelocity + GRAVITY, MAX_FALL);
+
+				let remaining = window.jumpVelocity;
+				let currentTop = topValInt;
+				let blocked = false;
+
+				while (Math.abs(remaining) > 0.01 && !blocked) {
+					const step = remaining > 0
+						? Math.min(remaining, MAX_STEP)
+						: Math.max(remaining, -MAX_STEP);
+					const testTop = Math.round(currentTop + step);
+
+					box.style.top = testTop + 'px';
+					const testPos = blockMovement(testTop, leftValInt, false, false);
+					box.style.top = topVal;
+
+					if (step > 0 && testPos.top < testTop) {
+						// Hit a floor while falling — land here.
+						window.isGrounded = true;
+						window.canDoubleJump = 0 < parseFloat(box.dataset.doubleJump || '0');
+						window.jumpVelocity = 0;
+						myTop = currentTop;
+						blocked = true;
+					} else if (step < 0 && testPos.top > testTop) {
+						// Hit a ceiling while jumping — cancel upward velocity.
+						window.jumpVelocity = 0;
+						myTop = currentTop;
+						blocked = true;
+					} else {
+						currentTop += step;
+						remaining -= step;
+					}
+				}
+
+				if (!blocked) {
+					window.isGrounded = false;
+					myTop = Math.round(currentTop);
+				}
+			} else {
+				myTop = miroExplorePosition(
+					finalPos.top,
+					d[87] ? 87 : 38,
+					d[83] ? 83 : 40,
+					d,
+					window.moveSpeed,
+					$newest
+				);
+			}
 			const myLeft = miroExplorePosition(
 				finalPos.left,
 				d[65] ? 65 : 37,
@@ -7679,7 +7909,7 @@ function getBlockDirection(
                     collisionWallTop < characterTop &&
                     collisionWallBottom < characterTop + 10;
                 const bottomCollision =
-                    collisionWallTop < characterBottom &&
+                    collisionWallTop <= characterBottom &&
                     collisionWallBottom > characterBottom &&
                     collisionWallTop > characterBottom - 10;
                 const leftCollision =
