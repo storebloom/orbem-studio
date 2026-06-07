@@ -247,7 +247,7 @@ class Meta_Box {
                         'Area Media' => [
                                 'explore-map-required' => [
                                         'upload',
-                                        'The background image for this area. All characters, items, and triggers will be placed on top of this image. Recommended minimum size: 5000 × 4517 pixels.'
+                                        'The background image for this area. All characters, items, and triggers will be placed on top of this image. Max size is 5000 × 4517 pixels.'
                                 ],
                                 'explore-music' => [
                                         'upload',

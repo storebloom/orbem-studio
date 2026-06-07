@@ -844,6 +844,35 @@ function makeNPCWander(npc, walkingSpeed, timeBetween, enemy) {
             const currentTop = npc.style.top.replace('px', '');
             const finalPos = blockMovement(currentTop, currentLeft, npc, enemy);
 
+            if (window.gravityMode) {
+                const NPC_GRAVITY = 0.5;
+                const NPC_MAX_FALL = 12;
+                const NPC_MAX_STEP = 3;
+                npc._gravVelocity = Math.min((npc._gravVelocity || 0) + NPC_GRAVITY, NPC_MAX_FALL);
+
+                let gravRemaining = npc._gravVelocity;
+                let gravTop = parseInt(npc.style.top, 10);
+                let gravLanded = false;
+
+                while (Math.abs(gravRemaining) > 0.01 && !gravLanded) {
+                    const gravStep = Math.min(gravRemaining, NPC_MAX_STEP);
+                    const gravTestTop = Math.round(gravTop + gravStep);
+                    const gravPos = blockMovement(gravTestTop, parseInt(npc.style.left, 10), npc, enemy);
+
+                    if (gravPos.top < gravTestTop) {
+                        npc._gravVelocity = 0;
+                        gravLanded = true;
+                    } else {
+                        gravTop = gravTestTop;
+                        gravRemaining -= gravStep;
+                    }
+                }
+
+                if (!gravLanded) {
+                    npc.style.top = Math.round(gravTop) + 'px';
+                }
+            }
+
             if (true === enemy) {
                 const mapCharacter = document.getElementById('map-character');
                 const mapCharacterImage = document.querySelector('.map-character-icon.engage');
@@ -884,20 +913,16 @@ function makeNPCWander(npc, walkingSpeed, timeBetween, enemy) {
 
 			switch (startDir) {
 				case 'down':
-					npc.style.top = finalPos.top + 1 + 'px';
-
+					if (!window.gravityMode) npc.style.top = finalPos.top + 1 + 'px';
 					break;
 				case 'up':
-					npc.style.top = finalPos.top - 1 + 'px';
-
+					if (!window.gravityMode) npc.style.top = finalPos.top - 1 + 'px';
 					break;
 				case 'left':
 					npc.style.left = finalPos.left - 1 + 'px';
-
 					break;
 				case 'right':
 					npc.style.left = finalPos.left + 1 + 'px';
-
 					break;
 			}
 
@@ -978,14 +1003,14 @@ function makeNPCWander(npc, walkingSpeed, timeBetween, enemy) {
 
 			switch (moveDir) {
 				case 'down':
-					if ('up' !== startDir) {
+					if (!window.gravityMode && 'up' !== startDir) {
 						npc.style.top = finalPos.top + 1 + 'px';
 					} else {
 						moveDir = '';
 					}
 					break;
 				case 'up':
-					if ('down' !== startDir) {
+					if (!window.gravityMode && 'down' !== startDir) {
 						npc.style.top = finalPos.top - 1 + 'px';
 					} else {
 						moveDir = '';
@@ -1057,7 +1082,9 @@ function pauseNpc(timeBetween, npc) {
 function getRandomDir(currentDir, enemy, enemyEl) {
     'use strict';
 
-    const dirs = ['up', 'down', 'left', 'right'];
+    const dirs = window.gravityMode
+        ? ['left', 'right']
+        : ['up', 'down', 'left', 'right'];
 
     if (true === enemy && enemyEl) {
         // If flagged as stuck, pick a random direction to escape
@@ -1088,7 +1115,7 @@ function getRandomDir(currentDir, enemy, enemyEl) {
             const absHorizontalDiff = Math.abs(horizontalDiff);
             const absVerticalDiff = Math.abs(verticalDiff);
 
-            if (absVerticalDiff > absHorizontalDiff) {
+            if (!window.gravityMode && absVerticalDiff > absHorizontalDiff) {
                 return verticalDiff > 0 ? 'down' : 'up';
             }
 
