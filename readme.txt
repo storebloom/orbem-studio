@@ -5,7 +5,7 @@ Tags: game engine, rpg, video game, game-dev, narrative game
 Requires at least: 6.1
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.5.0
+Stable tag: 1.5.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -15,7 +15,7 @@ Build fully playable, browser-based games directly inside WordPress. No canvas. 
 
 **Orbem Studio** is a no-code browser game engine that runs entirely inside WordPress.
 
-Build real games with combat, NPCs, missions, inventory, cutscenes, boss fights. Publish them as a URL on your own site. No Unity. No canvas. No downloads. Your game lives on a WordPress page.
+Build real games with combat, NPCs, missions, inventory, cutscenes, boss fights, and physics-based platforming. Publish them as a URL on your own site. No Unity. No canvas. No downloads. Your game lives on a WordPress page.
 
 The engine handles movement, collision, triggers, progression, and state entirely through WordPress systems. If you can install a plugin, you can build a game.
 
@@ -31,8 +31,10 @@ Orbem Studio ships with systems for:
 
 * Combat with directional attacks, heavy attacks, charged attacks, and boss fight mechanics
 * Enemies with wander, runner, and projectile behaviors, health bars, and hurt animations
+* Physics-based platforming with per-area gravity, jumping, double jumping, and jump sound effects
 * Missions and progression with branching chains, conditional triggers, and persistent player state
 * Cutscenes and scripted events with per-area music, sound effects, and cinematic playback
+* Built-in translation support for in-game dialogue, paragraph blocks, and heading blocks — the correct language is chosen automatically from the visitor's browser
 * Inventory with weapons, gear, consumables, and equip logic
 * Mobile controls with d-pad support and landscape mode
 * Developer mode with live object placement, visual trigger overlays, and a front end wall builder
@@ -57,6 +59,8 @@ Or sign up at [orbem.studio](https://orbem.studio) to build and host your game w
 
 * Full browser game engine running inside WordPress with no external dependencies
 * Real-time player movement and collision
+* Physics-based gravity mode per area — constant downward pull, floor detection, and wall collision for the player, NPCs, and enemies
+* Jump and double jump with configurable heights and jump sound effects, adjustable per character
 * Simultaneous build and playtest, no mode switching or recompiling
 
 **Combat System**
@@ -80,6 +84,7 @@ Or sign up at [orbem.studio](https://orbem.studio) to build and host your game w
 * Sound effects and audio triggers
 * Intro videos and cinematic playback
 * Google Text-to-Speech integration for voiced dialogue
+* Built-in translation support for paragraph and heading blocks — add translations per block and the correct language is served automatically based on the visitor's browser locale
 
 **Inventory and Equipment**
 
@@ -190,6 +195,10 @@ Documentation is available at https://orbemorder.com/orbem-studio/docs/readme
 Tutorials are available on the Orbem Studio YouTube channel at https://youtube.com/@orbemstudio
 
 == Changelog ==
+
+= 1.5.1 =
+* Add npc/enemy gravity.
+* Fix map label.
 
 = 1.5.0 =
 * Add wall delete feature.
