@@ -802,6 +802,8 @@ function setStaticNPCImage(moveDirection, npc) {
 	}
 }
 
+window.makeNPCWander = makeNPCWander;
+
 function makeNPCWander(npc, walkingSpeed, timeBetween, enemy) {
 	'use strict';
 
@@ -2480,12 +2482,12 @@ const enterNewArea = (function () {
 							newDefaultMap.dataset.startleft =
 								newMapItems['start-left'];
 							newDefaultMap.innerHTML =
-								newMapItems['map-explainers'] +
-								newMapItems['map-items'] +
-								newMapItems['map-cutscenes'] +
-								newMapItems.minigames +
-								newMapItems['map-svg'] +
-								newMapItems['map-communicate'];
+								(newMapItems['map-explainers'] || '') +
+								(newMapItems['map-items'] || '') +
+								(newMapItems['map-cutscenes'] || '') +
+								(newMapItems.minigames || '') +
+								(newMapItems['map-svg'] || '') +
+								(newMapItems['map-communicate'] || '');
 
 							if ('yes' === newMapItems['is-cutscene']) {
 								newDefaultMap.dataset.iscutscene = 'yes';
@@ -2585,6 +2587,12 @@ const enterNewArea = (function () {
 									}
 								);
 							}
+
+							// Engage enemies that have no trigger defined.
+							engageUntriggeredEnemies();
+
+							// Apply gravity to items marked with explore-gravity = yes.
+							applyItemGravity();
 
 							// Load materialize item logic.
 							materializeItemLogic();
@@ -3414,6 +3422,8 @@ function stopShooterEnemy(enemyEl) {
     enemyEl._shooterInt = null;
 }
 
+window.engageEnemy = engageEnemy;
+
 /**
  * Start enemies.
  * @param enemy
@@ -3708,6 +3718,13 @@ function trackProjectile(projectile, collisionWalls, isProjectile) {
 	}
 
 	requestAnimationFrame(tick);
+
+	projectile.addEventListener('transitionend', function onProjTransitionEnd() {
+		projectile.removeEventListener('transitionend', onProjTransitionEnd);
+		if (document.body.contains(projectile)) {
+			projectile.remove();
+		}
+	});
 }
 
 function enemyOverlap(a, b, container) {
@@ -4052,9 +4069,71 @@ function shouldRemoveItemOnload(mapItem) {
 	return false;
 }
 
-/**
- * Engages the explore page game functions.
- */
+function applyItemGravity() {
+	if (!window.gravityMode) return;
+
+	const gravityItems = document.querySelectorAll('[data-gravity="yes"]');
+
+	gravityItems.forEach((item) => {
+		if (item._gravityActive) return;
+		item._gravityActive = true;
+		item._itemGravVelocity = 0;
+
+		function itemGravTick() {
+			if (!document.body.contains(item)) return;
+
+			const GRAVITY  = 0.5;
+			const MAX_FALL = 12;
+			const MAX_STEP = 3;
+
+			item._itemGravVelocity = Math.min(item._itemGravVelocity + GRAVITY, MAX_FALL);
+
+			let remaining  = item._itemGravVelocity;
+			let currentTop = parseInt(item.style.top, 10) || 0;
+			let currentLeft = parseInt(item.style.left, 10) || 0;
+			let landed     = false;
+
+			while (Math.abs(remaining) > 0.01 && !landed) {
+				const step    = Math.min(remaining, MAX_STEP);
+				const testTop = Math.round(currentTop + step);
+
+				// Pass item as box so getBlockDirection uses item's own dimensions
+				// and finalTop/finalLeft directly (npc=true path), matching how
+				// NPC gravity collision works.
+				const testPos = blockMovement(testTop, currentLeft, item, false);
+
+				if (testPos.top < testTop) {
+					item._itemGravVelocity = 0;
+					landed = true;
+				} else {
+					currentTop += step;
+					remaining  -= step;
+				}
+			}
+
+			if (!landed) {
+				item.style.top = Math.round(currentTop) + 'px';
+				requestAnimationFrame(itemGravTick);
+			} else {
+				item._gravityActive = false;
+			}
+		}
+
+		requestAnimationFrame(itemGravTick);
+	});
+}
+
+function engageUntriggeredEnemies() {
+	const enemies = document.querySelectorAll('.enemy-item[data-genre="explore-enemy"]');
+	enemies.forEach((enemy) => {
+		const enemyName = enemy.classList[1]?.replace('-map-item', '') || '';
+		const hasTrigger = enemyName && document.querySelector('.' + enemyName + '-trigger-map-item');
+		if (!hasTrigger) {
+			engageEnemy(enemy, false);
+		}
+	});
+}
+
 export function engageExploreGame() {
 	'use strict';
 
@@ -4208,6 +4287,9 @@ export function engageExploreGame() {
 		});
 	}
 
+	// Engage enemies that have no trigger defined.
+	engageUntriggeredEnemies();
+
 	const missionListEl = document.querySelector('.missions-content');
 	if (missionListEl) missionListEl.dataset.area = currentLocation;
 
@@ -4235,6 +4317,10 @@ export function engageExploreGame() {
 
 	// Update explore position if on explore page.
 	movementIntFunc();
+
+	// Apply gravity to items marked with explore-gravity = yes.
+	// Must run after movementIntFunc so window.gravityMode is set.
+	applyItemGravity();
 
     const defaultMap =  document.querySelector('.default-map');
 
@@ -4501,7 +4587,7 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 			}
 
 			// No points for draggables.
-			const dragDest = document.querySelector(
+			const dragDest = /^\d/.test(String(position)) ? null : document.querySelector(
 				'.' + position + '-drag-dest-map-item'
 			);
 			let dragMission = false;
@@ -6401,6 +6487,8 @@ function engageCutscene(position, areaCutscene) {
         undefined === position?.className
             ? document.querySelector('.' + position + '-map-cutscene')
             : position;
+
+    if (!cutscene) return;
 
     const mc = document.getElementById('map-character');
     const character = cleanClassName(

@@ -336,13 +336,13 @@ include plugin_dir_path(__FILE__) . 'plugin-header.php';
         <?php else : ?>
             <img class="container-image" style="position:absolute;z-index: -1;object-fit: cover;<?php echo esc_attr('height:' . $orbem_studio_explore_area_height . ';' . 'width:' . $orbem_studio_explore_area_width . ';'); ?>" src="<?php echo esc_url($orbem_studio_explore_area_map) ?? ''; ?>" decoding="async" fetchpriority="high" loading="eager" />
         <?php endif; ?>
-        <div id="explore-points<?php echo false === in_array('on', [
+        <div id="explore-points" class="<?php echo false === in_array('on', [
             $orbem_studio_health_bar,
             $orbem_studio_mana_bar,
             $orbem_studio_power_bar,
             $orbem_studio_money_bar,
             $orbem_studio_points_bar
-        ]) && true === empty($orbem_studio_explore_missions) ? ' empty' : ''; ?>">
+        ]) && true === empty($orbem_studio_explore_missions) ? 'empty' : ''; ?>">
             <?php if ('on' === $orbem_studio_health_bar) : ?>
                 <div class="health-amount point-bar" data-type="health" data-amount="<?php echo esc_attr($orbem_studio_health + ($orbem_studio_point_widths['health'] - 100)); ?>" style="width: <?php echo isset($orbem_studio_point_widths['health']) ? esc_attr($orbem_studio_point_widths['health']) : 100; ?>px;"><div class="gauge"></div></div>
             <?php endif; ?>

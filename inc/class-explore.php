@@ -1548,6 +1548,7 @@ class Explore
                 $rotation                       = $explore_point_meta['explore-rotation'] ?? '';
                 $item_image                     = get_the_post_thumbnail_url($explore_point->ID);
                 $video_override                 = $explore_point_meta['explore-video-override'] ?? '';
+                $item_gravity                   = $explore_point_meta['explore-gravity'] ?? '';
 
                 // Create onload class:
                 $path_onload = true === empty($path_trigger_left) && true === empty($path_trigger_cutscene) && ('explore-character' === $explore_point->post_type || 'explore-enemy' === $explore_point->post_type) ? ' path-onload' : '';
@@ -1656,6 +1657,11 @@ class Explore
                     // Is strong.
                     if ('yes' === $is_strong) {
                         $html .= ' data-isstrong="yes"';
+                    }
+
+                    // Respects gravity.
+                    if ('yes' === $item_gravity) {
+                        $html .= ' data-gravity="yes"';
                     }
 
                     // Get item and enemy triggered missions.
