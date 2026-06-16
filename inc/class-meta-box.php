@@ -490,7 +490,23 @@ class Meta_Box {
 
                 ],
                 'explore-cutscene' => [
-
+                        'Cutscene NPC & Type' => [
+                                'explore-character' => [
+                                        [
+                                                'select' => $explore_character_array
+                                        ],
+                                        'Select the NPC involved in this cutscene.'
+                                ],
+                                'explore-trigger-type' => [
+                                        [
+                                                'radio' => [
+                                                        'auto',
+                                                        'engagement'
+                                                ]
+                                        ],
+                                        'Choose how the cutscene is triggered. "Auto" starts when the player enters the trigger. "Engagement" starts when the action key is pressed.'
+                                ],
+                        ],
                         'Cutscene Area & Trigger' => [
                                 'explore-area-required' => [
                                         [
@@ -506,15 +522,6 @@ class Meta_Box {
                                                 'width' => 'number',
                                         ],
                                         'Define the trigger area that starts this cutscene.'
-                                ],
-                                'explore-trigger-type' => [
-                                        [
-                                                'radio' => [
-                                                        'auto',
-                                                        'engagement'
-                                                ]
-                                        ],
-                                        'Choose how the cutscene is triggered. "Auto" starts when the player enters the trigger. "Engagement" starts when the action key is pressed.'
                                 ],
                         ],
 
@@ -601,12 +608,6 @@ class Meta_Box {
                         ],
 
                         'Character & NPC Configuration' => [
-                                'explore-character' => [
-                                        [
-                                                'select' => $explore_character_array
-                                        ],
-                                        'Select the NPC involved in this cutscene.'
-                                ],
                                 'explore-cutscene-character-position' => [
                                         [
                                                 'top' => 'number',
@@ -1516,6 +1517,15 @@ class Meta_Box {
                                                 ]
                                         ],
                                         'Choose whether this item should be removed from the map after interaction.'
+                                ],
+                                'explore-gravity' => [
+                                        [
+                                                'radio' => [
+                                                        'yes',
+                                                        'no'
+                                                ]
+                                        ],
+                                        'Choose whether this item should respect gravity in gravity physics enabled areas.'
                                 ],
                                 'explore-is-strong' => [
                                         [

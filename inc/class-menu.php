@@ -36,6 +36,124 @@ class Menu
     }
 
     /**
+     * Prevent the main character from being trashed.
+     *
+     * @action pre_trash_post
+     * @param bool|null $check
+     * @param \WP_Post  $post
+     * @return bool|null
+     */
+    public function preventMainCharacterTrash($check, $post)
+    {
+        if ('explore-character' !== $post->post_type) {
+            return $check;
+        }
+
+        $main_character_slug = get_option('explore_main_character', '');
+        $post_slug           = $post->post_name;
+
+        if ('' !== $main_character_slug && $post_slug === $main_character_slug) {
+            add_filter('pre_redirect_guess_404_permalink', '__return_false');
+            wp_die(
+                '<h2>' . esc_html__('Cannot Delete Main Character', 'orbem-studio') . '</h2>'
+                . '<p>' . esc_html__('This character is set as the Main Character in Orbem Studio\'s Global Game Options. A main character is required to play and build your game. To delete this character, first assign a different Main Character in Global Game Options.', 'orbem-studio') . '</p>'
+                . '<p><a href="' . esc_url(admin_url('admin.php?page=orbem-studio')) . '">' . esc_html__('Go to Global Game Options', 'orbem-studio') . '</a> &nbsp; <a href="' . esc_url(admin_url('edit.php?post_type=explore-character')) . '">' . esc_html__('&larr; Back to Characters', 'orbem-studio') . '</a></p>',
+                esc_html__('Cannot Delete Main Character', 'orbem-studio'),
+                ['response' => 403, 'back_link' => false]
+            );
+        }
+
+        return $check;
+    }
+
+    /**
+     * Prevent the main character from being permanently deleted.
+     *
+     * @action before_delete_post
+     * @param int      $post_id
+     * @param \WP_Post $post
+     * @return void
+     */
+    public function preventMainCharacterDelete($post_id, $post): void
+    {
+        if ('explore-character' !== $post->post_type) {
+            return;
+        }
+
+        $main_character_slug = get_option('explore_main_character', '');
+        $post_slug           = $post->post_name;
+
+        if ('' !== $main_character_slug && $post_slug === $main_character_slug) {
+            wp_die(
+                '<h2>' . esc_html__('Cannot Delete Main Character', 'orbem-studio') . '</h2>'
+                . '<p>' . esc_html__('This character is set as the Main Character in Orbem Studio\'s Global Game Options. A main character is required to play and build your game. To delete this character, first assign a different Main Character in Global Game Options.', 'orbem-studio') . '</p>'
+                . '<p><a href="' . esc_url(admin_url('admin.php?page=orbem-studio')) . '">' . esc_html__('Go to Global Game Options', 'orbem-studio') . '</a> &nbsp; <a href="' . esc_url(admin_url('edit.php?post_type=explore-character')) . '">' . esc_html__('&larr; Back to Characters', 'orbem-studio') . '</a></p>',
+                esc_html__('Cannot Delete Main Character', 'orbem-studio'),
+                ['response' => 403, 'back_link' => false]
+            );
+        }
+    }
+
+    /**
+     * Prevent the starting area from being trashed.
+     *
+     * @action pre_trash_post
+     * @param bool|null $check
+     * @param \WP_Post  $post
+     * @return bool|null
+     */
+    public function preventStartingAreaTrash($check, $post)
+    {
+        if ('explore-area' !== $post->post_type) {
+            return $check;
+        }
+
+        $first_area_slug = get_option('explore_first_area', '');
+        $post_slug       = $post->post_name;
+
+        if ('' !== $first_area_slug && $post_slug === $first_area_slug) {
+            add_filter('pre_redirect_guess_404_permalink', '__return_false');
+            wp_die(
+                '<h2>' . esc_html__('Cannot Delete Starting Area', 'orbem-studio') . '</h2>'
+                . '<p>' . esc_html__('This area is set as the Starting Area in Orbem Studio\'s Global Game Options. A starting area is required to play and build your game. To delete this area, first assign a different Starting Area in Global Game Options.', 'orbem-studio') . '</p>'
+                . '<p><a href="' . esc_url(admin_url('admin.php?page=orbem-studio')) . '">' . esc_html__('Go to Global Game Options', 'orbem-studio') . '</a> &nbsp; <a href="' . esc_url(admin_url('edit.php?post_type=explore-area')) . '">' . esc_html__('&larr; Back to Areas', 'orbem-studio') . '</a></p>',
+                esc_html__('Cannot Delete Starting Area', 'orbem-studio'),
+                ['response' => 403, 'back_link' => false]
+            );
+        }
+
+        return $check;
+    }
+
+    /**
+     * Prevent the starting area from being permanently deleted.
+     *
+     * @action before_delete_post
+     * @param int      $post_id
+     * @param \WP_Post $post
+     * @return void
+     */
+    public function preventStartingAreaDelete($post_id, $post): void
+    {
+        if ('explore-area' !== $post->post_type) {
+            return;
+        }
+
+        $first_area_slug = get_option('explore_first_area', '');
+        $post_slug       = $post->post_name;
+
+        if ('' !== $first_area_slug && $post_slug === $first_area_slug) {
+            wp_die(
+                '<h2>' . esc_html__('Cannot Delete Starting Area', 'orbem-studio') . '</h2>'
+                . '<p>' . esc_html__('This area is set as the Starting Area in Orbem Studio\'s Global Game Options. A starting area is required to play and build your game. To delete this area, first assign a different Starting Area in Global Game Options.', 'orbem-studio') . '</p>'
+                . '<p><a href="' . esc_url(admin_url('admin.php?page=orbem-studio')) . '">' . esc_html__('Go to Global Game Options', 'orbem-studio') . '</a> &nbsp; <a href="' . esc_url(admin_url('edit.php?post_type=explore-area')) . '">' . esc_html__('&larr; Back to Areas', 'orbem-studio') . '</a></p>',
+                esc_html__('Cannot Delete Starting Area', 'orbem-studio'),
+                ['response' => 403, 'back_link' => false]
+            );
+        }
+    }
+
+    /**
      * Register API field.
      *
      * @action rest_api_init
