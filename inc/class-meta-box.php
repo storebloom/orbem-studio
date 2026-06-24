@@ -1330,11 +1330,11 @@ class Meta_Box {
                                         ],
                                         'Select the area(s) where this explainer trigger will appear.'
                                 ],
-                                'explore-top-required' => [
+                                'explore-top' => [
                                         'number',
                                         'The top position of the explainer. Used for map and menu types; ignored for fullscreen.'
                                 ],
-                                'explore-left-required' => [
+                                'explore-left' => [
                                         'number',
                                         'The left position of the explainer. Used for map and menu types; ignored for fullscreen.'
                                 ],
@@ -1346,9 +1346,6 @@ class Meta_Box {
                                         'number',
                                         'The width of the explainer popup. Acts as max width when using fullscreen.'
                                 ],
-                        ],
-
-                        'Explainer Type & Display' => [
                                 'explore-explainer-type-required' => [
                                         [
                                                 'radio' => [
@@ -1359,6 +1356,18 @@ class Meta_Box {
                                         ],
                                         'Choose how the explainer is displayed: Map (fixed in the map), Menu (floating in the HUD), or Fullscreen (centered overlay).'
                                 ],
+                                'explore-explainer-trigger-required' => [
+                                        [
+                                                'top' => 'number',
+                                                'left' => 'number',
+                                                'width' => 'number',
+                                                'height' => 'number',
+                                        ],
+                                        'Define the trigger area that causes this explainer to appear.'
+                                ],
+                        ],
+
+                        'Explainer Type & Display' => [
                                 'explore-explainer-arrow' => [
                                         [
                                                 'orientation' => [
@@ -1401,15 +1410,6 @@ class Meta_Box {
                                                 ]
                                         ],
                                         'Allow clicking on the explainer to close it?'
-                                ],
-                                'explore-explainer-trigger-required' => [
-                                        [
-                                                'top' => 'number',
-                                                'left' => 'number',
-                                                'width' => 'number',
-                                                'height' => 'number',
-                                        ],
-                                        'Define the trigger area that causes this explainer to appear.'
                                 ],
                                 'explore-materialize-item-trigger' => [
                                         [

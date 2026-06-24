@@ -349,13 +349,6 @@ class Dev_Mode
         </div>
         <div class="right-bottom-devmode">
             <?php
-            $template = plugin_dir_path(__FILE__) . '../templates/components/interaction-collision.php';
-            if (file_exists($template)) {
-                include $template;
-            }
-            ?>
-
-            <?php
             $wall_builder = plugin_dir_path(__FILE__) . '../templates/components/wall-builder.php';
             if ( file_exists($wall_builder) ) {
                 include $wall_builder;
@@ -363,6 +356,12 @@ class Dev_Mode
             ?>
 
             <button class="dev-mode-menu-toggle">Show Hidden</button>
+            <?php
+            $template = plugin_dir_path(__FILE__) . '../templates/components/interaction-collision.php';
+            if (file_exists($template)) {
+                include $template;
+            }
+            ?>
         </div>
         <?php
         return ob_get_clean();
