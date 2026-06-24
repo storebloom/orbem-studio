@@ -37,7 +37,7 @@ export function engageDevMode() {
 
     // Clicking outside any wall deselects the current one.
     document.addEventListener('mousedown', function (e) {
-        if (selectedWall && ! e.target.closest('[data-genre="explore-wall"]')) {
+        if (selectedWall && !e.target.closest('[data-genre="explore-wall"]')) {
             deselectWall();
         }
     });
@@ -86,7 +86,7 @@ export function engageDevMode() {
                     body: JSON.stringify({ id: wallEl.id }),
                 })
                     .then(function (response) {
-                        if (! response.ok) {
+                        if (!response.ok) {
                             throw new Error(
                                 'Network response was not ok ' +
                                     response.statusText,
@@ -117,67 +117,61 @@ export function engageDevMode() {
             const wallBuilderActive = document
                 .getElementById('engage-wallbuilder')
                 ?.classList.contains('engage');
-            if (wallClickTarget === wallEl && ! wallBuilderActive) {
+            if (wallClickTarget === wallEl && !wallBuilderActive) {
                 handleWallSelect(wallEl);
             }
             wallClickTarget = null;
         });
     }
 
-    // Handle the dragstart event
+    // Handle the mousedown event to begin custom drag (no HTML5 drag API)
     function handleDragStart(event) {
+        if (event.button !== 0) return;
         clearTimeout(sendItemCoodinateTimeout);
+        draggedContainer = event.target.closest('.map-item, .enemy-item');
+        if (!draggedContainer) return;
         event.preventDefault();
-        draggedContainer = event.target.closest('.map-item, .enemy-item'); // Get the container element
 
-        // Remove transition for items that moved.
-        draggedContainer.style.transition = '';
+        // Disable transition so the item follows the cursor instantly.
+        draggedContainer.style.transition = 'none';
 
-        if (draggedContainer) {
-            // Calculate the offset of the mouse from the top-left corner of the container
-            const rect = draggedContainer.getBoundingClientRect();
-            offsetX = event.clientX - rect.left;
-            offsetY = event.clientY - rect.top;
+        const rect = draggedContainer.getBoundingClientRect();
+        offsetX = event.clientX - rect.left;
+        offsetY = event.clientY - rect.top;
 
-            event.dataTransfer.setData('text/plain', '');
-
-            // Add mousemove event listener to update container position
-            document.addEventListener('mousemove', handleMouseMove);
-        }
+        document.addEventListener('mousemove', handleMouseMove);
+        document.addEventListener('mouseup', handleDragEnd);
     }
 
     // Handle the mousemove event to update container position
     function handleMouseMove(event) {
         if (draggedContainer) {
-            // Calculate the mouse position relative to the .default-map element
-            const mapRect = document
-                .querySelector('.game-container')
-                .getBoundingClientRect();
+            const isMenu = 'menu' === draggedContainer.dataset.type;
+            const mapEl = document.querySelector('.game-container');
+            const mapRect = mapEl.getBoundingClientRect();
 
-            const mouseX =
-                'menu' === draggedContainer.dataset.type
-                    ? event.clientX
-                    : event.clientX - mapRect.left;
-            const mouseY =
-                'menu' === draggedContainer.dataset.type
-                    ? event.clientY
-                    : event.clientY - mapRect.top;
+            const mouseX = isMenu
+                ? event.clientX
+                : event.clientX - mapRect.left;
+            const mouseY = isMenu ? event.clientY : event.clientY - mapRect.top;
 
-            // Update container position based on mouse position relative to the container.
-            // offsetX/offsetY are in screen pixels; divide the whole expression by devZoom
-            // so positions stay in unscaled CSS-pixel space. Menu items are not inside the
-            // scaled container so they use zoom=1.
-            const zoom =
-                'menu' === draggedContainer.dataset.type
-                    ? 1
-                    : window.devZoom || 1;
-            draggedContainer.style.left = `${(mouseX - offsetX) / zoom}px`;
-            draggedContainer.style.top = `${(mouseY - offsetY) / zoom}px`;
+            // offsetX/offsetY are in screen pixels; divide by devZoom to get CSS-pixel space.
+            // Add the container's scroll offset so the item stays under the cursor even when
+            // the map is scrolled (getBoundingClientRect is in viewport coords, but CSS
+            // left/top are relative to the container's pre-scroll content edge).
+            const zoom = isMenu ? 1 : window.devZoom || 1;
+            const scrollX = isMenu ? 0 : mapEl.scrollLeft;
+            const scrollY = isMenu ? 0 : mapEl.scrollTop;
+
+            draggedContainer.style.left = `${(mouseX - offsetX) / zoom + scrollX}px`;
+            draggedContainer.style.top = `${(mouseY - offsetY) / zoom + scrollY}px`;
         }
     }
 
-    // Handle the dragend event
+    // Handle the mouseup event to end custom drag
     function handleDragEnd() {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleDragEnd);
         if (draggedContainer) {
             sendItemCoodinateTimeout = setTimeout(() => {
                 const filehref = `${OrbemOrder.siteRESTURL}/set-item-position/`;
@@ -222,17 +216,12 @@ export function engageDevMode() {
                 // Clear the reference to the dragged container.
                 draggedContainer = null;
             }, 1000);
-
-            // Remove mousemove event listener
-            document.removeEventListener('mousemove', handleMouseMove);
         }
     }
 
     // Expose drag attachment so external code (e.g. pro plugin) can wire up dynamically injected elements.
     window.attachDevModeDrag = function (el) {
-        el.draggable = true;
-        el.addEventListener('dragstart', handleDragStart);
-        el.addEventListener('mouseup', handleDragEnd);
+        el.addEventListener('mousedown', handleDragStart);
     };
 
     // Select level
@@ -413,9 +402,7 @@ export function engageDevMode() {
 
         if (items && items.length) {
             items.forEach((item) => {
-                item.draggable = true;
-                item.addEventListener('dragstart', handleDragStart);
-                item.addEventListener('mouseup', handleDragEnd);
+                item.addEventListener('mousedown', handleDragStart);
             });
         }
 
@@ -457,13 +444,17 @@ export function engageDevMode() {
                 const wallElement = document.createElement('div');
                 wallElement.draggable = true;
 
-                // Calculate the mouse position relative to the .default-map element
-                const mapRect = document
-                    .querySelector('.game-container')
-                    .getBoundingClientRect();
+                // Calculate the mouse position in CSS-pixel space, accounting for
+                // container scroll so the wall origin lands under the cursor.
+                const mapEl = document.querySelector('.game-container');
+                const mapRect = mapEl.getBoundingClientRect();
 
-                const mouseX = (event.clientX - mapRect.left) / window.devZoom;
-                const mouseY = (event.clientY - mapRect.top) / window.devZoom;
+                const mouseX =
+                    (event.clientX - mapRect.left) / window.devZoom +
+                    mapEl.scrollLeft;
+                const mouseY =
+                    (event.clientY - mapRect.top) / window.devZoom +
+                    mapEl.scrollTop;
 
                 // Set the starting position of the wall basedon when you began to drag the mouse.
                 wallElement.className = 'wp-block-group map-item';
@@ -483,14 +474,16 @@ export function engageDevMode() {
                     }
 
                     if (wallElement) {
-                        const mapRect = document
-                            .querySelector('.game-container')
-                            .getBoundingClientRect();
+                        const mapEl2 =
+                            document.querySelector('.game-container');
+                        const mapRect = mapEl2.getBoundingClientRect();
 
                         const mouseX =
-                            (event.clientX - mapRect.left) / window.devZoom;
+                            (event.clientX - mapRect.left) / window.devZoom +
+                            mapEl2.scrollLeft;
                         const mouseY =
-                            (event.clientY - mapRect.top) / window.devZoom;
+                            (event.clientY - mapRect.top) / window.devZoom +
+                            mapEl2.scrollTop;
                         const wallElementLeft = parseFloat(
                             wallElement.style.left.replace('px', ''),
                         );
@@ -574,21 +567,16 @@ export function engageDevMode() {
                                 wallElement.dataset.height = height;
 
                                 wallElement.addEventListener(
-                                    'dragstart',
+                                    'mousedown',
                                     handleDragStart,
-                                );
-                                wallElement.addEventListener(
-                                    'mouseup',
-                                    handleDragEnd,
                                 );
                                 attachWallClickBehavior(wallElement);
                             });
                     } else {
                         wallElement.addEventListener(
-                            'dragstart',
+                            'mousedown',
                             handleDragStart,
                         );
-                        wallElement.addEventListener('mouseup', handleDragEnd);
                     }
                     document.removeEventListener(
                         'mousemove',

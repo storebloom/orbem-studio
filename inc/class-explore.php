@@ -2623,7 +2623,9 @@ class Explore
                     $html .= '></div>';
                 }
 
-                if (false === empty($explainer_top)) {
+                // Fullscreen explainers don't need top/left — they're centered
+                // overlays. Map/menu explainers still need a top to render.
+                if ('fullscreen' === $type || false === empty($explainer_top)) {
                     $html .= '<div id="' . esc_attr($explainer->ID) . '" class="' . esc_attr($explainer->post_name) . '-explainer-item explainer-container map-item' . esc_attr($fullscreen) . '"';
                     $html .= ' style="left:' . esc_attr($explainer_left) . 'px;top:' . esc_attr($explainer_top) . 'px;height:auto; ' . esc_attr($explainer_width) . 'px; border: ' . esc_attr($border_size) . 'px ' . esc_attr($border_style) . ' ' . esc_attr($border_color) . '; border-radius: ' . esc_attr($border_radius) . 'px;"';
                     $html .= ' data-type="' . esc_attr($explainer_type) . '"';

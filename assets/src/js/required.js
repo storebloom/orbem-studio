@@ -1,6 +1,54 @@
 document.addEventListener('DOMContentLoaded', function () {
     'use strict';
 
+    // Explainer post type: explore-top and explore-left are only required for
+    // map / menu explainers. Fullscreen explainers are centered overlays and
+    // don't use top/left positioning.
+    function syncExplainerTypeRequired() {
+        const typeRadios = document.querySelectorAll(
+            'input[name="explore-explainer-type"]'
+        );
+        if (0 === typeRadios.length) return;
+
+        const checked = document.querySelector(
+            'input[name="explore-explainer-type"]:checked'
+        );
+        const isFullscreen = checked && 'fullscreen' === checked.value;
+
+        ['explore-top', 'explore-left'].forEach(function (fieldName) {
+            const input = document.querySelector(
+                'input[name="' + fieldName + '"]'
+            );
+            if (!input) return;
+
+            if (isFullscreen) {
+                input.removeAttribute('required');
+                input.classList.remove('orbem-studio-error');
+            } else {
+                input.setAttribute('required', '');
+            }
+
+            // Walk up to the wrapper, then back to the field's H3 label so
+            // we can show/hide the required asterisk too.
+            let el = input.closest('p');
+            while (el && 'H3' !== el.tagName) {
+                el = el.previousElementSibling;
+            }
+            if (el) {
+                const sup = el.querySelector('sup');
+                if (sup) sup.style.display = isFullscreen ? 'none' : '';
+            }
+        });
+    }
+
+    syncExplainerTypeRequired();
+
+    document.addEventListener('change', function (e) {
+        if (e.target && 'explore-explainer-type' === e.target.name) {
+            syncExplainerTypeRequired();
+        }
+    });
+
     // Required field check.
     const publishButtons = document.querySelectorAll(
         '#publish, .editor-post-publish-button, .editor-post-update-button'
