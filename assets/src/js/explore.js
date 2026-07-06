@@ -809,6 +809,11 @@ window.makeNPCWander = makeNPCWander;
 function makeNPCWander(npc, walkingSpeed, timeBetween, enemy) {
     'use strict';
 
+    // Prevent a second wander loop if one is already running on this element.
+    if (npc._wanderInt) {
+        return;
+    }
+
     let startDir = getRandomDir([], enemy, npc);
     let moveDir = '';
     let triedDown = false;
@@ -837,6 +842,13 @@ function makeNPCWander(npc, walkingSpeed, timeBetween, enemy) {
     }
 
     npc._wanderInt = setInterval(() => {
+        if (!document.body.contains(npc)) {
+            clearInterval(npc._wanderInt);
+            npc._wanderInt = null;
+            stopRunnerPunching(npc);
+            return;
+        }
+
         if (
             'true' !== npc.dataset?.break &&
             'true' !== npc.dataset?.cutscenebreak
@@ -1421,6 +1433,10 @@ function saveMission(mission, value, position) {
                     materialize.style.display = 'block';
                 } else {
                     materialize.style.display = 'block';
+                    if ('explore-enemy' === materialize.dataset.genre) {
+                        engageEnemy(materialize, false);
+                    }
+                    materializeGravity(materialize);
                 }
             });
         }
@@ -1530,6 +1546,8 @@ function saveMission(mission, value, position) {
                         if ('explore-enemy' === showItem.dataset.genre) {
                             engageEnemy(showItem, false);
                         }
+
+                        materializeGravity(showItem);
                     });
 
                     saveMaterializedItem(
@@ -2616,6 +2634,10 @@ const enterNewArea = (function () {
                                             cleanClassName(showItem.className)
                                         );
                                         showItem.classList.add('no-point');
+                                        if ('explore-enemy' === showItem.dataset.genre) {
+                                            engageEnemy(showItem, false);
+                                        }
+                                        materializeGravity(showItem);
                                     });
 
                                     saveMaterializedItem(
@@ -2700,10 +2722,14 @@ const enterNewArea = (function () {
                             newMapItems['start-top'] = parseInt(newMapItems['start-top']) + 240;
                         }
 
+                        const _charIcon = characterItem.querySelector('.map-character-icon');
+                        const _iconH = _charIcon ? parseInt(_charIcon.getAttribute('height') || '0') : 0;
+                        const _iconW = _charIcon ? parseInt(_charIcon.getAttribute('width') || '0') : 0;
+
                         characterItem.style.top =
-                            newMapItems['start-top'] + 'px';
+                            (parseInt(newMapItems['start-top']) - (window.globalTopPositionOffset - Math.round(_iconH / 2))) + 'px';
                         characterItem.style.left =
-                            newMapItems['start-left'] + 'px';
+                            (parseInt(newMapItems['start-left']) - (window.globalLeftPositionOffset - Math.round(_iconW / 2))) + 'px';
                         characterItem.className =
                             newMapItems['start-direction'] + '-dir';
 
@@ -3352,6 +3378,12 @@ function startRunnerPunching(enemyEl) {
     let showPunch = false;
 
     enemyEl._runnerPunchInt = setInterval(() => {
+        if (!document.body.contains(enemyEl)) {
+            clearInterval(enemyEl._runnerPunchInt);
+            enemyEl._runnerPunchInt = null;
+            return;
+        }
+
         const strength = enemyEl.dataset.value;
 
         updatePunchImage(enemyEl, showPunch);
@@ -3380,12 +3412,19 @@ function startRunnerPunching(enemyEl) {
 function stopRunnerEnemy(enemyEl) {
     'use strict';
 
-    if (!enemyEl || !enemyEl._wanderInt) {
+    if (!enemyEl) {
         return;
     }
 
-    clearInterval(enemyEl._wanderInt);
-    enemyEl._wanderInt = null;
+    if (enemyEl._wanderInt) {
+        clearInterval(enemyEl._wanderInt);
+        enemyEl._wanderInt = null;
+    }
+
+    // Always stop punching regardless of wander state — the previous guard on
+    // _wanderInt caused stopRunnerPunching to be skipped when the wander
+    // interval happened to be null at kill time, leaving the punch interval
+    // running and dealing damage to the player after the enemy was dead.
     stopRunnerPunching(enemyEl);
 }
 
@@ -3598,6 +3637,16 @@ function shootProjectile(
 
     if (true !== spell && 'no' === isProjectile) {
         newProjectile.classList.add('shooting');
+        // Center the projectile inside the enemy before inserting so the CSS
+        // `transition: all` on .projectile doesn't animate from the default
+        // `top: 40px` to the centered value (which visually appears as sliding
+        // up from the bottom, especially for small enemies).
+        const projImg = newProjectile.querySelector('img');
+        const projW = projImg ? (parseInt(projImg.style.width)  || 0) : 0;
+        const projH = projImg ? (parseInt(projImg.style.height) || 0) : 0;
+        newProjectile.style.position = 'absolute';
+        newProjectile.style.left = Math.round((enemy.offsetWidth  - projW) / 2) + 'px';
+        newProjectile.style.top  = Math.round((enemy.offsetHeight - projH) / 2) + 'px';
         enemy.prepend(newProjectile);
         moveEnemy(newProjectile, mapCharacterLeft, mapCharacterTop, projSpeed, enemy);
         collisionWalls = document.querySelectorAll(
@@ -3628,6 +3677,11 @@ function trackProjectile(projectile, collisionWalls, isProjectile) {
     'use strict';
 
     const container = document.querySelector('.game-container');
+    // In gravity mode, walls at or below the spawner's feet are ignored until
+    // the projectile clears them — prevents a small enemy from instantly
+    // self-destructing its shot on the floor it's standing on.
+    // Walls beside or above the enemy are never excluded.
+    let belowSpawnWalls = null;
 
     function tick() {
         if (!document.body.contains(projectile)) {
@@ -3647,7 +3701,24 @@ function trackProjectile(projectile, collisionWalls, isProjectile) {
             return;
         }
 
+        if (window.gravityMode && belowSpawnWalls === null) {
+            const spawner = projectile.parentElement;
+            const spawnerBottom = spawner ? spawner.getBoundingClientRect().bottom : 0;
+            belowSpawnWalls = new Set(
+                Array.from(collisionWalls).filter((wall) =>
+                    wall.getBoundingClientRect().top >= spawnerBottom - 2
+                )
+            );
+        }
+
         for (const wall of collisionWalls) {
+            if (belowSpawnWalls && belowSpawnWalls.has(wall)) {
+                if (enemyOverlap(projectile, wall, container)) {
+                    continue;
+                }
+                belowSpawnWalls.delete(wall);
+            }
+
             if (enemyOverlap(projectile, wall, container) && false === wall.className.includes('trigger')) {
                 // If projectile collides with player than take health of player.
                 if (
@@ -3759,6 +3830,8 @@ function moveEnemy(
     let leftDifference;
     let topDifference;
     const projectilePosition = projectile.getBoundingClientRect();
+    const projCenterX = projectilePosition.left + projectilePosition.width  / 2;
+    const projCenterY = projectilePosition.top  + projectilePosition.height / 2;
 
     const mapCharacter = document.getElementById('map-character');
     const bPosition = getPositionAtCenter(newEnemy);
@@ -3775,16 +3848,15 @@ function moveEnemy(
     );
 
     const angle = Math.atan2(
-        mapCharacterTop - projectilePosition.top,
-        mapCharacterLeft - projectilePosition.left
+        mapCharacterTop  - projCenterY,
+        mapCharacterLeft - projCenterX
     );
 
     const targetX = mapCharacterLeft + Math.cos(angle) * 800;
-    const targetY = mapCharacterTop + Math.sin(angle) * 800;
+    const targetY = mapCharacterTop  + Math.sin(angle) * 800;
 
-    // Calculate the required translation
-    leftDifference = targetX - projectilePosition.left;
-    topDifference = targetY - projectilePosition.top;
+    leftDifference = targetX - projCenterX;
+    topDifference  = targetY - projCenterY;
 
     projectile.style.transform =
         'translate(' + leftDifference + 'px, ' + topDifference + 'px)';
@@ -4107,7 +4179,13 @@ function applyItemGravity() {
 
     const gravityItems = document.querySelectorAll('[data-gravity="yes"]');
     gravityItems.forEach((item) => {
-        startGravityLoop(item);
+        // Skip items hidden by their own display:none rule (e.g. data-showaftermission,
+        // materialize-item targets). getComputedStyle checks the element's own resolved
+        // display, NOT inherited from ancestors — so a display:none on .game-container
+        // doesn't incorrectly mark its children as hidden.
+        if ('none' !== window.getComputedStyle(item).display) {
+            startGravityLoop(item);
+        }
     });
 }
 
@@ -4122,13 +4200,38 @@ function applyEntityGravity() {
         // Main player character is handled by movementIntFunc's movement interval.
         if ('map-character' === entity.id) return;
 
-        startGravityLoop(entity);
+        // Skip entities hidden by their own display:none rule (same reasoning as
+        // applyItemGravity above). Gravity for these starts via materializeGravity().
+        if ('none' !== window.getComputedStyle(entity).display) {
+            startGravityLoop(entity);
+        }
     });
+}
+
+/**
+ * Start gravity for an element that has just been made visible.
+ * Checks whether the element is a gravity candidate before starting.
+ */
+function materializeGravity(el) {
+    if (!window.gravityMode || !el) return;
+    if (
+        'yes' === el.dataset.gravity ||
+        'explore-enemy' === el.dataset.genre ||
+        'explore-character' === el.dataset.genre ||
+        el.classList.contains('enemy-item')
+    ) {
+        startGravityLoop(el);
+    }
 }
 
 function engageUntriggeredEnemies() {
     const enemies = document.querySelectorAll('.enemy-item[data-genre="explore-enemy"]');
     enemies.forEach((enemy) => {
+        // Skip enemies hidden by their own CSS (data-showaftermission etc.).
+        // Use getComputedStyle so a display:none on .game-container (the outer
+        // wrapper) doesn't accidentally hide all enemies at startup.
+        if ('none' === window.getComputedStyle(enemy).display) return;
+
         const enemyName = enemy.classList[1]?.replace('-map-item', '') || '';
         const hasTrigger = enemyName && document.querySelector('.' + enemyName + '-trigger-map-item');
         if (!hasTrigger) {
@@ -5044,10 +5147,18 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 
                     if (itemEl) {
                         itemEl.style.display = 'block';
+                        if ('explore-enemy' === itemEl.dataset.genre) {
+                            engageEnemy(itemEl, false);
+                        }
+                        materializeGravity(itemEl);
                     }
 
                     if (dragDest) {
                         dragDest.style.display = 'block';
+                        if ('explore-enemy' === dragDest.dataset.genre) {
+                            engageEnemy(dragDest, false);
+                        }
+                        materializeGravity(dragDest);
                     }
 
                     materializedItemsArray.push(itemName);
@@ -6964,6 +7075,9 @@ function playJumpSound() {
     const jumpAudio = document.querySelector('#map-character .jump-sound audio');
     if (jumpAudio) {
         jumpAudio.currentTime = 0;
+        if (window.sfxVolume !== undefined) {
+            jumpAudio.volume = window.sfxVolume;
+        }
         jumpAudio.play().catch(() => {});
     }
 }
@@ -8065,7 +8179,19 @@ function getBlockDirection(
                     box.dataset.collide = 'true';
                 }
 
-                if (topCollision && !bottomCollision) {
+                // Only treat a wall's bottom edge as a ceiling when the player
+                // is genuinely underneath it — i.e. their horizontal center falls
+                // within the wall's width. When the player is beside a wall (only
+                // the edge of their hitbox overlaps), their center is outside the
+                // wall's horizontal extent. Stacked walls create a seam at the
+                // top of the lower wall; without this guard, that seam fires as a
+                // ceiling the instant the player tries to jump beside the stack,
+                // cancelling upward velocity even though the player is not under it.
+                const characterCenterX = (characterLeft + characterRight) / 2;
+                const playerIsBelowWall =
+                    characterCenterX > collisionWallLeft &&
+                    characterCenterX < collisionWallRight;
+                if (topCollision && !bottomCollision && playerIsBelowWall) {
                     final.top = top + adjust;
                     final.collide = true;
                     box.dataset.collide = 'true';
@@ -8153,11 +8279,19 @@ function theHazardOverlap(el1, el2, isParent) {
         const r = el.getBoundingClientRect();
         const inset = applyInset ? hitboxInset : 0;
 
+        // When grounded in gravity mode the sub-step loop parks the player up to
+        // MAX_STEP (3 px) above any surface before the hazard check runs.
+        // Add inset back (cancels hitbox shrink on the bottom edge) plus 3 px so
+        // "standing on top of a hazard" registers as overlap.
+        const groundedExt = (applyInset && window.gravityMode && window.isGrounded)
+            ? inset + 3
+            : 0;
+
         return {
             left:   r.left   - containerRect.left + inset,
             right:  r.right  - containerRect.left - inset,
             top:    r.top    - containerRect.top  + inset,
-            bottom: r.bottom - containerRect.top  - inset,
+            bottom: r.bottom - containerRect.top  - inset + groundedExt,
         };
     };
 

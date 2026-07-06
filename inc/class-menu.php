@@ -194,6 +194,47 @@ class Menu
                         'title' => 'Go to Orbem Studio',
                 ],
         ]);
+
+        $game_page = get_option('explore_game_page', '');
+        $page      = get_queried_object();
+
+        if (false === empty($game_page) && $page instanceof \WP_Post && false === empty($page->post_name) && $game_page === $page->post_name) {
+            $wp_admin_bar->add_node([
+                'id'    => 'orbem-mobile-builder-notice',
+                'title' => esc_html__('Game builder tools are not available on mobile.', 'orbem-studio'),
+                'meta'  => [
+                    'class' => 'orbem-mobile-builder-notice',
+                ],
+            ]);
+        }
+    }
+
+    /**
+     * Output CSS to show the mobile builder notice only on touch devices.
+     *
+     * @action wp_head
+     * @return void
+     */
+    public function mobileBuilderNoticeStyles(): void
+    {
+        if (!current_user_can('manage_options')) {
+            return;
+        }
+
+        $game_page = get_option('explore_game_page', '');
+        $page      = get_queried_object();
+
+        if (false === empty($game_page) && $page instanceof \WP_Post && false === empty($page->post_name) && $game_page === $page->post_name) {
+            ?>
+            <style>
+                #wp-admin-bar-orbem-mobile-builder-notice { display: none; }
+                @media (pointer: coarse) {
+                    #wp-admin-bar-orbem-mobile-builder-notice { display: block !important; }
+                    #wp-admin-bar-orbem-mobile-builder-notice .ab-item { color: #ffcc00 !important; font-weight: 600; pointer-events: none; }
+                }
+            </style>
+            <?php
+        }
     }
 
     /**
