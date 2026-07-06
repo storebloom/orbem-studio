@@ -1250,7 +1250,7 @@ class Explore
                 ],
                 [
                     'key'     => 'explore-area',
-                    'value'   => '"' . $target_area . '"',
+                    'value'   => 's:' . strlen($target_area) . ':"' . $target_area . '";',
                     'compare' => 'LIKE',
                 ],
             ],
@@ -1370,7 +1370,7 @@ class Explore
                 ],
                 [
                     'key'     => 'explore-area',
-                    'value'   => '"' . $target_area . '"',
+                    'value'   => 's:' . strlen($target_area) . ':"' . $target_area . '";',
                     'compare' => 'LIKE',
                 ],
             ],
@@ -1450,7 +1450,7 @@ class Explore
                     ],
                     [
                         'key'     => 'explore-area',
-                        'value'   => '"' . $area . '"',
+                        'value'   => 's:' . strlen($area) . ':"' . $area . '";',
                         'compare' => 'LIKE'
                     ]
                 ]

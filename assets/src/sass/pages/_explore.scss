@@ -777,6 +777,13 @@ html {
       }
     }
 
+    @media (pointer: coarse) {
+      .right-bottom-devmode,
+      .dev-mode-menu {
+        display: none !important;
+      }
+    }
+
     .game-container {
       background-size: cover;
       background-repeat: no-repeat;

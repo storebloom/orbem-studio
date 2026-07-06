@@ -11,6 +11,18 @@ export function engageDevMode() {
     window.devmode = false;
     window.devZoom = window?.devZoom ?? 1;
 
+    // Let pointer events pass through the character container so map items stay draggable,
+    // but keep the icon images themselves clickable for devmode selection.
+    const mapCharacterContainer = document.getElementById('map-character');
+    if (mapCharacterContainer) {
+        mapCharacterContainer.style.pointerEvents = 'none';
+        mapCharacterContainer
+            .querySelectorAll('img.map-character-icon')
+            .forEach((img) => {
+                img.style.pointerEvents = 'auto';
+            });
+    }
+
     // Drag logic.
     let draggedContainer = null;
     let offsetX = 0;
@@ -118,6 +130,11 @@ export function engageDevMode() {
                 .getElementById('engage-wallbuilder')
                 ?.classList.contains('engage');
             if (wallClickTarget === wallEl && !wallBuilderActive) {
+                // Walls are only selectable when "Show hidden" is active.
+                if (!devmodeMenuToggle?.classList.contains('engage')) {
+                    wallClickTarget = null;
+                    return;
+                }
                 handleWallSelect(wallEl);
             }
             wallClickTarget = null;
@@ -130,6 +147,16 @@ export function engageDevMode() {
         clearTimeout(sendItemCoodinateTimeout);
         draggedContainer = event.target.closest('.map-item, .enemy-item');
         if (!draggedContainer) return;
+
+        // Walls are only moveable when "Show hidden" is active.
+        if (
+            'explore-wall' === draggedContainer.dataset.genre &&
+            !devmodeMenuToggle?.classList.contains('engage')
+        ) {
+            draggedContainer = null;
+            return;
+        }
+
         event.preventDefault();
 
         // Disable transition so the item follows the cursor instantly.
@@ -594,6 +621,10 @@ export function engageDevMode() {
 }
 document.addEventListener('DOMContentLoaded', function () {
     'use strict';
+
+    if (window.matchMedia('(pointer: coarse)').matches) {
+        return;
+    }
 
     const devMode = document.querySelector('main[data-devmode=true]');
 
