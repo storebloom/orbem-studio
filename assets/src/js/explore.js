@@ -3103,7 +3103,7 @@ function updatePointBars(unequip) {
     const manaBar = document.querySelector(`#explore-points .mana-amount`);
 
     let manaAmount = manaBar ? parseInt(manaBar.dataset.amount) : 100;
-    let manaWidth = manabar ? parseInt(manaBar.style.width.replace('px', '')) : 100;
+    let manaWidth = manaBar ? parseInt(manaBar.style.width.replace('px', '')) : 100;
 
     let healthAmount = healthBar ? parseInt(healthBar.dataset.amount) : 100;
     let healthWidth = healthBar ? parseInt(healthBar.style.width.replace('px', '')) : 100;
@@ -3719,7 +3719,7 @@ function trackProjectile(projectile, collisionWalls, isProjectile) {
                 belowSpawnWalls.delete(wall);
             }
 
-            if (enemyOverlap(projectile, wall, container) && false === wall.className.includes('trigger')) {
+            if (enemyOverlap(projectile, wall, container) && false === wall.className.includes('trigger') && 'true' !== wall.dataset.passable) {
                 // If projectile collides with player than take health of player.
                 if (
                     true === wall.classList.contains('map-character-icon') &&
@@ -4232,9 +4232,10 @@ function engageUntriggeredEnemies() {
         // wrapper) doesn't accidentally hide all enemies at startup.
         if ('none' === window.getComputedStyle(enemy).display) return;
 
-        const enemyName = enemy.classList[1]?.replace('-map-item', '') || '';
+        const enemyName = [...enemy.classList].find(c => c.endsWith('-map-item') && c !== 'map-item')?.replace('-map-item', '') || '';
         const hasTrigger = enemyName && document.querySelector('.' + enemyName + '-trigger-map-item');
-        if (!hasTrigger) {
+        const hasPendingBossCutscene = enemyName && document.querySelector('.map-cutscene[data-boss="' + enemyName + '"]:not(.been-viewed)');
+        if (!hasTrigger && !hasPendingBossCutscene) {
             engageEnemy(enemy, false);
         }
     });
@@ -4847,6 +4848,7 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
                 if (
                     'true' === value.dataset.draggable &&
                     false === value.classList.contains('dragme') &&
+                    false === value.classList.contains('no-point') &&
                     !document.querySelector('.dragme') &&
                     canCharacterInteract(value, mapChar, 'strength')
                 ) {
@@ -4858,10 +4860,8 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
                     'true' === value.dataset.trigger &&
                     false === value.classList.contains('cutscene-trigger')
                 ) {
-                    const triggee = document.querySelector(
-                        '.' + value.dataset.triggee
-                    );
-                    // Start enemy attacks.
+                    const triggeeId = value.id?.replace(/-t$/, '');
+                    const triggee = triggeeId ? document.getElementById(triggeeId) : null;
 
                     if (triggee && 'explore-enemy' === triggee.dataset.genre) {
                         engageEnemy(triggee, value);
@@ -7694,7 +7694,7 @@ function characterHitEvent(event) {
                             break;
                     }
 
-                    if (currentImageMapCharacter && '' !== weaponAnimation.getAttribute('src')) {
+                    if (currentImageMapCharacter && weaponAnimation && '' !== weaponAnimation.getAttribute('src')) {
                         currentImageMapCharacter.classList.add('punched');
                         weaponAnimation.classList.add('engage');
 
@@ -8495,7 +8495,12 @@ function engageDraggableFunction() {
     'use strict';
 
     document.addEventListener('keydown', dragItemEvent);
-    document.querySelector('.action-key').addEventListener('click', dragItemEvent);
+
+    const actionKey = document.querySelector('.action-key');
+
+    if ( actionKey ) {
+        actionKey.addEventListener('click', dragItemEvent);
+    }
 }
 
 function dragItemEvent(e) {
