@@ -46,6 +46,18 @@ Games built with Orbem Studio:
 * [Cemetery Showdown](https://cemetery-showdown.orbem.studio) -- zombie combat game
 * [Learn how to use Orbem Studio](https://orbem.studio/learn) -- watch turtorials and learn the basics
 
+= Build and Host for Free on orbem.studio =
+
+Don't have your own WordPress site? [orbem.studio](https://orbem.studio) is the hosted platform for Orbem Studio. Free to use, no WordPress installation required.
+
+Sign up and get:
+
+* **Free game hosting** | your game gets its own URL on the orbem.studio platform, shareable and playable in any browser
+* **Full front end builder** | place objects, set triggers, configure enemies and missions, and playtest all from inside the game view, no admin panel required
+* **Integrated art tool** | draw and animate your own game asset images directly in the browser, no external software needed
+
+[Get started free at orbem.studio](https://orbem.studio)
+
 = Getting Started =
 
 Install the plugin, click Generate a Starter Game, and you have a playable game running on your WordPress site in under 60 seconds. No configuration required to get started.
@@ -186,10 +198,10 @@ This is configurable. You can require login or allow guest gameplay depending on
 Yes. All systems are designed to be extended using WordPress hooks, filters, and custom metadata.
 
 = Do I need my own WordPress site? =
-No. You can sign up at orbem.studio to build and host your game without your own WordPress installation.
+No. [orbem.studio](https://orbem.studio) is the hosted platform — sign up free and get game hosting, a full front end builder, and an integrated art tool for drawing and animating your game assets, all without a WordPress installation.
 
 = Where can I find documentation? =
-Documentation is available at https://orbemorder.com/orbem-studio/docs/readme
+Documentation is available at https://orbem.studio/orbem-studio/docs/readme
 
 Tutorials are available on the Orbem Studio YouTube channel at https://youtube.com/@orbemstudio
 
