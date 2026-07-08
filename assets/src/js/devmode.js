@@ -483,10 +483,15 @@ export function engageDevMode() {
                     (event.clientY - mapRect.top) / window.devZoom +
                     mapEl.scrollTop;
 
+                // Remember the drag origin so the wall's box can be normalized
+                // regardless of which direction the user drags in.
+                const startX = mouseX - offsetX;
+                const startY = mouseY - offsetY;
+
                 // Set the starting position of the wall basedon when you began to drag the mouse.
                 wallElement.className = 'wp-block-group map-item';
-                wallElement.style.left = `${mouseX - offsetX}px`;
-                wallElement.style.top = `${mouseY - offsetY}px`;
+                wallElement.style.left = `${startX}px`;
+                wallElement.style.top = `${startY}px`;
                 wallElement.style.backgroundColor = 'rgb(255,203,0)';
                 wallElement.style.opacity = '0.3';
                 wallElement.style.zIndex = '1';
@@ -511,17 +516,18 @@ export function engageDevMode() {
                         const mouseY =
                             (event.clientY - mapRect.top) / window.devZoom +
                             mapEl2.scrollTop;
-                        const wallElementLeft = parseFloat(
-                            wallElement.style.left.replace('px', ''),
-                        );
-                        const wallElementTop = parseFloat(
-                            wallElement.style.top.replace('px', ''),
-                        );
 
+                        // Normalize against the drag origin so dragging up
+                        // and/or left resizes from the correct corner instead
+                        // of producing a negative width/height.
+                        wallElement.style.left =
+                            Math.min(startX, mouseX) + 'px';
+                        wallElement.style.top =
+                            Math.min(startY, mouseY) + 'px';
                         wallElement.style.width =
-                            mouseX - wallElementLeft + 'px';
+                            Math.abs(mouseX - startX) + 'px';
                         wallElement.style.height =
-                            mouseY - wallElementTop + 'px';
+                            Math.abs(mouseY - startY) + 'px';
                     }
                 }
 

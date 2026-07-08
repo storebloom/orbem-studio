@@ -395,6 +395,7 @@ function engageClickableTimes()
                 revealCutscene(clickable);
                 removeCutscene(clickable);
                 interactWithItem(clickable);
+                redirectAfterInteraction(clickable);
 
                 if (clickable.dataset.mission && '' !== clickable.dataset.mission) {
                     saveMission(clickable.dataset.mission, clickable, clickableName);
@@ -2516,6 +2517,12 @@ const enterNewArea = (function () {
                             // Engage storage menus.
                             engageStorageMenus();
 
+                            // Engage clickables. Must run here (after the new
+                            // area's items are actually in the DOM) rather than
+                            // in the sibling 100ms setTimeout below, which fires
+                            // before this 700ms block and would find nothing.
+                            engageClickableTimes();
+
                             // Add characters.
                             const characterList = document.querySelector(
                                 '.characters-content'
@@ -2766,9 +2773,6 @@ const enterNewArea = (function () {
 
                         playSong(newMusic, position);
                         theWeapon.style.display = 'block';
-
-                        // Engage clickables.
-                        engageClickableTimes();
 
                         if (
                             ('undefined' !==
@@ -3103,7 +3107,7 @@ function updatePointBars(unequip) {
     const manaBar = document.querySelector(`#explore-points .mana-amount`);
 
     let manaAmount = manaBar ? parseInt(manaBar.dataset.amount) : 100;
-    let manaWidth = manabar ? parseInt(manaBar.style.width.replace('px', '')) : 100;
+    let manaWidth = manaBar ? parseInt(manaBar.style.width.replace('px', '')) : 100;
 
     let healthAmount = healthBar ? parseInt(healthBar.dataset.amount) : 100;
     let healthWidth = healthBar ? parseInt(healthBar.style.width.replace('px', '')) : 100;
@@ -3719,7 +3723,7 @@ function trackProjectile(projectile, collisionWalls, isProjectile) {
                 belowSpawnWalls.delete(wall);
             }
 
-            if (enemyOverlap(projectile, wall, container) && false === wall.className.includes('trigger')) {
+            if (enemyOverlap(projectile, wall, container) && false === wall.className.includes('trigger') && 'true' !== wall.dataset.passable) {
                 // If projectile collides with player than take health of player.
                 if (
                     true === wall.classList.contains('map-character-icon') &&
@@ -4232,9 +4236,10 @@ function engageUntriggeredEnemies() {
         // wrapper) doesn't accidentally hide all enemies at startup.
         if ('none' === window.getComputedStyle(enemy).display) return;
 
-        const enemyName = enemy.classList[1]?.replace('-map-item', '') || '';
+        const enemyName = [...enemy.classList].find(c => c.endsWith('-map-item') && c !== 'map-item')?.replace('-map-item', '') || '';
         const hasTrigger = enemyName && document.querySelector('.' + enemyName + '-trigger-map-item');
-        if (!hasTrigger) {
+        const hasPendingBossCutscene = enemyName && document.querySelector('.map-cutscene[data-boss="' + enemyName + '"]:not(.been-viewed)');
+        if (!hasTrigger && !hasPendingBossCutscene) {
             engageEnemy(enemy, false);
         }
     });
@@ -4371,7 +4376,12 @@ export function engageExploreGame() {
     }
 
     if (missions) {
-        missions.style.opacity = '1';
+        const hasMissions = missions.querySelector('.mission-list .mission-item');
+        if (hasMissions) {
+            missions.style.opacity = '1';
+        } else {
+            missions.style.display = 'none';
+        }
     }
 
     // Flash key-guide.
@@ -4491,6 +4501,17 @@ export function engageExploreGame() {
 
             enterFullscreen();
         }
+
+        // Convert the raw map-relative start position rendered by PHP into a
+        // position centered on the character's image, matching enterNewArea's math.
+        const _charIcon = mapChar.querySelector('.map-character-icon');
+        const _iconH = _charIcon ? parseInt(_charIcon.getAttribute('height') || '0') : 0;
+        const _iconW = _charIcon ? parseInt(_charIcon.getAttribute('width') || '0') : 0;
+
+        mapChar.style.top =
+            (parseInt(mapChar.style.top) - (window.globalTopPositionOffset - Math.round(_iconH / 2))) + 'px';
+        mapChar.style.left =
+            (parseInt(mapChar.style.left) - (window.globalLeftPositionOffset - Math.round(_iconW / 2))) + 'px';
 
         mapChar.scrollIntoView({
             behavior: 'instant',
@@ -4741,6 +4762,8 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 
                         addUserPoints(newAmount, 'health', 'hazard', false, '');
 
+                        redirectAfterInteraction(value);
+
                         // Push character away from hazard center.
                         pushCharacter(
                             25,
@@ -4847,6 +4870,7 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
                 if (
                     'true' === value.dataset.draggable &&
                     false === value.classList.contains('dragme') &&
+                    false === value.classList.contains('no-point') &&
                     !document.querySelector('.dragme') &&
                     canCharacterInteract(value, mapChar, 'strength')
                 ) {
@@ -4858,10 +4882,8 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
                     'true' === value.dataset.trigger &&
                     false === value.classList.contains('cutscene-trigger')
                 ) {
-                    const triggee = document.querySelector(
-                        '.' + value.dataset.triggee
-                    );
-                    // Start enemy attacks.
+                    const triggeeId = value.id?.replace(/-t$/, '');
+                    const triggee = triggeeId ? document.getElementById(triggeeId) : null;
 
                     if (triggee && 'explore-enemy' === triggee.dataset.genre) {
                         engageEnemy(triggee, value);
@@ -5174,8 +5196,10 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
                 // remove item on collision if collectable.
                 if ('true' === value.dataset.collectable && 'no' !== value.dataset.disappear) {
                     value.remove();
+                    redirectAfterInteraction(value);
                 } else if ('true' === value.dataset.collectable && 'no' === value.dataset.disappear) {
                     interactWithItem(value, mapChar);
+                    redirectAfterInteraction(value);
                 }
 
                 // Clear this so it doesn't set hazard to false even when I'm in it.
@@ -5299,6 +5323,8 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
                                 '',
                             );
                         }
+
+                        redirectAfterInteraction(value);
                     }
 
                     // Don't remove item if it's a sign.
@@ -5636,6 +5662,28 @@ function canCharacterInteract(item, character, type) {
  * When user hits an item with weapon
  * @param item
  */
+/**
+ * Redirect the browser to an item's explore-redirect-path after it has been
+ * interacted with. Guards against firing more than once per item since some
+ * interaction types (hazard overlap, non-disappearing collectables) re-run
+ * their handler on every tick while the player keeps overlapping the item.
+ */
+function redirectAfterInteraction(item) {
+    'use strict';
+
+    const redirectPath = item?.dataset?.redirectPath;
+
+    if (!redirectPath || 'true' === item.dataset.redirected) {
+        return;
+    }
+
+    item.dataset.redirected = 'true';
+
+    setTimeout(() => {
+        window.location.href = redirectPath;
+    }, 1000);
+}
+
 function interactWithItem(item) {
     'use strict';
 
@@ -5651,6 +5699,24 @@ function interactWithItem(item) {
     // If disappear set to false change image.
     if ('no' === item.dataset?.disappear) {
         swapInteractedImage(item);
+    }
+
+    // Reveal items waiting for this item to be interacted with.
+    const itemName = cleanClassName(item.className);
+    if (itemName) {
+        const revealItems = document.querySelectorAll('[data-showafteritem="' + itemName + '"]');
+        if (revealItems.length) {
+            const materializedItemsArray = [];
+            revealItems.forEach((showItem) => {
+                showItem.classList.add('materialized');
+                materializedItemsArray.push(cleanClassName(showItem.className));
+                if ('explore-enemy' === showItem.dataset.genre) {
+                    engageEnemy(showItem, false);
+                }
+                materializeGravity(showItem);
+            });
+            saveMaterializedItem(currentLocation, materializedItemsArray);
+        }
     }
 }
 
@@ -7694,7 +7760,7 @@ function characterHitEvent(event) {
                             break;
                     }
 
-                    if (currentImageMapCharacter && '' !== weaponAnimation.getAttribute('src')) {
+                    if (currentImageMapCharacter && weaponAnimation && '' !== weaponAnimation.getAttribute('src')) {
                         currentImageMapCharacter.classList.add('punched');
                         weaponAnimation.classList.add('engage');
 
@@ -8495,7 +8561,12 @@ function engageDraggableFunction() {
     'use strict';
 
     document.addEventListener('keydown', dragItemEvent);
-    document.querySelector('.action-key').addEventListener('click', dragItemEvent);
+
+    const actionKey = document.querySelector('.action-key');
+
+    if ( actionKey ) {
+        actionKey.addEventListener('click', dragItemEvent);
+    }
 }
 
 function dragItemEvent(e) {
@@ -8578,6 +8649,8 @@ function dragItemEvent(e) {
                     // Add completed mission so you can't keep getting points.
                     dragDest.classList.add('completed-mission');
                     dragmeitem.classList.add('no-point');
+
+                    redirectAfterInteraction(dragmeitem);
 
                     if ('true' === dragDest.dataset.removable) {
                         dragDest.remove();

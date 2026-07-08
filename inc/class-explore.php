@@ -1538,6 +1538,8 @@ class Explore
                 $materialize_item_trigger       = $explore_point_meta['explore-materialize-item-trigger'] ?? '';
                 $materialize_after_cutscene     = $explore_point_meta['explore-materialize-after-cutscene'] ?? '';
                 $materialize_after_mission      = $explore_point_meta['explore-materialize-after-mission'] ?? '';
+                $materialize_after_item         = $explore_point_meta['explore-materialize-after-item'] ?? '';
+                $redirect_path                  = $explore_point_meta['explore-redirect-path'] ?? '';
                 $wanderer                       = $explore_point_meta['explore-wanderer'] ?? '';
                 $materialize_item_trigger       = $materialize_item_trigger ?? false;
                 $is_materialized_item_triggered = self::isMaterializedItemTriggered($explore_point->post_name, $current_location, $userid);
@@ -1624,6 +1626,11 @@ class Explore
                     // Is item breakable.
                     if (true === $breakable) {
                         $html .= ' data-breakable="true"';
+                    }
+
+                    // Redirect path.
+                    if (false === empty($redirect_path)) {
+                        $html .= ' data-redirect-path="' . esc_url($redirect_path) . '"';
                     }
 
                     // Will disappear?
@@ -1748,6 +1755,11 @@ class Explore
                     // Materialize this item after this mission.
                     if (false === empty($materialize_after_mission)) {
                         $html .= ' data-showaftermission="' . esc_attr($materialize_after_mission) . '"';
+                    }
+
+                    // Materialize this item after another item is interacted with.
+                    if (false === empty($materialize_after_item)) {
+                        $html .= ' data-showafteritem="' . esc_attr($materialize_after_item) . '"';
                     }
 
                     if (true === $draggable) {

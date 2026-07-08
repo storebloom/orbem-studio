@@ -4,7 +4,7 @@ Tags: game engine, rpg, video game, game-dev, narrative game
 Requires at least: 6.1
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.5.4
+Stable tag: 1.5.5
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -206,6 +206,12 @@ Documentation is available at https://orbem.studio/orbem-studio/docs/readme
 Tutorials are available on the Orbem Studio YouTube channel at https://youtube.com/@orbemstudio
 
 == Changelog ==
+
+= 1.5.5 =
+* Allow the wall builder to drag in any direction, not just top-left to bottom-right.
+* Add explore-redirect-path field to redirect players to a URL after interacting with an item.
+* Fix area entry position mismatch between initial load and area transitions.
+* Fix clickable items not being wired up after entering a new area.
 
 = 1.5.4 =
 * Add mobile notice.
