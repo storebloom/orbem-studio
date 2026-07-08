@@ -206,6 +206,12 @@ html {
         }
       }
 
+      &[data-showafteritem] {
+        &:not(.materialized) {
+          display: none;
+        }
+      }
+
       &[data-clickable] {
         cursor: pointer;
       }

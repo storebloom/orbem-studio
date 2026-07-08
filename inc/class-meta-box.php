@@ -1332,6 +1332,7 @@ class Meta_Box {
                                 ],
                                 'explore-top' => [
                                         'number',
+                                        'number',
                                         'The top position of the explainer. Used for map and menu types; ignored for fullscreen.'
                                 ],
                                 'explore-left' => [
@@ -1536,6 +1537,10 @@ class Meta_Box {
                                         ],
                                         'Require the Strength ability in order to interact with this item.'
                                 ],
+                                'explore-redirect-path' => [
+                                        'url',
+                                        'The url that the user will be sent to after interacting with this item.'
+                                ]
                         ],
 
                         'Triggers & Visibility' => [
@@ -1577,6 +1582,12 @@ class Meta_Box {
                                                 'select' => $explore_mission_array
                                         ],
                                         'Select a mission that will reveal this item after it is completed.'
+                                ],
+                                'explore-materialize-after-item' => [
+                                        [
+                                                'select' => $explore_item_array
+                                        ],
+                                        'Select an item that will reveal this item after it is interacted with.'
                                 ],
                         ],
 
