@@ -114,7 +114,7 @@ class Export_Import
 
         $this->importOptions($data['options']);
         $this->importPosts($data['posts']);
-        $this->importCss($data['css']);
+        $this->importCss($data['css'] ?? '');
 
         wp_safe_redirect(add_query_arg('import_success', '1', admin_url('admin.php?page=orbem-studio-export-import')));
         exit;
@@ -236,7 +236,7 @@ class Export_Import
     /**
      * Import game options -- overrides existing.
      */
-    private function importCss(array $css): void
+    private function importCss(string $css): void
     {
         if (false === empty($css)) {
             update_option('explore_custom_css', $css);
