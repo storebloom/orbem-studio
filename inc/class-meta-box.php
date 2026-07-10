@@ -77,8 +77,14 @@ class Meta_Box {
             foreach ($orbem_studio_meta_data as $meta_info_fields) {
                 foreach ($meta_info_fields as $meta_key => $meta_info) {
                     $meta_key = str_replace('-required', '', $meta_key);
-                    
+
                     $orbem_studio_values[$meta_key] = get_post_meta($post->ID, $meta_key, true);
+
+                    // Fields can define a 'default' entry in their config array,
+                    // used when no meta value has been saved yet.
+                    if (true === empty($orbem_studio_values[$meta_key]) && isset($meta_info['default'])) {
+                        $orbem_studio_values[$meta_key] = $meta_info['default'];
+                    }
                 }
             }
         }
@@ -752,7 +758,8 @@ class Meta_Box {
                                         [
                                                 'select' => ['Weapons' => 'weapons']
                                         ],
-                                        'Defines the item category for this object.'
+                                        'Defines the item category for this object.',
+                                        'default' => 'weapons'
                                 ],
                                 'explore-weapon-sound' => [
                                         'upload',
@@ -763,7 +770,7 @@ class Meta_Box {
                         'Weapon Materialization & Visibility' => [
                                 'explore-area' => [
                                         [
-                                                'select' => $explore_area_array
+                                                'multiselect' => $explore_area_array
                                         ],
                                         'Select the area where this weapon can be found.'
                                 ],

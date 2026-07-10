@@ -4,7 +4,7 @@ Tags: game engine, rpg, video game, game-dev, narrative game
 Requires at least: 6.1
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.5.5
+Stable tag: 1.5.6
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -206,6 +206,10 @@ Documentation is available at https://orbem.studio/orbem-studio/docs/readme
 Tutorials are available on the Orbem Studio YouTube channel at https://youtube.com/@orbemstudio
 
 == Changelog ==
+
+= 1.5.6 =
+* Add support for default values on meta box fields, used to default a weapon's value type to "Weapons".
+* Fix fatal error importing a game when custom CSS was included in the export file.
 
 = 1.5.5 =
 * Allow the wall builder to drag in any direction, not just top-left to bottom-right.
