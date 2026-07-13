@@ -1502,6 +1502,7 @@ class Explore
 
                 $boss_waves                     = $explore_point_meta['explore-boss-waves'] ?? '';
                 $value                          = $explore_point_meta['explore-value'] ?? '';
+                $reward_value                   = $explore_point_meta['explore-reward-value'] ?? '';
                 $timer                          = $explore_point_meta['explore-timer'] ?? '';
                 $type                           = $explore_point_meta['explore-value-type'] ?? '';
                 $interaction_type               = $explore_point_meta['explore-interaction-type'] ?? '';
@@ -1597,6 +1598,11 @@ class Explore
 
                     $html .= '<div style="' . esc_attr($layer) . 'transform: rotate(' . esc_attr($rotation) . 'deg);left:' . esc_attr($left) . 'px; top:' . esc_attr($top) . 'px;" id="' . esc_attr($explore_point->ID) . '" data-genre="' . esc_attr($explore_point->post_type) . '" data-type="' . esc_attr($type) . '" data-value="' . esc_attr($value) . '"';
                     $html .= ' data-image="' . esc_attr($item_image) . '"';
+
+                    // Reward granted to the player for killing this enemy.
+                    if ('explore-enemy' === $explore_point->post_type && false === empty($reward_value)) {
+                        $html .= ' data-reward-value="' . esc_attr($reward_value) . '"';
+                    }
 
                     if ('explore-area' === $explore_point->post_type) {
                         $map_url = $explore_point_meta['explore-map'] ?? '';
@@ -1951,7 +1957,20 @@ class Explore
                     if (true === $draggable) {
                         $drag_dest = $explore_point_meta['explore-drag-dest'] ?? '';
 
-                        if (false === empty($drag_dest)) {
+                        // The drag-dest group is submitted by the meta box form even
+                        // when left untouched, and its number sub-fields (top/left/
+                        // width/height/offset) always save as "0" rather than an empty
+                        // string (the number field template renders floatval('') as 0).
+                        // So checking for "any non-empty sub-value" still treats an
+                        // untouched group as configured. Use image/mission instead —
+                        // neither has that coercion, so a non-empty value in either
+                        // reliably signals the destination was actually set up.
+                        // Otherwise a phantom destination element is rendered and
+                        // blocks free dragging of items with no destination set.
+                        $drag_dest_configured = is_array($drag_dest) &&
+                            (false === empty($drag_dest['image']) || false === empty($drag_dest['mission']));
+
+                        if ($drag_dest_configured) {
                             $drag_top = $drag_dest['top'] ?? '';
                             $drag_left = $drag_dest['left'] ?? '';
                             $drag_height = $drag_dest['height'] ?? '';

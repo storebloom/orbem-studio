@@ -2062,6 +2062,16 @@ const hurtTheEnemy = (function () {
                 playHurtSound(value);
 
                 if (0 === newHealth) {
+                    // Grant the reward defined for killing this enemy.
+                    const rewardAmount = parseInt(value.dataset.rewardValue || '0', 10);
+                    const rewardType = value.dataset.type;
+
+                    if (0 < rewardAmount && rewardType) {
+                        const currentAmount = getCurrentPoints(rewardType);
+                        addUserPoints(currentAmount + rewardAmount, rewardType, cleanClassName(value.className), false, '');
+                        playPointSound(rewardType);
+                    }
+
                     stopShooterEnemy(value);
                     stopRunnerEnemy(value);
 
