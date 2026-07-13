@@ -1072,6 +1072,16 @@ class Meta_Box {
                                         ],
                                         'Select the voice used for this enemy’s dialogue or sounds.'
                                 ],
+                                'explore-reward-value' => [
+                                        'number',
+                                        'The reward or effect value applied when this enemy is killed.'
+                                ],
+                                'explore-value-type' => [
+                                        [
+                                                'select' => $explore_value_array
+                                        ],
+                                        'Select the type of reward granted when this enemy is killed.'
+                                ],
                         ],
 
                         'Movement & Pathing' => [

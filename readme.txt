@@ -4,7 +4,7 @@ Tags: game engine, rpg, video game, game-dev, narrative game
 Requires at least: 6.1
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.5.6
+Stable tag: 1.5.7
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -206,6 +206,10 @@ Documentation is available at https://orbem.studio/orbem-studio/docs/readme
 Tutorials are available on the Orbem Studio YouTube channel at https://youtube.com/@orbemstudio
 
 == Changelog ==
+
+= 1.5.7 =
+* Add explore-reward-value and explore-value-type support so killing an enemy grants the player a configured reward.
+* Fix draggable items being unable to be picked up when no drag destination/mission was configured.
 
 = 1.5.6 =
 * Add support for default values on meta box fields, used to default a weapon's value type to "Weapons".
