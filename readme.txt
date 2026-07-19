@@ -4,7 +4,7 @@ Tags: game engine, rpg, video game, game-dev, narrative game
 Requires at least: 6.1
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.5.7
+Stable tag: 1.5.8
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -206,6 +206,11 @@ Documentation is available at https://orbem.studio/orbem-studio/docs/readme
 Tutorials are available on the Orbem Studio YouTube channel at https://youtube.com/@orbemstudio
 
 == Changelog ==
+
+= 1.5.8 =
+* Fix draggable items with no destination configured still rendering a phantom drag destination, which blocked pickup.
+* Fix a crash when switching directional sprites if no character image currently had the active/engage state, which broke movement until the page was reloaded.
+* Add more explainer popup style options.
 
 = 1.5.7 =
 * Add explore-reward-value and explore-value-type support so killing an enemy grants the player a configured reward.

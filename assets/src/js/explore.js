@@ -5372,7 +5372,7 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
         const allImages = document.querySelectorAll('.map-character-icon:not(.fight-image)');
 
         if (
-            false === box.classList.contains('fight-image') &&
+            (!box || false === box.classList.contains('fight-image')) &&
             true === window.allowMovement
         ) {
             switch (goThisWay) {
@@ -9008,8 +9008,11 @@ function directCharacter(topDown, leftRight, mapCharacter) {
         window.currentCharacterAutoDirection = direction;
         mapCharacter.classList.add(direction + '-dir');
 
-        if (currentImage && newImage && '' !== newImage.getAttribute('src')) {
-            currentImage.classList.remove('engage');
+        if (newImage && '' !== newImage.getAttribute('src')) {
+            if (currentImage) {
+                currentImage.classList.remove('engage');
+            }
+
             newImage.classList.add('engage');
         }
 

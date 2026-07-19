@@ -2588,10 +2588,13 @@ class Explore
         }
 
         $html          = '';
-        $border_color  = get_option('explore_explainer_border_color', '');
-        $border_radius = absint(get_option('explore_explainer_border_radius', '0'));
-        $border_size   = absint(get_option('explore_explainer_border_size', '0'));
-        $border_style  = get_option('explore_explainer_border_style', '');
+        $border_color      = get_option('explore_explainer_border_color', '');
+        $border_radius     = absint(get_option('explore_explainer_border_radius', '0'));
+        $border_size       = absint(get_option('explore_explainer_border_size', '0'));
+        $border_style      = get_option('explore_explainer_border_style', '');
+        $font_color        = get_option('explore_explainer_font_color', '');
+        $font_size         = absint(get_option('explore_explainer_font_size', '0'));
+        $background_color  = get_option('explore_explainer_background_color', '');
 
         foreach($explore_explainers as $explainer) {
             $explainer_meta = [];
@@ -2658,7 +2661,21 @@ class Explore
                 // overlays. Map/menu explainers still need a top to render.
                 if ('fullscreen' === $type || false === empty($explainer_top)) {
                     $html .= '<div id="' . esc_attr($explainer->ID) . '" class="' . esc_attr($explainer->post_name) . '-explainer-item explainer-container map-item' . esc_attr($fullscreen) . '"';
-                    $html .= ' style="left:' . esc_attr($explainer_left) . 'px;top:' . esc_attr($explainer_top) . 'px;height:auto; ' . esc_attr($explainer_width) . 'px; border: ' . esc_attr($border_size) . 'px ' . esc_attr($border_style) . ' ' . esc_attr($border_color) . '; border-radius: ' . esc_attr($border_radius) . 'px;"';
+                    $html .= ' style="left:' . esc_attr($explainer_left) . 'px;top:' . esc_attr($explainer_top) . 'px;height:auto; ' . esc_attr($explainer_width) . 'px; border: ' . esc_attr($border_size) . 'px ' . esc_attr($border_style) . ' ' . esc_attr($border_color) . '; border-radius: ' . esc_attr($border_radius) . 'px;';
+
+                    if (false === empty($font_color)) {
+                        $html .= ' color: ' . esc_attr($font_color) . ';';
+                    }
+
+                    if (0 < $font_size) {
+                        $html .= ' font-size: ' . esc_attr($font_size) . 'px;';
+                    }
+
+                    if (false === empty($background_color)) {
+                        $html .= ' background-color: ' . esc_attr($background_color) . ';';
+                    }
+
+                    $html .= '"';
                     $html .= ' data-type="' . esc_attr($explainer_type) . '"';
 
                     if (false === empty($close_on_click)) {
