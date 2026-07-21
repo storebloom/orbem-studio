@@ -4,7 +4,7 @@ Tags: game engine, rpg, video game, game-dev, narrative game
 Requires at least: 6.1
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.5.8
+Stable tag: 1.5.9
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -206,6 +206,10 @@ Documentation is available at https://orbem.studio/orbem-studio/docs/readme
 Tutorials are available on the Orbem Studio YouTube channel at https://youtube.com/@orbemstudio
 
 == Changelog ==
+
+= 1.5.9 =
+* Fix mobile/tablet character starting position not matching desktop by removing a stale hardcoded position offset that duplicated work already done by the icon-centering math.
+* Align mobile/tablet breakpoint detection in JS with the CSS breakpoints so the position math always matches the actual rendered container size.
 
 = 1.5.8 =
 * Fix draggable items with no destination configured still rendering a phantom drag destination, which blocked pickup.
