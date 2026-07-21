@@ -53,7 +53,11 @@ window._touchJumpActive = false;
 document.addEventListener('DOMContentLoaded', function () {
     'use strict';
 
-    if (500 > window.innerWidth) {
+    // Must match the #map-character width/height overrides in _explore.scss
+    // exactly (max-width: 480px for mobile, 481-1025px for tablet), otherwise
+    // globalLeftPositionOffset/globalTopPositionOffset assume a container
+    // size that doesn't match what's actually rendered at that width.
+    if (480 >= window.innerWidth) {
         window.globalLeftPositionOffset = 150;
         weaponPosLeft = window.globalLeftPositionOffset;
         isOnMobile = true;
@@ -61,7 +65,7 @@ document.addEventListener('DOMContentLoaded', function () {
         detectDeviceOrientationChange();
     }
 
-    if (1025 > window.innerWidth && 500 < window.innerWidth) {
+    if (1025 >= window.innerWidth && 481 <= window.innerWidth) {
         window.globalTopPositionOffset = 150;
         isOnTablet = true
 
@@ -2731,14 +2735,6 @@ const enterNewArea = (function () {
                                 JSON.parse(nextAreaPosition).left;
                         }
 
-                        if (isOnMobile) {
-                            newMapItems['start-left'] = parseInt(newMapItems['start-left']) + 240;
-                        }
-
-                        if (isOnTablet) {
-                            newMapItems['start-top'] = parseInt(newMapItems['start-top']) + 240;
-                        }
-
                         const _charIcon = characterItem.querySelector('.map-character-icon');
                         const _iconH = _charIcon ? parseInt(_charIcon.getAttribute('height') || '0') : 0;
                         const _iconW = _charIcon ? parseInt(_charIcon.getAttribute('width') || '0') : 0;
@@ -4500,15 +4496,14 @@ export function engageExploreGame() {
     const mapChar = document.getElementById('map-character');
 
     if (mapChar) {
+        // Entering fullscreen doesn't require a position adjustment — the
+        // icon-centering math below already produces the same on-screen
+        // position for any container/offset size (mobile, tablet, desktop).
         if (isOnMobile && mapChar.style.left.replace('px', '') === defaultMap.dataset.startleft) {
-            mapChar.style.left = (parseInt(mapChar.style.left.replace('px', '')) + 240) + 'px';
-
             enterFullscreen();
         }
 
         if (isOnTablet && mapChar.style.top.replace('px', '') === defaultMap.dataset.starttop) {
-            mapChar.style.top = (parseInt(mapChar.style.top.replace('px', '')) + 240) + 'px';
-
             enterFullscreen();
         }
 
