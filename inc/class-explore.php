@@ -818,10 +818,18 @@ class Explore
             $default_weapon_array = false !== $default_weapon_obj_id ? ['name' => $default_weapon, 'type' => 'weapons', 'id' => $default_weapon_obj_id] : [];
 
             if (true === empty($current_storage_items)) {
-                $menu_map_array = ['items' => [], 'weapons' => [$default_weapon_array], 'gear' => []];
+                // Initialise the FULL storage structure (not the single-type
+                // array) so appending below doesn't nest one type inside
+                // another.
+                $current_storage_items = [
+                    'items'   => [],
+                    'weapons' => false === empty($default_weapon_array) ? [$default_weapon_array] : [],
+                    'gear'    => [],
+                ];
+                $menu_map_array = $current_storage_items[$menu_map] ?? [];
             } else {
                 foreach ($menu_map_array as $index => $item) {
-                    if ($name === $item['name']) {
+                    if ($name === ($item['name'] ?? '')) {
                         $count                           = $item['count'] ?? 1;
                         $menu_map_array[$index]['count'] = 'weapons'=== $menu_map ? 1 : $count + 1;
                         $has_dupe                        = true;
@@ -1328,6 +1336,31 @@ class Explore
     }
 
     /**
+     * The image shown in the player's hand for a weapon. Uses the optional
+     * explore-weapon-held-image override when set, otherwise falls back to the
+     * weapon's featured image (the same art used for the map collectible).
+     *
+     * @param int $weapon_id
+     * @return string Image URL, or '' when none is available.
+     */
+    public static function getWeaponHeldImage(int $weapon_id): string
+    {
+        if (0 >= $weapon_id) {
+            return '';
+        }
+
+        $held = get_post_meta($weapon_id, 'explore-weapon-held-image', true);
+
+        if (false === empty($held)) {
+            return $held;
+        }
+
+        $thumb = get_the_post_thumbnail_url($weapon_id);
+
+        return false === empty($thumb) ? $thumb : '';
+    }
+
+    /**
      * Grab all the points you can collide with.
      * @param string $position
      * @param string $post_type
@@ -1548,6 +1581,25 @@ class Explore
                 $hazard_remove                  = false;
                 $explore_attack                 = $explore_point_meta['explore-attack'] ?? '';
                 $weapon_strength                = false === empty($explore_attack) ? wp_json_encode($explore_attack) : '""';
+                $weapon_projectile              = $explore_point_meta['explore-projectile'] ?? '';
+                $weapon_projectile              = false === empty($weapon_projectile) ? $weapon_projectile : 'no';
+                $weapon_visibility              = $explore_point_meta['explore-weapon-visibility'] ?? '';
+                $weapon_visibility              = false === empty($weapon_visibility) ? $weapon_visibility : 'attack';
+                $weapon_motion                  = $explore_point_meta['explore-weapon-motion'] ?? '';
+                $weapon_motion                  = false === empty($weapon_motion) ? $weapon_motion : 'swing';
+                $weapon_facing                  = $explore_point_meta['explore-weapon-facing'] ?? '';
+                $weapon_held_width              = $explore_point_meta['explore-weapon-held-width'] ?? '';
+                $weapon_held_height             = $explore_point_meta['explore-weapon-held-height'] ?? '';
+                $weapon_resting                 = $explore_point_meta['explore-weapon-resting-position'] ?? '';
+                $weapon_resting                 = false === empty($weapon_resting) ? $weapon_resting : 'in-hand';
+                $weapon_range                   = intval($explore_point_meta['explore-weapon-range'] ?? 0);
+                $weapon_proj_cfg                = $explore_point_meta['explore-weapon-projectile'] ?? [];
+                $weapon_proj_cfg                = is_array($weapon_proj_cfg) ? $weapon_proj_cfg : [];
+                $weapon_proj_image              = $weapon_proj_cfg['image-url'] ?? '';
+                $weapon_proj_width              = $weapon_proj_cfg['width'] ?? '';
+                $weapon_proj_height             = $weapon_proj_cfg['height'] ?? '';
+                $weapon_proj_facing             = $explore_point_meta['explore-weapon-projectile-facing'] ?? '';
+                $weapon_ammo_cost               = intval($explore_point_meta['explore-weapon-ammo-cost'] ?? 0);
                 $rotation                       = $explore_point_meta['explore-rotation'] ?? '';
                 $item_image                     = get_the_post_thumbnail_url($explore_point->ID);
                 $video_override                 = $explore_point_meta['explore-video-override'] ?? '';
@@ -1743,6 +1795,20 @@ class Explore
 
                     if ('explore-weapon' === $explore_point->post_type) {
                         $html .= ' data-strength=\'' . esc_attr($weapon_strength) . '\'';
+                        $html .= ' data-projectile="' . esc_attr($weapon_projectile) . '"';
+                        $html .= ' data-visibility="' . esc_attr($weapon_visibility) . '"';
+                        $html .= ' data-motion="' . esc_attr($weapon_motion) . '"';
+                        $html .= ' data-facing="' . esc_attr($weapon_facing) . '"';
+                        $html .= ' data-resting="' . esc_attr($weapon_resting) . '"';
+                        $html .= ' data-range="' . esc_attr($weapon_range) . '"';
+                        $html .= ' data-projectile-image="' . esc_url($weapon_proj_image) . '"';
+                        $html .= ' data-projectile-width="' . esc_attr($weapon_proj_width) . '"';
+                        $html .= ' data-projectile-height="' . esc_attr($weapon_proj_height) . '"';
+                        $html .= ' data-projectile-facing="' . esc_attr($weapon_proj_facing) . '"';
+                        $html .= ' data-ammo-cost="' . esc_attr($weapon_ammo_cost) . '"';
+                        $html .= ' data-held-width="' . esc_attr($weapon_held_width) . '"';
+                        $html .= ' data-held-height="' . esc_attr($weapon_held_height) . '"';
+                        $html .= ' data-held-image="' . esc_url(self::getWeaponHeldImage($explore_point->ID)) . '"';
                     }
 
                     if (true === $collectable || 'explore-weapon' === $explore_point->post_type) {
@@ -1870,8 +1936,9 @@ class Explore
                             $projectile_width = $projectile['width'] ?? '0';
                             $projectile_height = $projectile['height'] ?? '0';
                             $projectile_image_url = $projectile['image-url'] ?? '';
+                            $projectile_facing = $explore_point_meta['explore-projectile-facing'] ?? '';
 
-                            $html .= '<div class="projectile" data-value="' . esc_attr($value) . '"><img alt="projectile" style="width:' . esc_attr($projectile_width) . 'px; height: ' . esc_attr($projectile_height) . 'px;" src="' . esc_url($projectile_image_url) . '" /></div>';
+                            $html .= '<div class="projectile" data-value="' . esc_attr($value) . '" data-projectile-facing="' . esc_attr($projectile_facing) . '"><img alt="projectile" style="width:' . esc_attr($projectile_width) . 'px; height: ' . esc_attr($projectile_height) . 'px;" src="' . esc_url($projectile_image_url) . '" /></div>';
                         }
                     }
 
@@ -3187,6 +3254,8 @@ class Explore
             'jump'             => $meta['explore-jump'] ?? '',
             'double-jump'      => $meta['explore-double-jump'] ?? '',
             'jump-sound'       => $meta['explore-jump-sound'] ?? false,
+            'charge-glow-color'  => $meta['explore-charge-glow-color'] ?? '',
+            'charge-glow-target' => $meta['explore-charge-glow-target'] ?? 'character',
         ];
     }
 

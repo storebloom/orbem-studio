@@ -754,6 +754,33 @@ class Meta_Box {
                                         ],
                                         'Choose whether this weapon fires a projectile instead of performing a melee attack.'
                                 ],
+                                'explore-weapon-projectile' => [
+                                        [
+                                                'image-url' => 'upload',
+                                                'width' => 'number',
+                                                'height' => 'number',
+                                        ],
+                                        'Optional projectile image fired from the weapon (used with the "Shoot" motion, or whenever Projectile is set to "yes"). If left empty, the weapon image itself is thrown as the projectile.'
+                                ],
+                                'explore-weapon-projectile-facing' => [
+                                        [
+                                                'select' => [
+                                                        'Up' => 'up',
+                                                        'Down' => 'down',
+                                                        'Left' => 'left',
+                                                        'Right' => 'right',
+                                                        'Top Right' => 'top-right',
+                                                        'Top Left' => 'top-left',
+                                                        'Bottom Right' => 'bottom-right',
+                                                        'Bottom Left' => 'bottom-left',
+                                                ]
+                                        ],
+                                        'The direction the projectile image points in its source art. The projectile is rotated so it points the way it is fired. Leave as None to fire the image without rotation.'
+                                ],
+                                'explore-weapon-ammo-cost' => [
+                                        'number',
+                                        'How much mana/ammo each shot costs (only used when the game has a mana bar). Leave empty for 1 per shot.'
+                                ],
                                 'explore-value-type-required' => [
                                         [
                                                 'select' => ['Weapons' => 'weapons']
@@ -764,6 +791,69 @@ class Meta_Box {
                                 'explore-weapon-sound' => [
                                         'upload',
                                         'The sound the weapon makes when used.'
+                                ],
+                                'explore-weapon-held-image' => [
+                                        'upload',
+                                        'Optional image shown in the character\'s hand when this weapon is equipped. Leave empty to use this weapon\'s featured image.'
+                                ],
+                                'explore-weapon-visibility' => [
+                                        [
+                                                'radio' => [
+                                                        'always',
+                                                        'attack'
+                                                ]
+                                        ],
+                                        'When the weapon image appears on the character. "Always" keeps it held while idle and walking; "Attack" shows it only during an attack.',
+                                        'default' => 'attack'
+                                ],
+                                'explore-weapon-motion' => [
+                                        [
+                                                'select' => [
+                                                        'Swing' => 'swing',
+                                                        'Thrust' => 'thrust',
+                                                        'Shoot' => 'shoot',
+                                                ]
+                                        ],
+                                        'How the weapon image animates on attack. Swing rotates it in an arc, Thrust pushes it forward and back, Shoot recoils and fires the weapon image as a projectile.',
+                                        'default' => 'swing'
+                                ],
+                                'explore-weapon-facing' => [
+                                        [
+                                                'select' => [
+                                                        'Up' => 'up',
+                                                        'Down' => 'down',
+                                                        'Left' => 'left',
+                                                        'Right' => 'right',
+                                                        'Top Right' => 'top-right',
+                                                        'Top Left' => 'top-left',
+                                                        'Bottom Right' => 'bottom-right',
+                                                        'Bottom Left' => 'bottom-left',
+                                                ]
+                                        ],
+                                        'The direction the weapon points in its source image. Used to rotate/flip the held image so it faces the way the character is facing. Use the diagonal options when the weapon runs corner-to-corner in the artwork. Leave as None to show the image without any rotation.'
+                                ],
+                                'explore-weapon-held-width' => [
+                                        'number',
+                                        'Width (in pixels) of the weapon image when held/shown on the character. Leave empty to fall back to the weapon’s placement width.'
+                                ],
+                                'explore-weapon-held-height' => [
+                                        'number',
+                                        'Height (in pixels) of the weapon image when held/shown on the character. Leave empty to keep the image’s natural aspect ratio.'
+                                ],
+                                'explore-weapon-range' => [
+                                        'number',
+                                        'How far (in pixels) the weapon extends out from the player’s center in the direction they are facing. e.g. 20 makes it swing 20px out in front. Leave empty for 0 (centered).'
+                                ],
+                                'explore-weapon-resting-position' => [
+                                        [
+                                                'select' => [
+                                                        'In Hand' => 'in-hand',
+                                                        'On Back' => 'on-back',
+                                                        'On Hip' => 'on-hip',
+                                                ]
+                                        ],
+                                        'Where the weapon sits when the character is not attacking (only applies when Visibility is "always"). In Hand keeps it pointed the way the character faces; On Back centers it on the character pointing down; On Hip is the same but dropped to hip level.',
+                                        'default' => 'in-hand'
                                 ]
                         ],
 
@@ -883,6 +973,21 @@ class Meta_Box {
                                                 ]
                                         ],
                                         'Choose whether this character can be collected and used as an additional playable character.'
+                                ],
+                                'explore-charge-glow-color' => [
+                                        'color',
+                                        'The color of the pulsating glow shown during a charged attack.'
+                                ],
+                                'explore-charge-glow-target' => [
+                                        [
+                                                'select' => [
+                                                        'Character' => 'character',
+                                                        'Weapon' => 'weapon',
+                                                        'All' => 'all',
+                                                ]
+                                        ],
+                                        'What the charged-attack glow emanates from: the character, the weapon, or both.',
+                                        'default' => 'character'
                                 ],
                         ],
 
@@ -1181,6 +1286,21 @@ class Meta_Box {
                                                 'height' => 'number',
                                         ],
                                         'Configure the projectile used by this enemy. Applies only to shooter and boss types.'
+                                ],
+                                'explore-projectile-facing' => [
+                                        [
+                                                'select' => [
+                                                        'Up' => 'up',
+                                                        'Down' => 'down',
+                                                        'Left' => 'left',
+                                                        'Right' => 'right',
+                                                        'Top Right' => 'top-right',
+                                                        'Top Left' => 'top-left',
+                                                        'Bottom Right' => 'bottom-right',
+                                                        'Bottom Left' => 'bottom-left',
+                                                ]
+                                        ],
+                                        'The direction the projectile image points in its source art. The projectile is rotated to point the way it travels toward the player. Leave as None to fire the image without rotation.'
                                 ],
                                 'explore-enemy-speed' => [
                                         'number',
