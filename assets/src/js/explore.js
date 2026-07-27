@@ -681,8 +681,8 @@ function engageStorageMenus() {
                 }
 
                 const selectedTabContent = document.querySelector(
-                    '.retrieval-points [data-menu="' +
-                    storageTab.className.replace('-tab', '') +
+                    '.retrieval-points .storage-menu[data-menu="' +
+                    storageTab.dataset.menu +
                     '"]'
                 );
 
@@ -1978,8 +1978,12 @@ function addUserCoordianate(left, top) {
 const hurtTheEnemy = (function () {
     'use strict';
 
-    return function (theWeapon, value) {
-        if (value && theWeapon && elementsOverlap(theWeapon, value, 0)) {
+    return function (theWeapon, value, hitArea) {
+        // The overlap test can use a separate hit area (e.g. the equipped
+        // weapon image's reach) while damage/type still come from theWeapon.
+        const overlapTarget = hitArea || theWeapon;
+
+        if (value && theWeapon && elementsOverlap(overlapTarget, value, 0)) {
             const now = Date.now();
             const nextAllowedHit = parseInt(value.dataset.nextAllowedHit || '0', 10);
 
@@ -2930,20 +2934,25 @@ const showItemDescription = (function () {
                         '.storage-item.engage'
                     );
                     const equipButton = document.createElement('button');
-                    equipButton.classList.add('storage-item-button');
+                    equipButton.classList.add('storage-item-button', 'is-equip');
                     equipButton.textContent = 'Equip';
                     const unequipButton = document.createElement('button');
                     unequipButton.textContent = 'Unequip';
-                    unequipButton.classList.add('storage-item-button');
+                    unequipButton.classList.add('storage-item-button', 'is-unequip');
                     const dropButton = document.createElement('button');
                     dropButton.textContent = 'Drop';
-                    dropButton.classList.add('storage-item-button');
+                    dropButton.classList.add('storage-item-button', 'is-drop');
 
-                    // Replace current description content.
+                    // Replace current description content. Show Equip only when
+                    // the item is not already equipped, Unequip only when it is.
                     description.innerHTML = newItemDescription;
                     description.appendChild(dropButton);
-                    description.appendChild(unequipButton);
-                    description.appendChild(equipButton);
+
+                    if (selectedItem.classList.contains('equipped')) {
+                        description.appendChild(unequipButton);
+                    } else {
+                        description.appendChild(equipButton);
+                    }
 
                     // Add use and drop features.
                     const useButton = description.querySelector('.use-button');
@@ -2998,21 +3007,17 @@ const showItemDescription = (function () {
                                         null ===
                                         selectedItem.dataset.character))
                             ) {
-                                const itemImage =
-                                    selectedItem.querySelector('img');
-                                const currentWeapon =
-                                    document.querySelector('.map-weapon');
-                                const currentWeaponButton =
-                                    document.querySelector(
-                                        '.weapon-content img'
-                                    );
-
-                                if (currentWeapon && currentWeaponButton) {
-                                    currentWeaponButton.src = itemImage.src;
-                                    currentWeapon.dataset.weapon =
-                                        selectedItem.title;
-                                    currentWeapon.dataset.strength =
-                                        selectedItem.dataset.strength;
+                                if ('weapons' === selectedItem.dataset.type) {
+                                    // Only one weapon can be equipped: clear the
+                                    // previously equipped weapon's badge.
+                                    document
+                                        .querySelectorAll(
+                                            '.storage-item[data-type="weapons"].equipped'
+                                        )
+                                        .forEach((el) =>
+                                            el.classList.remove('equipped')
+                                        );
+                                    applyWeaponToPlayer(selectedItem);
                                 }
 
                                 selectedItem.classList.add('equipped');
@@ -3040,7 +3045,42 @@ const showItemDescription = (function () {
                                 '.storage-item.engage'
                             );
 
-                            // Update item class.
+                            if (
+                                selectedItem &&
+                                'weapons' === selectedItem.dataset.type
+                            ) {
+                                // Unequipping a weapon falls back to the default
+                                // weapon (a hidden storage item) — the player is
+                                // never left with no weapon.
+                                const defaultItem = document.querySelector(
+                                    '.storage-item[data-type="weapons"].default-weapon'
+                                );
+
+                                document
+                                    .querySelectorAll(
+                                        '.storage-item[data-type="weapons"].equipped'
+                                    )
+                                    .forEach((el) =>
+                                        el.classList.remove('equipped')
+                                    );
+
+                                if (defaultItem) {
+                                    applyWeaponToPlayer(defaultItem);
+                                    defaultItem.classList.add('equipped');
+                                    equipNewItem(
+                                        'weapons',
+                                        defaultItem.dataset.id,
+                                        amount,
+                                        false,
+                                        defaultItem.title
+                                    );
+                                }
+
+                                description.innerHTML = '';
+                                return;
+                            }
+
+                            // Gear: normal unequip.
                             if (selectedItem) {
                                 selectedItem.classList.remove('equipped');
                                 selectedItem.classList.add('unequip');
@@ -3072,35 +3112,133 @@ const showItemDescription = (function () {
 })();
 
 /**
+ * Apply a storage/collectable item's weapon data to the player's `.map-weapon`
+ * element and its `.weapon-overlay` image. Shared by both the equip button and
+ * changeWeapon() so the held image, motion, visibility, strength and projectile
+ * flags stay in sync no matter how the weapon was equipped.
+ *
+ * The held image falls back to the item's own thumbnail (the weapon's featured
+ * image) when no explicit held-image override was provided.
+ *
+ * @param {HTMLElement} source A `.storage-item` (or map collectable) element.
+ */
+function applyWeaponToPlayer(source) {
+    'use strict';
+
+    if (!source) {
+        return;
+    }
+
+    const currentWeapon = document.querySelector('.map-weapon');
+
+    if (!currentWeapon) {
+        return;
+    }
+
+    const itemImage = source.querySelector('img');
+    const overlay = currentWeapon.querySelector('.weapon-overlay');
+    // Optional HUD weapon button — not present in every game layout.
+    const currentWeaponButton = document.querySelector('.weapon-content img');
+    const heldImage =
+        source.dataset.heldImage ||
+        (itemImage ? itemImage.src : '') ||
+        '';
+
+    currentWeapon.dataset.weapon = source.title;
+    currentWeapon.dataset.strength = source.dataset.strength;
+    currentWeapon.dataset.projectile = source.dataset.projectile || 'no';
+    currentWeapon.dataset.visibility = source.dataset.visibility || 'attack';
+    currentWeapon.dataset.motion = source.dataset.motion || 'swing';
+    currentWeapon.dataset.facing = source.dataset.facing || '';
+    currentWeapon.dataset.resting = source.dataset.resting || 'in-hand';
+    currentWeapon.dataset.range = source.dataset.range || '0';
+    currentWeapon.style.setProperty(
+        '--weapon-range',
+        (parseInt(source.dataset.range, 10) || 0) + 'px'
+    );
+    currentWeapon.dataset.heldImage = heldImage;
+
+    if (overlay) {
+        overlay.src = heldImage;
+
+        // Held size: prefer the dedicated held width/height, falling back to the
+        // item's on-map size. An unset height keeps the image's aspect ratio.
+        const heldWidth = source.dataset.heldWidth || source.dataset.width || '';
+        const heldHeight = source.dataset.heldHeight || '';
+
+        overlay.style.width = heldWidth ? heldWidth + 'px' : '';
+        overlay.style.height = heldHeight ? heldHeight + 'px' : '';
+
+        // Half the weapon's short dimension, for On Hip edge alignment.
+        const w = parseInt(heldWidth, 10) || 0;
+        const h = parseInt(heldHeight, 10) || 0;
+        const halfWidth = w && h ? Math.round(Math.min(w, h) / 2) : 0;
+        currentWeapon.style.setProperty(
+            '--weapon-hip-halfwidth',
+            halfWidth + 'px'
+        );
+    }
+
+    // Optional fired-projectile image. Empty src falls back to throwing the
+    // weapon image itself. data-projectile-facing (on .map-weapon) drives the
+    // projectile's rotation to the fire direction.
+    currentWeapon.dataset.projectileFacing =
+        source.dataset.projectileFacing || '';
+    currentWeapon.dataset.ammoCost = source.dataset.ammoCost || '0';
+    const projectileImg = currentWeapon.querySelector('.weapon-projectile');
+    if (projectileImg) {
+        projectileImg.src = source.dataset.projectileImage || '';
+        projectileImg.style.width = source.dataset.projectileWidth
+            ? source.dataset.projectileWidth + 'px'
+            : '';
+        projectileImg.style.height = source.dataset.projectileHeight
+            ? source.dataset.projectileHeight + 'px'
+            : '';
+    }
+
+    if (currentWeaponButton && itemImage) {
+        currentWeaponButton.src = itemImage.src;
+    }
+
+    window.currentWeapon =
+        defaultWeapon !== source.title ? '-' + source.title : '';
+}
+
+/**
+ * Resolve a character sprite element by its base id (without the weapon
+ * suffix), preferring the weapon-specific variant when one exists with a real
+ * src. This lets a character reuse its base walking / standing / directional
+ * sprites for weapons that only supply an on-attack overlay image, instead of
+ * breaking to the default static image when no per-weapon character sprites
+ * were uploaded for the equipped weapon.
+ *
+ * @param {string} baseId Sprite element id without the weapon suffix.
+ * @returns {HTMLElement|null}
+ */
+function getCharacterSprite(baseId) {
+    'use strict';
+
+    if (window.currentWeapon) {
+        const weaponSprite = document.getElementById(
+            baseId + window.currentWeapon
+        );
+
+        if (weaponSprite && '' !== weaponSprite.getAttribute('src')) {
+            return weaponSprite;
+        }
+    }
+
+    return document.getElementById(baseId);
+}
+
+/**
  * Temporarily change weapon player is using. Previously equipped weapon will still be noted as equipped to allow for change back.
  * @param selectedItem
  */
 function changeWeapon(selectedItem) {
     'use strict';
 
-    if (selectedItem) {
-        const itemImage = selectedItem.querySelector('img');
-        const currentWeapon = document.querySelector('.map-weapon');
-        const currentWeaponButton = document.querySelector(
-            '.weapon-content img'
-        );
-        const currentWeaponImg = currentWeapon.querySelector('img');
-
-        if (currentWeapon && currentWeaponButton) {
-            currentWeaponImg.src = itemImage.src;
-            currentWeaponButton.src = itemImage.src;
-            currentWeapon.dataset.weapon = selectedItem.title;
-            currentWeaponImg.style.width = selectedItem.dataset.width + 'px';
-            currentWeaponImg.style.height = selectedItem.dataset.height + 'px';
-            currentWeapon.dataset.strength = selectedItem.dataset.strength;
-            currentWeapon.dataset.projectile = selectedItem.dataset.projectile;
-
-            window.currentWeapon =
-                defaultWeapon !== selectedItem.title
-                    ? '-' + selectedItem.title
-                    : '';
-        }
-    }
+    applyWeaponToPlayer(selectedItem);
 }
 
 function updatePointBars(unequip) {
@@ -3643,6 +3781,31 @@ function shootProjectile(
     newProjectile.style.transform = '';
     newProjectile.style.display = '';
 
+    // Weapon projectiles: if the weapon defines a dedicated projectile image,
+    // show that on the flying clone; otherwise fall back to throwing the weapon
+    // image itself (the `.weapon-overlay`). Spells use their own projectile art.
+    if (true !== spell) {
+        newProjectile.classList.remove(
+            'weapon-swing',
+            'weapon-thrust',
+            'weapon-shoot'
+        );
+
+        const projectileImg = newProjectile.querySelector('.weapon-projectile');
+        const projectileOverlay = newProjectile.querySelector('.weapon-overlay');
+        const hasProjectileImg =
+            projectileImg && '' !== (projectileImg.getAttribute('src') || '');
+
+        if (hasProjectileImg) {
+            projectileImg.style.display = 'block';
+            if (projectileOverlay) {
+                projectileOverlay.style.display = 'none';
+            }
+        } else if (projectileOverlay) {
+            projectileOverlay.style.display = 'block';
+        }
+    }
+
     let collisionWalls;
 
     if (true !== spell && 'no' === isProjectile) {
@@ -3803,6 +3966,190 @@ function enemyOverlap(a, b, container) {
     );
 }
 
+/**
+ * Fire a projectile from the player's weapon. Unlike the old approach (which
+ * cloned the .map-weapon and hijacked the movement loop), this builds a
+ * standalone element that travels in a straight line in the direction the
+ * character faces — like a shooter enemy — damaging enemies and stopping at
+ * walls. Uses the configured projectile image, or the weapon image itself.
+ *
+ * @param {HTMLElement} weapon The player's .map-weapon element.
+ */
+function fireWeaponProjectile(weapon) {
+    'use strict';
+
+    const container = document.querySelector('.game-container');
+    const mapChar = document.querySelector('#map-character');
+
+    if (!container || !mapChar) {
+        return;
+    }
+
+    // Projectile image + size: configured projectile image, else the weapon.
+    const projSrcEl = weapon.querySelector('.weapon-projectile');
+    const overlayEl = weapon.querySelector('.weapon-overlay');
+    const useProj =
+        projSrcEl && '' !== (projSrcEl.getAttribute('src') || '');
+    const srcEl = useProj ? projSrcEl : overlayEl;
+    const src = srcEl ? srcEl.getAttribute('src') || srcEl.src || '' : '';
+
+    if ('' === src) {
+        return;
+    }
+
+    const width = srcEl.style.width || srcEl.offsetWidth + 'px';
+    const height = srcEl.style.height || srcEl.offsetHeight + 'px';
+
+    // Direction the character faces → travel vector + rotation angle.
+    const dirData = {
+        right: { angle: 0, dx: 1, dy: 0 },
+        down: { angle: 90, dx: 0, dy: 1 },
+        left: { angle: 180, dx: -1, dy: 0 },
+        top: { angle: 270, dx: 0, dy: -1 },
+        up: { angle: 270, dx: 0, dy: -1 },
+    };
+    const dir = dirData[weapon.dataset.direction] || dirData.down;
+
+    const facingAngles = {
+        right: 0,
+        'bottom-right': 45,
+        down: 90,
+        'bottom-left': 135,
+        left: 180,
+        'top-left': 225,
+        up: 270,
+        'top-right': 315,
+    };
+    const facingAngle = facingAngles[weapon.dataset.projectileFacing];
+    const rotate =
+        undefined !== facingAngle
+            ? ' rotate(' + (dir.angle - facingAngle) + 'deg)'
+            : '';
+
+    // Spawn at the weapon's tip: the character's center (container coordinates,
+    // matching how .map-weapon is positioned) plus the weapon's reach — its
+    // range offset plus its length — in the facing direction.
+    const range = parseInt(weapon.dataset.range, 10) || 0;
+    const weaponLength = overlayEl
+        ? Math.max(overlayEl.offsetWidth, overlayEl.offsetHeight)
+        : 0;
+    const tipOffset = range + weaponLength;
+    const spawnLeft =
+        parseInt(mapChar.style.left, 10) +
+        window.globalLeftPositionOffset +
+        dir.dx * tipOffset;
+    const spawnTop =
+        parseInt(mapChar.style.top, 10) +
+        window.globalTopPositionOffset +
+        dir.dy * tipOffset;
+
+    const proj = document.createElement('div');
+    proj.className = 'weapon-fired-projectile';
+    proj.dataset.strength = weapon.dataset.strength || '""';
+    proj.dataset.weapon = weapon.dataset.weapon || '';
+    proj.style.position = 'absolute';
+    proj.style.left = spawnLeft + 'px';
+    proj.style.top = spawnTop + 'px';
+    proj.style.width = '0';
+    proj.style.height = '0';
+    proj.style.zIndex = '2';
+
+    const img = document.createElement('img');
+    img.src = src;
+    img.style.position = 'absolute';
+    img.style.left = '50%';
+    img.style.top = '50%';
+    img.style.width = width;
+    img.style.height = height;
+    img.style.transform = 'translate(-50%, -50%)' + rotate;
+    proj.appendChild(img);
+    container.appendChild(proj);
+
+    // Travel far enough to leave the map, then let collision/bounds remove it.
+    const distance = 5000;
+    proj.style.transition = 'transform 1.2s linear';
+    void proj.offsetWidth;
+    proj.style.transform =
+        'translate(' + dir.dx * distance + 'px, ' + dir.dy * distance + 'px)';
+
+    const collisionWalls = document.querySelectorAll(
+        '.enemy-item, .default-map svg rect, [data-genre="explore-wall"]'
+    );
+
+    trackWeaponProjectile(proj, collisionWalls);
+}
+
+/**
+ * Track a fired weapon projectile: remove it when it leaves the map or hits a
+ * wall, and damage the enemy it strikes.
+ *
+ * @param {HTMLElement} projectile
+ * @param {NodeList}    collisionWalls
+ */
+function trackWeaponProjectile(projectile, collisionWalls) {
+    'use strict';
+
+    const container = document.querySelector('.game-container');
+
+    function tick() {
+        if (!document.body.contains(projectile)) {
+            return;
+        }
+
+        const pr = getRelativeRect(projectile, container);
+        const margin = 200;
+
+        if (
+            pr.right < -margin ||
+            pr.left > container.offsetWidth + margin ||
+            pr.bottom < -margin ||
+            pr.top > container.offsetHeight + margin
+        ) {
+            projectile.remove();
+            return;
+        }
+
+        for (const wall of collisionWalls) {
+            if (!document.body.contains(wall)) {
+                continue;
+            }
+
+            if (
+                wall.className.includes('trigger') ||
+                'true' === wall.dataset.passable
+            ) {
+                continue;
+            }
+
+            if (enemyOverlap(projectile, wall, container)) {
+                if (wall.classList.contains('enemy-item')) {
+                    hurtTheEnemy(projectile, wall, {
+                        offsetLeft: wall.offsetLeft,
+                        offsetTop: wall.offsetTop,
+                        offsetWidth: wall.offsetWidth,
+                        offsetHeight: wall.offsetHeight,
+                        classList: { contains: () => false },
+                    });
+                }
+
+                projectile.remove();
+                return;
+            }
+        }
+
+        requestAnimationFrame(tick);
+    }
+
+    requestAnimationFrame(tick);
+
+    projectile.addEventListener('transitionend', function onEnd() {
+        projectile.removeEventListener('transitionend', onEnd);
+        if (document.body.contains(projectile)) {
+            projectile.remove();
+        }
+    });
+}
+
 function getRelativeRect(el, container) {
     'use strict';
 
@@ -3862,6 +4209,29 @@ function moveEnemy(
         mapCharacterLeft - projCenterX
     );
 
+    // Rotate the projectile image to point the way it travels. The rotation is
+    // the travel angle minus the angle the art already faces (data-projectile-
+    // facing on the .projectile). Applied to the inner <img> so it doesn't
+    // clash with the movement transform on the .projectile element.
+    const facingAngles = {
+        right: 0,
+        'bottom-right': 45,
+        down: 90,
+        'bottom-left': 135,
+        left: 180,
+        'top-left': 225,
+        up: 270,
+        'top-right': 315,
+    };
+    const facingAngle = facingAngles[projectile.dataset.projectileFacing];
+    if (undefined !== facingAngle) {
+        const projImg = projectile.querySelector('img');
+        if (projImg) {
+            projImg.style.transform =
+                'rotate(' + ((angle * 180) / Math.PI - facingAngle) + 'deg)';
+        }
+    }
+
     const targetX = mapCharacterLeft + Math.cos(angle) * 800;
     const targetY = mapCharacterTop  + Math.sin(angle) * 800;
 
@@ -3883,6 +4253,10 @@ function moveSpell(projectile, mapCharacterLeft, mapCharacterTop) {
 
     // Set the transition speed dynamically.
     projectile.style.transition = 'all 3s';
+    // Force a reflow so the transition animates from the projectile's current
+    // position instead of jumping straight to the far target (which flies off
+    // screen instantly and never appears).
+    void projectile.offsetWidth;
     projectile.style.left = mapCharacterLeft + 'px';
     projectile.style.top = mapCharacterTop + 'px';
 }
@@ -4719,8 +5093,53 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
             let position = cleanClassName(value.className);
 
             if (value.classList.contains('enemy-item') && weaponEl.classList.contains('engage')) {
+                // For an equipped overlay weapon, use the weapon image's reach
+                // (centered on the character) as the hit area instead of the
+                // pushed-out hitbox point, so range matches what's on screen.
+                let weaponHitArea = weaponEl;
+                const activeOverlay =
+                    weaponEl.matches &&
+                    weaponEl.matches('.weapon-swing, .weapon-thrust, .weapon-shoot')
+                        ? weaponEl.querySelector('.weapon-overlay')
+                        : null;
+
+                if (activeOverlay) {
+                    const reach = Math.max(
+                        activeOverlay.offsetWidth,
+                        activeOverlay.offsetHeight
+                    );
+
+                    // Shift the hit area out by the weapon's range in the facing
+                    // direction, matching the on-screen offset.
+                    const range = parseInt(weaponEl.dataset.range, 10) || 0;
+                    let rangeX = 0;
+                    let rangeY = 0;
+                    switch (weaponEl.dataset.direction) {
+                        case 'top':
+                            rangeY = -range;
+                            break;
+                        case 'down':
+                            rangeY = range;
+                            break;
+                        case 'left':
+                            rangeX = -range;
+                            break;
+                        case 'right':
+                            rangeX = range;
+                            break;
+                    }
+
+                    weaponHitArea = {
+                        offsetLeft: weaponEl.offsetLeft - reach + rangeX,
+                        offsetTop: weaponEl.offsetTop - reach + rangeY,
+                        offsetWidth: reach * 2,
+                        offsetHeight: reach * 2,
+                        classList: { contains: () => false },
+                    };
+                }
+
                 // Hurt enemy save enemy health.
-                hurtTheEnemy(weaponEl, value);
+                hurtTheEnemy(weaponEl, value, weaponHitArea);
             }
 
             // No points for draggables.
@@ -5374,12 +5793,8 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
                 case 38:
                     direction =
                         '' !== isDragging ? window.draggingDirection : 'up';
-                    newCharacterImage = document.getElementById(
-                        window.mainCharacter +
-                        '-' +
-                        direction +
-                        isDragging +
-                        window.currentWeapon
+                    newCharacterImage = getCharacterSprite(
+                        window.mainCharacter + '-' + direction + isDragging
                     );
                     if (newCharacterImage && '' !== newCharacterImage.getAttribute('src')) {
                         box.classList.remove('engage');
@@ -5398,12 +5813,8 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
                 case 37:
                     direction =
                         '' !== isDragging ? window.draggingDirection : 'left';
-                    newCharacterImage = document.getElementById(
-                        window.mainCharacter +
-                        '-' +
-                        direction +
-                        isDragging +
-                        window.currentWeapon
+                    newCharacterImage = getCharacterSprite(
+                        window.mainCharacter + '-' + direction + isDragging
                     );
                     if (
                         newCharacterImage &&
@@ -5424,12 +5835,8 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
                 case 39:
                     direction =
                         '' !== isDragging ? window.draggingDirection : 'right';
-                    newCharacterImage = document.getElementById(
-                        window.mainCharacter +
-                        '-' +
-                        direction +
-                        isDragging +
-                        window.currentWeapon
+                    newCharacterImage = getCharacterSprite(
+                        window.mainCharacter + '-' + direction + isDragging
                     );
                     if (newCharacterImage && '' !== newCharacterImage.getAttribute('src')) {
                         box.classList.remove('engage');
@@ -5447,12 +5854,8 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
                 case 40:
                     direction =
                         '' !== isDragging ? window.draggingDirection : 'down';
-                    newCharacterImage = document.getElementById(
-                        window.mainCharacter +
-                        '-' +
-                        direction +
-                        isDragging +
-                        window.currentWeapon
+                    newCharacterImage = getCharacterSprite(
+                        window.mainCharacter + '-' + direction + isDragging
                     );
                     if (newCharacterImage && '' !== newCharacterImage.getAttribute('src')) {
                         box.classList.remove('engage');
@@ -5470,12 +5873,8 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
                 case 87:
                     direction =
                         '' !== isDragging ? window.draggingDirection : 'up';
-                    newCharacterImage = document.getElementById(
-                        window.mainCharacter +
-                        '-' +
-                        direction +
-                        isDragging +
-                        window.currentWeapon
+                    newCharacterImage = getCharacterSprite(
+                        window.mainCharacter + '-' + direction + isDragging
                     );
                     if (newCharacterImage && '' !== newCharacterImage.getAttribute('src')) {
                         box.classList.remove('engage');
@@ -5494,12 +5893,8 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
                 case 65:
                     direction =
                         '' !== isDragging ? window.draggingDirection : 'left';
-                    newCharacterImage = document.getElementById(
-                        window.mainCharacter +
-                        '-' +
-                        direction +
-                        isDragging +
-                        window.currentWeapon
+                    newCharacterImage = getCharacterSprite(
+                        window.mainCharacter + '-' + direction + isDragging
                     );
                     if (newCharacterImage && '' !== newCharacterImage.getAttribute('src')) {
                         box.classList.remove('engage');
@@ -5517,12 +5912,8 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
                 case 68:
                     direction =
                         '' !== isDragging ? window.draggingDirection : 'right';
-                    newCharacterImage = document.getElementById(
-                        window.mainCharacter +
-                        '-' +
-                        direction +
-                        isDragging +
-                        window.currentWeapon
+                    newCharacterImage = getCharacterSprite(
+                        window.mainCharacter + '-' + direction + isDragging
                     );
                     if (newCharacterImage && '' !== newCharacterImage.getAttribute('src')) {
                         box.classList.remove('engage');
@@ -5540,12 +5931,8 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
                 case 83:
                     direction =
                         '' !== isDragging ? window.draggingDirection : 'down';
-                    newCharacterImage = document.getElementById(
-                        window.mainCharacter +
-                        '-' +
-                        direction +
-                        isDragging +
-                        window.currentWeapon
+                    newCharacterImage = getCharacterSprite(
+                        window.mainCharacter + '-' + direction + isDragging
                     );
                     if (newCharacterImage && '' !== newCharacterImage.getAttribute('src')) {
                         box.classList.remove('engage');
@@ -5907,6 +6294,56 @@ function storeExploreItem(item) {
             itemStyle.height.replace('px', '')
         );
         menuItem.setAttribute('data-strength', item.dataset.strength);
+
+        // Carry the weapon overlay data from the map collectible so a weapon
+        // equipped in the same session (before the next page load re-renders
+        // storage from post meta) still shows/animates its held image.
+        if ('weapons' === type) {
+            menuItem.setAttribute(
+                'data-projectile',
+                item.dataset.projectile || 'no'
+            );
+            menuItem.setAttribute(
+                'data-visibility',
+                item.dataset.visibility || 'attack'
+            );
+            menuItem.setAttribute('data-motion', item.dataset.motion || 'swing');
+            menuItem.setAttribute('data-facing', item.dataset.facing || '');
+            menuItem.setAttribute(
+                'data-resting',
+                item.dataset.resting || 'in-hand'
+            );
+            menuItem.setAttribute('data-range', item.dataset.range || '0');
+            menuItem.setAttribute(
+                'data-held-width',
+                item.dataset.heldWidth || ''
+            );
+            menuItem.setAttribute(
+                'data-held-height',
+                item.dataset.heldHeight || ''
+            );
+            menuItem.setAttribute(
+                'data-held-image',
+                item.dataset.heldImage || item.dataset.image || ''
+            );
+            menuItem.setAttribute(
+                'data-projectile-image',
+                item.dataset.projectileImage || ''
+            );
+            menuItem.setAttribute(
+                'data-projectile-width',
+                item.dataset.projectileWidth || ''
+            );
+            menuItem.setAttribute(
+                'data-projectile-height',
+                item.dataset.projectileHeight || ''
+            );
+            menuItem.setAttribute(
+                'data-projectile-facing',
+                item.dataset.projectileFacing || ''
+            );
+            menuItem.setAttribute('data-ammo-cost', item.dataset.ammoCost || '0');
+        }
 
         const itemImage = document.createElement('img');
 
@@ -7646,7 +8083,17 @@ function setStaticMCImage(mapChar, direction, weaponChange) {
             weaponChange && defaultWeapon !== window.currentWeapon
                 ? window.currentWeapon
                 : '';
-        const staticVersion = document.getElementById(staticId + thisIsWeapon);
+
+        // Prefer the weapon-specific static sprite, but fall back to the base
+        // static sprite so weapons that only supply an on-attack overlay still
+        // return to a valid standing image instead of the default static.
+        let staticVersion = thisIsWeapon
+            ? document.getElementById(staticId + thisIsWeapon)
+            : null;
+
+        if (!staticVersion || '' === staticVersion.getAttribute('src')) {
+            staticVersion = document.getElementById(staticId);
+        }
 
         if (staticVersion && '' !== staticVersion.getAttribute('src')) {
             currentCharacterImage.classList.remove('engage');
@@ -7676,6 +8123,9 @@ function addCharacterHit() {
                 chargeAttackTimeout = setTimeout(() => {
                     if (true === spaceIsPressed) {
                         document.querySelector('#map-character').dataset.charge = 'true';
+                        document
+                            .querySelector('.game-container')
+                            ?.classList.add('charging');
                         chargeAttackInProgress = true;
                     }
                 }, 1000);
@@ -7705,21 +8155,68 @@ function characterHitEvent(event) {
     const currentImageMapCharacter = mapChar.querySelector(
         '.map-character-icon.engage'
     );
+    // A non-default weapon may have its own per-weapon punch sprites uploaded
+    // (explore-weapon-images). Those win. When none exist for this
+    // character+weapon+direction we fall back to the base punch sprite and
+    // overlay the weapon's held image on top instead.
+    const hasWeaponSuffix = '' !== weaponType;
+    let usedWeaponSprite = false;
     let weaponAnimation = mapChar.querySelector(
         `#${window.mainCharacter}-${direction}-punch${weaponType}${attackType}`
     );
 
-    if (!weaponAnimation) {
+    if (!weaponAnimation || '' === weaponAnimation.getAttribute('src')) {
         weaponAnimation = mapChar.querySelector(
             `#${window.mainCharacter}-${direction}-punch${weaponType}`
         );
     }
+
+    // A weapon-specific punch sprite only "wins" (and suppresses the overlay)
+    // when it actually has an image. The per-weapon sprite slots are always
+    // rendered — even as empty `src=""` placeholders when no art was uploaded —
+    // so an existence check alone is not enough; we must confirm a real src.
+    if (
+        weaponAnimation &&
+        hasWeaponSuffix &&
+        '' !== weaponAnimation.getAttribute('src')
+    ) {
+        usedWeaponSprite = true;
+    } else if (
+        !weaponAnimation ||
+        '' === weaponAnimation.getAttribute('src')
+    ) {
+        // Fall back to the base (weapon-less) punch sprite so the character
+        // still animates a punch while the weapon overlay does the rest.
+        const basePunch =
+            mapChar.querySelector(
+                `#${window.mainCharacter}-${direction}-punch${attackType}`
+            ) ||
+            mapChar.querySelector(
+                `#${window.mainCharacter}-${direction}-punch`
+            );
+        weaponAnimation =
+            basePunch && '' !== basePunch.getAttribute('src')
+                ? basePunch
+                : null;
+    }
+
+    // Show the weapon overlay only when no per-weapon sprite is doing the job
+    // and the weapon actually has a held image to display.
+    const weaponHeldImage = weapon.dataset.heldImage || '';
+    const useWeaponOverlay =
+        false === usedWeaponSprite && hasWeaponSuffix && '' !== weaponHeldImage;
+    const weaponOverlay = weapon.querySelector('.weapon-overlay');
+    const weaponMotionClass = 'weapon-' + (weapon.dataset.motion || 'swing');
 
     if (false !== window.allowHit) {
         const manaPoints = document.querySelector(
             `#explore-points .mana-amount`
         );
         const currentPoints = manaPoints ? manaPoints.dataset.amount : 0;
+        // When a mana bar exists it doubles as ammo: projectile weapons (and
+        // spells) require it and consume it. With no mana bar, projectiles are
+        // unlimited.
+        const hasManaBar = null !== manaPoints;
 
         if (true === ['ShiftLeft', 'ShiftRight'].includes(event.code)) {
             shiftIsPressed = false;
@@ -7749,34 +8246,89 @@ function characterHitEvent(event) {
                         weapon.classList.add('charge-attack-engage');
                     }
 
-                    // Move weapon based on direction
-                    switch (direction) {
-                        case 'up':
-                            weaponPosTop = window.globalTopPositionOffset - ((currentImageMapCharacter.offsetHeight / 2) + 5);
-                            break;
-                        case 'down':
-                            weaponPosTop = window.globalTopPositionOffset + ((currentImageMapCharacter.offsetHeight / 2) + 5);
-                            break;
-                        case 'left':
-                            weaponPosLeft = window.globalLeftPositionOffset - ((currentImageMapCharacter.offsetWidth / 2) + 5);
-                            break;
-                        case 'right':
-                            weaponPosLeft = window.globalLeftPositionOffset + ((currentImageMapCharacter.offsetWidth / 2) + 5);
-                            break;
+                    // Move the (invisible) weapon hitbox out in the attack
+                    // direction to give melee reach — but NOT for overlay
+                    // weapons, which stay anchored at the character's center and
+                    // use the weapon image itself as the hit area (see the
+                    // hit-detection loop). This avoids the weapon lurching out
+                    // ~100px and snapping back mid-swing.
+                    if (false === useWeaponOverlay) {
+                        switch (direction) {
+                            case 'up':
+                                weaponPosTop = window.globalTopPositionOffset - ((currentImageMapCharacter.offsetHeight / 2) + 5);
+                                break;
+                            case 'down':
+                                weaponPosTop = window.globalTopPositionOffset + ((currentImageMapCharacter.offsetHeight / 2) + 5);
+                                break;
+                            case 'left':
+                                weaponPosLeft = window.globalLeftPositionOffset - ((currentImageMapCharacter.offsetWidth / 2) + 5);
+                                break;
+                            case 'right':
+                                weaponPosLeft = window.globalLeftPositionOffset + ((currentImageMapCharacter.offsetWidth / 2) + 5);
+                                break;
+                        }
                     }
 
-                    if (currentImageMapCharacter && weaponAnimation && '' !== weaponAnimation.getAttribute('src')) {
+                    // Play the character's punch sprite only when the overlay is
+                    // NOT driving the attack. With an overlay weapon equipped the
+                    // character keeps its normal (walking/standing) sprite while
+                    // the weapon image does the swinging.
+                    if (
+                        false === useWeaponOverlay &&
+                        currentImageMapCharacter &&
+                        weaponAnimation &&
+                        '' !== weaponAnimation.getAttribute('src')
+                    ) {
                         currentImageMapCharacter.classList.add('punched');
                         weaponAnimation.classList.add('engage');
 
                         playWeaponSound(weapon);
                     }
+
+                    // Drive the weapon overlay (swing/thrust/shoot) only when no
+                    // per-weapon sprite is handling the attack visually. The
+                    // overlay's lifecycle is driven entirely by its motion class
+                    // (independent of `.engage`, which resets on a shorter timer)
+                    // so the animation always plays to completion. It is removed
+                    // on animationend, which also hides the overlay via CSS.
+                    if (useWeaponOverlay && weaponOverlay) {
+                        // Restart the animation from the start on each attack.
+                        weapon.classList.remove(weaponMotionClass);
+                        void weapon.offsetWidth;
+                        weapon.classList.add(weaponMotionClass);
+
+                        weaponOverlay.addEventListener(
+                            'animationend',
+                            () => {
+                                weapon.classList.remove(weaponMotionClass);
+                                // End the charge glow when the swing ends.
+                                document
+                                    .querySelector('.game-container')
+                                    ?.classList.remove('charging');
+                            },
+                            { once: true }
+                        );
+
+                        // The punch sprite is skipped for overlay weapons, so
+                        // play the weapon sound here for attack feedback.
+                        playWeaponSound(weapon);
+                    }
                 }
 
-                // If spell, take manna away if above 0.
-                if (0 < currentPoints && true === isSpell) {
-                    // Use mana.
-                    const objectAmount = weapon.getAttribute('data-value');
+                // Consume mana/ammo when a mana bar exists — for spells and for
+                // projectile weapons alike. The cost is the weapon's data-value
+                // when set, otherwise 1 per shot.
+                if (
+                    hasManaBar &&
+                    0 < currentPoints &&
+                    (true === isSpell || 'yes' === weapon.dataset.projectile)
+                ) {
+                    // Use mana/ammo. Cost is the weapon's ammo cost if set,
+                    // else its data-value (spells), else 1 per shot.
+                    const objectAmount =
+                        parseInt(weapon.dataset.ammoCost, 10) ||
+                        parseInt(weapon.getAttribute('data-value'), 10) ||
+                        1;
 
                     // Remove amount to current points.
                     manaPoints.setAttribute(
@@ -7820,7 +8372,7 @@ function characterHitEvent(event) {
                                 'punched'
                             );
 
-                            weaponAnimation.classList.remove('engage');
+                            weaponAnimation?.classList.remove('engage');
 
                             // Reset weapon based on direction
                             switch (direction) {
@@ -7841,6 +8393,9 @@ function characterHitEvent(event) {
                             if (true === chargeAttackInProgress) {
                                 chargeAttackInProgress = false;
                                 mapChar.dataset.charge = 'false';
+                                document
+                                    .querySelector('.game-container')
+                                    ?.classList.remove('charging');
 
                                 // Remove highlight on point bar.
                                 setTimeout(() => {
@@ -7848,7 +8403,7 @@ function characterHitEvent(event) {
                                     currentImageMapCharacter.classList.remove(
                                         'punched'
                                     );
-                                    weaponAnimation.classList.remove('engage');
+                                    weaponAnimation?.classList.remove('engage');
                                 }, 700);
                             }
                         }
@@ -7864,7 +8419,7 @@ function characterHitEvent(event) {
                         currentImageMapCharacter.classList.remove(
                             'punched'
                         );
-                        weaponAnimation.classList.remove('engage');
+                        weaponAnimation?.classList.remove('engage');
 
                         // Reset weapon based on direction
                         switch (direction) {
@@ -7886,49 +8441,56 @@ function characterHitEvent(event) {
                     }, 500);
                 }
 
-                // For shooting.
+                // For shooting. Fire a projectile weapon or spell, but only if
+                // there is ammo — when a mana bar exists it must be above 0;
+                // with no mana bar, projectiles are unlimited.
                 if (
-                    0 < currentPoints &&
                     weapon &&
                     ('yes' === weapon.dataset.projectile ||
-                        true === isSpell)
+                        true === isSpell) &&
+                    (false === hasManaBar || 0 < currentPoints)
                 ) {
-                    let weaponLeft = parseInt(
-                        weapon.style.left.replace('px', '')
-                    );
-                    let weaponTop = parseInt(
-                        weapon.style.top.replace('px', '')
-                    );
-                    const weaponClass =
-                        true === isSpell ? '.magic-weapon' : '.map-weapon';
-                    const playerDirection =
-                        weapon.getAttribute('data-direction');
+                    if (true === isSpell) {
+                        // Spells keep the magic-weapon path.
+                        let weaponLeft = parseInt(
+                            weapon.style.left.replace('px', '')
+                        );
+                        let weaponTop = parseInt(
+                            weapon.style.top.replace('px', '')
+                        );
+                        const playerDirection =
+                            weapon.getAttribute('data-direction');
 
-                    switch (playerDirection) {
-                        case 'down':
-                            weaponTop = weaponTop + 10000;
-                            break;
-                        case 'top':
-                            weaponTop = weaponTop - 10000;
-                            break;
-                        case 'left':
-                            weaponLeft = weaponLeft - 10000;
-                            break;
-                        case 'right':
-                            weaponLeft = weaponLeft + 10000;
-                            break;
+                        switch (playerDirection) {
+                            case 'down':
+                                weaponTop = weaponTop + 10000;
+                                break;
+                            case 'top':
+                                weaponTop = weaponTop - 10000;
+                                break;
+                            case 'left':
+                                weaponLeft = weaponLeft - 10000;
+                                break;
+                            case 'right':
+                                weaponLeft = weaponLeft + 10000;
+                                break;
+                        }
+
+                        shootProjectile(
+                            weapon,
+                            weaponLeft,
+                            weaponTop,
+                            document,
+                            2,
+                            isSpell,
+                            '.magic-weapon',
+                            weapon.dataset.projectile
+                        );
+                    } else {
+                        // Weapon projectile: fly straight in the facing
+                        // direction, damaging enemies and stopping at walls.
+                        fireWeaponProjectile(weapon);
                     }
-
-                    shootProjectile(
-                        weapon,
-                        weaponLeft,
-                        weaponTop,
-                        document,
-                        2,
-                        isSpell,
-                        weaponClass,
-                        weapon.dataset.projectile
-                    );
                 }
             }
         }
@@ -8947,10 +9509,12 @@ function moveCharacter(mapCharacter, newTop, newLeft, gradual, cutscene, areaCut
                     '.map-character-icon.engage',
                 );
 
-                const newStaticImage = document.getElementById(
+                // Prefer the weapon-specific static sprite, falling back to the
+                // base static sprite for overlay-only weapons.
+                const newStaticImage = getCharacterSprite(
                     currentMovementImage.id.replace(
                         window.mainCharacter,
-                        window.mainCharacter + '-static' + window.currentWeapon,
+                        window.mainCharacter + '-static',
                     ),
                 );
 
@@ -8996,8 +9560,8 @@ function directCharacter(topDown, leftRight, mapCharacter) {
     );
 
     if (direction !== window.currentCharacterAutoDirection) {
-        const newImage = mapCharacter.querySelector(
-            '#' + window.mainCharacter + '-' + direction + window.currentWeapon
+        const newImage = getCharacterSprite(
+            window.mainCharacter + '-' + direction
         );
 
         window.currentCharacterAutoDirection = direction;

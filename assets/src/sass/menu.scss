@@ -1,3 +1,95 @@
+// Shared pixel-RPG popup styling (used by storage, settings and characters).
+@mixin rpg-panel {
+  background: linear-gradient(180deg, #2a3042 0%, #1b1f2b 100%);
+  border: 3px solid #0c0e15;
+  border-radius: 10px;
+  box-shadow: inset 0 0 0 2px #414863, 0 14px 44px rgba(0, 0, 0, .6);
+  color: #e6e8ef;
+}
+
+@mixin rpg-close {
+  align-items: center;
+  background: #0c0e15;
+  border: 2px solid #414863;
+  border-radius: 5px;
+  color: #e6e8ef;
+  cursor: pointer;
+  display: flex;
+  font-size: 14px;
+  height: 30px;
+  justify-content: center;
+  line-height: 1;
+  position: absolute;
+  right: .7rem;
+  top: .7rem;
+  transition: all .12s;
+  width: 30px;
+  z-index: 3;
+
+  &:hover {
+    background: #e0574f;
+    border-color: #e0574f;
+    color: #fff;
+  }
+}
+
+@mixin rpg-button {
+  background: #333a50;
+  border: 2px solid #414863;
+  border-radius: 6px;
+  color: #e6e8ef;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: .3px;
+  padding: .55rem 1.1rem;
+  transition: filter .12s, transform .1s;
+
+  &:hover {
+    filter: brightness(1.18);
+    transform: translateY(-1px);
+  }
+}
+
+@mixin rpg-title {
+  color: #f0c060;
+  font-size: 1.15rem;
+  letter-spacing: .5px;
+  margin: 0 0 1rem;
+  text-align: center;
+}
+
+@mixin rpg-range {
+  appearance: none;
+  -webkit-appearance: none;
+  background: #12151f;
+  border: 2px solid #414863;
+  border-radius: 6px;
+  cursor: pointer;
+  height: 12px;
+  outline: none;
+  width: 190px;
+
+  &::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    background: #f0c060;
+    border: 2px solid #0c0e15;
+    border-radius: 3px;
+    height: 22px;
+    width: 14px;
+  }
+
+  &::-moz-range-thumb {
+    background: #f0c060;
+    border: 2px solid #0c0e15;
+    border-radius: 3px;
+    height: 22px;
+    width: 14px;
+  }
+}
+
 #characters {
   left: 50%;
   position: fixed;
@@ -29,14 +121,12 @@
   }
 
   .characters-content {
-    background: white;
-    border: 1px solid black;
-    border-radius: 10px;
+    @include rpg-panel;
     display: none;
-    padding: 1rem;
+    padding: 2.4rem 1.4rem 1.4rem;
 
     h2 {
-      margin-top: 0;
+      @include rpg-title;
     }
 
     .characters-form {
@@ -46,28 +136,34 @@
       width: 100%;
 
       .close-settings {
-        cursor: pointer;
-        position: absolute;
-        right: .25rem;
-        top: .25rem;
+        @include rpg-close;
       }
 
       .character-list {
         display: flex;
-        gap: 1rem;
+        flex-wrap: wrap;
+        gap: .75rem;
+        justify-content: center;
 
         .character-item {
           align-items: center;
-          border: 4px solid white;
+          background: radial-gradient(circle at 50% 30%, #232838 0%, #12151f 100%);
+          border: 3px solid #2c3346;
+          border-radius: 8px;
+          box-shadow: inset 0 2px 5px rgba(0, 0, 0, .45);
+          color: #e6e8ef;
           cursor: pointer;
           display: flex;
           flex-direction: column;
-          font-weight: bold;
+          font-weight: 700;
           justify-content: flex-end;
-          width: 150px;
+          padding: .5rem;
+          transition: border-color .12s, transform .1s;
+          width: 140px;
 
           &:hover {
-            border-radius: 4px;
+            border-color: #f0c060;
+            transform: translateY(-2px);
           }
 
           .character-images {
@@ -87,7 +183,15 @@
       }
 
       a {
+        color: #9aa0b3;
         margin-top: 1rem;
+        text-align: center;
+        text-decoration: none;
+        transition: color .12s;
+
+        &:hover {
+          color: #f0c060;
+        }
       }
     }
   }
@@ -126,35 +230,56 @@
   }
 
   .setting-content {
-    background: white;
-    border: 1px solid black;
-    border-radius: 10px;
+    @include rpg-panel;
     display: none;
-    padding: 1rem;
+    padding: 2.4rem 1.4rem 1.4rem;
 
     h2 {
-      margin-top: 0;
+      @include rpg-title;
     }
 
     .settings-form {
       display: flex;
       flex-direction: column;
+      gap: 1rem;
       position: relative;
       width: 100%;
 
       .close-settings {
-        cursor: pointer;
-        position: absolute;
-        right: .25rem;
-        top: .25rem;
+        @include rpg-close;
       }
 
       label {
-        margin-bottom: 1rem;
+        align-items: center;
+        color: #c8ccda;
+        display: flex;
+        font-weight: 600;
+        gap: 1rem;
+        justify-content: space-between;
+        margin: 0;
+
+        input[type="range"] {
+          @include rpg-range;
+        }
+      }
+
+      #update-settings {
+        @include rpg-button;
+        background: #3a7a3d;
+        border-color: #63c667;
+        margin-top: .4rem;
       }
 
       a {
-        margin-top: 1rem;
+        color: #9aa0b3;
+        margin-top: .3rem;
+        text-align: center;
+        text-decoration: none;
+        transition: color .12s;
+
+        &:hover {
+          color: #f0c060;
+        }
       }
     }
   }
@@ -192,18 +317,19 @@
     }
   }
 
+  // Pixel-RPG inventory panel.
   .storage-content {
-    background: white;
-    border: 1px solid black;
+    background: linear-gradient(180deg, #2a3042 0%, #1b1f2b 100%);
+    border: 3px solid #0c0e15;
     border-radius: 10px;
+    box-shadow: inset 0 0 0 2px #414863, 0 14px 44px rgba(0, 0, 0, .6);
+    color: #e6e8ef;
     display: none;
-    padding: 1rem;
+    font-family: inherit;
     margin: auto;
-    width: 600px;
-
-    h2 {
-      margin-top: 0;
-    }
+    max-width: 680px;
+    padding: 0;
+    width: 92vw;
 
     .storage-form {
       display: flex;
@@ -212,66 +338,235 @@
       width: 100%;
 
       .close-settings {
+        align-items: center;
+        background: #0c0e15;
+        border: 2px solid #414863;
+        border-radius: 5px;
+        color: #e6e8ef;
         cursor: pointer;
+        display: flex;
+        font-size: 14px;
+        height: 30px;
+        justify-content: center;
+        line-height: 1;
         position: absolute;
-        right: .25rem;
-        top: .25rem;
+        right: .7rem;
+        top: .7rem;
+        transition: all .12s;
+        width: 30px;
+        z-index: 3;
+
+        &:hover {
+          background: #e0574f;
+          border-color: #e0574f;
+          color: #fff;
+        }
       }
 
       .retrieval-points {
-        .menu-tabs {
-          display: flex;
-          gap: 2rem;
-          border: 1px solid black;
-          padding: 1rem;
+        display: flex;
+        flex-direction: column;
 
-          &>div {
+        // Tab bar.
+        .menu-tabs {
+          border: 0;
+          display: flex;
+          gap: .35rem;
+          padding: 1rem 3.2rem .1rem 1rem;
+
+          & > div {
+            background: #12151f;
+            border: 2px solid #414863;
+            border-bottom: 0;
+            border-radius: 7px 7px 0 0;
+            color: #9aa0b3;
             cursor: pointer;
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: .4px;
+            padding: .5rem 1.1rem;
+            transition: color .12s, background .12s;
+            user-select: none;
+
+            &:hover {
+              color: #e6e8ef;
+            }
+
+            &.engage {
+              background: linear-gradient(180deg, #333a50 0%, #262c3d 100%);
+              box-shadow: inset 0 3px 0 #f0c060;
+              color: #f0c060;
+            }
           }
         }
 
+        // Slot grid.
         .storage-menu {
-          border-left: 1px solid black;
-          border-bottom: 1px solid black;
+          background: #12151f;
+          border: 2px solid #414863;
+          border-radius: 0 8px 8px 8px;
           display: none;
-          flex-wrap: nowrap;
-
-          &[data-menu="weapons"] {
-            .storage-item {
-              img {
-                object-fit: contain;
-                width: 80px;
-              }
-            }
-          }
+          gap: .5rem;
+          grid-template-columns: repeat(6, 1fr);
+          margin: 0 1rem;
+          padding: .75rem;
 
           &.engage {
-            display: flex;
+            display: grid;
+          }
+
+          // The default (fallback) weapon stays in the DOM but is never shown
+          // in the grid.
+          .storage-item.default-weapon {
+            display: none;
           }
 
           .storage-item {
-            border-top: 1px solid black;
-            border-right: 1px solid black;
-            padding: 1rem;
-            width: 100%;
+            align-items: center;
+            aspect-ratio: 1 / 1;
+            background: radial-gradient(circle at 50% 35%, #232838 0%, #171b27 100%);
+            border: 2px solid #2c3346;
+            border-radius: 7px;
+            box-shadow: inset 0 2px 5px rgba(0, 0, 0, .45);
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            overflow: visible;
+            padding: 5px;
+            position: relative;
+            transition: border-color .1s, box-shadow .1s, transform .1s;
+            width: auto;
 
-            &:before {
+            img {
+              height: auto !important;
+              image-rendering: pixelated;
+              max-height: 100%;
+              max-width: 100%;
+              object-fit: contain;
+              width: auto !important;
+            }
+
+            // Stack count badge.
+            &[data-count]:not([data-count=""])::before {
+              background: #0c0e15;
+              border: 1px solid #414863;
+              border-radius: 4px;
+              bottom: 3px;
+              color: #f0c060;
               content: attr(data-count);
+              font-size: 11px;
+              font-weight: 700;
+              line-height: 1;
+              padding: 1px 4px;
+              position: absolute;
+              right: 3px;
             }
 
-            &[data-type="health"] {
-              &:after {
-                content: '♥';
-                font-size: 2rem;
+            &[data-empty="false"]:hover {
+              border-color: #6b74a0;
+              transform: translateY(-1px);
+            }
+
+            // Selected slot.
+            &.engage {
+              border-color: #f0c060;
+              box-shadow: 0 0 0 2px #f0c060, inset 0 2px 5px rgba(0, 0, 0, .45);
+            }
+
+            // Equipped slot.
+            &.equipped {
+              border-color: #63c667;
+
+              &::after {
+                background: #63c667;
+                border-radius: 3px;
+                color: #0c0e15;
+                content: 'E';
+                font-size: 10px;
+                font-weight: 800;
+                left: 3px;
+                line-height: 1;
+                padding: 1px 4px;
+                position: absolute;
+                top: 3px;
               }
             }
 
-            &[data-type="mana"] {
-              &:after {
-                content: '⁂';
-                font-size: 2rem;
-              }
+            // Consumable icons (Items tab).
+            &[data-type="health"]::after {
+              color: #e0574f;
+              content: '♥';
+              font-size: 1.8rem;
             }
+
+            &[data-type="mana"]::after {
+              color: #6ab0f0;
+              content: '⁂';
+              font-size: 1.8rem;
+            }
+          }
+        }
+
+        // Detail + action bar for the selected item.
+        #item-description {
+          align-items: center;
+          border-top: 2px solid #414863;
+          display: flex;
+          flex-wrap: wrap;
+          gap: .5rem;
+          margin: .9rem 0 0;
+          padding: .85rem 1rem 1rem;
+
+          &:empty {
+            display: none;
+          }
+
+          h2,
+          h3,
+          p,
+          span {
+            color: #c8ccda;
+            margin: 0 .6rem 0 0;
+          }
+
+          h2,
+          h3 {
+            color: #f0c060;
+            font-size: 1rem;
+          }
+        }
+
+        .storage-item-button {
+          background: #333a50;
+          border: 2px solid #414863;
+          border-radius: 6px;
+          color: #e6e8ef;
+          cursor: pointer;
+          font-family: inherit;
+          font-size: 13px;
+          font-weight: 700;
+          letter-spacing: .3px;
+          margin-left: auto;
+          padding: .5rem 1rem;
+          transition: filter .12s, transform .1s;
+
+          & + .storage-item-button {
+            margin-left: 0;
+          }
+
+          &:hover {
+            filter: brightness(1.18);
+            transform: translateY(-1px);
+          }
+
+          &.is-equip {
+            background: #3a7a3d;
+            border-color: #63c667;
+          }
+
+          &.is-drop {
+            background: #7a3634;
+            border-color: #e0574f;
           }
         }
       }

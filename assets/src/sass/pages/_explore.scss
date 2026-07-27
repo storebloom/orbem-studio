@@ -801,6 +801,41 @@ html {
       position: relative;
       width: 5000px;
 
+      // Charged-attack glow. A pulsating colored drop-shadow that haloes the
+      // character and/or weapon image without tinting the artwork itself. Which
+      // one glows is set per character via data-charge-target; the color comes
+      // from --charge-glow-color (defaults when unset). The whole effect is
+      // gated on the `charging` class, which spans the build-up through the end
+      // of the release swing (JS clears it on the swing's animationend), so the
+      // glow finishes exactly when the attack does.
+      &.charging[data-charge-target="character"],
+      &.charging[data-charge-target="all"] {
+        #map-character .map-character-icon.engage {
+          animation: chargeGlow 0.7s infinite alternate;
+        }
+      }
+
+      // The weapon glow animates `filter` on the .map-weapon container (not the
+      // .weapon-overlay), so it haloes the weapon image without taking over the
+      // overlay's `animation` property — otherwise it would override the swing
+      // and stall the attack.
+      //
+      // The filter creates a new stacking context on .map-weapon, which would
+      // otherwise collapse the weapon's effective z-index to auto (0) and drop
+      // it behind the character for left/right/down. Set an explicit z-index so
+      // the weapon keeps its normal front-of-character stacking (up stays
+      // behind the head).
+      &.charging[data-charge-target="weapon"] .map-weapon,
+      &.charging[data-charge-target="all"] .map-weapon {
+        animation: chargeGlow 0.7s infinite alternate;
+        z-index: 2;
+      }
+
+      &.charging[data-charge-target="weapon"] .map-weapon[data-direction="top"],
+      &.charging[data-charge-target="all"] .map-weapon[data-direction="top"] {
+        z-index: 0;
+      }
+
       .container-image {
         will-change: transform;
         backface-visibility: hidden;
@@ -1342,12 +1377,6 @@ html {
           }
         }
 
-        &[data-charge="true"] {
-         .map-character-icon.engage {
-           filter: sepia(1) hue-rotate(227deg) saturate(6) brightness(0.7) contrast(3.5);
-           animation: flashColor 1s infinite alternate;
-         }
-        }
 
         @media only screen and (max-width: 480px) {
           width: 300px;
@@ -1447,8 +1476,313 @@ html {
 
       .map-weapon,
       .magic-weapon {
-        background: blue;
+        background: transparent;
         position: absolute;
+
+        // Weapon image held/swung by the player. Hidden by default; shown at
+        // rest for "always" weapons and during an attack. Size comes from the
+        // weapon's held width/height (set inline), with a fallback here.
+        // --weapon-orient rotates/flips the source image so it points the way
+        // the character faces (orientation map below).
+        .weapon-overlay {
+          display: none;
+          height: auto;
+          left: 50%;
+          max-width: none;
+          pointer-events: none;
+          position: absolute;
+          top: 50%;
+          // --weapon-anchor places the weapon's grip on the follow point
+          // (character center) so swings pivot there; defaults to centering.
+          // It composes the outward range offset with the per-facing grip
+          // anchor (--weapon-grip-anchor, range-free; reused by On Hip).
+          --weapon-anchor: var(--weapon-range-offset, translate(0, 0)) var(--weapon-grip-anchor, translate(-50%, -50%));
+          transform: var(--weapon-anchor) var(--weapon-orient, rotate(0deg));
+          transform-origin: 50% 50%;
+          width: 160px;
+          z-index: 2;
+        }
+
+        // Optional fired projectile image. Hidden on the held weapon; shown
+        // (via JS) only on the flying projectile clone when configured.
+        // --projectile-orient rotates it from its source facing to the fire
+        // direction (generated below from the shared orientation matrix).
+        .weapon-projectile {
+          display: none;
+          left: 50%;
+          pointer-events: none;
+          position: absolute;
+          top: 50%;
+          transform: translate(-50%, -50%) var(--projectile-orient, rotate(0deg));
+          z-index: 2;
+        }
+
+        // Never render a broken/empty image.
+        .weapon-overlay[src=""],
+        .weapon-overlay:not([src]) {
+          display: none !important;
+        }
+
+        &[data-visibility="always"] .weapon-overlay {
+          display: block;
+        }
+
+        // Shown during an attack only when the overlay is actually driving the
+        // visual (no per-weapon sprite took priority). The motion class is
+        // added on attack and removed on animationend, so the overlay stays
+        // visible for the full animation — independent of `.engage`, which
+        // resets on a shorter timer. Gating on the motion class also means it
+        // never doubles up on a sprite attack.
+        &.weapon-swing .weapon-overlay,
+        &.weapon-thrust .weapon-overlay,
+        &.weapon-shoot .weapon-overlay {
+          display: block;
+        }
+
+        // Orientation: rotate/flip the source image from the direction it faces
+        // in the artwork (data-facing) to the direction the character faces
+        // (data-direction). Opposite-axis pairs mirror; perpendicular pairs
+        // rotate 90°. data-direction uses "top" for up.
+        // Cardinal facings use flips for the 180° (opposite) case; diagonal
+        // facings are always odd multiples of 45° from a cardinal direction, so
+        // they are pure rotations (delta = target angle − source angle, with
+        // right = 0°, down = 90°, left = 180°, up = 270° clockwise).
+        $weapon-orient: (
+          up:           (top: rotate(0deg),    down: scaleY(-1),      left: rotate(-90deg),  right: rotate(90deg)),
+          down:         (top: scaleY(-1),      down: rotate(0deg),    left: rotate(90deg),   right: rotate(-90deg)),
+          left:         (top: rotate(90deg),   down: rotate(-90deg),  left: rotate(0deg),    right: scaleX(-1)),
+          right:        (top: rotate(-90deg),  down: rotate(90deg),   left: scaleX(-1),      right: rotate(0deg)),
+          bottom-right: (top: rotate(-135deg), down: rotate(45deg),   left: rotate(135deg),  right: rotate(-45deg)),
+          bottom-left:  (top: rotate(135deg),  down: rotate(-45deg),  left: rotate(45deg),   right: rotate(-135deg)),
+          top-left:     (top: rotate(45deg),   down: rotate(-135deg), left: rotate(-45deg),  right: rotate(135deg)),
+          top-right:    (top: rotate(-45deg),  down: rotate(135deg),  left: rotate(-135deg), right: rotate(45deg)),
+        );
+        @each $face, $dirs in $weapon-orient {
+          @each $dir, $transform in $dirs {
+            &[data-facing="#{$face}"][data-direction="#{$dir}"] {
+              --weapon-orient: #{$transform};
+            }
+          }
+        }
+
+        // Same matrix, keyed on the projectile's facing, so a fired projectile
+        // points the way it is shot (the fire direction is data-direction).
+        @each $face, $dirs in $weapon-orient {
+          @each $dir, $transform in $dirs {
+            &[data-projectile-facing="#{$face}"][data-direction="#{$dir}"] {
+              --projectile-orient: #{$transform};
+            }
+          }
+        }
+
+        // Range offset: a screen-space translate pushing the weapon out from
+        // the character's center in the facing direction by --weapon-range
+        // (set inline from the weapon's Range field, default 0). Baked into
+        // --weapon-anchor below so it applies to the resting pose and every
+        // attack (position and pivot) alike.
+        &[data-direction="top"]   { --weapon-range-offset: translate(0, calc(-1 * var(--weapon-range, 0px))); }
+        &[data-direction="down"]  { --weapon-range-offset: translate(0, var(--weapon-range, 0px)); }
+        &[data-direction="left"]  { --weapon-range-offset: translate(calc(-1 * var(--weapon-range, 0px)), 0); }
+        &[data-direction="right"] { --weapon-range-offset: translate(var(--weapon-range, 0px), 0); }
+
+        // Grip pivot + anchor: the transform-origin is the weapon's handle
+        // (opposite the direction the artwork points) and --weapon-anchor
+        // translates the image so that handle lands on the follow point
+        // (character center), then pushes out by the range offset. Swings
+        // rotate around the hand, which sits `range` px out from center.
+        &[data-facing="up"] .weapon-overlay {
+          transform-origin: 50% 100%;
+          --weapon-grip-anchor: translate(-50%, -100%);
+        }
+        &[data-facing="down"] .weapon-overlay {
+          transform-origin: 50% 0%;
+          --weapon-grip-anchor: translate(-50%, 0%);
+        }
+        &[data-facing="left"] .weapon-overlay {
+          transform-origin: 100% 50%;
+          --weapon-grip-anchor: translate(-100%, -50%);
+        }
+        &[data-facing="right"] .weapon-overlay {
+          transform-origin: 0% 50%;
+          --weapon-grip-anchor: translate(0%, -50%);
+        }
+
+        // Diagonal facings: the handle is the corner opposite the point.
+        &[data-facing="top-right"] .weapon-overlay {
+          transform-origin: 0% 100%;
+          --weapon-grip-anchor: translate(0%, -100%);
+        }
+        &[data-facing="top-left"] .weapon-overlay {
+          transform-origin: 100% 100%;
+          --weapon-grip-anchor: translate(-100%, -100%);
+        }
+        &[data-facing="bottom-right"] .weapon-overlay {
+          transform-origin: 0% 0%;
+          --weapon-grip-anchor: translate(0%, 0%);
+        }
+        &[data-facing="bottom-left"] .weapon-overlay {
+          transform-origin: 100% 0%;
+          --weapon-grip-anchor: translate(-100%, 0%);
+        }
+
+        // Down-facing orientation, used by the On Back / On Hip resting
+        // positions which always point the weapon down regardless of the
+        // direction the character faces. Mirrors the orient map's "down" column
+        // for both cardinal and diagonal facings.
+        &[data-facing="up"] .weapon-overlay           { --weapon-orient-down: scaleY(-1); }
+        &[data-facing="down"] .weapon-overlay         { --weapon-orient-down: rotate(0deg); }
+        &[data-facing="left"] .weapon-overlay         { --weapon-orient-down: rotate(-90deg); }
+        &[data-facing="right"] .weapon-overlay        { --weapon-orient-down: rotate(90deg); }
+        &[data-facing="bottom-right"] .weapon-overlay { --weapon-orient-down: rotate(45deg); }
+        &[data-facing="bottom-left"] .weapon-overlay  { --weapon-orient-down: rotate(-45deg); }
+        &[data-facing="top-left"] .weapon-overlay     { --weapon-orient-down: rotate(-135deg); }
+        &[data-facing="top-right"] .weapon-overlay    { --weapon-orient-down: rotate(135deg); }
+
+        // Resting position (visible only for always-shown weapons). On Back
+        // centers the weapon on the character pointing down; On Hip is the same
+        // dropped to hip level. Both pivot about the weapon's center. In Hand
+        // keeps the default grip-anchored, facing-direction pose.
+        //
+        // All resting rules are gated to the idle state ($idle = no attack
+        // motion) so an attack always uses the normal in-hand position, pivot,
+        // and z-index regardless of where the weapon rests.
+        $idle: ":not(.weapon-swing):not(.weapon-thrust):not(.weapon-shoot)";
+
+        // On Back: centered on the character, pointing down, pivoting about
+        // the weapon's own center.
+        &[data-resting="on-back"]#{$idle} .weapon-overlay {
+          --weapon-anchor: translate(-50%, -50%);
+          transform-origin: 50% 50%;
+          transform: translate(-50%, -50%) var(--weapon-orient-down, rotate(0deg));
+        }
+
+        // On Hip: weapon points down, hanging from the character's vertical
+        // center (grip/top edge at center) and shifted horizontally per
+        // direction. Keeps the per-facing grip transform-origin so orient-down
+        // pivots at the handle (which becomes the top of the hanging weapon).
+        // --weapon-hip-align is the per-direction horizontal shift (below);
+        // --character-width / --weapon-hip-halfwidth are set inline so the
+        // weapon's edge aligns to the character's edge.
+        &[data-resting="on-hip"]#{$idle} .weapon-overlay {
+          transform: var(--weapon-hip-align, translate(0, 0)) var(--weapon-grip-anchor, translate(-50%, -50%)) var(--weapon-orient-down, rotate(0deg));
+        }
+        // Down/Up put the weapon's center on the character's left/right edge,
+        // then nudge it back in toward center by a quarter of the weapon's width.
+        &[data-resting="on-hip"]#{$idle}[data-direction="down"] .weapon-overlay {
+          --weapon-hip-align: translateX(calc(var(--weapon-hip-halfwidth, 0px) / 2 - var(--character-width, 90px) / 2));
+        }
+        &[data-resting="on-hip"]#{$idle}[data-direction="top"] .weapon-overlay {
+          --weapon-hip-align: translateX(calc(var(--character-width, 90px) / 2 - var(--weapon-hip-halfwidth, 0px) / 2));
+        }
+
+        // On Back z-index: facing up shows the back (on top), others behind.
+        &[data-resting="on-back"]#{$idle}[data-direction="top"]:not(.protection):not(.fire) {
+          z-index: 3;
+        }
+        @each $dir in (down, left, right) {
+          &[data-resting="on-back"]#{$idle}[data-direction="#{$dir}"]:not(.protection):not(.fire) {
+            z-index: 0;
+          }
+        }
+
+        // On Hip z-index: down/right sit on top of the character, left/up behind.
+        @each $dir in (down, right) {
+          &[data-resting="on-hip"]#{$idle}[data-direction="#{$dir}"]:not(.protection):not(.fire) {
+            z-index: 3;
+          }
+        }
+        @each $dir in (left, top) {
+          &[data-resting="on-hip"]#{$idle}[data-direction="#{$dir}"]:not(.protection):not(.fire) {
+            z-index: 0;
+          }
+        }
+
+        // In Hand: facing up, the held weapon sits behind the character (behind
+        // the head), matching the up-swing.
+        &[data-resting="in-hand"]#{$idle}[data-direction="top"]:not(.protection):not(.fire) {
+          z-index: 0;
+        }
+
+        // Swing windup/end: screen-space rotations (on top of the orientation)
+        // marking where the slash starts and ends, relative to the facing
+        // direction. The end overshoots the facing direction by 45° so the
+        // slash follows through past the target instead of stopping on it.
+        &[data-direction="right"] { --weapon-swing-windup: -90deg; --weapon-swing-end: 45deg; }
+        &[data-direction="left"]  { --weapon-swing-windup: 90deg;  --weapon-swing-end: -45deg; }
+        &[data-direction="down"]  { --weapon-swing-windup: 90deg;  --weapon-swing-end: -45deg; }
+        &[data-direction="top"]   { --weapon-swing-windup: 90deg;  --weapon-swing-end: -45deg; }
+
+        // Attack motions. Swing is direction-agnostic (orientation already
+        // points the weapon); thrust/shoot push in screen space per direction.
+        // Not gated on `.engage` so each animation runs to completion.
+        &.weapon-swing .weapon-overlay {
+          animation: weapon-swing 0.225s ease-out forwards;
+        }
+
+        @each $dir in (down, top, left, right) {
+          &.weapon-thrust[data-direction="#{$dir}"] .weapon-overlay {
+            animation: weapon-thrust-#{$dir} 0.35s ease-out;
+          }
+
+          &.weapon-shoot[data-direction="#{$dir}"] .weapon-overlay {
+            animation: weapon-shoot-#{$dir} 0.3s ease-out;
+          }
+        }
+
+        // Swing: an overhead chop. Starts raised (the windup rotation, in
+        // screen space on top of the orientation) and slashes through the
+        // facing direction, following through 45° past it (the end rotation).
+        // `forwards` holds that final pose until the overlay is hidden.
+        @keyframes weapon-swing {
+          0%   { transform: var(--weapon-anchor, translate(-50%, -50%)) rotate(var(--weapon-swing-windup, -90deg)) var(--weapon-orient, rotate(0deg)); }
+          100% { transform: var(--weapon-anchor, translate(-50%, -50%)) rotate(var(--weapon-swing-end, 0deg)) var(--weapon-orient, rotate(0deg)); }
+        }
+
+        // Thrust: push outward in screen space (leading translate, applied
+        // last) and pull back, keeping the grip anchored and the image
+        // oriented.
+        @keyframes weapon-thrust-down {
+          0%   { transform: translate(0, 0)    var(--weapon-anchor, translate(-50%, -50%)) var(--weapon-orient, rotate(0deg)); }
+          50%  { transform: translate(0, 45px) var(--weapon-anchor, translate(-50%, -50%)) var(--weapon-orient, rotate(0deg)); }
+          100% { transform: translate(0, 0)    var(--weapon-anchor, translate(-50%, -50%)) var(--weapon-orient, rotate(0deg)); }
+        }
+        @keyframes weapon-thrust-top {
+          0%   { transform: translate(0, 0)     var(--weapon-anchor, translate(-50%, -50%)) var(--weapon-orient, rotate(0deg)); }
+          50%  { transform: translate(0, -45px) var(--weapon-anchor, translate(-50%, -50%)) var(--weapon-orient, rotate(0deg)); }
+          100% { transform: translate(0, 0)     var(--weapon-anchor, translate(-50%, -50%)) var(--weapon-orient, rotate(0deg)); }
+        }
+        @keyframes weapon-thrust-left {
+          0%   { transform: translate(0, 0)     var(--weapon-anchor, translate(-50%, -50%)) var(--weapon-orient, rotate(0deg)); }
+          50%  { transform: translate(-45px, 0) var(--weapon-anchor, translate(-50%, -50%)) var(--weapon-orient, rotate(0deg)); }
+          100% { transform: translate(0, 0)     var(--weapon-anchor, translate(-50%, -50%)) var(--weapon-orient, rotate(0deg)); }
+        }
+        @keyframes weapon-thrust-right {
+          0%   { transform: translate(0, 0)    var(--weapon-anchor, translate(-50%, -50%)) var(--weapon-orient, rotate(0deg)); }
+          50%  { transform: translate(45px, 0) var(--weapon-anchor, translate(-50%, -50%)) var(--weapon-orient, rotate(0deg)); }
+          100% { transform: translate(0, 0)    var(--weapon-anchor, translate(-50%, -50%)) var(--weapon-orient, rotate(0deg)); }
+        }
+
+        // Shoot: a short recoil opposite the facing direction.
+        @keyframes weapon-shoot-down {
+          0%   { transform: translate(0, 0)    var(--weapon-anchor, translate(-50%, -50%)) var(--weapon-orient, rotate(0deg)); }
+          40%  { transform: translate(0, -8px) var(--weapon-anchor, translate(-50%, -50%)) var(--weapon-orient, rotate(0deg)); }
+          100% { transform: translate(0, 0)    var(--weapon-anchor, translate(-50%, -50%)) var(--weapon-orient, rotate(0deg)); }
+        }
+        @keyframes weapon-shoot-top {
+          0%   { transform: translate(0, 0)   var(--weapon-anchor, translate(-50%, -50%)) var(--weapon-orient, rotate(0deg)); }
+          40%  { transform: translate(0, 8px) var(--weapon-anchor, translate(-50%, -50%)) var(--weapon-orient, rotate(0deg)); }
+          100% { transform: translate(0, 0)   var(--weapon-anchor, translate(-50%, -50%)) var(--weapon-orient, rotate(0deg)); }
+        }
+        @keyframes weapon-shoot-left {
+          0%   { transform: translate(0, 0)   var(--weapon-anchor, translate(-50%, -50%)) var(--weapon-orient, rotate(0deg)); }
+          40%  { transform: translate(8px, 0) var(--weapon-anchor, translate(-50%, -50%)) var(--weapon-orient, rotate(0deg)); }
+          100% { transform: translate(0, 0)   var(--weapon-anchor, translate(-50%, -50%)) var(--weapon-orient, rotate(0deg)); }
+        }
+        @keyframes weapon-shoot-right {
+          0%   { transform: translate(0, 0)    var(--weapon-anchor, translate(-50%, -50%)) var(--weapon-orient, rotate(0deg)); }
+          40%  { transform: translate(-8px, 0) var(--weapon-anchor, translate(-50%, -50%)) var(--weapon-orient, rotate(0deg)); }
+          100% { transform: translate(0, 0)    var(--weapon-anchor, translate(-50%, -50%)) var(--weapon-orient, rotate(0deg)); }
+        }
 
         &[data-weapon="fist"] {
           z-index: 1;
@@ -1499,6 +1833,14 @@ html {
           }
 
           &.charge-attack-engage {
+            z-index: 0;
+          }
+
+          // On any up-facing attack (swing/thrust/shoot), drop the weapon below
+          // the character so it passes behind the head, not over it.
+          &.weapon-swing,
+          &.weapon-thrust,
+          &.weapon-shoot {
             z-index: 0;
           }
         }
@@ -1675,12 +2017,19 @@ html {
       }
     }
 
-    @keyframes flashColor {
+    // Pulsating charged-attack glow. Layered colored drop-shadows halo the
+    // opaque pixels of the (transparent PNG) artwork, growing and shrinking
+    // without changing the artwork's own colors.
+    @keyframes chargeGlow {
       0% {
-        filter: none;
+        filter:
+          drop-shadow(0 0 2px var(--charge-glow-color, #00e5ff))
+          drop-shadow(0 0 4px var(--charge-glow-color, #00e5ff));
       }
       100% {
-        filter: sepia(1) hue-rotate(227deg) saturate(6) brightness(0.7) contrast(3.5);
+        filter:
+          drop-shadow(0 0 10px var(--charge-glow-color, #00e5ff))
+          drop-shadow(0 0 20px var(--charge-glow-color, #00e5ff));
       }
     }
 
