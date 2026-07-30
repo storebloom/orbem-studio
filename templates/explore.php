@@ -255,6 +255,10 @@ $orbem_studio_is_area_cutscene             = $orbem_studio_explore_area ? get_po
 $orbem_studio_explore_area_map             = $orbem_studio_explore_area ? get_post_meta($orbem_studio_explore_area->ID, 'explore-map', true) : '';
 $orbem_studio_explore_area_height          = $orbem_studio_explore_area ? get_post_meta($orbem_studio_explore_area->ID, 'explore-area-height', true) : '';
 $orbem_studio_explore_area_width           = $orbem_studio_explore_area ? get_post_meta($orbem_studio_explore_area->ID, 'explore-area-width', true) : '';
+$orbem_studio_area_scale_pct               = $orbem_studio_explore_area ? intval(get_post_meta($orbem_studio_explore_area->ID, 'explore-area-scale', true)) : 0;
+$orbem_studio_area_scale_pct               = 0 < $orbem_studio_area_scale_pct ? $orbem_studio_area_scale_pct : 100;
+$orbem_studio_area_scale                   = $orbem_studio_area_scale_pct / 100;
+$orbem_studio_area_scaled                  = 100 !== $orbem_studio_area_scale_pct;
 $orbem_studio_explore_area_start_top       = $orbem_studio_explore_area ? get_post_meta($orbem_studio_explore_area->ID, 'explore-start-top', true) : '';
 $orbem_studio_explore_area_start_left      = $orbem_studio_explore_area ? get_post_meta($orbem_studio_explore_area->ID, 'explore-start-left', true) : '';
 $orbem_studio_explore_start_direction_raw  = $orbem_studio_explore_area ? get_post_meta($orbem_studio_explore_area->ID, 'explore-start-direction', true) : '';
@@ -369,12 +373,19 @@ include plugin_dir_path(__FILE__) . 'plugin-header.php';
     <?php if (true === $orbem_studio_is_admin) : ?>
         <?php echo wp_kses(html_entity_decode(Dev_Mode::getDevModeHTML()), $orbem_studio_allowed_tags); ?>
     <?php endif; ?>
-    <div class="game-container <?php echo esc_attr($orbem_studio_location); ?>" data-main="<?php echo esc_attr($orbem_studio_main_character); ?>" data-fadeout="true" data-physics="<?php echo esc_attr($orbem_studio_area_physics); ?>" data-charge-target="<?php echo esc_attr($orbem_studio_charge_glow_target); ?>"<?php echo false === empty($orbem_studio_charge_glow_color) ? ' style="--charge-glow-color: ' . esc_attr($orbem_studio_charge_glow_color) . '"' : ''; ?>>
-        <?php if ((false === empty($orbem_studio_explore_area_map) && false !== stripos($orbem_studio_explore_area_map, '.webm')) || (false === empty($orbem_studio_explore_area_map) && false !== stripos($orbem_studio_explore_area_map, '.mp4'))): ?>
+    <div class="game-container <?php echo esc_attr($orbem_studio_location); ?>" data-main="<?php echo esc_attr($orbem_studio_main_character); ?>" data-fadeout="true" data-physics="<?php echo esc_attr($orbem_studio_area_physics); ?>" data-area-scale="<?php echo esc_attr($orbem_studio_area_scale); ?>" data-charge-target="<?php echo esc_attr($orbem_studio_charge_glow_target); ?>"<?php echo false === empty($orbem_studio_charge_glow_color) ? ' style="--charge-glow-color: ' . esc_attr($orbem_studio_charge_glow_color) . '"' : ''; ?>>
+        <?php
+        ob_start();
+        if ((false === empty($orbem_studio_explore_area_map) && false !== stripos($orbem_studio_explore_area_map, '.webm')) || (false === empty($orbem_studio_explore_area_map) && false !== stripos($orbem_studio_explore_area_map, '.mp4'))): ?>
             <video class="container-image" style="position:absolute;z-index: 1;<?php echo esc_attr('height:' . $orbem_studio_explore_area_height . ';' . 'width:' . $orbem_studio_explore_area_width . ';'); ?>" src="<?php echo esc_attr($orbem_studio_explore_area_map); ?>" autoplay loop muted></video>
         <?php else : ?>
             <img class="container-image" style="position:absolute;z-index: -1;object-fit: cover;<?php echo esc_attr('height:' . $orbem_studio_explore_area_height . ';' . 'width:' . $orbem_studio_explore_area_width . ';'); ?>" src="<?php echo esc_url($orbem_studio_explore_area_map) ?? ''; ?>" decoding="async" fetchpriority="high" loading="eager" />
-        <?php endif; ?>
+        <?php endif;
+        $orbem_studio_container_image_html = ob_get_clean();
+        if (false === $orbem_studio_area_scaled) {
+            echo $orbem_studio_container_image_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built from escaped parts above.
+        }
+        ?>
         <div id="explore-points" class="<?php echo false === in_array('on', [
             $orbem_studio_health_bar,
             $orbem_studio_mana_bar,
@@ -469,6 +480,10 @@ include plugin_dir_path(__FILE__) . 'plugin-header.php';
                 action key
             <?php endif; ?>
         </div>
+        <?php if (true === $orbem_studio_area_scaled) : ?>
+            <div class="game-world" style="position:absolute;top:0;left:0;width:5000px;height:4517px;transform-origin:0 0;transform:scale(<?php echo esc_attr($orbem_studio_area_scale); ?>);will-change:transform;">
+            <?php echo $orbem_studio_container_image_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built from escaped parts above. ?>
+        <?php endif; ?>
         <div
             style="top: <?php echo false === empty($orbem_studio_coordinates['top']) ? esc_attr($orbem_studio_coordinates['top']) : esc_attr($orbem_studio_explore_area_start_top); ?>px; left: <?php echo false === empty($orbem_studio_coordinates['left']) ? esc_attr($orbem_studio_coordinates['left']) : esc_attr($orbem_studio_explore_area_start_left); ?>px"
             class="<?php echo esc_attr($orbem_studio_explore_area_start_direction); ?>"
@@ -546,6 +561,9 @@ include plugin_dir_path(__FILE__) . 'plugin-header.php';
             <?php echo wp_kses_post(html_entity_decode(Explore::getExplainerHTML($orbem_studio_explore_explainers, 'map'))); ?>
             <?php echo wp_kses_post(html_entity_decode(Explore::getMapCommunicateHTML($orbem_studio_location, $orbem_studio_userid))); ?>
         </div>
+        <?php if (true === $orbem_studio_area_scaled) : ?>
+            </div>
+        <?php endif; ?>
     </div>
     <div class="loading-screen">
         LOADING...
