@@ -9,7 +9,13 @@ export function engageDevMode() {
     let recordThePath = false;
 
     window.devmode = false;
-    window.devZoom = window?.devZoom ?? 1;
+    // In a zoomed area the world is drawn at the area's scale, so mouse->world
+    // placement math must divide by that same factor. devZoom already drives
+    // that division throughout devmode; seed it from the area scale.
+    const devGameContainer = document.querySelector('.game-container');
+    const devAreaScale =
+        parseFloat(devGameContainer?.dataset.areaScale) || window.areaScale || 1;
+    window.devZoom = devAreaScale;
 
     // Let pointer events pass through the character container so map items stay draggable,
     // but keep the icon images themselves clickable for devmode selection.

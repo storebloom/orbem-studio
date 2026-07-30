@@ -275,6 +275,10 @@ class Meta_Box {
                                         'number',
                                         'The width of the area image (leave empty for full size 5000px)'
                                 ],
+                                'explore-area-scale' => [
+                                        'number',
+                                        'Zoom for this area as a percentage (e.g. 160 = 160%). Enlarges the whole world — great for small pixel art — while keeping the player centered. Leave empty or 100 for no zoom.'
+                                ],
                         ],
 
                         'Area Entry Trigger' => [
@@ -734,6 +738,14 @@ class Meta_Box {
                                         'number',
                                         'Controls how this weapon is layered visually. Higher numbers appear in front of lower numbers.'
                                 ],
+                                'explore-weapon-held-width' => [
+                                        'number',
+                                        'Width (in pixels) of the weapon image when held/shown on the character. Leave empty to fall back to the weapon’s placement width.'
+                                ],
+                                'explore-weapon-held-height' => [
+                                        'number',
+                                        'Height (in pixels) of the weapon image when held/shown on the character. Leave empty to keep the image’s natural aspect ratio.'
+                                ],
                         ],
 
                         'Weapon Stats & Type' => [
@@ -831,14 +843,6 @@ class Meta_Box {
                                                 ]
                                         ],
                                         'The direction the weapon points in its source image. Used to rotate/flip the held image so it faces the way the character is facing. Use the diagonal options when the weapon runs corner-to-corner in the artwork. Leave as None to show the image without any rotation.'
-                                ],
-                                'explore-weapon-held-width' => [
-                                        'number',
-                                        'Width (in pixels) of the weapon image when held/shown on the character. Leave empty to fall back to the weapon’s placement width.'
-                                ],
-                                'explore-weapon-held-height' => [
-                                        'number',
-                                        'Height (in pixels) of the weapon image when held/shown on the character. Leave empty to keep the image’s natural aspect ratio.'
                                 ],
                                 'explore-weapon-range' => [
                                         'number',

@@ -1008,6 +1008,7 @@ class Explore
                 'map-svg'                 => self::getMapSVG($area[0]),
                 'is-cutscene'             => $is_area_cutscene,
                 'area-physics'            => false !== $area_id ? get_post_meta($area_id, 'explore-physics', true) : '',
+                'area-scale'              => false !== $area_id ? self::getAreaScale($area_id) : 1,
                 'dev-mode'                => $dev_mode,
             ],
         ] );
@@ -1358,6 +1359,24 @@ class Explore
         $thumb = get_the_post_thumbnail_url($weapon_id);
 
         return false === empty($thumb) ? $thumb : '';
+    }
+
+    /**
+     * The zoom factor for an area as a decimal (e.g. 160% -> 1.6). Authors set
+     * a percentage in the "Area Scale" field; empty or 100 means no zoom (1).
+     *
+     * @param int $area_id
+     * @return float
+     */
+    public static function getAreaScale(int $area_id): float
+    {
+        if (0 >= $area_id) {
+            return 1.0;
+        }
+
+        $percent = intval(get_post_meta($area_id, 'explore-area-scale', true));
+
+        return 0 < $percent ? $percent / 100 : 1.0;
     }
 
     /**

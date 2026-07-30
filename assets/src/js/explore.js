@@ -2291,6 +2291,110 @@ function playHurtSound(character) {
  * Pull new area html.
  *
  */
+/**
+ * Wrap (or unwrap) the world in a transform-scaled `.game-world` layer for the
+ * given area zoom, and keep window.areaScale / devZoom / the container
+ * attribute in sync. Called on load and on every area change so the zoom
+ * follows the player between areas. offsetLeft/Top-based collision is
+ * transform-invariant, so only this DOM structure and the screen<->world
+ * conversions (click-to-move, projectile aiming, devmode placement) depend on
+ * the scale.
+ *
+ * @param {number} scale The area zoom factor (1 = no zoom).
+ */
+function applyAreaScale(scale) {
+    'use strict';
+
+    const container = document.querySelector('.game-container');
+
+    if (!container) {
+        return;
+    }
+
+    scale = parseFloat(scale) || 1;
+    window.areaScale = scale;
+    container.dataset.areaScale = scale;
+    window.devZoom = scale;
+
+    // Clear any overlays a previous area hoisted to the container so stale
+    // cutscene/minigame/communicate popups don't accumulate between areas.
+    container
+        .querySelectorAll(
+            ':scope > .map-cutscene, :scope > .minigame, :scope > .communication-wrapper'
+        )
+        .forEach((overlay) => {
+            overlay.remove();
+        });
+
+    let world = container.querySelector('.game-world');
+
+    if (1 === scale) {
+        // Unwrap: return the world elements to the container, drop the layer.
+        if (world) {
+            while (world.firstChild) {
+                container.appendChild(world.firstChild);
+            }
+            world.remove();
+
+            // Keep default-map painting last (map items over the character),
+            // matching the canonical unscaled DOM order.
+            const defaultMap = container.querySelector('.default-map');
+
+            if (defaultMap) {
+                container.appendChild(defaultMap);
+            }
+        }
+        return;
+    }
+
+    // Ensure the scaled layer exists.
+    if (!world) {
+        world = document.createElement('div');
+        world.className = 'game-world';
+        container.appendChild(world);
+    }
+
+    world.style.cssText =
+        'position:absolute;top:0;left:0;width:5000px;height:4517px;' +
+        'transform-origin:0 0;transform:scale(' +
+        scale +
+        ');will-change:transform;';
+
+    // Move the visual world into the layer, in paint order. appendChild moves
+    // elements already inside the layer to enforce a consistent order.
+    ['.container-image', '#map-character', '.map-weapon', '.default-map'].forEach(
+        (selector) => {
+            const el = container.querySelector(selector);
+
+            if (el) {
+                world.appendChild(el);
+            }
+        }
+    );
+
+    // Menu/fullscreen explainers render their pop-ups as screen-fixed direct
+    // children of the container, but their map triggers are world-positioned.
+    // Pull any stray world trigger into the scaled layer so its (offset-based)
+    // hit area lines up with the zoomed map instead of firing at a 1x spot.
+    container
+        .querySelectorAll(':scope > [data-trigger="true"], :scope > .explainer-trigger')
+        .forEach((trigger) => {
+            world.appendChild(trigger);
+        });
+
+    // Lift the screen-fixed overlays back out to the container so their
+    // position:fixed anchors to the viewport, not the transformed layer.
+    const defaultMap = world.querySelector('.default-map');
+
+    if (defaultMap) {
+        defaultMap
+            .querySelectorAll('.map-cutscene, .minigame, .communication-wrapper')
+            .forEach((overlay) => {
+                container.appendChild(overlay);
+            });
+    }
+}
+
 const enterNewArea = (function () {
     'use strict';
 
@@ -2327,9 +2431,10 @@ const enterNewArea = (function () {
             });
         }
 
-        // Remove menu explainers.
+        // Remove menu explainers. Include any that applyAreaScale hoisted into
+        // the scaled .game-world layer so they don't linger between areas.
         const menuExplainers = document.querySelectorAll(
-            '.game-container > .explainer-container, .game-container > .explainer-trigger'
+            '.game-container > .explainer-container, .game-container > .explainer-trigger, .game-world > .explainer-container, .game-world > .explainer-trigger'
         );
 
         if (menuExplainers) {
@@ -2520,6 +2625,13 @@ const enterNewArea = (function () {
                                 window.isGrounded = false;
                                 window.canDoubleJump = false;
                             }
+
+                            // Apply this area's zoom BEFORE movement/camera setup
+                            // so the world is wrapped in the scaled layer first
+                            // (and the camera centers on the scaled character).
+                            // Runs here rather than at the end of this block so a
+                            // later error can't skip the wrapping.
+                            applyAreaScale(newMapItems['area-scale']);
 
                             // Engage walking.
                             movementIntFunc();
@@ -4063,7 +4175,11 @@ function fireWeaponProjectile(weapon) {
     img.style.height = height;
     img.style.transform = 'translate(-50%, -50%)' + rotate;
     proj.appendChild(img);
-    container.appendChild(proj);
+    // Spawn coordinates are world-local (from mapChar.style.left), so in a
+    // zoomed area the projectile must live inside the scaled world layer to
+    // line up with the weapon and travel the right visual distance.
+    const worldLayer = document.querySelector('.game-world') || container;
+    worldLayer.appendChild(proj);
 
     // Travel far enough to leave the map, then let collision/bounds remove it.
     const distance = 5000;
@@ -4235,8 +4351,13 @@ function moveEnemy(
     const targetX = mapCharacterLeft + Math.cos(angle) * 800;
     const targetY = mapCharacterTop  + Math.sin(angle) * 800;
 
-    leftDifference = targetX - projCenterX;
-    topDifference  = targetY - projCenterY;
+    // Deltas are in screen pixels (from getBoundingClientRect). The projectile
+    // sits inside the scaled .game-world, so a transform applied here is scaled
+    // again by the wrapper — divide by the area scale to cancel that out.
+    const scale = window.areaScale || 1;
+
+    leftDifference = (targetX - projCenterX) / scale;
+    topDifference  = (targetY - projCenterY) / scale;
 
     projectile.style.transform =
         'translate(' + leftDifference + 'px, ' + topDifference + 'px)';
@@ -4632,6 +4753,13 @@ export function engageExploreGame() {
     const playerName = document.querySelector('#orbem-studio-play-name');
     const container = document.querySelector('.game-container');
     const touchButtons = document.querySelector('.touch-buttons');
+    // Per-area zoom. Scaled areas wrap the world in a transform:scale layer
+    // (.game-world). offsetLeft/Top-based math is unaffected by transforms, but
+    // screen<->world conversions (click-to-move, projectile aiming, devmode
+    // placement) divide by this factor. 1 = no zoom. The template renders the
+    // wrapper server-side on load; applyAreaScale normalizes it (and hoists the
+    // fixed overlays out) so the same code path handles load and area changes.
+    applyAreaScale(container?.dataset.areaScale);
     window.previousCutsceneArea = OrbemOrder.previousCutsceneArea || localStorage.getItem('orbem_local_previousCutsceneArea') || '';
 
     const tryAgain = document.querySelectorAll('.try-again');
@@ -5171,6 +5299,17 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
                 offsetHeight: box.offsetHeight,
             };
 
+            // A just-dropped weapon can't be re-collected until the player
+            // steps off it, so replacing a weapon doesn't instantly re-equip
+            // the one that was dropped.
+            if ('true' === value.dataset.dropCooldown) {
+                if (box && !elementsOverlap(finalCharPos, value, 5)) {
+                    delete value.dataset.dropCooldown;
+                }
+
+                return;
+            }
+
             // Touching with buffer.
             if (value && box && 'true' === value.dataset.hazard && theHazardOverlap(box, value, (value?.offsetParent && 'boss' === value.offsetParent.dataset.enemyType))) {
                 // If in hazard set to true.
@@ -5701,33 +5840,42 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
                     } else if (
                         ('true' === value.dataset.breakable ||
                             'true' === value.dataset.collectable) &&
-                        value.dataset.mission &&
-                        '' !== value.dataset.mission &&
                         canCharacterInteract(value, mapChar, 'strength') &&
                         null === triggee &&
-                        undefined === hasTrigger &&
-                        noOtherItemAttachedToMission(value.dataset.mission)
+                        undefined === hasTrigger
                     ) {
-                        const multiItem = document.querySelectorAll(
-                            `.map-item[data-mission="${value.dataset.mission}"]`
-                        );
+                        // Nothing requires a mission to be collected. Complete an
+                        // attached mission only if the item belongs to one (and
+                        // it is the last item for that mission).
+                        if (
+                            value.dataset.mission &&
+                            '' !== value.dataset.mission &&
+                            noOtherItemAttachedToMission(value.dataset.mission)
+                        ) {
+                            const multiItem = document.querySelectorAll(
+                                `.map-item[data-mission="${value.dataset.mission}"]`
+                            );
 
-                        if (multiItem) {
-                            position = [];
+                            if (multiItem) {
+                                position = [];
 
-                            multiItem.forEach((theMultiItem) => {
-                                position.push(
-                                    cleanClassName(theMultiItem.className)
-                                );
-                            });
+                                multiItem.forEach((theMultiItem) => {
+                                    position.push(
+                                        cleanClassName(theMultiItem.className)
+                                    );
+                                });
+                            }
+
+                            saveMission(value.dataset.mission, value, position);
                         }
-
-                        saveMission(value.dataset.mission, value, position);
                     }
 
-                    // For breakable.
+                    // For breakable (and collectable weapons hit with the
+                    // blade, so a struck weapon is stored before it is hidden).
                     if (
-                        ('true' === value.dataset.breakable) &&
+                        ('true' === value.dataset.breakable ||
+                            ('explore-weapon' === value.dataset.genre &&
+                                'true' === value.dataset.collectable)) &&
                         false === value.classList.contains('interacted-with') &&
                         false === value.classList.contains('no-point')
                     ) {
@@ -6250,6 +6398,64 @@ function triggerIndicator(indicateMe, isCutscene, trigger, isMinigame) {
  *
  * @param item
  */
+/**
+ * Drop the currently held (auto-equipped) weapon back onto the map at the
+ * player's feet so it can be picked up again. Used when weapons can't be
+ * managed in storage and a newly collected weapon replaces the one in hand.
+ */
+function dropEquippedWeaponOnMap() {
+    'use strict';
+
+    const clone = window.autoEquippedWeaponClone;
+    const defaultMap = document.querySelector('.default-map');
+    const mapChar = document.querySelector('#map-character');
+
+    if (!clone || !defaultMap || !mapChar) {
+        return;
+    }
+
+    const cloneWidth = parseInt(clone.dataset.width, 10) || 50;
+    const cloneHeight = parseInt(clone.dataset.height, 10) || 50;
+
+    // Drop the weapon behind the player (opposite the way they're facing) and
+    // a good distance off, so they don't accidentally walk back onto it.
+    const dropDistance = 180;
+    const weaponEl = document.querySelector('.map-weapon');
+    const facing = (weaponEl && weaponEl.dataset.direction) || 'down';
+    let offsetX = 0;
+    let offsetY = dropDistance;
+
+    if ('top' === facing) {
+        offsetY = dropDistance;
+    } else if ('down' === facing) {
+        offsetY = -dropDistance;
+    } else if ('left' === facing) {
+        offsetX = dropDistance;
+        offsetY = 0;
+    } else if ('right' === facing) {
+        offsetX = -dropDistance;
+        offsetY = 0;
+    }
+
+    const charLeft =
+        (parseInt(mapChar.style.left, 10) || 0) +
+        window.globalLeftPositionOffset;
+    const charTop =
+        (parseInt(mapChar.style.top, 10) || 0) +
+        window.globalTopPositionOffset;
+
+    clone.style.left = charLeft + offsetX - cloneWidth / 2 + 'px';
+    clone.style.top = charTop + offsetY - cloneHeight / 2 + 'px';
+    clone.style.display = 'block';
+
+    // Don't let the player instantly re-collect the weapon they're standing on.
+    clone.dataset.dropCooldown = 'true';
+
+    defaultMap.appendChild(clone);
+
+    window.autoEquippedWeaponClone = null;
+}
+
 function storeExploreItem(item) {
     'use strict';
 
@@ -6259,7 +6465,9 @@ function storeExploreItem(item) {
     const name = cleanClassName(item.className);
     const menuItem = document.createElement('span');
     const menuType = getMenuType(type);
-    const menu = document.querySelector('[data-menu="' + menuType + '"]');
+    const menu = document.querySelector(
+        '.storage-menu[data-menu="' + menuType + '"]'
+    );
     const thePoints = document.querySelector(`#explore-points .${type}-amount`);
     let currentPoints = 100;
 
@@ -6353,6 +6561,39 @@ function storeExploreItem(item) {
         menuItem.append(itemImage);
     }
     menuItem.className = 'storage-item';
+
+    // If a weapon is collected but there's no way to manage weapons in storage
+    // (the weapons tab is disabled, or the storage menu is hidden entirely),
+    // equip it immediately. Only one non-default weapon can be held this way,
+    // so equipping the new one replaces (drops) any weapon already equipped.
+    if ('weapons' === type && !menu) {
+        // Drop whatever weapon is currently held back onto the map before
+        // equipping the new one (only one weapon can be carried this way).
+        dropEquippedWeaponOnMap();
+
+        applyWeaponToPlayer(menuItem);
+        equipNewItem('weapons', id, value, false, name);
+
+        // Remember this weapon's collectable so it can be dropped when a
+        // later pick-up replaces it.
+        const droppable = item.cloneNode(true);
+        const droppableStyle = getComputedStyle(item);
+
+        droppable.dataset.width = droppableStyle.width.replace('px', '');
+        droppable.dataset.height = droppableStyle.height.replace('px', '');
+        droppable.classList.remove(
+            'engage',
+            'dragme',
+            'interacted-with',
+            'already-hit'
+        );
+        delete droppable.dataset.dropCooldown;
+        delete droppable.dataset.mission;
+
+        window.autoEquippedWeaponClone = droppable;
+
+        return;
+    }
 
     // Add to menu.
     if (menu) {
@@ -6962,6 +7203,24 @@ function engageSign(signname) {
     const item = document.querySelector('.' + signname + '-map-item');
     item.classList.add('open-up');
 
+    // In a zoomed area the sign lives inside the transform-scaled .game-world,
+    // which would break its position:fixed pop-up. Temporarily lift the pop-up
+    // out to the (unscaled) game container so it centers on the viewport, and
+    // put it back when the sign closes.
+    let hoistedFocus = null;
+    let focusHome = null;
+    if ((window.areaScale || 1) !== 1) {
+        const focus = item.querySelector('.focus-content');
+        const gameContainer = document.querySelector('.game-container');
+
+        if (focus && gameContainer) {
+            hoistedFocus = focus;
+            focusHome = item;
+            focus.style.zIndex = '99999';
+            gameContainer.appendChild(focus);
+        }
+    }
+
     setTimeout(() => {
         document.addEventListener('click', closeSign);
     }, 0);
@@ -6977,6 +7236,14 @@ function engageSign(signname) {
         if ('Space' === event.code || 'click' === event.type) {
             item.classList.remove('open-up');
             document.removeEventListener('keydown', closeSign);
+
+            // Return a hoisted pop-up to its sign item.
+            if (hoistedFocus && focusHome) {
+                hoistedFocus.style.zIndex = '';
+                focusHome.appendChild(hoistedFocus);
+                hoistedFocus = null;
+                focusHome = null;
+            }
 
             const focusViewName = cleanClassName(item.className);
             const cutscene = document.querySelector('.cutscene-trigger[data-materializefocus="' + focusViewName + '"]');
@@ -9384,8 +9651,12 @@ function clickTransport(clickE) {
 
     const container = document.querySelector('.game-container');
     const rect = container.getBoundingClientRect();
-    const x = clickE.clientX - rect.left - window.globalLeftPositionOffset;
-    const y = clickE.clientY - rect.top - window.globalTopPositionOffset;
+    // In a zoomed area the world is drawn scale× larger, so each screen pixel
+    // maps to 1/scale world pixels. Convert the click to world coordinates
+    // before subtracting the (world-space) camera-centering offset.
+    const scale = window.areaScale || 1;
+    const x = (clickE.clientX - rect.left) / scale - window.globalLeftPositionOffset;
+    const y = (clickE.clientY - rect.top) / scale - window.globalTopPositionOffset;
     const mapCharacter = document.getElementById('map-character');
     const bar = document.querySelector('.power-amount');
     const gauge = bar.querySelector('.gauge');

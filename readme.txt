@@ -4,7 +4,7 @@ Tags: game engine, rpg, video game, game-dev, narrative game
 Requires at least: 6.1
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.6.0
+Stable tag: 1.7.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -206,6 +206,10 @@ Documentation is available at https://orbem.studio/orbem-studio/docs/readme
 Tutorials are available on the Orbem Studio YouTube channel at https://youtube.com/@orbemstudio
 
 == Changelog ==
+
+= 1.7.0 =
+* Add a per-area zoom option (Area Scale percentage) that enlarges the whole world for small pixel art while keeping the player centered, working on load and when entering areas without breaking movement, collision, or the game-building tools.
+* Auto-equip a collected weapon when the storage weapons tab is disabled or storage is hidden, dropping any currently held non-default weapon back onto the map.
 
 = 1.6.0 =
 * Add an in-hand weapon image system that shows and animates a weapon's featured image on the character during attacks (swing/thrust/shoot) instead of requiring per-weapon sprites, with fields for held image, visibility, motion, facing (cardinal and diagonal), size, range, and resting position.
