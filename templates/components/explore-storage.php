@@ -19,7 +19,7 @@ $orbem_studio_default_weapon_obj     = false === empty($orbem_studio_default_wea
         'post_status'    => 'publish'
     ]
 ) : false;
-$orbem_studio_default_weapon_id      = isset($orbem_studio_default_weapon_obj[0]->ID) && false !== $orbem_studio_default_weapon_obj ? $orbem_studio_default_weapon_obj[0]->ID : '';
+$orbem_studio_default_weapon_id      = false === empty($orbem_studio_default_weapon_obj) && isset($orbem_studio_default_weapon_obj[0]) ? (int) $orbem_studio_default_weapon_obj[0] : '';
 $orbem_studio_default_storage        = '' !== $orbem_studio_default_weapon_id ? ['items' => [], 'weapons' => [['name' => $orbem_studio_default_weapon, 'id' => $orbem_studio_default_weapon_id, 'type' => 'weapons']], 'gear' => []] : ['items' => [], 'weapons' => [], 'gear' => []];
 $orbem_studio_storage                = false === empty($orbem_studio_storage) && true === is_array($orbem_studio_storage) ? $orbem_studio_storage : $orbem_studio_default_storage;
 // Guarantee exactly the three storage buckets, each a list (defensive against
@@ -29,6 +29,28 @@ $orbem_studio_storage                = [
     'weapons' => isset($orbem_studio_storage['weapons']) && is_array($orbem_studio_storage['weapons']) ? $orbem_studio_storage['weapons'] : [],
     'gear'    => isset($orbem_studio_storage['gear'])    && is_array($orbem_studio_storage['gear'])    ? $orbem_studio_storage['gear']    : [],
 ];
+// Guarantee the default weapon is always present (rendered hidden) in the
+// weapons bucket so unequipping another weapon can always fall back to it,
+// even when the player's saved storage doesn't include it.
+if ('' !== $orbem_studio_default_weapon_id) {
+    $orbem_studio_has_default_weapon = false;
+    foreach ($orbem_studio_storage['weapons'] as $orbem_studio_weapon_item) {
+        if (
+            is_array($orbem_studio_weapon_item)
+            && (($orbem_studio_weapon_item['name'] ?? '') === $orbem_studio_default_weapon
+                || intval($orbem_studio_weapon_item['id'] ?? 0) === intval($orbem_studio_default_weapon_id))
+        ) {
+            $orbem_studio_has_default_weapon = true;
+            break;
+        }
+    }
+    if (false === $orbem_studio_has_default_weapon) {
+        array_unshift(
+            $orbem_studio_storage['weapons'],
+            ['name' => $orbem_studio_default_weapon, 'id' => $orbem_studio_default_weapon_id, 'type' => 'weapons']
+        );
+    }
+}
 $orbem_studio_storage_limit          = get_user_meta($orbem_studio_userid, 'storage_limit', true);
 $orbem_studio_storage_limit          = false === empty($orbem_studio_storage_limit ) ? $orbem_studio_storage_limit : 11;
 $orbem_studio_current_explore_gear   = get_user_meta($orbem_studio_userid, 'explore_current_gear', true) ?? [];

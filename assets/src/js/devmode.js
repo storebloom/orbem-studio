@@ -8,6 +8,13 @@ export function engageDevMode() {
 
     let recordThePath = false;
 
+    // A wall with a non-invisible texture is a visible surface, so Show Hidden
+    // ignores it and it stays selectable/movable regardless of that toggle.
+    const isTexturedWall = (el) =>
+        'explore-wall' === el?.dataset?.genre &&
+        !!el.dataset.texture &&
+        'invisible' !== el.dataset.texture;
+
     window.devmode = false;
     // In a zoomed area the world is drawn at the area's scale, so mouse->world
     // placement math must divide by that same factor. devZoom already drives
@@ -62,7 +69,11 @@ export function engageDevMode() {
 
     function deselectWall() {
         if (selectedWall) {
-            selectedWall.style.opacity = '0.3';
+            // Textured walls stay fully opaque; invisible walls return to the
+            // Show Hidden dim so they remain visible in devmode.
+            selectedWall.style.opacity = isTexturedWall(selectedWall)
+                ? ''
+                : '0.3';
             selectedWall.style.outline = '';
             selectedWall.style.zIndex = '1';
             const btn = selectedWall.querySelector('.wall-delete-btn');
@@ -79,7 +90,11 @@ export function engageDevMode() {
         }
         deselectWall();
         selectedWall = wallEl;
-        wallEl.style.opacity = '0.65';
+        // A textured wall is a real surface — keep it fully visible on select;
+        // only the outline marks it. Invisible walls dim so they can be seen.
+        if (!isTexturedWall(wallEl)) {
+            wallEl.style.opacity = '0.65';
+        }
         wallEl.style.outline = '2px solid rgba(255,60,60,0.9)';
         wallEl.style.zIndex = '9998';
 
@@ -136,8 +151,12 @@ export function engageDevMode() {
                 .getElementById('engage-wallbuilder')
                 ?.classList.contains('engage');
             if (wallClickTarget === wallEl && !wallBuilderActive) {
-                // Walls are only selectable when "Show hidden" is active.
-                if (!devmodeMenuToggle?.classList.contains('engage')) {
+                // Walls are selectable when "Show hidden" is active, or any
+                // time when they carry a visible texture (a real surface).
+                if (
+                    !isTexturedWall(wallEl) &&
+                    !devmodeMenuToggle?.classList.contains('engage')
+                ) {
                     wallClickTarget = null;
                     return;
                 }
@@ -154,9 +173,11 @@ export function engageDevMode() {
         draggedContainer = event.target.closest('.map-item, .enemy-item');
         if (!draggedContainer) return;
 
-        // Walls are only moveable when "Show hidden" is active.
+        // Walls are moveable when "Show hidden" is active, or any time when
+        // they carry a visible texture (a real surface).
         if (
             'explore-wall' === draggedContainer.dataset.genre &&
+            !isTexturedWall(draggedContainer) &&
             !devmodeMenuToggle?.classList.contains('engage')
         ) {
             draggedContainer = null;
@@ -188,16 +209,15 @@ export function engageDevMode() {
                 : event.clientX - mapRect.left;
             const mouseY = isMenu ? event.clientY : event.clientY - mapRect.top;
 
-            // offsetX/offsetY are in screen pixels; divide by devZoom to get CSS-pixel space.
-            // Add the container's scroll offset so the item stays under the cursor even when
-            // the map is scrolled (getBoundingClientRect is in viewport coords, but CSS
-            // left/top are relative to the container's pre-scroll content edge).
+            // Mouse and scroll offsets are in screen pixels; the item's left/top
+            // are world coordinates inside the (possibly zoomed) map, so convert
+            // the whole screen-space position by dividing by devZoom.
             const zoom = isMenu ? 1 : window.devZoom || 1;
             const scrollX = isMenu ? 0 : mapEl.scrollLeft;
             const scrollY = isMenu ? 0 : mapEl.scrollTop;
 
-            draggedContainer.style.left = `${(mouseX - offsetX) / zoom + scrollX}px`;
-            draggedContainer.style.top = `${(mouseY - offsetY) / zoom + scrollY}px`;
+            draggedContainer.style.left = `${(mouseX - offsetX + scrollX) / zoom}px`;
+            draggedContainer.style.top = `${(mouseY - offsetY + scrollY) / zoom}px`;
         }
     }
 
@@ -290,6 +310,13 @@ export function engageDevMode() {
                     devmodeMenuToggle.textContent.replace('Show', 'Hide');
                 if (triggers) {
                     triggers.forEach((trigger) => {
+                        // A textured wall is a visible surface, not a hidden
+                        // element — leave it alone so Show Hidden doesn't paint
+                        // over its texture.
+                        if (isTexturedWall(trigger)) {
+                            return;
+                        }
+
                         if ('true' === trigger.dataset?.trigger) {
                             trigger.style.backgroundColor = 'rgb(27,170,0)';
                         }
@@ -337,6 +364,9 @@ export function engageDevMode() {
                 devmodeMenuToggle.textContent =
                     devmodeMenuToggle.textContent.replace('Hide', 'Show');
                 triggers.forEach((trigger) => {
+                    if (isTexturedWall(trigger)) {
+                        return;
+                    }
                     trigger.style.backgroundColor = '';
                     trigger.style.opacity = '';
                 });
@@ -483,11 +513,11 @@ export function engageDevMode() {
                 const mapRect = mapEl.getBoundingClientRect();
 
                 const mouseX =
-                    (event.clientX - mapRect.left) / window.devZoom +
-                    mapEl.scrollLeft;
+                    (event.clientX - mapRect.left + mapEl.scrollLeft) /
+                    window.devZoom;
                 const mouseY =
-                    (event.clientY - mapRect.top) / window.devZoom +
-                    mapEl.scrollTop;
+                    (event.clientY - mapRect.top + mapEl.scrollTop) /
+                    window.devZoom;
 
                 // Remember the drag origin so the wall's box can be normalized
                 // regardless of which direction the user drags in.
@@ -517,11 +547,11 @@ export function engageDevMode() {
                         const mapRect = mapEl2.getBoundingClientRect();
 
                         const mouseX =
-                            (event.clientX - mapRect.left) / window.devZoom +
-                            mapEl2.scrollLeft;
+                            (event.clientX - mapRect.left + mapEl2.scrollLeft) /
+                            window.devZoom;
                         const mouseY =
-                            (event.clientY - mapRect.top) / window.devZoom +
-                            mapEl2.scrollTop;
+                            (event.clientY - mapRect.top + mapEl2.scrollTop) /
+                            window.devZoom;
 
                         // Normalize against the drag origin so dragging up
                         // and/or left resizes from the correct corner instead

@@ -1681,6 +1681,18 @@ class Explore
                         $html .= ' data-map-url="' . esc_attr($map_url) . '"';
                     }
 
+                    // Walls carry their texture so devmode knows a textured wall
+                    // is a visible surface (Show Hidden leaves it alone and it
+                    // stays selectable/movable regardless of that toggle).
+                    if ('explore-wall' === $explore_point->post_type) {
+                        $wall_texture = $explore_point_meta['explore-texture'] ?? '';
+                        $wall_custom  = $explore_point_meta['explore-custom-texture'] ?? '';
+                        $wall_has_texture = (false === empty($wall_custom))
+                            || (false === empty($wall_texture) && 'invisible' !== $wall_texture);
+
+                        $html .= ' data-texture="' . esc_attr($wall_has_texture ? ($wall_texture ?: 'custom') : 'invisible') . '"';
+                    }
+
                     if (false === empty($wanderer)) {
                         $html .= ' data-wanderer="' . esc_attr($wanderer) . '"';
                     }
@@ -1884,6 +1896,11 @@ class Explore
                         $enemy_speed       = $explore_point_meta['explore-enemy-speed'] ?? '';
                         $projectile_rate   = $explore_point_meta['explore-projectile-rate'] ?? '5000';
                         $enemy_weapon_type = $explore_point_meta['explore-weapon-weakness'] ?? '';
+                        $attack_display_time = $explore_point_meta['explore-attack-display-time'] ?? '';
+
+                        if (false === empty($attack_display_time)) {
+                            $html .= ' data-attack-display-time="' . esc_attr($attack_display_time) . '"';
+                        }
 
                         if (false === empty($enemy_weapon_type)) {
                             $html .= ' data-weapon="' . esc_attr($enemy_weapon_type) . '"';
@@ -3275,6 +3292,9 @@ class Explore
             'jump-sound'       => $meta['explore-jump-sound'] ?? false,
             'charge-glow-color'  => $meta['explore-charge-glow-color'] ?? '',
             'charge-glow-target' => $meta['explore-charge-glow-target'] ?? 'character',
+            'normal-attack-display-time'  => $meta['explore-normal-attack-display-time'] ?? '',
+            'heavy-attack-display-time'   => $meta['explore-heavy-attack-display-time'] ?? '',
+            'charged-attack-display-time' => $meta['explore-charged-attack-display-time'] ?? '',
         ];
     }
 
@@ -3469,13 +3489,42 @@ class Explore
                     }
                 }
 
+                // Wall texture: tile a preset (or uploaded) texture across the
+                // wall as a repeated background. Overrides the default invisible
+                // wall when a texture other than "invisible" is chosen.
+                $texture_css = '';
+
+                if ('explore-wall' === $point->post_type) {
+                    $texture     = get_post_meta($point->ID, 'explore-texture', true);
+                    $custom      = get_post_meta($point->ID, 'explore-custom-texture', true);
+                    $texture_scale = intval(get_post_meta($point->ID, 'explore-texture-scale', true));
+                    $texture_scale = 0 < $texture_scale ? $texture_scale : 64;
+                    $texture_url = '';
+
+                    if (false === empty($custom)) {
+                        $texture_url = $custom;
+                    } elseif (false === empty($texture) && 'invisible' !== $texture) {
+                        $texture_url = plugin_dir_url(__FILE__) . '../assets/src/images/textures/' . sanitize_file_name($texture) . '.svg';
+                    }
+
+                    if (false === empty($texture_url)) {
+                        $texture_css = "background: url('" . esc_url($texture_url) . "') repeat; background-size: " . esc_attr($texture_scale) . "px " . esc_attr($texture_scale) . "px; image-rendering: pixelated;";
+                    }
+
+                    // Rounded wall corners (clips the texture to the rounded box).
+                    $border_radius = intval(get_post_meta($point->ID, 'explore-wall-border-radius', true));
+                    if (0 < $border_radius) {
+                        $texture_css .= " border-radius: " . esc_attr($border_radius) . "px; overflow: hidden;";
+                    }
+                }
+
                 $css .= "
                 body .game-container .default-map {$type}.{$point->post_name}-map-item[data-genre='" . esc_attr($point->post_type) . "'] {
                     top: " . esc_attr($top) . ";
                     left: " . esc_attr($left) . ";
                     " . ($height !== '0px' ? 'height:' . esc_attr($height) . ';' : '') . "
                     " . ($width !== '0px' ? 'width:' . esc_attr($width) . ';' : '') . "
-                    " . (! empty($bg_url) ? "background: url('" . esc_url($bg_url) . "') no-repeat; background-size: contain;" : '') . "
+                    " . (! empty($texture_css) ? $texture_css : (! empty($bg_url) ? "background: url('" . esc_url($bg_url) . "') no-repeat; background-size: contain;" : '')) . "
                 }
                 ";
             }

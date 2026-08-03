@@ -496,6 +496,9 @@ include plugin_dir_path(__FILE__) . 'plugin-header.php';
             data-hitbox-inset="<?php echo esc_attr($orbem_studio_main_character_info['hitbox-inset'] ?? ''); ?>"
             data-jump="<?php echo esc_attr($orbem_studio_jump); ?>"
             data-double-jump="<?php echo esc_attr($orbem_studio_double_jump); ?>"
+            data-normal-attack-time="<?php echo esc_attr($orbem_studio_main_character_info['normal-attack-display-time'] ?? ''); ?>"
+            data-heavy-attack-time="<?php echo esc_attr($orbem_studio_main_character_info['heavy-attack-display-time'] ?? ''); ?>"
+            data-charged-attack-time="<?php echo esc_attr($orbem_studio_main_character_info['charged-attack-display-time'] ?? ''); ?>"
         >
             <span class="misc-gauge-wrap"><span class="misc-gauge"></span></span>
             <?php if (false === empty($orbem_studio_hurt_sound)) : ?>
