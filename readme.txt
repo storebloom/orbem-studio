@@ -4,7 +4,7 @@ Tags: game engine, rpg, video game, game-dev, narrative game
 Requires at least: 6.1
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.7.0
+Stable tag: 1.7.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -206,6 +206,13 @@ Documentation is available at https://orbem.studio/orbem-studio/docs/readme
 Tutorials are available on the Orbem Studio YouTube channel at https://youtube.com/@orbemstudio
 
 == Changelog ==
+
+= 1.7.1 =
+* Add wall textures: tile a repeating pixel texture (grass, dirt, water, wood, lava and more, or upload your own) across any wall, with an adjustable texture scale and rounded corners; textured walls stay visible and selectable in devmode.
+* Add attack display time fields (in milliseconds) for characters (normal, heavy, charged) and enemies so animated attack sprites have time to finish before reverting.
+* Keep the character in its attack pose while the attack sprite is displaying; turning re-aims the attack sprite in the new direction instead of switching to a walking sprite.
+* Fix unequipping a weapon so it reliably falls back to the default weapon and clears the held weapon from the character.
+* Fix the scene fade overlay, devmode item dragging, and other positioning so they work correctly in zoomed areas.
 
 = 1.7.0 =
 * Add a per-area zoom option (Area Scale percentage) that enlarges the whole world for small pixel art while keeping the player centered, working on load and when entering areas without breaking movement, collision, or the game-building tools.

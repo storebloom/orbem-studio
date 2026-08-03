@@ -402,6 +402,44 @@ class Meta_Box {
                                         'Select the area(s) where this wall will exist.'
                                 ],
                         ],
+                        'Wall Texture' => [
+                                'explore-texture' => [
+                                        [
+                                                'select' => [
+                                                        'Invisible' => 'invisible',
+                                                        'Grass' => 'grass',
+                                                        'Leaves' => 'leaves',
+                                                        'Dirt' => 'dirt',
+                                                        'Mud' => 'mud',
+                                                        'Rock' => 'rock',
+                                                        'Sand' => 'sand',
+                                                        'Water' => 'water',
+                                                        'Wood' => 'wood',
+                                                        'Cobblestone' => 'cobblestone',
+                                                        'Cloud' => 'cloud',
+                                                        'Fire' => 'fire',
+                                                        'Snow' => 'snow',
+                                                        'Ice' => 'ice',
+                                                        'Lava' => 'lava',
+                                                        'Carpet' => 'carpet',
+                                                ]
+                                        ],
+                                        'The texture tiled across this wall as its background. Choose Invisible to keep the wall as an invisible collision block (default).',
+                                        'default' => 'invisible'
+                                ],
+                                'explore-texture-scale' => [
+                                        'number',
+                                        'The size in pixels of the repeated texture tile. Larger values make the pattern bigger. Leave empty for the default (64).'
+                                ],
+                                'explore-wall-border-radius' => [
+                                        'number',
+                                        'Rounds the wall\'s corners by this many pixels. Leave empty or 0 for square corners.'
+                                ],
+                                'explore-custom-texture' => [
+                                        'upload',
+                                        'Optional: upload your own image to tile across the wall instead of one of the presets above.'
+                                ],
+                        ],
                 ],
                 'explore-mission' => [
                         'Mission Area' => [
@@ -993,6 +1031,18 @@ class Meta_Box {
                                         'What the charged-attack glow emanates from: the character, the weapon, or both.',
                                         'default' => 'character'
                                 ],
+                                'explore-normal-attack-display-time' => [
+                                        'number',
+                                        'How long (in milliseconds) the normal attack image stays on screen. Increase this so animated (GIF) attack sprites have time to finish. Leave empty for the default.'
+                                ],
+                                'explore-heavy-attack-display-time' => [
+                                        'number',
+                                        'How long (in milliseconds) the heavy attack image stays on screen. Leave empty for the default.'
+                                ],
+                                'explore-charged-attack-display-time' => [
+                                        'number',
+                                        'How long (in milliseconds) the charged attack image stays on screen. Leave empty for the default.'
+                                ],
                         ],
 
                         'Weapon & Gear Configuration' => [
@@ -1322,6 +1372,10 @@ class Meta_Box {
                                                 'width' => 'number',
                                         ],
                                         'Define the trigger area that causes this enemy to fire projectiles or start running.'
+                                ],
+                                'explore-attack-display-time' => [
+                                        'number',
+                                        'How long (in milliseconds) the enemy’s attack image stays on screen. Increase this so animated (GIF) attack sprites have time to finish. Leave empty for the default.'
                                 ],
                         ],
 

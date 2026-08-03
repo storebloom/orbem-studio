@@ -3163,10 +3163,18 @@ const showItemDescription = (function () {
                             ) {
                                 // Unequipping a weapon falls back to the default
                                 // weapon (a hidden storage item) — the player is
-                                // never left with no weapon.
-                                const defaultItem = document.querySelector(
-                                    '.storage-item[data-type="weapons"].default-weapon'
-                                );
+                                // never left with no weapon. Fall back to matching
+                                // by the default weapon's name in case the hidden
+                                // slot's class isn't present.
+                                const defaultItem =
+                                    document.querySelector(
+                                        '.storage-item[data-type="weapons"].default-weapon'
+                                    ) ||
+                                    document.querySelector(
+                                        '.storage-item[data-type="weapons"][title="' +
+                                            defaultWeapon +
+                                            '"]'
+                                    );
 
                                 document
                                     .querySelectorAll(
@@ -3175,6 +3183,20 @@ const showItemDescription = (function () {
                                     .forEach((el) =>
                                         el.classList.remove('equipped')
                                     );
+
+                                // Clear the currently held weapon's overlay and
+                                // any lingering attack/animation state so the old
+                                // weapon can't stay visible on the character.
+                                const heldWeapon =
+                                    document.querySelector('.map-weapon');
+                                if (heldWeapon) {
+                                    heldWeapon.classList.remove(
+                                        'engage',
+                                        'weapon-swing',
+                                        'weapon-thrust',
+                                        'weapon-shoot'
+                                    );
+                                }
 
                                 if (defaultItem) {
                                     applyWeaponToPlayer(defaultItem);
@@ -3835,12 +3857,17 @@ function engageShooter(enemy) {
         projectileTemplate.style.display = 'none';
     }
 
+    // Per-enemy attack display time (ms) so animated (GIF) attack sprites can
+    // finish; empty keeps the default.
+    const attackDisplayTime =
+        parseInt(enemy.dataset.attackDisplayTime, 10) || 500;
+
     enemy._shooterInt = setInterval(() => {
         updatePunchImage(enemy, true);
 
         setTimeout(() => {
             updatePunchImage(enemy, false);
-        }, 500);
+        }, attackDisplayTime);
 
         const mapCharacter = document.querySelector('.map-character-icon.engage');
         const mapCharacterLeft =
@@ -5933,7 +5960,51 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 
         const allImages = document.querySelectorAll('.map-character-icon:not(.fight-image)');
 
-        if (
+        if (window.attackContext) {
+            // An attack's display is still holding: keep the character in its
+            // attack pose and re-aim the punch sprite to the direction being
+            // pressed, instead of switching to a walking sprite. Turning
+            // changes the attack direction until the hold ends.
+            const attackKeyDirs = {
+                38: 'up',
+                87: 'up',
+                37: 'left',
+                65: 'left',
+                39: 'right',
+                68: 'right',
+                40: 'down',
+                83: 'down',
+            };
+            const attackDir =
+                '' !== isDragging
+                    ? window.draggingDirection
+                    : attackKeyDirs[goThisWay];
+
+            if (attackDir) {
+                direction = attackDir;
+                const weaponDir = 'up' === attackDir ? 'top' : attackDir;
+
+                mapChar.className = '';
+                mapChar.classList.add(weaponDir + '-dir');
+                if (weaponEl) {
+                    weaponEl.setAttribute('data-direction', weaponDir);
+                }
+
+                const punchSprite = resolvePunchSprite(
+                    mapChar,
+                    attackDir,
+                    window.attackContext.weaponType,
+                    window.attackContext.attackType
+                );
+
+                if (punchSprite) {
+                    mapChar
+                        .querySelectorAll('.map-character-icon.engage')
+                        .forEach((img) => img.classList.remove('engage'));
+                    punchSprite.classList.add('engage');
+                }
+            }
+        } else if (
             (!box || false === box.classList.contains('fight-image')) &&
             true === window.allowMovement
         ) {
@@ -8404,6 +8475,75 @@ function addCharacterHit() {
     document.querySelector('.action-key').addEventListener('click', characterHitEvent);
 }
 
+/**
+ * Resolve the punch/attack sprite element for a direction, mirroring the
+ * fallback chain used when an attack starts: weapon+attack-type, weapon,
+ * base+attack-type, base. Returns the element only when it has a real src.
+ *
+ * @param {HTMLElement} mapChar    The #map-character element.
+ * @param {string}      direction  up/down/left/right.
+ * @param {string}      weaponType Weapon suffix (e.g. '-katana') or ''.
+ * @param {string}      attackType Attack suffix ('-heavy'/'-charged') or ''.
+ * @returns {HTMLElement|null}
+ */
+function resolvePunchSprite(mapChar, direction, weaponType, attackType) {
+    'use strict';
+
+    const ids = [
+        `${window.mainCharacter}-${direction}-punch${weaponType}${attackType}`,
+        `${window.mainCharacter}-${direction}-punch${weaponType}`,
+        `${window.mainCharacter}-${direction}-punch${attackType}`,
+        `${window.mainCharacter}-${direction}-punch`,
+    ];
+
+    for (const id of ids) {
+        const el = mapChar.querySelector('#' + id);
+        if (el && '' !== el.getAttribute('src')) {
+            return el;
+        }
+    }
+
+    return null;
+}
+
+/**
+ * End an attack's display: clear the attack context and re-engage the normal
+ * (non-attack) sprite for the direction the character is now facing, so a turn
+ * made mid-attack is reflected once the hold ends. A held movement key makes
+ * the movement loop swap to the walking sprite on the next tick.
+ *
+ * @param {HTMLElement} mapChar The #map-character element.
+ * @param {HTMLElement} weapon  The .map-weapon element (carries data-direction).
+ */
+function restoreSpriteAfterAttack(mapChar, weapon) {
+    'use strict';
+
+    if (!window.attackContext) {
+        return;
+    }
+
+    window.attackContext = null;
+
+    const faceDir =
+        'top' === weapon.dataset.direction
+            ? 'up'
+            : weapon.dataset.direction || 'down';
+    const restoreSprite =
+        getCharacterSprite(window.mainCharacter + '-static-' + faceDir) ||
+        getCharacterSprite(window.mainCharacter + '-' + faceDir);
+
+    mapChar
+        .querySelectorAll('.map-character-icon.engage')
+        .forEach((img) => img.classList.remove('engage'));
+    mapChar
+        .querySelectorAll('.map-character-icon.punched')
+        .forEach((img) => img.classList.remove('punched'));
+
+    if (restoreSprite && '' !== restoreSprite.getAttribute('src')) {
+        restoreSprite.classList.add('engage');
+    }
+}
+
 function characterHitEvent(event) {
     const weapon = document.querySelector('.map-weapon');
     const weaponType =
@@ -8499,7 +8639,23 @@ function characterHitEvent(event) {
                 weaponTime = weapon.classList.contains('protection')
                     ? 8000
                     : 100;
-                weaponTime = chargeAttackInProgress ? 1000 : weaponTime;
+
+                // Per-character attack display time (ms). Extends how long the
+                // attack image shows so animated (GIF) sprites can finish.
+                // Empty/unset keeps the defaults. Charged uses its own value;
+                // normal uses its own (but never overrides protection's long
+                // hold). Heavy is applied on its reset timeout further below.
+                const normalAttackTime = parseInt(mapChar.dataset.normalAttackTime, 10);
+                const chargedAttackTime = parseInt(mapChar.dataset.chargedAttackTime, 10);
+
+                if (chargeAttackInProgress) {
+                    weaponTime = 0 < chargedAttackTime ? chargedAttackTime : 1000;
+                } else if (
+                    false === weapon.classList.contains('protection') &&
+                    0 < normalAttackTime
+                ) {
+                    weaponTime = normalAttackTime;
+                }
 
                 // Only engage if not a spell or mana is not 0.
                 if (
@@ -8548,6 +8704,11 @@ function characterHitEvent(event) {
                     ) {
                         currentImageMapCharacter.classList.add('punched');
                         weaponAnimation.classList.add('engage');
+
+                        // Remember the attack params so that turning during the
+                        // display hold re-aims the punch sprite (rather than
+                        // showing a walking sprite). Cleared when the hold ends.
+                        window.attackContext = { weaponType, attackType };
 
                         playWeaponSound(weapon);
                     }
@@ -8641,6 +8802,11 @@ function characterHitEvent(event) {
 
                             weaponAnimation?.classList.remove('engage');
 
+                            // End attack display: show the normal (non-attack)
+                            // sprite for the direction now faced (the player may
+                            // have turned mid-attack, re-aiming the punch sprite).
+                            restoreSpriteAfterAttack(mapChar, weapon);
+
                             // Reset weapon based on direction
                             switch (direction) {
                                 case 'up':
@@ -8679,6 +8845,11 @@ function characterHitEvent(event) {
                     weapon.classList.add('heavy-engage');
                     heavyAttackInProgress = true;
 
+                    // Per-character heavy attack display time (ms); empty keeps
+                    // the default so animated heavy sprites can finish.
+                    const heavyAttackTime = parseInt(mapChar.dataset.heavyAttackTime, 10);
+                    const heavyTime = 0 < heavyAttackTime ? heavyAttackTime : 500;
+
                     setTimeout(() => {
                         heavyAttackInProgress = false;
                         weapon.classList.remove('heavy-engage');
@@ -8687,6 +8858,10 @@ function characterHitEvent(event) {
                             'punched'
                         );
                         weaponAnimation?.classList.remove('engage');
+
+                        // End attack display: show the normal sprite for the
+                        // direction now faced (turned mid-attack re-aims punch).
+                        restoreSpriteAfterAttack(mapChar, weapon);
 
                         // Reset weapon based on direction
                         switch (direction) {
@@ -8705,7 +8880,7 @@ function characterHitEvent(event) {
                         }
 
                         shiftIsPressed = false;
-                    }, 500);
+                    }, heavyTime);
                 }
 
                 // For shooting. Fire a projectile weapon or spell, but only if
