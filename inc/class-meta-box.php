@@ -407,6 +407,7 @@ class Meta_Box {
                                         [
                                                 'select' => [
                                                         'Invisible' => 'invisible',
+                                                        'Custom (uploaded below)' => 'custom',
                                                         'Grass' => 'grass',
                                                         'Leaves' => 'leaves',
                                                         'Dirt' => 'dirt',
@@ -437,7 +438,7 @@ class Meta_Box {
                                 ],
                                 'explore-custom-texture' => [
                                         'upload',
-                                        'Optional: upload your own image to tile across the wall instead of one of the presets above.'
+                                        'Upload your own image to tile across the wall. Only used when the texture above is set to "Custom".'
                                 ],
                         ],
                 ],
@@ -553,6 +554,15 @@ class Meta_Box {
                                                 ]
                                         ],
                                         'Choose how the cutscene is triggered. "Auto" starts when the player enters the trigger. "Engagement" starts when the action key is pressed.'
+                                ],
+                                'explore-the-end' => [
+                                        [
+                                                'radio' => [
+                                                        'yes',
+                                                        'no'
+                                                ]
+                                        ],
+                                        'The End: when Yes, the game restarts after this cutscene ends (wipes saved progress and returns to the start).'
                                 ],
                         ],
                         'Cutscene Area & Trigger' => [
@@ -885,6 +895,10 @@ class Meta_Box {
                                 'explore-weapon-range' => [
                                         'number',
                                         'How far (in pixels) the weapon extends out from the player’s center in the direction they are facing. e.g. 20 makes it swing 20px out in front. Leave empty for 0 (centered).'
+                                ],
+                                'explore-weapon-vertical-offset' => [
+                                        'number',
+                                        'Moves the held weapon up or down on the character (in pixels). Negative moves it up, positive moves it down. Pairs with Range, which offsets it in the facing direction.'
                                 ],
                                 'explore-weapon-resting-position' => [
                                         [
@@ -1606,6 +1620,19 @@ class Meta_Box {
                                                 ]
                                         ],
                                         'Allow clicking on the explainer to close it?'
+                                ],
+                                'explore-the-end' => [
+                                        [
+                                                'radio' => [
+                                                        'yes',
+                                                        'no'
+                                                ]
+                                        ],
+                                        'The End: when Yes, closing this explainer restarts the game (wipes saved progress and returns to the start).'
+                                ],
+                                'explore-auto-close' => [
+                                        'number',
+                                        'Auto-close this explainer after this many milliseconds. Leave empty or 0 to keep it open until the player closes it.'
                                 ],
                                 'explore-materialize-item-trigger' => [
                                         [

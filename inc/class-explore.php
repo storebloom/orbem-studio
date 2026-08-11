@@ -1607,11 +1607,13 @@ class Explore
                 $weapon_motion                  = $explore_point_meta['explore-weapon-motion'] ?? '';
                 $weapon_motion                  = false === empty($weapon_motion) ? $weapon_motion : 'swing';
                 $weapon_facing                  = $explore_point_meta['explore-weapon-facing'] ?? '';
-                $weapon_held_width              = $explore_point_meta['explore-weapon-held-width'] ?? '';
-                $weapon_held_height             = $explore_point_meta['explore-weapon-held-height'] ?? '';
+                // Held size falls back to the weapon's placement (map) size.
+                $weapon_held_width              = false === empty($explore_point_meta['explore-weapon-held-width']) ? $explore_point_meta['explore-weapon-held-width'] : ($explore_point_meta['explore-width'] ?? '');
+                $weapon_held_height             = false === empty($explore_point_meta['explore-weapon-held-height']) ? $explore_point_meta['explore-weapon-held-height'] : ($explore_point_meta['explore-height'] ?? '');
                 $weapon_resting                 = $explore_point_meta['explore-weapon-resting-position'] ?? '';
                 $weapon_resting                 = false === empty($weapon_resting) ? $weapon_resting : 'in-hand';
                 $weapon_range                   = intval($explore_point_meta['explore-weapon-range'] ?? 0);
+                $weapon_vertical_offset         = intval($explore_point_meta['explore-weapon-vertical-offset'] ?? 0);
                 $weapon_proj_cfg                = $explore_point_meta['explore-weapon-projectile'] ?? [];
                 $weapon_proj_cfg                = is_array($weapon_proj_cfg) ? $weapon_proj_cfg : [];
                 $weapon_proj_image              = $weapon_proj_cfg['image-url'] ?? '';
@@ -1619,6 +1621,7 @@ class Explore
                 $weapon_proj_height             = $weapon_proj_cfg['height'] ?? '';
                 $weapon_proj_facing             = $explore_point_meta['explore-weapon-projectile-facing'] ?? '';
                 $weapon_ammo_cost               = intval($explore_point_meta['explore-weapon-ammo-cost'] ?? 0);
+                $weapon_sound                   = $explore_point_meta['explore-weapon-sound'] ?? '';
                 $rotation                       = $explore_point_meta['explore-rotation'] ?? '';
                 $item_image                     = get_the_post_thumbnail_url($explore_point->ID);
                 $video_override                 = $explore_point_meta['explore-video-override'] ?? '';
@@ -1687,10 +1690,19 @@ class Explore
                     if ('explore-wall' === $explore_point->post_type) {
                         $wall_texture = $explore_point_meta['explore-texture'] ?? '';
                         $wall_custom  = $explore_point_meta['explore-custom-texture'] ?? '';
-                        $wall_has_texture = (false === empty($wall_custom))
-                            || (false === empty($wall_texture) && 'invisible' !== $wall_texture);
 
-                        $html .= ' data-texture="' . esc_attr($wall_has_texture ? ($wall_texture ?: 'custom') : 'invisible') . '"';
+                        // "Custom" uses the uploaded image; any other preset
+                        // (other than Invisible) uses that preset. Anything else
+                        // — or Custom without an upload — stays invisible.
+                        if ('custom' === $wall_texture && false === empty($wall_custom)) {
+                            $wall_texture_attr = 'custom';
+                        } elseif (false === empty($wall_texture) && 'invisible' !== $wall_texture && 'custom' !== $wall_texture) {
+                            $wall_texture_attr = $wall_texture;
+                        } else {
+                            $wall_texture_attr = 'invisible';
+                        }
+
+                        $html .= ' data-texture="' . esc_attr($wall_texture_attr) . '"';
                     }
 
                     if (false === empty($wanderer)) {
@@ -1832,6 +1844,7 @@ class Explore
                         $html .= ' data-facing="' . esc_attr($weapon_facing) . '"';
                         $html .= ' data-resting="' . esc_attr($weapon_resting) . '"';
                         $html .= ' data-range="' . esc_attr($weapon_range) . '"';
+                        $html .= ' data-vertical-offset="' . esc_attr($weapon_vertical_offset) . '"';
                         $html .= ' data-projectile-image="' . esc_url($weapon_proj_image) . '"';
                         $html .= ' data-projectile-width="' . esc_attr($weapon_proj_width) . '"';
                         $html .= ' data-projectile-height="' . esc_attr($weapon_proj_height) . '"';
@@ -1840,6 +1853,7 @@ class Explore
                         $html .= ' data-held-width="' . esc_attr($weapon_held_width) . '"';
                         $html .= ' data-held-height="' . esc_attr($weapon_held_height) . '"';
                         $html .= ' data-held-image="' . esc_url(self::getWeaponHeldImage($explore_point->ID)) . '"';
+                        $html .= ' data-sound="' . esc_url($weapon_sound) . '"';
                     }
 
                     if (true === $collectable || 'explore-weapon' === $explore_point->post_type) {
@@ -2234,6 +2248,7 @@ class Explore
             $mission_complete_cutscene  = $cutscene_post_meta['explore-mission-complete-cutscene'] ?? '';
             $boss_fight                 = $cutscene_post_meta['explore-cutscene-boss'] ?? '';
             $cutscene_trigger_type      = $cutscene_post_meta['explore-trigger-type'] ?? '';
+            $cutscene_the_end           = $cutscene_post_meta['explore-the-end'] ?? '';
             $next_area_datapoint        = false === empty($next_area) ? ' data-nextarea="' . esc_attr($next_area) . '"' : '';
             $cutscene_name              = $explore_cutscene->post_name;
             $is_cutscene_triggered      = self::isMaterializedItemTriggered($explore_cutscene->post_name, $area_name, $userid);
@@ -2249,6 +2264,10 @@ class Explore
 
             if (false === empty($cutscene_trigger_type)) {
                 $html .= ' data-triggertype="' . esc_attr($cutscene_trigger_type) . '"';
+            }
+
+            if ('yes' === $cutscene_the_end) {
+                $html .= ' data-the-end="yes"';
             }
 
             if (false === empty($npc_face_me)) {
@@ -2717,6 +2736,8 @@ class Explore
                 $explainer_top              = $explainer_meta['explore-top'] ?? '0';
                 $width_value                = $explainer_meta['explore-width'] ?? '0';
                 $close_on_click             = isset($explainer_meta['explore-click-close']) && 'yes' === $explainer_meta['explore-click-close'];
+                $explainer_the_end          = ($explainer_meta['explore-the-end'] ?? '') === 'yes';
+                $explainer_auto_close       = intval($explainer_meta['explore-auto-close'] ?? 0);
                 $explainer_width            = ('fullscreen' === $type)
                     ? 'width: 100%; max-width:' . $width_value
                     : 'width:' . $width_value;
@@ -2783,6 +2804,14 @@ class Explore
 
                     if (false === empty($close_on_click)) {
                         $html .= ' data-clickclose="' . esc_attr($close_on_click) . '"';
+                    }
+
+                    if ($explainer_the_end) {
+                        $html .= ' data-the-end="yes"';
+                    }
+
+                    if (0 < $explainer_auto_close) {
+                        $html .= ' data-auto-close="' . esc_attr($explainer_auto_close) . '"';
                     }
 
                     $html .= ' data-type="' . esc_attr($explainer_type) . '"';
@@ -3501,9 +3530,9 @@ class Explore
                     $texture_scale = 0 < $texture_scale ? $texture_scale : 64;
                     $texture_url = '';
 
-                    if (false === empty($custom)) {
+                    if ('custom' === $texture && false === empty($custom)) {
                         $texture_url = $custom;
-                    } elseif (false === empty($texture) && 'invisible' !== $texture) {
+                    } elseif (false === empty($texture) && 'invisible' !== $texture && 'custom' !== $texture) {
                         $texture_url = plugin_dir_url(__FILE__) . '../assets/src/images/textures/' . sanitize_file_name($texture) . '.svg';
                     }
 

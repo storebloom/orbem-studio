@@ -117,18 +117,22 @@ if ('on' === $orbem_studio_storage_tabs_items) {
                     $orbem_studio_item_motion      = false === empty($orbem_studio_item_motion) ? $orbem_studio_item_motion : 'swing';
                     $orbem_studio_item_held_image  = $orbem_studio_is_weapon && false !== $orbem_studio_item_exists ? \OrbemStudio\Explore::getWeaponHeldImage($orbem_studio_item_id) : '';
                     $orbem_studio_item_facing      = $orbem_studio_is_weapon && false !== $orbem_studio_item_exists ? get_post_meta($orbem_studio_item_id, 'explore-weapon-facing', true) : '';
-                    $orbem_studio_item_held_width  = $orbem_studio_is_weapon && false !== $orbem_studio_item_exists ? get_post_meta($orbem_studio_item_id, 'explore-weapon-held-width', true) : '';
-                    $orbem_studio_item_held_height = $orbem_studio_is_weapon && false !== $orbem_studio_item_exists ? get_post_meta($orbem_studio_item_id, 'explore-weapon-held-height', true) : '';
+                    // Held size falls back to the weapon's placement (map)
+                    // width/height when no dedicated held size is set.
+                    $orbem_studio_item_held_width  = $orbem_studio_is_weapon && false !== $orbem_studio_item_exists ? (get_post_meta($orbem_studio_item_id, 'explore-weapon-held-width', true) ?: get_post_meta($orbem_studio_item_id, 'explore-width', true)) : '';
+                    $orbem_studio_item_held_height = $orbem_studio_is_weapon && false !== $orbem_studio_item_exists ? (get_post_meta($orbem_studio_item_id, 'explore-weapon-held-height', true) ?: get_post_meta($orbem_studio_item_id, 'explore-height', true)) : '';
                     $orbem_studio_item_resting     = $orbem_studio_is_weapon && false !== $orbem_studio_item_exists ? get_post_meta($orbem_studio_item_id, 'explore-weapon-resting-position', true) : '';
                     $orbem_studio_item_resting     = false === empty($orbem_studio_item_resting) ? $orbem_studio_item_resting : 'in-hand';
                     $orbem_studio_item_proj_cfg    = $orbem_studio_is_weapon && false !== $orbem_studio_item_exists ? get_post_meta($orbem_studio_item_id, 'explore-weapon-projectile', true) : [];
                     $orbem_studio_item_proj_cfg    = is_array($orbem_studio_item_proj_cfg) ? $orbem_studio_item_proj_cfg : [];
                     $orbem_studio_item_proj_facing = $orbem_studio_is_weapon && false !== $orbem_studio_item_exists ? get_post_meta($orbem_studio_item_id, 'explore-weapon-projectile-facing', true) : '';
                     $orbem_studio_item_ammo_cost   = $orbem_studio_is_weapon && false !== $orbem_studio_item_exists ? intval(get_post_meta($orbem_studio_item_id, 'explore-weapon-ammo-cost', true)) : 0;
+                    $orbem_studio_item_sound       = $orbem_studio_is_weapon && false !== $orbem_studio_item_exists ? get_post_meta($orbem_studio_item_id, 'explore-weapon-sound', true) : '';
                     $orbem_studio_item_proj_image  = $orbem_studio_item_proj_cfg['image-url'] ?? '';
                     $orbem_studio_item_proj_width  = $orbem_studio_item_proj_cfg['width'] ?? '';
                     $orbem_studio_item_proj_height = $orbem_studio_item_proj_cfg['height'] ?? '';
                     $orbem_studio_item_range       = $orbem_studio_is_weapon && false !== $orbem_studio_item_exists ? intval(get_post_meta($orbem_studio_item_id, 'explore-weapon-range', true)) : 0;
+                    $orbem_studio_item_voffset     = $orbem_studio_is_weapon && false !== $orbem_studio_item_exists ? intval(get_post_meta($orbem_studio_item_id, 'explore-weapon-vertical-offset', true)) : 0;
                     $orbem_studio_weapons_and_gear = false === empty($orbem_studio_item["type"]) && ('gear' === $orbem_studio_item["type"] || 'weapons' === $orbem_studio_item["type"]);
                     $orbem_studio_width            = isset($orbem_studio_item['width']) ? (int) $orbem_studio_item['width'] : 50;
                     $orbem_studio_height           = isset($orbem_studio_item['height']) ? (int) $orbem_studio_item['height'] : 50;
@@ -168,6 +172,7 @@ if ('on' === $orbem_studio_storage_tabs_items) {
                             data-facing="<?php echo esc_attr($orbem_studio_item_facing); ?>"
                             data-resting="<?php echo esc_attr($orbem_studio_item_resting); ?>"
                             data-range="<?php echo esc_attr($orbem_studio_item_range); ?>"
+                            data-vertical-offset="<?php echo esc_attr($orbem_studio_item_voffset); ?>"
                             data-held-width="<?php echo esc_attr($orbem_studio_item_held_width); ?>"
                             data-held-height="<?php echo esc_attr($orbem_studio_item_held_height); ?>"
                             data-held-image="<?php echo esc_url($orbem_studio_item_held_image); ?>"
@@ -176,6 +181,7 @@ if ('on' === $orbem_studio_storage_tabs_items) {
                             data-projectile-height="<?php echo esc_attr($orbem_studio_item_proj_height); ?>"
                             data-projectile-facing="<?php echo esc_attr($orbem_studio_item_proj_facing); ?>"
                             data-ammo-cost="<?php echo esc_attr($orbem_studio_item_ammo_cost); ?>"
+                            data-sound="<?php echo esc_url($orbem_studio_item_sound); ?>"
                             <?php endif; ?>
 
                             title="<?php echo false === empty($orbem_studio_item["name"]) ? esc_attr($orbem_studio_item["name"]) : ''; ?>"
