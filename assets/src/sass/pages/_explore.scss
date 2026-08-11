@@ -1496,7 +1496,7 @@ html {
           // (character center) so swings pivot there; defaults to centering.
           // It composes the outward range offset with the per-facing grip
           // anchor (--weapon-grip-anchor, range-free; reused by On Hip).
-          --weapon-anchor: var(--weapon-range-offset, translate(0, 0)) var(--weapon-grip-anchor, translate(-50%, -50%));
+          --weapon-anchor: translate(0, var(--weapon-vertical-offset, 0px)) var(--weapon-range-offset, translate(0, 0)) var(--weapon-grip-anchor, translate(-50%, -50%));
           transform: var(--weapon-anchor) var(--weapon-orient, rotate(0deg));
           transform-origin: 50% 50%;
           width: 160px;
@@ -1653,7 +1653,7 @@ html {
         &[data-resting="on-back"]#{$idle} .weapon-overlay {
           --weapon-anchor: translate(-50%, -50%);
           transform-origin: 50% 50%;
-          transform: translate(-50%, -50%) var(--weapon-orient-down, rotate(0deg));
+          transform: translate(0, var(--weapon-vertical-offset, 0px)) translate(-50%, -50%) var(--weapon-orient-down, rotate(0deg));
         }
 
         // On Hip: weapon points down, hanging from the character's vertical
@@ -1664,7 +1664,7 @@ html {
         // --character-width / --weapon-hip-halfwidth are set inline so the
         // weapon's edge aligns to the character's edge.
         &[data-resting="on-hip"]#{$idle} .weapon-overlay {
-          transform: var(--weapon-hip-align, translate(0, 0)) var(--weapon-grip-anchor, translate(-50%, -50%)) var(--weapon-orient-down, rotate(0deg));
+          transform: translate(0, var(--weapon-vertical-offset, 0px)) var(--weapon-hip-align, translate(0, 0)) var(--weapon-grip-anchor, translate(-50%, -50%)) var(--weapon-orient-down, rotate(0deg));
         }
         // Down/Up put the weapon's center on the character's left/right edge,
         // then nudge it back in toward center by a quarter of the weapon's width.

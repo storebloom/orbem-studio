@@ -963,7 +963,6 @@ class Menu
     public static function getGameOptionSettings(): array
     {
         $pages = get_posts(['post_type' => 'page', 'post_status' => 'any', 'posts_per_page' => -1, 'no_found_rows' => true]);
-        $explainers = get_posts(['post_type' => 'explore-explainer', 'post_status' => 'any', 'posts_per_page' => -1, 'no_found_rows' => true]);
         $areas = get_posts(['post_type' => 'explore-area', 'post_status' => 'publish', 'posts_per_page' => -1, 'no_found_rows' => true]);
         $characters = get_posts(['post_type' => 'explore-character', 'post_status' => 'publish', 'posts_per_page' => -1, 'no_found_rows' => true]);
         $weapons = get_posts(['post_type' => 'explore-weapon', 'post_status' => 'publish', 'posts_per_page' => -1, 'no_found_rows' => true]);
@@ -1006,7 +1005,6 @@ class Menu
                 'explore_start_music' => ['upload', 'Start Screen Music', 'The music that will play after the intro video and on the start screen.'],
                 'explore_signin_screen' => ['upload', 'Sign In Screen Background Image', 'The image/video that will show on the start screen.'],
                 'explore_signin_screen_mobile' => ['upload', 'Mobile Sign In Screen Background Image', 'The image/video that will show on the start screen on mobile devices.'],
-                'explore_lose_message' => ['select', 'Lose Message', 'The message that pops up when you lose all your health (uses an Explainer)', $explainers],
                 'explore_walking_sound' => ['upload', 'Walking Sound Effect', 'The sound that will play when your main character walks.'],
                 'explore_points_sound' => ['upload', 'Sound When Points Are Given', 'The sound that will play when you complete a mission or collect something.']
         ];

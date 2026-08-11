@@ -4,7 +4,7 @@ Tags: game engine, rpg, video game, game-dev, narrative game
 Requires at least: 6.1
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 1.7.1
+Stable tag: 1.7.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -206,6 +206,13 @@ Documentation is available at https://orbem.studio/orbem-studio/docs/readme
 Tutorials are available on the Orbem Studio YouTube channel at https://youtube.com/@orbemstudio
 
 == Changelog ==
+
+= 1.7.2 =
+* Fix mission progression so completing a mission by collecting an item (or any other trigger) reliably reveals the next mission; missions with similar names (e.g. a base mission and its "pt 2"/"pt 3" follow-ups) no longer block the chain, and simultaneous completions no longer cancel each other.
+* Add a "Custom" option to the wall texture dropdown so an uploaded custom texture is only used when explicitly selected, letting a wall stay invisible while a custom image is on file.
+* Fix collected and auto-equipped weapon sound effects not playing; the equipped weapon's sound now stays in sync and plays each time the weapon is used.
+* Add a vertical offset field for weapons to raise or lower the held weapon on the character, pairing with the existing range (facing-direction) offset.
+* Use the Explainer assigned to the "Lose Message" placement area as the lose popup, honoring its auto-close delay and "The End" (restart game) settings, and remove the redundant Lose Message game option.
 
 = 1.7.1 =
 * Add wall textures: tile a repeating pixel texture (grass, dirt, water, wood, lava and more, or upload your own) across any wall, with an adjustable texture scale and rounded corners; textured walls stay visible and selectable in devmode.

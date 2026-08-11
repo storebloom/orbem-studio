@@ -33,25 +33,45 @@ class Util
         $this->plugin->util = $this;
     }
 
-    public static function getLoseMessage() {
-        $lose_message_explainer = get_option('explore_lose_message');
+    /**
+     * The explainer assigned to the "lose-message" placement area, or null.
+     */
+    public static function getLoseExplainer(): ?\WP_Post
+    {
+        $needle = 'lose-message';
+
         $lose_explainer = get_posts([
-            'post_type'      => ['explore-explainer'],
-            'name'           => sanitize_key($lose_message_explainer),
-            'post_status'    => 'any',
+            'post_type'      => 'explore-explainer',
+            'post_status'    => 'publish',
             'posts_per_page' => 1,
             'no_found_rows'  => true,
+            // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+            'meta_query'     => [
+                [
+                    'key'     => 'explore-area',
+                    'value'   => 's:' . strlen($needle) . ':"' . $needle . '";',
+                    'compare' => 'LIKE',
+                ],
+            ],
         ]);
-        $sound_html = '';
 
-        if (!empty($lose_explainer[0]) && $lose_message_explainer === $lose_explainer[0]->post_name) {
-            $sound_byte = get_post_meta($lose_explainer[0]->ID, 'explore-sound-byte', true);
+        return !empty($lose_explainer[0]) ? $lose_explainer[0] : null;
+    }
+
+    public static function getLoseMessage(?\WP_Post $lose_explainer = null) {
+        if (null === $lose_explainer) {
+            $lose_explainer = self::getLoseExplainer();
+        }
+
+        if ($lose_explainer instanceof \WP_Post) {
+            $sound_byte = get_post_meta($lose_explainer->ID, 'explore-sound-byte', true);
+            $sound_html = '';
 
             if (false === empty($sound_byte)) {
-                $sound_html = '<audio id="' . esc_attr($lose_explainer[0]->ID) . '-s" src="' . esc_url($sound_byte) . '"></audio>';
+                $sound_html = '<audio id="' . esc_attr($lose_explainer->ID) . '-s" src="' . esc_url($sound_byte) . '"></audio>';
             }
 
-            return do_blocks($lose_explainer[0]->post_content) . $sound_html;
+            return do_blocks($lose_explainer->post_content) . $sound_html;
         }
 
         return 'You lost. <button class="try-again">Try again</button>';

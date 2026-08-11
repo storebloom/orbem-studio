@@ -15,6 +15,23 @@ export function engageDevMode() {
         !!el.dataset.texture &&
         'invisible' !== el.dataset.texture;
 
+    // Highlight (or clear) invisible walls with the Show Hidden overlay so they
+    // can be seen — used by Show Hidden and the wall builder.
+    const setInvisibleWallsVisible = (visible) => {
+        document
+            .querySelectorAll('[data-genre="explore-wall"]')
+            .forEach((wall) => {
+                if (isTexturedWall(wall)) {
+                    return;
+                }
+                wall.style.backgroundColor = visible ? 'rgb(255,203,0)' : '';
+                wall.style.opacity = visible ? 0.3 : '';
+                if (visible) {
+                    wall.style.zIndex = 1;
+                }
+            });
+    };
+
     window.devmode = false;
     // In a zoomed area the world is drawn at the area's scale, so mouse->world
     // placement math must divide by that same factor. devZoom already drives
@@ -363,8 +380,20 @@ export function engageDevMode() {
             } else if (triggers) {
                 devmodeMenuToggle.textContent =
                     devmodeMenuToggle.textContent.replace('Hide', 'Show');
+                const wallBuilderOn = document
+                    .getElementById('engage-wallbuilder')
+                    ?.classList.contains('engage');
+
                 triggers.forEach((trigger) => {
                     if (isTexturedWall(trigger)) {
+                        return;
+                    }
+                    // Keep invisible walls visible if the wall builder is still
+                    // active.
+                    if (
+                        wallBuilderOn &&
+                        'explore-wall' === trigger.dataset.genre
+                    ) {
                         return;
                     }
                     trigger.style.backgroundColor = '';
@@ -487,9 +516,20 @@ export function engageDevMode() {
                 if (engageWallBuilder.classList.contains('engage')) {
                     document.body.style.cursor = 'cell';
 
+                    // Reveal existing invisible walls so they can be seen while
+                    // building new ones.
+                    setInvisibleWallsVisible(true);
+
                     document.addEventListener('mousedown', handleWallDragStart);
                 } else {
                     document.body.style.cursor = 'default';
+
+                    // Re-hide invisible walls, unless Show Hidden is keeping them
+                    // visible.
+                    if (!devmodeMenuToggle?.classList.contains('engage')) {
+                        setInvisibleWallsVisible(false);
+                    }
+
                     document.removeEventListener(
                         'mousedown',
                         handleWallDragStart,
