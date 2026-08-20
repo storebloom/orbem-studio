@@ -168,14 +168,38 @@ class Explore
     }
 
     /**
+     * The logged in user id. get_current_user_id() is unreliable inside REST
+     * calls, so the user object is the only consistent source.
+     * @return int
+     */
+    public static function currentUserId(): int
+    {
+        $user = wp_get_current_user();
+
+        return (int) $user->ID;
+    }
+
+    /**
+     * The user id save state belongs to, or 0 when the game plays as a guest.
+     * @return int
+     */
+    public static function playerId(): int
+    {
+        if ('No' === get_option('explore_require_login', false)) {
+            return 0;
+        }
+
+        return self::currentUserId();
+    }
+
+    /**
      * Call back function for rest route that saves the previous cutscene area.
      * @param \WP_REST_Request $request The arg values from rest route.
      * @return \WP_REST_Response
      */
     public function setPreviousCutsceneArea(\WP_REST_Request $request): \WP_REST_Response
     {
-        $user     = wp_get_current_user();
-        $userid = (int) $user->ID;
+        $userid = self::playerId();
 
         // Endpoint intentionally accessible to all authenticated users.
         if (0 === $userid) {
@@ -204,8 +228,7 @@ class Explore
      */
     public function addSpell(\WP_REST_Request $request): \WP_REST_Response
     {
-        $user     = wp_get_current_user();
-        $userid = (int) $user->ID;
+        $userid = self::playerId();
 
         // Endpoint intentionally accessible to all authenticated users.
         if (0 === $userid) {
@@ -263,8 +286,7 @@ class Explore
      */
     public function addCharacterPoints(\WP_REST_Request $request): \WP_REST_Response
     {
-        $user     = wp_get_current_user();
-        $userid = (int) $user->ID;
+        $userid = self::playerId();
 
         // Endpoint intentionally accessible to all authenticated users.
         if (0 === $userid) {
@@ -373,8 +395,7 @@ class Explore
      */
     public function saveDrag(\WP_REST_Request $request): \WP_REST_Response
     {
-        $user     = wp_get_current_user();
-        $userid = (int) $user->ID;
+        $userid = self::playerId();
 
         // Endpoint intentionally accessible to all authenticated users.
         if (0 === $userid) {
@@ -426,8 +447,7 @@ class Explore
      */
     public function saveMaterializedItem(\WP_REST_Request $request): \WP_REST_Response
     {
-        $user   = wp_get_current_user();
-        $userid = (int) $user->ID;
+        $userid = self::playerId();
 
         // Endpoint intentionally accessible to all authenticated users.
         if (0 === $userid) {
@@ -473,8 +493,7 @@ class Explore
      */
     public function enableAbility(\WP_REST_Request $request): \WP_REST_Response
     {
-        $user     = wp_get_current_user();
-        $userid = (int) $user->ID;
+        $userid = self::playerId();
 
         // Endpoint intentionally accessible to all authenticated users.
         if (0 === $userid) {
@@ -509,8 +528,7 @@ class Explore
      */
     public function addCharacter(\WP_REST_Request $request): \WP_REST_Response
     {
-        $user   = wp_get_current_user();
-        $userid = (int) $user->ID;
+        $userid = self::playerId();
 
         // Endpoint intentionally accessible to all authenticated users.
         if (0 === $userid) {
@@ -554,8 +572,7 @@ class Explore
      */
     public function saveEnemy(\WP_REST_Request $request): \WP_REST_Response
     {
-        $user   = wp_get_current_user();
-        $userid = (int) $user->ID;
+        $userid = self::playerId();
 
         // Endpoint intentionally accessible to all authenticated users.
         if (0 === $userid) {
@@ -600,8 +617,7 @@ class Explore
      */
     public function saveMission(\WP_REST_Request $request): \WP_REST_Response
     {
-        $user   = wp_get_current_user();
-        $userid = (int) $user->ID;
+        $userid = self::playerId();
 
         // Endpoint intentionally accessible to all authenticated users.
         if (0 === $userid) {
@@ -648,8 +664,7 @@ class Explore
      */
     public function equipNewItem(\WP_REST_Request $request): \WP_REST_Response
     {
-        $user     = wp_get_current_user();
-        $userid = (int) $user->ID;
+        $userid = self::playerId();
 
         // Endpoint intentionally accessible to all authenticated users.
         if (0 === $userid) {
@@ -726,8 +741,7 @@ class Explore
      */
     public function saveStorageItem(\WP_REST_Request $request): \WP_REST_Response
     {
-        $user     = wp_get_current_user();
-        $userid = (int) $user->ID;
+        $userid = self::playerId();
 
         // Endpoint intentionally accessible to all authenticated users.
         if (0 === $userid) {
@@ -863,8 +877,7 @@ class Explore
      */
     public function saveSettings(\WP_REST_Request $request): \WP_REST_Response
     {
-        $user   = wp_get_current_user();
-        $userid = (int) $user->ID;
+        $userid = self::playerId();
 
         // Endpoint intentionally accessible to all authenticated users.
         if (0 === $userid) {
@@ -902,8 +915,7 @@ class Explore
      */
     public function getOrbemArea(\WP_REST_Request $request): \WP_REST_Response
     {
-        $user                = wp_get_current_user();
-        $orbem_studio_userid = (int) $user->ID;
+        $orbem_studio_userid = self::playerId();
 
         // Get request data.
         $data                    = $request->get_json_params();
@@ -958,7 +970,7 @@ class Explore
         $map_cutscenes         = self::getMapCutsceneHTML($explore_cutscenes, $position, $orbem_studio_userid);
         $map_abilities         = self::getMapAbilitiesHTML($explore_abilities);
 
-        $is_admin = user_can($orbem_studio_userid, 'manage_options');
+        $is_admin = user_can(self::currentUserId(), 'manage_options');
         $dev_mode = '';
 
         ob_start();
@@ -1021,8 +1033,7 @@ class Explore
      */
     public function getItemDescription(\WP_REST_Request $request): \WP_REST_Response
     {
-        $user     = wp_get_current_user();
-        $userid   = (int) $user->ID;
+        $userid = self::playerId();
 
         // Get request data.
         $data  = $request->get_json_params();
@@ -1082,8 +1093,7 @@ class Explore
      */
     public function saveCoordinates(\WP_REST_Request $request): \WP_REST_Response
     {
-        $user     = wp_get_current_user();
-        $userid   = (int) $user->ID;
+        $userid = self::playerId();
 
         // Endpoint intentionally accessible to all authenticated users.
         if (0 === $userid) {
@@ -1124,8 +1134,7 @@ class Explore
      */
     public function resetExplore(): \WP_REST_Response
     {
-        $user   = wp_get_current_user();
-        $userid = (int) $user->ID;
+        $userid = self::playerId();
 
         if (0 === $userid) {
             return rest_ensure_response( [
@@ -1473,8 +1482,7 @@ class Explore
      */
     public static function getMapItemHTML(array $explore_points, string $current_location): string
     {
-        $user   = wp_get_current_user();
-        $userid = (int) $user->ID;
+        $userid = self::playerId();
         $dead_ones = '';
 
         if (0 !== $userid) {
@@ -1911,10 +1919,13 @@ class Explore
                         $projectile_rate   = $explore_point_meta['explore-projectile-rate'] ?? '5000';
                         $enemy_weapon_type = $explore_point_meta['explore-weapon-weakness'] ?? '';
                         $attack_display_time = $explore_point_meta['explore-attack-display-time'] ?? '';
+                        $damage_time         = 'end' === ($explore_point_meta['explore-damage-time'] ?? '') ? 'end' : 'start';
 
                         if (false === empty($attack_display_time)) {
                             $html .= ' data-attack-display-time="' . esc_attr($attack_display_time) . '"';
                         }
+
+                        $html .= ' data-damage-time="' . esc_attr($damage_time) . '"';
 
                         if (false === empty($enemy_weapon_type)) {
                             $html .= ' data-weapon="' . esc_attr($enemy_weapon_type) . '"';
@@ -2157,8 +2168,7 @@ class Explore
     public static function isMaterializedItemTriggered(string $item_name, string $location, int $userid): bool
     {
         if (0 >= $userid) {
-            $user   = wp_get_current_user();
-            $userid = $user->ID;
+            $userid = self::playerId();
         }
 
         if (0 >= $userid) {
@@ -2188,8 +2198,7 @@ class Explore
     public static function getMapCutsceneHTML(array $explore_cutscenes, string $position, int $userid): string
     {
         if (0 >= $userid) {
-            $user   = wp_get_current_user();
-            $userid = $user->ID;
+            $userid = self::playerId();
         }
 
         $html   = '';
@@ -2485,8 +2494,7 @@ class Explore
     public static function getMapCommunicateHTML(string $location, int $userid): string
     {
         if (0 >= $userid) {
-            $user   = wp_get_current_user();
-            $userid = $user->ID;
+            $userid = self::playerId();
         }
 
         $html   = '';
@@ -2841,8 +2849,7 @@ class Explore
     public static function getMapAbilitiesHTML(array $explore_abilities): string
     {
         $html   = '';
-        $user   = wp_get_current_user();
-        $userid = $user->ID;
+        $userid = self::playerId();
         $magics = 0 !== $userid ? get_user_meta($userid, 'explore_magic', true) : [];
 
         foreach($explore_abilities as $explore_ability) {
@@ -3115,8 +3122,7 @@ class Explore
      */
     public static function getCurrentPointWidth(): array
     {
-        $user   = wp_get_current_user();
-        $userid = (int) $user->ID;
+        $userid = self::playerId();
 
         $base_amounts = [
             'health' => 100,
@@ -3183,8 +3189,7 @@ class Explore
 
         sort($levels, SORT_NUMERIC);
 
-        $user   = wp_get_current_user();
-        $userid = (int) $user->ID;
+        $userid = self::playerId();
 
         if (0 === $userid) {
             return 1;
@@ -3324,6 +3329,7 @@ class Explore
             'normal-attack-display-time'  => $meta['explore-normal-attack-display-time'] ?? '',
             'heavy-attack-display-time'   => $meta['explore-heavy-attack-display-time'] ?? '',
             'charged-attack-display-time' => $meta['explore-charged-attack-display-time'] ?? '',
+            'damage-time'      => 'end' === ($meta['explore-damage-time'] ?? '') ? 'end' : 'start',
         ];
     }
 
@@ -3465,7 +3471,7 @@ class Explore
 
         // Fetch options and user meta
         $first_area           = get_option('explore_first_area', false);
-        $current_location     = get_user_meta(get_current_user_id(), 'current_location', true);
+        $current_location     = get_user_meta(self::playerId(), 'current_location', true);
         $position             = ! empty( $current_location ) ? $current_location : get_post_field('post_name', $first_area);
         $explore_points       = self::getExplorePoints($position);
 

@@ -234,7 +234,7 @@ $orbem_studio_player_name                  = 'Yes' === $orbem_studio_player_name
 $orbem_studio_plugin_dir                   = str_replace( '/templates/', '', plugin_dir_url(__FILE__));
 $orbem_studio_plugin_dir_path              = plugin_dir_path(__FILE__);
 $orbem_studio_default_weapon               = get_option('explore_default_weapon', '');
-$orbem_studio_userid                       = get_current_user_id();
+$orbem_studio_userid                       = Explore::playerId();
 $orbem_studio_game_url                     = get_option('explore_game_page', '');
 $orbem_studio_autoplay_cutscene            = get_option('explore_autoplay_cutscene', 'Yes');
 $orbem_studio_game_url                     = false === empty($orbem_studio_game_url) ? get_permalink(get_page_by_path($orbem_studio_game_url)) : '/';
@@ -339,9 +339,10 @@ $orbem_studio_hurt_sound                   = $orbem_studio_main_character_info['
 $orbem_studio_jump_sound                   = $orbem_studio_main_character_info['jump-sound'] ?? false;
 $orbem_studio_jump                         = $orbem_studio_main_character_info['jump'] ?? '';
 $orbem_studio_double_jump                  = $orbem_studio_main_character_info['double-jump'] ?? '';
+$orbem_studio_char_height                  = false === empty($orbem_studio_main_character_info['height']) ? intval($orbem_studio_main_character_info['height']) : 185;
 $orbem_studio_area_physics                 = $orbem_studio_explore_area ? get_post_meta($orbem_studio_explore_area->ID, 'explore-physics', true) : '';
-$orbem_studio_is_admin                     = user_can(get_current_user_id(), 'manage_options');
-$orbem_studio_is_logged_in                 = is_user_logged_in();
+$orbem_studio_is_admin                     = user_can(Explore::currentUserId(), 'manage_options');
+$orbem_studio_is_logged_in                 = 0 !== $orbem_studio_userid;
 
 if ( $orbem_studio_is_admin ) {
     $orbem_studio_item_list = array_merge($orbem_studio_explore_points, $orbem_studio_explore_minigames, $orbem_studio_explore_explainers, $orbem_studio_explore_walls);
@@ -489,8 +490,9 @@ include plugin_dir_path(__FILE__) . 'plugin-header.php';
             <?php echo $orbem_studio_container_image_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built from escaped parts above. ?>
         <?php endif; ?>
         <div
-            style="top: <?php echo false === empty($orbem_studio_coordinates['top']) ? esc_attr($orbem_studio_coordinates['top']) : esc_attr($orbem_studio_explore_area_start_top); ?>px; left: <?php echo false === empty($orbem_studio_coordinates['left']) ? esc_attr($orbem_studio_coordinates['left']) : esc_attr($orbem_studio_explore_area_start_left); ?>px"
+            style="top: <?php echo false === empty($orbem_studio_coordinates['top']) ? esc_attr($orbem_studio_coordinates['top']) : esc_attr($orbem_studio_explore_area_start_top); ?>px; left: <?php echo false === empty($orbem_studio_coordinates['left']) ? esc_attr($orbem_studio_coordinates['left']) : esc_attr($orbem_studio_explore_area_start_left); ?>px; --character-height: <?php echo esc_attr($orbem_studio_char_height); ?>px"
             class="<?php echo esc_attr($orbem_studio_explore_area_start_direction); ?>"
+            data-character-height="<?php echo esc_attr($orbem_studio_char_height); ?>"
             data-mainid="<?php echo esc_attr($orbem_studio_main_character_id); ?>"
             id="map-character"
             data-continued="<?php echo false === empty($orbem_studio_coordinates) ? '1' : ''; ?>"
@@ -504,6 +506,7 @@ include plugin_dir_path(__FILE__) . 'plugin-header.php';
             data-normal-attack-time="<?php echo esc_attr($orbem_studio_main_character_info['normal-attack-display-time'] ?? ''); ?>"
             data-heavy-attack-time="<?php echo esc_attr($orbem_studio_main_character_info['heavy-attack-display-time'] ?? ''); ?>"
             data-charged-attack-time="<?php echo esc_attr($orbem_studio_main_character_info['charged-attack-display-time'] ?? ''); ?>"
+            data-damage-time="<?php echo esc_attr($orbem_studio_main_character_info['damage-time'] ?? 'start'); ?>"
         >
             <span class="misc-gauge-wrap"><span class="misc-gauge"></span></span>
             <?php if (false === empty($orbem_studio_hurt_sound)) : ?>

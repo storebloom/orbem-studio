@@ -2,9 +2,9 @@
 Contributors: orbemorder, scottstorebloom, scottmweaver
 Tags: game engine, rpg, video game, game-dev, narrative game
 Requires at least: 6.1
-Tested up to: 7.0
+Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.7.2
+Stable tag: 1.7.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -206,6 +206,16 @@ Documentation is available at https://orbem.studio/orbem-studio/docs/readme
 Tutorials are available on the Orbem Studio YouTube channel at https://youtube.com/@orbemstudio
 
 == Changelog ==
+
+= 1.7.3 =
+* Add a "Damage time" option for characters and enemies (start or end, defaulting to start) that controls when an attack deals its damage, so a long attack animation can resolve at the end of the swing and give the target a chance to escape first.
+* Apply the enemy attack display time to melee enemies as well as shooters, and keep a runner standing still for the whole attack animation instead of turning or walking mid-swing.
+* Fix the enemy kill reward only updating part of the points display; the level readout, point total, and gain notification now update along with the reward.
+* Fix a weapon's vertical offset not applying to the projectile it fires, and fix projectiles being invisible when no projectile width and height were set.
+* Fix the character sinking or dropping in gravity areas when switching between walking, standing, and attack sprites, and stop the hitbox inset from lifting the character's feet off the ground.
+* Fix the weapon sitting below the character on tablet-sized screens.
+* Use the desktop sign-in screen on mobile when no mobile sign-in image or video has been added, instead of showing a blank background.
+* Play as a guest whenever a game does not require login, so building and refreshing no longer resumes a half-finished game and forces a reset.
 
 = 1.7.2 =
 * Fix mission progression so completing a mission by collecting an item (or any other trigger) reliably reveals the next mission; missions with similar names (e.g. a base mission and its "pt 2"/"pt 3" follow-ups) no longer block the chain, and simultaneous completions no longer cancel each other.
