@@ -19,13 +19,16 @@ if (true === $orbem_studio_is_admin) {
 }
 
 $orbem_studio_new_game = 'No' === $orbem_studio_require_login ? 'Start Game' : 'New Game';
+
+// Without the class the desktop media is never hidden, so it also serves mobile.
+$orbem_studio_signin_desktop_class = empty($orbem_studio_signin_screen_mobile) ? '' : 'signin-media-desktop';
 ?>
 <div class="explore-overlay engage" style="height: 100svh;left: 0;position: fixed;top: 0;width: 100%; z-index: 4;">
     <?php if (!empty($orbem_studio_signin_screen)) : ?>
         <?php if (false !== stripos($orbem_studio_signin_screen, '.webm') || false !== stripos($orbem_studio_signin_screen, '.mp4')) : ?>
-            <video class="signin-media-desktop" style="object-fit:cover;position:absolute;z-index:0;width:100%;height:100svh;top:0;left:0;" src="<?php echo esc_url($orbem_studio_signin_screen); ?>" autoplay loop muted></video>
+            <video class="<?php echo esc_attr($orbem_studio_signin_desktop_class); ?>" style="object-fit:cover;position:absolute;z-index:0;width:100%;height:100svh;top:0;left:0;" src="<?php echo esc_url($orbem_studio_signin_screen); ?>" autoplay loop muted></video>
         <?php else: ?>
-            <img class="signin-media-desktop" style="object-fit:cover;position:absolute;z-index:0;width:100%;height:100svh;top:0;left:0;" src="<?php echo esc_url($orbem_studio_signin_screen); ?>" alt="" />
+            <img class="<?php echo esc_attr($orbem_studio_signin_desktop_class); ?>" style="object-fit:cover;position:absolute;z-index:0;width:100%;height:100svh;top:0;left:0;" src="<?php echo esc_url($orbem_studio_signin_screen); ?>" alt="" />
         <?php endif; ?>
     <?php endif; ?>
 

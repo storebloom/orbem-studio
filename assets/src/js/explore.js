@@ -51,8 +51,60 @@ window.canDoubleJump = false;
 window._jumpKeyActive = false;
 window._touchJumpActive = false;
 
+// Retarts gif sprite from frame 1.
+function restartGifSprite(img) {
+    'use strict';
+
+    if (!img || 'IMG' !== img.tagName) {
+        return;
+    }
+
+    const src = img.getAttribute('src');
+
+    if (!src || false === /\.gif(\?|#|$)/i.test(src)) {
+        return;
+    }
+
+    img.src = src.split('#')[0] + '#r' + Date.now();
+}
+
 document.addEventListener('DOMContentLoaded', function () {
     'use strict';
+
+    const spriteGifObserver = new MutationObserver(function (mutations) {
+        mutations.forEach(function (mutation) {
+            const target = mutation.target;
+
+            if (
+                'IMG' !== target.tagName ||
+                false === target.matches('.map-character-icon, .character-icon') ||
+                false === target.classList.contains('engage')
+            ) {
+                return;
+            }
+
+            // The walk loop churns engage off/on the same sprite every tick.
+            // Only restart when a genuinely different sprite becomes shown,
+            // otherwise repeated restarts freeze the GIF on frame 1.
+            const parent = target.parentElement;
+
+            if (parent) {
+                if (parent._shownGifSprite === target) {
+                    return;
+                }
+
+                parent._shownGifSprite = target;
+            }
+
+            restartGifSprite(target);
+        });
+    });
+
+    spriteGifObserver.observe(document.body, {
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['class'],
+    });
 
     // Must match the #map-character width/height overrides in _explore.scss
     // exactly (max-width: 480px for mobile, 481-1025px for tablet), otherwise
@@ -68,6 +120,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (1025 >= window.innerWidth && 481 <= window.innerWidth) {
         window.globalTopPositionOffset = 150;
+        weaponPosTop = window.globalTopPositionOffset;
         isOnTablet = true
 
         detectDeviceOrientationChange();
@@ -865,6 +918,11 @@ function makeNPCWander(npc, walkingSpeed, timeBetween, enemy) {
             const currentLeft = npc.style.left.replace('px', '');
             const currentTop = npc.style.top.replace('px', '');
             const finalPos = blockMovement(currentTop, currentLeft, npc, enemy);
+
+            // Hold still for the attack, after blockMovement has rechecked reach.
+            if ('true' === npc.dataset?.attacking) {
+                return;
+            }
 
             // Gravity for this entity is handled continuously by applyEntityGravity.
 
@@ -2026,6 +2084,84 @@ function addUserCoordianate(left, top) {
 /**
  * Take health away from enemy.
  */
+/**
+ * Damage a single enemy with the player's weapon, resolving the weapon's
+ * on-screen reach as the hit area.
+ *
+ * @param weaponEl
+ * @param enemyEl
+ */
+function hitEnemyWithWeapon(weaponEl, enemyEl) {
+    'use strict';
+
+    // For an equipped overlay weapon, use the weapon image's reach (centered on
+    // the character) as the hit area instead of the pushed-out hitbox point, so
+    // range matches what's on screen.
+    let weaponHitArea = weaponEl;
+    const activeOverlay =
+        weaponEl.matches &&
+        weaponEl.matches('.weapon-swing, .weapon-thrust, .weapon-shoot')
+            ? weaponEl.querySelector('.weapon-overlay')
+            : null;
+
+    if (activeOverlay) {
+        const reach = Math.max(
+            activeOverlay.offsetWidth,
+            activeOverlay.offsetHeight
+        );
+
+        // Shift the hit area out by the weapon's range in the facing direction.
+        const range = parseInt(weaponEl.dataset.range, 10) || 0;
+        let rangeX = 0;
+        let rangeY = 0;
+        switch (weaponEl.dataset.direction) {
+            case 'top':
+                rangeY = -range;
+                break;
+            case 'down':
+                rangeY = range;
+                break;
+            case 'left':
+                rangeX = -range;
+                break;
+            case 'right':
+                rangeX = range;
+                break;
+        }
+
+        const verticalOffset =
+            parseInt(weaponEl.dataset.verticalOffset, 10) || 0;
+
+        weaponHitArea = {
+            offsetLeft: weaponEl.offsetLeft - reach + rangeX,
+            offsetTop: weaponEl.offsetTop - reach + rangeY + verticalOffset,
+            offsetWidth: reach * 2,
+            offsetHeight: reach * 2,
+            classList: { contains: () => false },
+        };
+    }
+
+    hurtTheEnemy(weaponEl, enemyEl, weaponHitArea);
+}
+
+/**
+ * Deal the player's attack damage to every enemy currently in reach. Used for
+ * the "end" damage time, where one pass runs as the attack animation finishes.
+ *
+ * @param weaponEl
+ */
+function hitEnemiesInReach(weaponEl) {
+    'use strict';
+
+    if (!weaponEl) {
+        return;
+    }
+
+    document.querySelectorAll('.enemy-item').forEach((enemyEl) => {
+        hitEnemyWithWeapon(weaponEl, enemyEl);
+    });
+}
+
 const hurtTheEnemy = (function () {
     'use strict';
 
@@ -2126,9 +2262,7 @@ const hurtTheEnemy = (function () {
                     const rewardType = value.dataset.type;
 
                     if (0 < rewardAmount && rewardType) {
-                        const currentAmount = getCurrentPoints(rewardType);
-                        addUserPoints(currentAmount + rewardAmount, rewardType, cleanClassName(value.className), false, '');
-                        playPointSound(rewardType);
+                        runPointAnimation(value, cleanClassName(value.className), true, rewardAmount, '');
                     }
 
                     stopShooterEnemy(value);
@@ -3714,7 +3848,7 @@ function setDirectionImage(enemyEl, direction) {
     }
 }
 
-function stopRunnerPunching(enemyEl) {
+function stopRunnerPunching(enemyEl, letAttackFinish) {
     'use strict';
 
     if (!enemyEl || !enemyEl._runnerPunchInt) {
@@ -3723,6 +3857,21 @@ function stopRunnerPunching(enemyEl) {
 
     clearInterval(enemyEl._runnerPunchInt);
     enemyEl._runnerPunchInt = null;
+
+    // A dead enemy must not land damage queued for the end of its attack.
+    clearTimeout(enemyEl._runnerDamageTimeout);
+    enemyEl._runnerDamageTimeout = null;
+
+    // Escaping the reach only cancels the damage; the swing still plays out.
+    if (true === letAttackFinish) {
+        return;
+    }
+
+    // Otherwise a kill mid-punch still swaps the dead image back afterwards.
+    clearTimeout(enemyEl._runnerPunchTimeout);
+    enemyEl._runnerPunchTimeout = null;
+
+    delete enemyEl.dataset.attacking;
 }
 
 function startRunnerPunching(enemyEl) {
@@ -3732,7 +3881,12 @@ function startRunnerPunching(enemyEl) {
         return;
     }
 
-    let showPunch = false;
+    const attackDisplayTime =
+        parseInt(enemyEl.dataset.attackDisplayTime, 10) || 800;
+    const damageAtEnd = 'end' === enemyEl.dataset.damageTime;
+
+    // The cycle has to outlast the animation or the runner never gets to move.
+    const attackCycle = Math.max(1600, attackDisplayTime * 2);
 
     enemyEl._runnerPunchInt = setInterval(() => {
         if (!document.body.contains(enemyEl)) {
@@ -3742,28 +3896,49 @@ function startRunnerPunching(enemyEl) {
         }
 
         const strength = enemyEl.dataset.value;
+        
+        clearTimeout(enemyEl._runnerPunchTimeout);
+        clearTimeout(enemyEl._runnerDamageTimeout);
 
-        updatePunchImage(enemyEl, showPunch);
+        // Held for the attack so wandering can't turn or move mid-animation.
+        enemyEl.dataset.attacking = 'true';
 
-        if (showPunch) {
-            // Hurt main.
-            if (!window.mcHurtCooldown) {
-                window.mcHurtCooldown = true;
+        updatePunchImage(enemyEl, true);
 
-                // apply damage here
-                const currentHealth = getCurrentPoints('health');
-                const newAmount = parseInt(currentHealth, 10) - parseInt(strength, 10);
-                hurtAnimation();
-                addUserPoints(newAmount, 'health', 'enemy', '');
+        enemyEl._runnerPunchTimeout = setTimeout(() => {
+            updatePunchImage(enemyEl, false);
+            delete enemyEl.dataset.attacking;
+        }, attackDisplayTime);
 
-                setTimeout(() => {
-                    window.mcHurtCooldown = false;
-                }, 1000);
+        // Hurt main.
+        const hurtMainCharacter = () => {
+            if (window.mcHurtCooldown) {
+                return;
             }
-        }
 
-        showPunch = !showPunch;
-    }, 800);
+            window.mcHurtCooldown = true;
+
+            // apply damage here
+            const currentHealth = getCurrentPoints('health');
+            const newAmount = parseInt(currentHealth, 10) - parseInt(strength, 10);
+            hurtAnimation();
+            addUserPoints(newAmount, 'health', 'enemy', '');
+
+            setTimeout(() => {
+                window.mcHurtCooldown = false;
+            }, 1000);
+        };
+
+        if (damageAtEnd) {
+            // Just inside the animation, so escaping has to beat the swing.
+            enemyEl._runnerDamageTimeout = setTimeout(
+                hurtMainCharacter,
+                Math.round(attackDisplayTime * 0.9)
+            );
+        } else {
+            hurtMainCharacter();
+        }
+    }, attackCycle);
 }
 
 function stopRunnerEnemy(enemyEl) {
@@ -4211,8 +4386,9 @@ function fireWeaponProjectile(weapon) {
         return;
     }
 
-    const width = srcEl.style.width || srcEl.offsetWidth + 'px';
-    const height = srcEl.style.height || srcEl.offsetHeight + 'px';
+    // The source image is hidden, so it measures 0 without a configured size.
+    const width = srcEl.style.width || (srcEl.offsetWidth || srcEl.naturalWidth) + 'px';
+    const height = srcEl.style.height || (srcEl.offsetHeight || srcEl.naturalHeight) + 'px';
 
     // Direction the character faces → travel vector + rotation angle.
     const dirData = {
@@ -4247,6 +4423,8 @@ function fireWeaponProjectile(weapon) {
     const weaponLength = overlayEl
         ? Math.max(overlayEl.offsetWidth, overlayEl.offsetHeight)
         : 0;
+    // The shot leaves from the weapon's height, not the character's center.
+    const verticalOffset = parseInt(weapon.dataset.verticalOffset, 10) || 0;
     const tipOffset = range + weaponLength;
     const spawnLeft =
         parseInt(mapChar.style.left, 10) +
@@ -4255,6 +4433,7 @@ function fireWeaponProjectile(weapon) {
     const spawnTop =
         parseInt(mapChar.style.top, 10) +
         window.globalTopPositionOffset +
+        verticalOffset +
         dir.dy * tipOffset;
 
     const proj = document.createElement('div');
@@ -5325,62 +5504,20 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
         weaponEl = magicEl;
     }
 
+    const weaponOverlay = weaponEl.querySelector('.weapon-overlay');
+    const damageAtEnd = 'end' === mapChar.dataset.damageTime;
+
     if (0 < modal.length && false === window.noTouch) {
         // Overlap check for map item.
         modal.forEach((value) => {
             let position = cleanClassName(value.className);
 
-            if (value.classList.contains('enemy-item') && weaponEl.classList.contains('engage')) {
-                // For an equipped overlay weapon, use the weapon image's reach
-                // (centered on the character) as the hit area instead of the
-                // pushed-out hitbox point, so range matches what's on screen.
-                let weaponHitArea = weaponEl;
-                const activeOverlay =
-                    weaponEl.matches &&
-                    weaponEl.matches('.weapon-swing, .weapon-thrust, .weapon-shoot')
-                        ? weaponEl.querySelector('.weapon-overlay')
-                        : null;
-
-                if (activeOverlay) {
-                    const reach = Math.max(
-                        activeOverlay.offsetWidth,
-                        activeOverlay.offsetHeight
-                    );
-
-                    // Shift the hit area out by the weapon's range in the facing
-                    // direction, matching the on-screen offset.
-                    const range = parseInt(weaponEl.dataset.range, 10) || 0;
-                    let rangeX = 0;
-                    let rangeY = 0;
-                    switch (weaponEl.dataset.direction) {
-                        case 'top':
-                            rangeY = -range;
-                            break;
-                        case 'down':
-                            rangeY = range;
-                            break;
-                        case 'left':
-                            rangeX = -range;
-                            break;
-                        case 'right':
-                            rangeX = range;
-                            break;
-                    }
-
-                    const verticalOffset =
-                        parseInt(weaponEl.dataset.verticalOffset, 10) || 0;
-
-                    weaponHitArea = {
-                        offsetLeft: weaponEl.offsetLeft - reach + rangeX,
-                        offsetTop: weaponEl.offsetTop - reach + rangeY + verticalOffset,
-                        offsetWidth: reach * 2,
-                        offsetHeight: reach * 2,
-                        classList: { contains: () => false },
-                    };
-                }
-
-                // Hurt enemy save enemy health.
-                hurtTheEnemy(weaponEl, value, weaponHitArea);
+            if (
+                value.classList.contains('enemy-item') &&
+                weaponEl.classList.contains('engage') &&
+                false === damageAtEnd
+            ) {
+                hitEnemyWithWeapon(weaponEl, value);
             }
 
             // No points for draggables.
@@ -6117,13 +6254,14 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
         ) {
             switch (goThisWay) {
                 case 38:
+                    weaponOverlay.style.opacity = '1';
                     direction =
                         '' !== isDragging ? window.draggingDirection : 'up';
                     newCharacterImage = getCharacterSprite(
                         window.mainCharacter + '-' + direction + isDragging
                     );
                     if (newCharacterImage && '' !== newCharacterImage.getAttribute('src')) {
-                        box.classList.remove('engage');
+                        box?.classList.remove('engage');
                         allImages.forEach((image) => {
                             image.classList.remove('engage');
                         });
@@ -6132,11 +6270,43 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 
                     mapChar.className = '';
                     mapChar.classList.add('top-dir');
+
+                    if (
+                        newCharacterImage &&
+                        newCharacterImage.id ===
+                            window.mainCharacter +
+                                '-' +
+                                direction +
+                                isDragging +
+                                '-' +
+                                weaponEl.dataset.weapon &&
+                        weaponOverlay &&
+                        '' !== weaponOverlay.src
+                    ) {
+                        weaponOverlay.style.opacity = '0';
+                    }
+
                     if (weaponEl) {
                         weaponEl.setAttribute('data-direction', 'top');
                     }
+
+                    if (
+                        newCharacterImage &&
+                        newCharacterImage.id ===
+                            window.mainCharacter +
+                                '-' +
+                                direction +
+                                isDragging +
+                                '-' +
+                                weaponEl.dataset.weapon &&
+                        weaponOverlay &&
+                        '' !== weaponOverlay.src
+                    ) {
+                        weaponOverlay.style.opacity = '0';
+                    }
                     break;
                 case 37:
+                    weaponOverlay.style.opacity = '1';
                     direction =
                         '' !== isDragging ? window.draggingDirection : 'left';
                     newCharacterImage = getCharacterSprite(
@@ -6146,7 +6316,7 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
                         newCharacterImage &&
                         '' !== newCharacterImage.getAttribute('src')
                     ) {
-                        box.classList.remove('engage');
+                        box?.classList.remove('engage');
                         allImages.forEach((image) => {
                             image.classList.remove('engage');
                         });
@@ -6157,15 +6327,31 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
                     if (weaponEl) {
                         weaponEl.setAttribute('data-direction', 'left');
                     }
+
+                    if (
+                        newCharacterImage &&
+                        newCharacterImage.id ===
+                            window.mainCharacter +
+                                '-' +
+                                direction +
+                                isDragging +
+                                '-' +
+                                weaponEl.dataset.weapon &&
+                        weaponOverlay &&
+                        '' !== weaponOverlay.src
+                    ) {
+                        weaponOverlay.style.opacity = '0';
+                    }
                     break;
                 case 39:
+                    weaponOverlay.style.opacity = '1';
                     direction =
                         '' !== isDragging ? window.draggingDirection : 'right';
                     newCharacterImage = getCharacterSprite(
                         window.mainCharacter + '-' + direction + isDragging
                     );
                     if (newCharacterImage && '' !== newCharacterImage.getAttribute('src')) {
-                        box.classList.remove('engage');
+                        box?.classList.remove('engage');
                         allImages.forEach((image) => {
                             image.classList.remove('engage');
                         });
@@ -6173,18 +6359,36 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
                     }
                     mapChar.className = '';
                     mapChar.classList.add('right-dir');
+
                     if (weaponEl) {
                         weaponEl.setAttribute('data-direction', 'right');
                     }
+
+                    if (
+                        newCharacterImage &&
+                        newCharacterImage.id ===
+                            window.mainCharacter +
+                                '-' +
+                                direction +
+                                isDragging +
+                                '-' +
+                                weaponEl.dataset.weapon &&
+                        weaponOverlay &&
+                        '' !== weaponOverlay.src
+                    ) {
+                        weaponOverlay.style.opacity = '0';
+                    }
+
                     break;
                 case 40:
+                    weaponOverlay.style.opacity = '1';
                     direction =
                         '' !== isDragging ? window.draggingDirection : 'down';
                     newCharacterImage = getCharacterSprite(
                         window.mainCharacter + '-' + direction + isDragging
                     );
                     if (newCharacterImage && '' !== newCharacterImage.getAttribute('src')) {
-                        box.classList.remove('engage');
+                        box?.classList.remove('engage');
                         allImages.forEach((image) => {
                             image.classList.remove('engage');
                         });
@@ -6195,15 +6399,31 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
                     if (weaponEl) {
                         weaponEl.setAttribute('data-direction', 'down');
                     }
+
+                    if (
+                        newCharacterImage &&
+                        newCharacterImage.id ===
+                            window.mainCharacter +
+                                '-' +
+                                direction +
+                                isDragging +
+                                '-' +
+                                weaponEl.dataset.weapon &&
+                        weaponOverlay &&
+                        '' !== weaponOverlay.src
+                    ) {
+                        weaponOverlay.style.opacity = '0';
+                    }
                     break;
                 case 87:
+                    weaponOverlay.style.opacity = '1';
                     direction =
                         '' !== isDragging ? window.draggingDirection : 'up';
                     newCharacterImage = getCharacterSprite(
                         window.mainCharacter + '-' + direction + isDragging
                     );
                     if (newCharacterImage && '' !== newCharacterImage.getAttribute('src')) {
-                        box.classList.remove('engage');
+                        box?.classList.remove('engage');
                         allImages.forEach((image) => {
                             image.classList.remove('engage');
                         });
@@ -6215,15 +6435,31 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
                     if (weaponEl) {
                         weaponEl.setAttribute('data-direction', 'top');
                     }
+
+                    if (
+                        newCharacterImage &&
+                        newCharacterImage.id ===
+                            window.mainCharacter +
+                                '-' +
+                                direction +
+                                isDragging +
+                                '-' +
+                                weaponEl.dataset.weapon &&
+                        weaponOverlay &&
+                        '' !== weaponOverlay.src
+                    ) {
+                        weaponOverlay.style.opacity = '0';
+                    }
                     break;
                 case 65:
+                    weaponOverlay.style.opacity = '1';
                     direction =
                         '' !== isDragging ? window.draggingDirection : 'left';
                     newCharacterImage = getCharacterSprite(
                         window.mainCharacter + '-' + direction + isDragging
                     );
                     if (newCharacterImage && '' !== newCharacterImage.getAttribute('src')) {
-                        box.classList.remove('engage');
+                        box?.classList.remove('engage');
                         allImages.forEach((image) => {
                             image.classList.remove('engage');
                         });
@@ -6234,15 +6470,31 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
                     if (weaponEl) {
                         weaponEl.setAttribute('data-direction', 'left');
                     }
+
+                    if (
+                        newCharacterImage &&
+                        newCharacterImage.id ===
+                            window.mainCharacter +
+                                '-' +
+                                direction +
+                                isDragging +
+                                '-' +
+                                weaponEl.dataset.weapon &&
+                        weaponOverlay &&
+                        '' !== weaponOverlay.src
+                    ) {
+                        weaponOverlay.style.opacity = '0';
+                    }
                     break;
                 case 68:
+                    weaponOverlay.style.opacity = '1';
                     direction =
                         '' !== isDragging ? window.draggingDirection : 'right';
                     newCharacterImage = getCharacterSprite(
                         window.mainCharacter + '-' + direction + isDragging
                     );
                     if (newCharacterImage && '' !== newCharacterImage.getAttribute('src')) {
-                        box.classList.remove('engage');
+                        box?.classList.remove('engage');
                         allImages.forEach((image) => {
                             image.classList.remove('engage');
                         });
@@ -6253,15 +6505,30 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
                     if (weaponEl) {
                         weaponEl.setAttribute('data-direction', 'right');
                     }
+                    if (
+                        newCharacterImage &&
+                        newCharacterImage.id ===
+                            window.mainCharacter +
+                                '-' +
+                                direction +
+                                isDragging +
+                                '-' +
+                                weaponEl.dataset.weapon &&
+                        weaponOverlay &&
+                        '' !== weaponOverlay.src
+                    ) {
+                        weaponOverlay.style.opacity = '0';
+                    }
                     break;
                 case 83:
+                    weaponOverlay.style.opacity = '1';
                     direction =
                         '' !== isDragging ? window.draggingDirection : 'down';
                     newCharacterImage = getCharacterSprite(
                         window.mainCharacter + '-' + direction + isDragging
                     );
                     if (newCharacterImage && '' !== newCharacterImage.getAttribute('src')) {
-                        box.classList.remove('engage');
+                        box?.classList.remove('engage');
                         allImages.forEach((image) => {
                             image.classList.remove('engage');
                         });
@@ -6271,6 +6538,21 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
                     mapChar.classList.add('down-dir');
                     if (weaponEl) {
                         weaponEl.setAttribute('data-direction', 'down');
+                    }
+
+                    if (
+                        newCharacterImage &&
+                        newCharacterImage.id ===
+                            window.mainCharacter +
+                                '-' +
+                                direction +
+                                isDragging +
+                                '-' +
+                                weaponEl.dataset.weapon &&
+                        weaponOverlay &&
+                        '' !== weaponOverlay.src
+                    ) {
+                        weaponOverlay.style.opacity = '0';
                     }
                     break;
             }
@@ -8529,11 +8811,11 @@ function setStaticMCImage(mapChar, direction, weaponChange) {
             '' === window.currentCharacterAutoDirection) ||
         (currentCharacterImage && '' !== direction)
     ) {
+        // Strip attack tokens (keep any weapon suffix) so a punch id maps to its static.
         let staticId = currentCharacterImage.id
-            .replace('left-punch', 'left')
-            .replace('right-punch', 'right')
-            .replace('up-punch', 'up')
-            .replace('down-punch', 'down')
+            .replace('-punch', '')
+            .replace('-heavy', '')
+            .replace('-charged', '')
             .replace(
                 window.mainCharacter + '-',
                 window.mainCharacter + '-static-'
@@ -8550,21 +8832,12 @@ function setStaticMCImage(mapChar, direction, weaponChange) {
                 window.isDragging;
         }
 
-        const thisIsWeapon =
-            weaponChange && defaultWeapon !== window.currentWeapon
-                ? window.currentWeapon
-                : '';
-
-        // Prefer the weapon-specific static sprite, but fall back to the base
-        // static sprite so weapons that only supply an on-attack overlay still
-        // return to a valid standing image instead of the default static.
-        let staticVersion = thisIsWeapon
-            ? document.getElementById(staticId + thisIsWeapon)
-            : null;
-
-        if (!staticVersion || '' === staticVersion.getAttribute('src')) {
-            staticVersion = document.getElementById(staticId);
+        // Look up weaponless so getCharacterSprite prefers the equipped weapon's static.
+        if (window.currentWeapon && staticId.endsWith(window.currentWeapon)) {
+            staticId = staticId.slice(0, -window.currentWeapon.length);
         }
+
+        const staticVersion = getCharacterSprite(staticId);
 
         if (staticVersion && '' !== staticVersion.getAttribute('src')) {
             currentCharacterImage.classList.remove('engage');
@@ -8835,7 +9108,10 @@ function characterHitEvent(event) {
                         weaponAnimation &&
                         '' !== weaponAnimation.getAttribute('src')
                     ) {
-                        currentImageMapCharacter.classList.add('punched');
+                        // Don't punch (opacity 0) the sprite we're about to engage.
+                        if (currentImageMapCharacter !== weaponAnimation) {
+                            currentImageMapCharacter.classList.add('punched');
+                        }
                         weaponAnimation.classList.add('engage');
 
                         // Remember the attack params so that turning during the
@@ -8922,6 +9198,13 @@ function characterHitEvent(event) {
                         false === heavyAttackInProgress &&
                         false === shiftIsPressed)
                 ) {
+                    // Just inside the animation, so escaping has to beat the swing.
+                    if ('end' === mapChar.dataset.damageTime) {
+                        setTimeout(() => {
+                            hitEnemiesInReach(weapon);
+                        }, Math.round(weaponTime * 0.9));
+                    }
+
                     setTimeout(() => {
                         // If heavy attack is not happening then you reset weapon.
                         if (
@@ -8982,6 +9265,13 @@ function characterHitEvent(event) {
                     // the default so animated heavy sprites can finish.
                     const heavyAttackTime = parseInt(mapChar.dataset.heavyAttackTime, 10);
                     const heavyTime = 0 < heavyAttackTime ? heavyAttackTime : 500;
+
+                    // Just inside the animation, so escaping has to beat the swing.
+                    if ('end' === mapChar.dataset.damageTime) {
+                        setTimeout(() => {
+                            hitEnemiesInReach(weapon);
+                        }, Math.round(heavyTime * 0.9));
+                    }
 
                     setTimeout(() => {
                         heavyAttackInProgress = false;
@@ -9187,6 +9477,17 @@ function getBlockDirection(
     const enemyAttackInset = true === enemy ? 8 : 0;
     const playerAttackInset = true === enemy ? 8 : 0;
 
+    // Gravity areas inset the player's top only, keeping their true bottom.
+    const playerInsetSides = window.gravityMode ? 1 : 2;
+
+    // Gravity sprites are bottom-anchored, so their box hangs off one baseline
+    // instead of shifting with each sprite's rendered height.
+    const charHeight = parseFloat(mapChar.dataset.characterHeight) || 0;
+    const spriteTop = (spriteHeight) =>
+        window.gravityMode
+            ? window.globalTopPositionOffset + charHeight / 2 - spriteHeight
+            : window.globalTopPositionOffset - spriteHeight / 2;
+
     let enemyTargetCorner = 'center';
 
     if (true === enemy) {
@@ -9204,8 +9505,11 @@ function getBlockDirection(
         enemyTargetCorner = box.dataset.targetCorner;
     }
 
+    const isPlayerBox = true !== enemy && true !== npc;
     let cornerOffsetLeft = window.globalLeftPositionOffset - box.offsetWidth / 2;
-    let cornerOffsetTop = window.globalTopPositionOffset - box.offsetHeight / 2;
+    let cornerOffsetTop = isPlayerBox
+        ? spriteTop(box.offsetHeight)
+        : window.globalTopPositionOffset - box.offsetHeight / 2;
 
     if (true === enemy) {
         switch (enemyTargetCorner) {
@@ -9245,9 +9549,12 @@ function getBlockDirection(
         offsetWidth: Math.max(10, mapImage.offsetWidth - playerHitInset * 2),
         offsetTop:
             mapChar.offsetTop +
-            (window.globalTopPositionOffset - mapImage.offsetHeight / 2) +
+            spriteTop(mapImage.offsetHeight) +
             playerHitInset,
-        offsetHeight: Math.max(10, mapImage.offsetHeight - playerHitInset * 2),
+        offsetHeight: Math.max(
+            10,
+            mapImage.offsetHeight - playerHitInset * playerInsetSides
+        ),
     };
 
     // Slightly larger attack/contact box for the player's body.
@@ -9259,9 +9566,12 @@ function getBlockDirection(
         offsetWidth: Math.max(10, mapImage.offsetWidth - playerAttackInset * 2),
         offsetTop:
             mapChar.offsetTop +
-            (window.globalTopPositionOffset - mapImage.offsetHeight / 2) +
+            spriteTop(mapImage.offsetHeight) +
             playerAttackInset,
-        offsetHeight: Math.max(10, mapImage.offsetHeight - playerAttackInset * 2),
+        offsetHeight: Math.max(
+            10,
+            mapImage.offsetHeight - playerAttackInset * playerInsetSides
+        ),
     };
 
     // Movement collision box for the moving object.
@@ -9417,7 +9727,7 @@ function getBlockDirection(
     }
 
     if (true === enemy && false === touchingMainChar) {
-        stopRunnerPunching(box);
+        stopRunnerPunching(box, true);
     }
 
     return final;
@@ -9443,10 +9753,13 @@ function elementsOverlap(rect1, rect2, buffer) {
     const rect1Top    = rect1.offsetTop;
     const rect1Bottom = rect1.offsetTop  + rect1.offsetHeight;
 
+    // Gravity areas keep the sprite's true bottom so ground contact is honest.
+    const bottomInset = window.gravityMode ? 0 : hitboxInset;
+
     const rect2Right  = rect2.offsetLeft + rect2.offsetWidth  - hitboxInset;
     const rect2Left   = rect2.offsetLeft                      + hitboxInset;
     const rect2Top    = rect2.offsetTop                       + hitboxInset;
-    const rect2Bottom = rect2.offsetTop  + rect2.offsetHeight - hitboxInset;
+    const rect2Bottom = rect2.offsetTop  + rect2.offsetHeight - bottomInset;
 
     return (
         false ===
@@ -9489,19 +9802,19 @@ function theHazardOverlap(el1, el2, isParent) {
         const r = el.getBoundingClientRect();
         const inset = applyInset ? hitboxInset : 0;
 
-        // When grounded in gravity mode the sub-step loop parks the player up to
-        // MAX_STEP (3 px) above any surface before the hazard check runs.
-        // Add inset back (cancels hitbox shrink on the bottom edge) plus 3 px so
-        // "standing on top of a hazard" registers as overlap.
+        // Gravity areas keep the sprite's true bottom so ground contact is honest.
+        const bottomInset = (applyInset && window.gravityMode) ? 0 : inset;
+
+        // The sub-step loop parks the player up to MAX_STEP (3px) above a surface.
         const groundedExt = (applyInset && window.gravityMode && window.isGrounded)
-            ? inset + 3
+            ? 3
             : 0;
 
         return {
             left:   r.left   - containerRect.left + inset,
             right:  r.right  - containerRect.left - inset,
             top:    r.top    - containerRect.top  + inset,
-            bottom: r.bottom - containerRect.top  - inset + groundedExt,
+            bottom: r.bottom - containerRect.top  - bottomInset + groundedExt,
         };
     };
 

@@ -1474,6 +1474,14 @@ html {
         }
       }
 
+      &[data-physics="gravity"] {
+        #map-character .map-character-icon {
+          bottom: calc(50% - (var(--character-height, 185px) / 2));
+          top: auto;
+          transform: translate(-50%, 0);
+        }
+      }
+
       .map-weapon,
       .magic-weapon {
         background: transparent;

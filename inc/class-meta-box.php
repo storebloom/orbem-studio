@@ -1057,6 +1057,15 @@ class Meta_Box {
                                         'number',
                                         'How long (in milliseconds) the charged attack image stays on screen. Leave empty for the default.'
                                 ],
+                                'explore-damage-time' => [
+                                        [
+                                                'radio' => [
+                                                        'start',
+                                                        'end'
+                                                ]
+                                        ],
+                                        'When during the attack animation damage is dealt: at the start of the attack, or at the end once the attack display time has elapsed. Defaults to start.'
+                                ],
                         ],
 
                         'Weapon & Gear Configuration' => [
@@ -1390,6 +1399,15 @@ class Meta_Box {
                                 'explore-attack-display-time' => [
                                         'number',
                                         'How long (in milliseconds) the enemy’s attack image stays on screen. Increase this so animated (GIF) attack sprites have time to finish. Leave empty for the default.'
+                                ],
+                                'explore-damage-time' => [
+                                        [
+                                                'radio' => [
+                                                        'start',
+                                                        'end'
+                                                ]
+                                        ],
+                                        'When during the attack animation damage is dealt: at the start of the attack, or at the end once the attack display time has elapsed. Defaults to start.'
                                 ],
                         ],
 

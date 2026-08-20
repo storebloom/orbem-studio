@@ -214,7 +214,7 @@ class Plugin extends Plugin_Base {
     {
         $localizes = [];
 
-        $current_user_id = get_current_user_id();
+        $current_user_id = Explore::playerId();
         $explore_points = get_user_meta($current_user_id, 'explore_points', true);
         $current_materialized_items = get_user_meta($current_user_id, 'explore_materialized_items', true);
         $explore_points = $explore_points ?? [];
