@@ -277,7 +277,7 @@ class Meta_Box {
                                 ],
                                 'explore-area-scale' => [
                                         'number',
-                                        'Zoom for this area as a percentage (e.g. 160 = 160%). Enlarges the whole world — great for small pixel art — while keeping the player centered. Leave empty or 100 for no zoom.'
+                                        'Zoom for this area as a percentage (e.g. 160 = 160%). Enlarges the whole world, great for small pixel art, while keeping the player centered. Leave empty or 100 for no zoom.'
                                 ],
                         ],
 
@@ -539,12 +539,12 @@ class Meta_Box {
 
                 ],
                 'explore-cutscene' => [
-                        'Cutscene NPC & Type' => [
+                        'Cutscene Character & Type' => [
                                 'explore-character' => [
                                         [
                                                 'select' => $explore_character_array
                                         ],
-                                        'Select the NPC involved in this cutscene.'
+                                        'Select the character involved in this cutscene.'
                                 ],
                                 'explore-trigger-type' => [
                                         [
@@ -691,7 +691,7 @@ class Meta_Box {
                                                         'no'
                                                 ]
                                         ],
-                                        'Choose whether the NPC should face the player during the cutscene.'
+                                        'Choose whether the character should face the player during the cutscene.'
                                 ],
                                 'explore-path-after-cutscene' => [
                                         [
@@ -700,15 +700,15 @@ class Meta_Box {
                                                         'left' => 'number'
                                                 ]
                                         ],
-                                        'Define the path the NPC will walk after the cutscene ends.'
+                                        'Define the path the character will walk after the cutscene ends.'
                                 ],
                                 'explore-speed' => [
                                         'number',
-                                        'Set how fast the NPC moves along the post-cutscene path.'
+                                        'Set how fast the character moves along the post-cutscene path.'
                                 ],
                                 'explore-time-between' => [
                                         'number',
-                                        'Set the pause duration between each movement point in the NPC path.'
+                                        'Set the pause duration between each movement point in the character path.'
                                 ],
                         ],
 
@@ -1084,7 +1084,7 @@ class Meta_Box {
                         'Movement & Pathing' => [
                                 'explore-speed' => [
                                         'number',
-                                        'The movement speed of this NPC.'
+                                        'How fast this character moves, used both when they are the main character and when they walk as an NPC. Lower numbers move faster. Leave empty for the default of 16.'
                                 ],
                                 'explore-jump' => [
                                     'number',
@@ -1114,7 +1114,7 @@ class Meta_Box {
                                                         'left' => 'number'
                                                 ]
                                         ],
-                                        'Define a fixed walking path for this NPC.'
+                                        'Define a fixed walking path for this character.'
                                 ],
                                 'explore-repeat' => [
                                         [
@@ -1142,7 +1142,7 @@ class Meta_Box {
                                                         'select' => $explore_item_array
                                                 ],
                                         ],
-                                        'Define triggers that cause this NPC to start moving.'
+                                        'Define triggers that cause this character to start moving.'
                                 ],
                         ],
 

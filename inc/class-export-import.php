@@ -71,6 +71,419 @@ class Export_Import
     }
 
     /**
+     * Handle the itch.io export -- a zip containing a standalone index.html of the live game.
+     *
+     * @action admin_init
+     */
+    public function handleItchExport(): void
+    {
+        if (
+            !isset($_POST['orbem_action'], $_POST['orbem_itch_nonce']) ||
+            'export_itch' !== sanitize_text_field(wp_unslash($_POST['orbem_action'])) ||
+            !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['orbem_itch_nonce'])), 'orbem_export_itch') ||
+            !current_user_can('manage_options')
+        ) {
+            return;
+        }
+
+        if (!class_exists('ZipArchive')) {
+            $this->itchExportError(__('The PHP zip extension (ZipArchive) is not available on this server.', 'orbem-studio'));
+        }
+
+        set_time_limit(0);
+
+        $index = $this->buildGameIndex();
+
+        if ('' !== $index['error']) {
+            $this->itchExportError($index['error']);
+        }
+
+        $index_html = $index['html'];
+        $filename   = 'orbem-itch-' . sanitize_title(get_bloginfo('name')) . '-' . gmdate('Y-m-d') . '.zip';
+        $tmp_file   = wp_tempnam('orbem-itch');
+
+        if (empty($tmp_file)) {
+            $this->itchExportError(__('Could not create a temporary file for the zip.', 'orbem-studio'));
+        }
+
+        $zip = new \ZipArchive();
+
+        if (true !== $zip->open($tmp_file, \ZipArchive::CREATE | \ZipArchive::OVERWRITE)) {
+            wp_delete_file($tmp_file);
+            $this->itchExportError(__('Could not create the zip archive.', 'orbem-studio'));
+        }
+
+        $zip->addFromString('index.html', $index_html);
+        $zip->close();
+
+        // phpcs:ignore WordPress.WP.AlternativeFunctions -- reading back the zip we just wrote to stream it.
+        $zip_contents = file_get_contents($tmp_file);
+        wp_delete_file($tmp_file);
+
+        if (false === $zip_contents) {
+            $this->itchExportError(__('Could not read the generated zip archive.', 'orbem-studio'));
+        }
+
+        nocache_headers();
+        header('Content-Type: application/zip');
+        header('Content-Disposition: attachment; filename=' . $filename);
+        header('Content-Length: ' . strlen($zip_contents));
+        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- binary zip payload.
+        echo $zip_contents;
+        exit;
+    }
+
+    /**
+     * Redirect back to the export screen with an error message.
+     */
+    private function itchExportError(string $message): void
+    {
+        wp_safe_redirect(
+            add_query_arg(
+                'itch_error',
+                rawurlencode($message),
+                admin_url('admin.php?page=orbem-studio-export-import')
+            )
+        );
+        exit;
+    }
+
+    /**
+     * Build the standalone index.html document for the configured game page.
+     *
+     * Shared by the itch.io and Steam exports.
+     *
+     * @return array{html: string, error: string}
+     */
+    public function buildGameIndex(): array
+    {
+        $game_page = get_option('explore_game_page', '');
+        $page      = empty($game_page) ? null : get_page_by_path($game_page);
+
+        if (!$page instanceof \WP_Post) {
+            return [
+                'html'  => '',
+                'error' => __('No game page is set. Choose one under Game Options -- Page For Game.', 'orbem-studio'),
+            ];
+        }
+
+        $game_url = (string) get_permalink($page);
+
+        if (empty($game_url)) {
+            return [
+                'html'  => '',
+                'error' => __('Could not determine the game page URL.', 'orbem-studio'),
+            ];
+        }
+
+        $html = $this->fetchGamePageHtml($game_url);
+
+        if (empty($html)) {
+            return [
+                'html'  => '',
+                'error' => sprintf(
+                    /* translators: %s: URL of the game page. */
+                    __('Could not load the game page. Make sure %s is published and publicly reachable.', 'orbem-studio'),
+                    $game_url
+                ),
+            ];
+        }
+
+        return [
+            'html'  => $this->buildStandaloneDocument($html, $game_url, $page->post_title),
+            'error' => '',
+        ];
+    }
+
+    /**
+     * Fetch the rendered game page exactly as a logged out player sees it.
+     */
+    private function fetchGamePageHtml(string $url): string
+    {
+        $request_url = add_query_arg('orbem_static_export', '1', $url);
+        $args        = [
+            'timeout'     => 60,
+            'redirection' => 3,
+            'headers'     => ['Cache-Control' => 'no-cache'],
+        ];
+
+        $response = wp_remote_get($request_url, $args);
+
+        // Loopback requests to this same site often fail on local/self-signed certs.
+        if (is_wp_error($response) && $this->isSameHost($url)) {
+            $args['sslverify'] = false;
+            $response          = wp_remote_get($request_url, $args);
+        }
+
+        if (is_wp_error($response) || 200 !== wp_remote_retrieve_response_code($response)) {
+            return '';
+        }
+
+        return (string) wp_remote_retrieve_body($response);
+    }
+
+    /**
+     * Check that a URL points back at this site.
+     */
+    private function isSameHost(string $url): bool
+    {
+        $host = wp_parse_url($url, PHP_URL_HOST);
+        $home = wp_parse_url(home_url(), PHP_URL_HOST);
+
+        return !empty($host) && !empty($home) && strtolower($host) === strtolower($home);
+    }
+
+    /**
+     * Turn the fetched markup into a standalone HTML document.
+     *
+     * Stylesheets and scripts that live on this site are inlined so the file plays
+     * on its own. Media and REST calls keep their absolute URLs back to this site.
+     */
+    private function buildStandaloneDocument(string $html, string $game_url, string $title): string
+    {
+        $html = $this->absolutizeUrls($html, $game_url);
+        $html = $this->inlineStyles($html);
+        $html = $this->inlineScripts($html);
+
+        // A theme or filter may already have produced a full document -- leave it alone.
+        if (false !== stripos($html, '<html')) {
+            return $html;
+        }
+
+        // The game template prints head markup followed by <main>, without a document wrapper.
+        $split = stripos($html, '<main');
+        $head  = false === $split ? '' : substr($html, 0, $split);
+        $body  = false === $split ? $html : substr($html, $split);
+
+        return '<!DOCTYPE html>' . "\n"
+            . '<html lang="' . esc_attr(str_replace('_', '-', get_locale())) . '">' . "\n"
+            . '<head>' . "\n"
+            . '<meta charset="utf-8">' . "\n"
+            . '<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">' . "\n"
+            . '<title>' . esc_html($title ?: get_bloginfo('name')) . '</title>' . "\n"
+            . '<base href="' . esc_url($game_url) . '">' . "\n"
+            . $head . "\n"
+            . '<style>html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;}</style>' . "\n"
+            . '</head>' . "\n"
+            . '<body>' . "\n"
+            . $body . "\n"
+            . '</body>' . "\n"
+            . '</html>';
+    }
+
+    /**
+     * Rewrite every relative URL in the markup to an absolute URL on this site.
+     */
+    private function absolutizeUrls(string $html, string $base_url): string
+    {
+        $attributes = 'src|href|poster|action|data-src|data-map|data-image';
+
+        $html = (string) preg_replace_callback(
+            '/\s(' . $attributes . ')=(["\'])([^"\']*)\2/i',
+            function (array $match) use ($base_url): string {
+                return ' ' . $match[1] . '=' . $match[2] . $this->absoluteUrl($match[3], $base_url) . $match[2];
+            },
+            $html
+        );
+
+        $html = (string) preg_replace_callback(
+            '/\ssrcset=(["\'])([^"\']*)\1/i',
+            function (array $match) use ($base_url): string {
+                $sources = array_map(
+                    function (string $source) use ($base_url): string {
+                        $parts = preg_split('/\s+/', trim($source), 2) ?: [''];
+                        $parts[0] = $this->absoluteUrl($parts[0], $base_url);
+
+                        return implode(' ', $parts);
+                    },
+                    explode(',', $match[2])
+                );
+
+                return ' srcset=' . $match[1] . implode(', ', $sources) . $match[1];
+            },
+            $html
+        );
+
+        // Only touch url() inside style blocks and style attributes -- never inside scripts.
+        $html = (string) preg_replace_callback(
+            '#<style\b[^>]*>(.*?)</style>#is',
+            function (array $match) use ($base_url): string {
+                return str_replace($match[1], $this->absolutizeCssUrls($match[1], $base_url), $match[0]);
+            },
+            $html
+        );
+
+        return (string) preg_replace_callback(
+            '/\sstyle=(["\'])([^"\']*)\1/i',
+            function (array $match) use ($base_url): string {
+                return ' style=' . $match[1] . $this->absolutizeCssUrls($match[2], $base_url) . $match[1];
+            },
+            $html
+        );
+    }
+
+    /**
+     * Rewrite url() references inside CSS to absolute URLs.
+     */
+    private function absolutizeCssUrls(string $css, string $base_url): string
+    {
+        return (string) preg_replace_callback(
+            '/url\(\s*(["\']?)([^"\')]+)\1\s*\)/i',
+            function (array $match) use ($base_url): string {
+                return 'url(' . $match[1] . $this->absoluteUrl($match[2], $base_url) . $match[1] . ')';
+            },
+            $css
+        );
+    }
+
+    /**
+     * Resolve a single URL against the page it was found on.
+     */
+    private function absoluteUrl(string $url, string $base_url): string
+    {
+        $url = trim($url);
+
+        if (
+            '' === $url ||
+            str_starts_with($url, '#') ||
+            preg_match('#^(https?:|data:|blob:|mailto:|tel:|javascript:|about:)#i', $url)
+        ) {
+            return $url;
+        }
+
+        $home = wp_parse_url(home_url());
+
+        if (empty($home['scheme']) || empty($home['host'])) {
+            return $url;
+        }
+
+        if (str_starts_with($url, '//')) {
+            return $home['scheme'] . ':' . $url;
+        }
+
+        $origin = $home['scheme'] . '://' . $home['host'] . (isset($home['port']) ? ':' . $home['port'] : '');
+
+        if (str_starts_with($url, '/')) {
+            return $origin . $url;
+        }
+
+        $base_path = (string) wp_parse_url($base_url, PHP_URL_PATH);
+        $directory = str_ends_with($base_path, '/') ? $base_path : dirname($base_path);
+
+        return $origin . trailingslashit('/' === $directory ? '' : untrailingslashit($directory)) . $url;
+    }
+
+    /**
+     * Inline every stylesheet that resolves to a file on this site.
+     */
+    private function inlineStyles(string $html): string
+    {
+        return (string) preg_replace_callback(
+            '/<link\b[^>]*>/i',
+            function (array $match): string {
+                $tag = $match[0];
+
+                if (!preg_match('/rel=(["\'])stylesheet\1/i', $tag) || !preg_match('/href=(["\'])([^"\']+)\1/i', $tag, $href)) {
+                    return $tag;
+                }
+
+                $css = $this->readLocalAsset($href[2], 'css');
+
+                // Leave the file linked if inlining it would break out of the style block.
+                if ('' === $css || false !== stripos($css, '</style')) {
+                    return $tag;
+                }
+
+                return '<style>' . $this->absolutizeCssUrls($css, $href[2]) . '</style>';
+            },
+            $html
+        );
+    }
+
+    /**
+     * Inline every script that resolves to a file on this site.
+     */
+    private function inlineScripts(string $html): string
+    {
+        return (string) preg_replace_callback(
+            '#<script\b([^>]*)\ssrc=(["\'])([^"\']+)\2([^>]*)>\s*</script>#i',
+            function (array $match): string {
+                $js = $this->readLocalAsset($match[3], 'js');
+
+                if ('' === $js) {
+                    return $match[0];
+                }
+
+                // Keep type/id attributes, drop src and the now meaningless loading hints.
+                $attributes = (string) preg_replace('/\s(defer|async)\b/i', '', $match[1] . $match[4]);
+
+                return '<script' . $attributes . '>' . str_replace('</script', '<\/script', $js) . '</script>';
+            },
+            $html
+        );
+    }
+
+    /**
+     * Read a stylesheet or script from disk when the URL points at this WordPress install.
+     *
+     * Only .css and .js files inside the WordPress root or wp-content are ever read.
+     */
+    private function readLocalAsset(string $url, string $extension): string
+    {
+        $url  = (string) preg_replace('/[?#].*$/', '', trim($url));
+        $roots = array_filter([
+            realpath(WP_CONTENT_DIR),
+            realpath(untrailingslashit(ABSPATH)),
+        ]);
+
+        if ('' === $url || empty($roots)) {
+            return '';
+        }
+
+        $path = '';
+        $map  = [
+            untrailingslashit(content_url()) => WP_CONTENT_DIR,
+            untrailingslashit(site_url())    => untrailingslashit(ABSPATH),
+            untrailingslashit(home_url())    => untrailingslashit(ABSPATH),
+        ];
+
+        foreach ($map as $base_url => $base_dir) {
+            if (str_starts_with($url, $base_url . '/')) {
+                $path = $base_dir . substr($url, strlen($base_url));
+                break;
+            }
+        }
+
+        if ('' === $path || strtolower(pathinfo($path, PATHINFO_EXTENSION)) !== $extension) {
+            return '';
+        }
+
+        $real = realpath($path);
+
+        if (false === $real || !is_file($real) || !is_readable($real)) {
+            return '';
+        }
+
+        $inside = false;
+
+        foreach ($roots as $root) {
+            if (str_starts_with($real, trailingslashit($root))) {
+                $inside = true;
+                break;
+            }
+        }
+
+        if (false === $inside) {
+            return '';
+        }
+
+        // phpcs:ignore WordPress.WP.AlternativeFunctions -- reading a local build asset to inline it.
+        $contents = file_get_contents($real);
+
+        return false === $contents ? '' : $contents;
+    }
+
+    /**
      * Handle game import.
      *
      * @action admin_init

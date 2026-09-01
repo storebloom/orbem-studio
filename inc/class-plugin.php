@@ -25,6 +25,14 @@ class Plugin extends Plugin_Base {
      * @var Explore
      */
     public Explore $explore;
+
+    /**
+     * Steam export instance
+     *
+     * @var Steam_Export
+     */
+    public Steam_Export $steam_export;
+
     private Telemetry $telemetry;
 
     /**
@@ -37,6 +45,10 @@ class Plugin extends Plugin_Base {
         $telemetry = new Telemetry( $this );
         $this->telemetry = $telemetry;
 
+        $export_import     = new Export_Import( $this );
+        $steam_export      = new Steam_Export( $this, $export_import );
+        $this->steam_export = $steam_export;
+
 		// Initiate classes.
 		$classes = array(
             new Util( $this ),
@@ -44,7 +56,8 @@ class Plugin extends Plugin_Base {
             $meta_box,
             new Dev_Mode( $this, $meta_box ),
             new Menu( $this, $telemetry ),
-            new Export_Import( $this ),
+            $export_import,
+            $steam_export,
             $telemetry
 		);
 

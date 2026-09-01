@@ -4,11 +4,11 @@ Tags: game engine, rpg, video game, game-dev, narrative game
 Requires at least: 6.1
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.7.3
+Stable tag: 1.7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Build fully playable, browser-based games directly inside WordPress. No canvas. No external engine. Just a plugin.
+Build playable browser games inside WordPress. Publish as a URL, export to itch.io, or build a Windows desktop version for Steam.
 
 == Description ==
 
@@ -17,6 +17,18 @@ Build fully playable, browser-based games directly inside WordPress. No canvas. 
 Build real games with combat, NPCs, missions, inventory, cutscenes, boss fights, and physics-based platforming. Publish them as a URL on your own site. No Unity. No canvas. No downloads. Your game lives on a WordPress page.
 
 The engine handles movement, collision, triggers, progression, and state entirely through WordPress systems. If you can install a plugin, you can build a game.
+
+= Ship Your Game to itch.io and Steam =
+
+Your game does not have to stay on your site. Two buttons take it to the two places players actually look for games.
+
+**itch.io** gives you a zip holding a single index.html built from your live game page. Upload it, set the project kind to HTML, and it plays in the browser.
+
+**Steam** gives you a real Windows desktop build. Your game is injected into the official Electron runtime, so there is no Node, no npm, and no build server involved. The runtime is downloaded once, checksum verified, and cached; every build after that takes seconds.
+
+Enter your Steamworks App ID once and the build even ships with its Steam upload scripts filled in, plus a one click uploader that fetches steamcmd for you and starts in a safe preview mode so your first upload cannot go wrong.
+
+No build pipeline, no toolchain, nothing to install. Your game goes from a WordPress page to a Steam depot without leaving the admin.
 
 = Why Developers Use Orbem Studio =
 
@@ -37,12 +49,13 @@ Orbem Studio ships with systems for:
 * Inventory with weapons, gear, consumables, and equip logic
 * Mobile controls with d-pad support and landscape mode
 * Developer mode with live object placement, visual trigger overlays, and a front end wall builder
+* One click publishing to itch.io as a browser game, or to Steam as a Windows desktop build
 
 = Proven in Production =
 
 Games built with Orbem Studio:
 
-* [One Wizard Wrong Forest](https:one-wizard-wrong-forest.orbem.studio) -- fantasy brawler with goblin combat and a tree golem boss
+* [One Wizard Wrong Forest](https://one-wizard-wrong-forest.orbem.studio) -- fantasy brawler with goblin combat and a tree golem boss
 * [Cemetery Showdown](https://cemetery-showdown.orbem.studio) -- zombie combat game
 * [Learn how to use Orbem Studio](https://orbem.studio/learn) -- watch turtorials and learn the basics
 
@@ -65,6 +78,13 @@ Install the plugin, click Generate a Starter Game, and you have a playable game 
 Or sign up at [orbem.studio](https://orbem.studio) to build and host your game without your own WordPress site.
 
 = Key Features =
+
+**Publishing and Distribution**
+
+* Export for itch.io: download a zip holding a single index.html built from your live game page, ready to upload as an HTML project
+* Export for Steam: build a Windows desktop version of your game in one click, with no Node, npm, or build tooling on your server
+* Generated Steam upload scripts and a one click uploader that fetches steamcmd for you and starts in a safe preview mode
+* Full game export and import as JSON for backups and moving between sites
 
 **Game Engine**
 
@@ -133,6 +153,7 @@ Or sign up at [orbem.studio](https://orbem.studio) to build and host your game w
 * Educational games and gamified experiences
 * Playable demos and interactive product experiences
 * Experimental web-native game projects
+* Commercial releases published to itch.io or Steam
 
 == Installation ==
 
@@ -180,6 +201,22 @@ Service provider: Google LLC
 [Terms of Service](https://developers.google.com/identity/terms)
 [Privacy Policy](https://policies.google.com/privacy)
 
+= GitHub (Electron runtime download) =
+
+The Steam export builds a Windows desktop version of your game by injecting it into the official Electron runtime, which is downloaded from the Electron project's public releases on GitHub.
+
+What the service is used for:
+The service provides the prebuilt Electron runtime and its official checksum file, so a Windows build can be produced without any build tooling on your server.
+
+What data is sent and when:
+When an administrator builds a Steam export and no runtime is cached yet, the plugin makes two HTTPS GET requests to github.com for the release asset and its SHASUMS256.txt checksum list. No site data, user data, or game content is sent. The download happens once per Electron version and is then cached in your uploads folder and reused.
+
+Service provider: GitHub, Inc.
+[Terms of Service](https://docs.github.com/en/site-policy/github-terms/github-terms-of-service)
+[Privacy Policy](https://docs.github.com/en/site-policy/privacy-policies/github-privacy-statement)
+
+The exported build also includes a Windows script that can download steamcmd from Valve at https://steamcdn-a.akamaihd.net when you choose to run it. That runs on your own computer, not on your site.
+
 == Frequently Asked Questions ==
 
 = Does this require an external game engine? =
@@ -206,6 +243,11 @@ Documentation is available at https://orbem.studio/orbem-studio/docs/readme
 Tutorials are available on the Orbem Studio YouTube channel at https://youtube.com/@orbemstudio
 
 == Changelog ==
+
+= 1.7.4 =
+* Add a movement speed option for the main character: a character's existing Speed field now controls how fast the player moves as well as how they walk as an NPC, defaulting to 16, and switching to another character applies that character's own speed.
+* Add an "Export for Steam" option to Export / Import that builds a downloadable Windows desktop version of your game in one click; the official Electron runtime is downloaded once, checksum verified and cached, then each build injects your game into a copy of it, so nothing is compiled on your server. Enter your Steamworks App ID once and each build also includes ready-to-run Steam upload scripts and a one click uploader that fetches steamcmd for you, starting in a safe preview mode.
+* Add an "Export for itch.io" option to Export / Import that downloads a zip containing a ready-to-upload index.html built from your live game page (upload it to itch.io with Kind of project set to HTML).
 
 = 1.7.3 =
 * Add a "Damage time" option for characters and enemies (start or end, defaulting to start) that controls when an attack deals its damage, so a long attack animation can resolve at the end of the swing and give the target a chance to escape first.
