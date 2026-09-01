@@ -3738,14 +3738,17 @@ function selectNewCharacter(character) {
 
             const mcAbility = currentCharacter.dataset.ability;
             const mcName = currentCharacter.dataset.name;
+            const mcSpeed = currentCharacter.dataset.speed;
 
             // set new character
             currentCharacter.dataset.currentchar =
                 character.dataset.charactername;
             currentCharacter.dataset.ability = character.dataset.ability;
+            currentCharacter.dataset.speed = character.dataset.speed || '16';
             currentCharacter.dataset.name =
                 character.querySelector('.character-name').textContent;
             character.dataset.ability = mcAbility;
+            character.dataset.speed = mcSpeed;
             character.querySelector('.character-name').textContent = mcName;
         }
 
@@ -8366,6 +8369,10 @@ function movementIntFunc() {
 
     clearInterval(window.movementInt);
 
+    // Step interval from the character's speed field, as NPCs and enemies use.
+    const _mapChar = document.getElementById('map-character');
+    const characterSpeed = parseInt(_mapChar?.dataset.speed, 10) || 16;
+
     // Detect gravity mode from the current area's data-physics attribute.
     const _gameContainer = document.querySelector('.game-container');
     window.gravityMode = 'gravity' === (_gameContainer?.dataset.physics || '');
@@ -8732,7 +8739,7 @@ function movementIntFunc() {
 
             box.scrollIntoView({ block: 'nearest' });
         }
-    }, 16);
+    }, characterSpeed);
 }
 
 /**

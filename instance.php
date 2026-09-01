@@ -21,5 +21,6 @@ require_once __DIR__ . '/inc/class-dev-mode.php';
 require_once __DIR__ . '/inc/class-util.php';
 require_once __DIR__ . '/inc/class-menu.php';
 require_once __DIR__ . '/inc/class-export-import.php';
+require_once __DIR__ . '/inc/class-steam-export.php';
 
 $orbem_studio_studio = new Plugin();

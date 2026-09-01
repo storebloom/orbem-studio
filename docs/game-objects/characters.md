@@ -292,9 +292,17 @@ These settings control autonomous NPC behavior.
 #### Movement Speed
 
 **Field:** `explore-speed`  
-**Type:** Number
+**Type:** Number  
+**Default:** 16
 
-How fast the NPC moves. Lower values = faster movement.
+How fast the character moves. Lower values = faster movement.
+
+This field is used in both roles the character can play:
+
+- **As an NPC** it sets the pace along walking paths and post-cutscene paths
+- **As the main character** it sets the player's movement step interval
+
+Leave it empty for the default of 16. Switching to another character mid-game applies that character's own speed.
 
 **Example:**
 ```

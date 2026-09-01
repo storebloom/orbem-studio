@@ -33,7 +33,7 @@ if (true === empty($orbem_studio_characters)) {
 
             $orbem_studio_character_name = get_post_meta($orbem_studio_character_post[0]->ID, 'explore-character-name', true) ?? $orbem_studio_character_post[0]->post_title;
         ?>
-            <div class="character-item" data-ability="<?php echo esc_attr($orbem_studio_character_images['ability']); ?>" data-charactername="<?php echo esc_attr($orbem_studio_character_post[0]->post_name); ?>" data-weapon="<?php echo false === empty($orbem_studio_character_images['weapon']) ? esc_attr($orbem_studio_character_images['weapon']) : ''; ?>">
+            <div class="character-item" data-ability="<?php echo esc_attr($orbem_studio_character_images['ability']); ?>" data-charactername="<?php echo esc_attr($orbem_studio_character_post[0]->post_name); ?>" data-speed="<?php echo esc_attr($orbem_studio_character_images['speed'] ?? 16); ?>" data-weapon="<?php echo false === empty($orbem_studio_character_images['weapon']) ? esc_attr($orbem_studio_character_images['weapon']) : ''; ?>">
                 <div class="character-images">
                     <?php $orbem_studio_non_main_direction_images = $orbem_studio_character_images['direction_images'] ?? false; ?>
 

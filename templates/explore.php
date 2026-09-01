@@ -507,6 +507,7 @@ include plugin_dir_path(__FILE__) . 'plugin-header.php';
             data-heavy-attack-time="<?php echo esc_attr($orbem_studio_main_character_info['heavy-attack-display-time'] ?? ''); ?>"
             data-charged-attack-time="<?php echo esc_attr($orbem_studio_main_character_info['charged-attack-display-time'] ?? ''); ?>"
             data-damage-time="<?php echo esc_attr($orbem_studio_main_character_info['damage-time'] ?? 'start'); ?>"
+            data-speed="<?php echo esc_attr($orbem_studio_main_character_info['speed'] ?? 16); ?>"
         >
             <span class="misc-gauge-wrap"><span class="misc-gauge"></span></span>
             <?php if (false === empty($orbem_studio_hurt_sound)) : ?>

@@ -3330,6 +3330,7 @@ class Explore
             'heavy-attack-display-time'   => $meta['explore-heavy-attack-display-time'] ?? '',
             'charged-attack-display-time' => $meta['explore-charged-attack-display-time'] ?? '',
             'damage-time'      => 'end' === ($meta['explore-damage-time'] ?? '') ? 'end' : 'start',
+            'speed'            => intval($meta['explore-speed'] ?? 0) ?: 16,
         ];
     }
 
