@@ -51,6 +51,12 @@ window.canDoubleJump = false;
 window._jumpKeyActive = false;
 window._touchJumpActive = false;
 
+const DEFAULT_PATH_SPEED = 60;
+
+const DEFAULT_PROJECTILE_SPEED = 10;
+
+const DEFAULT_PATH_PAUSE = 0.175;
+
 // Retarts gif sprite from frame 1.
 function restartGifSprite(img) {
     'use strict';
@@ -561,6 +567,11 @@ function moveNPC(npc, cutscene, areaCutscene, cutPosition) {
                 let didPauseNPC = false;
 
                 walkingInterval = setInterval(() => {
+                    if (!document.body.contains(npc)) {
+                        stopPathMovement(npc);
+                        return;
+                    }
+
                     if ('false' !== npc.dataset?.canmove) {
                         const currentImage = npc.querySelector(
                             '.character-icon.engage'
@@ -581,7 +592,7 @@ function moveNPC(npc, cutscene, areaCutscene, cutPosition) {
                         );
 
                         // If loopAmount equals loop count, transition to next walking path.
-                        if (loopCount === loopAmount - 1 || firstRun) {
+                        if (loopCount >= loopAmount - 1 || firstRun) {
                             // Check that current position is not the last position. And move npc if it is not.
                             if (
                                 pathCount > position ||
@@ -654,6 +665,11 @@ function moveNPC(npc, cutscene, areaCutscene, cutPosition) {
 
                         // Live track NPC movement.
                         const trackNPC = () => {
+                            if (npc._pathStopped || !document.body.contains(npc)) {
+                                npc._trackingPath = false;
+                                return;
+                            }
+
                             if (
                                 parseInt(pathArray[nextPosition].left) ===
                                 npc.offsetLeft &&
@@ -672,7 +688,10 @@ function moveNPC(npc, cutscene, areaCutscene, cutPosition) {
                             requestAnimationFrame(trackNPC);
                         };
 
-                        trackNPC();
+                        if (!npc._trackingPath) {
+                            npc._trackingPath = true;
+                            trackNPC();
+                        }
 
                         didPauseNPC = false;
                     } else if (false === didPauseNPC) {
@@ -688,6 +707,9 @@ function moveNPC(npc, cutscene, areaCutscene, cutPosition) {
                         didPauseNPC = true;
                     }
                 }, 250);
+
+                npc._pathInt = walkingInterval;
+                npc._pathStopped = false;
             } else {
                 regulateTransitionSpeed(
                     npc.style.left.replace('px', ''),
@@ -1704,6 +1726,62 @@ function saveMission(mission, value, position) {
     }, 500);
 }
 
+function refreshHudVisibility() {
+    'use strict';
+
+    const hud = document.getElementById('explore-points');
+
+    if (!hud) {
+        return;
+    }
+
+    const isVisible = (el) => el && 'none' !== getComputedStyle(el).display;
+
+    const hasBars = [...hud.querySelectorAll('.point-bar, .money-amount, .level-amount')]
+        .some(isVisible);
+    const hasMissions = [...hud.querySelectorAll('.mission-list .mission-item')]
+        .some(isVisible);
+
+    hud.classList.toggle('empty', !hasBars && !hasMissions);
+
+    const missions = document.getElementById('missions');
+
+    if (missions) {
+        missions.style.display = hasMissions ? '' : 'none';
+    }
+}
+
+function watchHudContents() {
+    'use strict';
+
+    const hud = document.getElementById('explore-points');
+
+    if (!hud || hud._hudWatched) {
+        return;
+    }
+
+    hud._hudWatched = true;
+
+    let queued = false;
+    const observer = new MutationObserver(() => {
+        if (queued) {
+            return;
+        }
+        queued = true;
+        requestAnimationFrame(() => {
+            queued = false;
+            refreshHudVisibility();
+        });
+    });
+
+    observer.observe(hud, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['style', 'class'],
+    });
+}
+
 function showNextMission(theMission) {
     'use strict';
 
@@ -2267,6 +2345,7 @@ const hurtTheEnemy = (function () {
 
                     stopShooterEnemy(value);
                     stopRunnerEnemy(value);
+                    stopPathMovement(value);
 
                     if (value._pulsewaveInterval) {
                         clearInterval(value._pulsewaveInterval);
@@ -2615,6 +2694,10 @@ const enterNewArea = (function () {
                 stopShooterEnemy(enemyItem);
             });
         }
+
+        document
+            .querySelectorAll('.path-onload[data-path]:not([data-path=""])')
+            .forEach((walker) => stopPathMovement(walker));
 
         // Remove menu explainers. Include any that applyAreaScale hoisted into
         // the scaled .game-world layer so they don't linger between areas.
@@ -3963,6 +4046,21 @@ function stopRunnerEnemy(enemyEl) {
     stopRunnerPunching(enemyEl);
 }
 
+function stopPathMovement(el) {
+    'use strict';
+
+    if (!el) {
+        return;
+    }
+
+    el._pathStopped = true;
+
+    if (el._pathInt) {
+        clearInterval(el._pathInt);
+        el._pathInt = null;
+    }
+}
+
 function stopShooterEnemy(enemyEl) {
     'use strict';
 
@@ -4200,19 +4298,21 @@ function shootProjectile(
 
     let collisionWalls;
 
+    let spawnerEl = null;
+
     if (true !== spell && 'no' === isProjectile) {
         newProjectile.classList.add('shooting');
-        // Center the projectile inside the enemy before inserting so the CSS
-        // `transition: all` on .projectile doesn't animate from the default
-        // `top: 40px` to the centered value (which visually appears as sliding
-        // up from the bottom, especially for small enemies).
         const projImg = newProjectile.querySelector('img');
         const projW = projImg ? (parseInt(projImg.style.width)  || 0) : 0;
         const projH = projImg ? (parseInt(projImg.style.height) || 0) : 0;
         newProjectile.style.position = 'absolute';
-        newProjectile.style.left = Math.round((enemy.offsetWidth  - projW) / 2) + 'px';
-        newProjectile.style.top  = Math.round((enemy.offsetHeight - projH) / 2) + 'px';
-        enemy.prepend(newProjectile);
+        newProjectile.style.left =
+            Math.round(enemy.offsetLeft + (enemy.offsetWidth  - projW) / 2) + 'px';
+        newProjectile.style.top =
+            Math.round(enemy.offsetTop  + (enemy.offsetHeight - projH) / 2) + 'px';
+        (enemy.parentElement || document.querySelector('.game-container'))
+            .prepend(newProjectile);
+        spawnerEl = enemy;
         moveEnemy(newProjectile, mapCharacterLeft, mapCharacterTop, projSpeed, enemy);
         collisionWalls = document.querySelectorAll(
             '.default-map svg rect, .protection, .map-character-icon.engage, #map-weapon img, [data-genre="explore-point"], [data-genre="explore-wall"]'
@@ -4235,10 +4335,10 @@ function shootProjectile(
         );
     }
 
-    trackProjectile(newProjectile, collisionWalls, true);
+    trackProjectile(newProjectile, collisionWalls, true, spawnerEl);
 }
 
-function trackProjectile(projectile, collisionWalls, isProjectile) {
+function trackProjectile(projectile, collisionWalls, isProjectile, spawner) {
     'use strict';
 
     const container = document.querySelector('.game-container');
@@ -4267,8 +4367,8 @@ function trackProjectile(projectile, collisionWalls, isProjectile) {
         }
 
         if (window.gravityMode && belowSpawnWalls === null) {
-            const spawner = projectile.parentElement;
-            const spawnerBottom = spawner ? spawner.getBoundingClientRect().bottom : 0;
+            const origin = spawner || projectile.parentElement;
+            const spawnerBottom = origin ? origin.getBoundingClientRect().bottom : 0;
             belowSpawnWalls = new Set(
                 Array.from(collisionWalls).filter((wall) =>
                     wall.getBoundingClientRect().top >= spawnerBottom - 2
@@ -4601,7 +4701,8 @@ function moveEnemy(
         bPosition.x,
         bPosition.y,
         projectile,
-        projSpeed
+        projSpeed,
+        DEFAULT_PROJECTILE_SPEED
     );
 
     const angle = Math.atan2(
@@ -4682,7 +4783,8 @@ function regulateTransitionSpeed(
     bPositionx,
     bPositiony,
     projectile,
-    multiple
+    multiple,
+    fallbackSpeed
 ) {
     'use strict';
 
@@ -4690,7 +4792,9 @@ function regulateTransitionSpeed(
         aPositionx - bPositionx,
         aPositiony - bPositiony
     );
-    const transitionDist = diffDist * 0.075 * multiple;
+
+    const transitionDist =
+        diffDist * 0.075 * usableSpeed(multiple, fallbackSpeed || DEFAULT_PATH_SPEED);
     let moveDirection = 'down';
     const ydiff = Math.abs(aPositiony - bPositiony);
     const xdiff = Math.abs(aPositionx - bPositionx);
@@ -4730,15 +4834,30 @@ function getLoopAmount(
 ) {
     'use strict';
 
-    multiple = '0' === multiple ? '60' : multiple;
-    timeBetween = '0' === timeBetween ? '0.175' : timeBetween;
     const diffDist = Math.hypot(
         aPositionx - bPositionx,
         aPositiony - bPositiony
     );
-    const transitionDist = diffDist * parseFloat(timeBetween) * multiple;
+    const transitionDist =
+        diffDist * pathPause(timeBetween) * usableSpeed(multiple, DEFAULT_PATH_SPEED);
 
-    return Math.ceil(transitionDist / 250);
+    return Math.max(1, Math.ceil(transitionDist / 250));
+}
+
+function usableSpeed(value, fallback) {
+    'use strict';
+
+    const speed = parseFloat(value);
+
+    return Number.isFinite(speed) && 0 < speed ? speed : fallback;
+}
+
+function pathPause(value) {
+    'use strict';
+
+    const pause = parseFloat(value);
+
+    return Number.isFinite(pause) && 0 < pause ? pause : DEFAULT_PATH_PAUSE;
 }
 
 /**
@@ -5170,13 +5289,11 @@ export function engageExploreGame() {
     }
 
     if (missions) {
-        const hasMissions = missions.querySelector('.mission-list .mission-item');
-        if (hasMissions) {
-            missions.style.opacity = '1';
-        } else {
-            missions.style.display = 'none';
-        }
+        missions.style.opacity = '1';
     }
+
+    watchHudContents();
+    refreshHudVisibility();
 
     // Flash key-guide.
     const keyGuide = document.getElementById('key-guide');

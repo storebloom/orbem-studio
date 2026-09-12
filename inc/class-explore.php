@@ -1935,7 +1935,7 @@ class Explore
                             $html .= ' data-rate="' . esc_attr($projectile_rate) . '"';
                         }
 
-                        $html .= ' data-health="' . esc_attr($health) . '" data-healthamount="' . esc_attr($health) . '" data-enemyspeed="' . esc_attr($enemy_speed) . '" data-speed="' . esc_attr($speed) . '" data-enemy-type="' . esc_attr($explore_enemy_type) . '"';
+                        $html .= ' data-health="' . esc_attr($health) . '" data-healthamount="' . esc_attr($health) . '" data-enemyspeed="' . esc_attr($enemy_speed) . '" data-enemy-type="' . esc_attr($explore_enemy_type) . '"';
                         $wave_html = ' data-waves="';
 
                         // Boss waves.
@@ -2400,7 +2400,7 @@ class Explore
                 $html .= '<div class="character-image-wrapper">';
                 foreach($unique_character_ids as $character_id) {
                     if ( false === empty($character_id) ) {
-                        $html .= '<div data-character="' . esc_attr($character_id) . '" class="cut-character"><img src="' . esc_url(get_the_post_thumbnail_url($character_id)) . '"/></div>';
+                        $html .= '<div data-character="' . esc_attr($character_id) . '" class="cut-character"><img src="' . esc_url(self::characterPortraitUrl($character_id)) . '"/></div>';
                     }
                 }
                 $html .= '</div>';
@@ -2614,7 +2614,7 @@ class Explore
                     $character_id = $blocks[0]['attrs']['selectedCharacter'];
                 }
 
-                $html .= '<div data-character="' . esc_attr($character_id) . '" class="communicate-character"><img src="' . esc_url(get_the_post_thumbnail_url($character_id)) . '"/></div>';
+                $html .= '<div data-character="' . esc_attr($character_id) . '" class="communicate-character"><img src="' . esc_url(self::characterPortraitUrl($character_id)) . '"/></div>';
                 $html .= '<div class="message-wrapper">';
                 $html .= '<span class="communicate-name">' . esc_html(get_the_title($character_id)) . '</span>';
                 // Raw content for game engine; do not apply WordPress filters.
@@ -2639,6 +2639,32 @@ class Explore
         }
 
         return $html;
+    }
+
+    /**
+     * The face to show for a character in dialogue.
+     *
+     * The portrait is the character's featured image, which is a different
+     * thing from the sprite that walks around the map — and it is easy to set
+     * one without ever setting the other, particularly for a character created
+     * from a preset or by the starter-game generator. When the portrait is
+     * missing the dialogue box drew `<img src="">`, which is a broken image
+     * where the speaker's face should be. Fall back to the static sprite, which
+     * every character on the map has by definition.
+     */
+    private static function characterPortraitUrl($character_id): string
+    {
+        $thumbnail = get_the_post_thumbnail_url($character_id);
+
+        if (false === empty($thumbnail)) {
+            return (string) $thumbnail;
+        }
+
+        $images = get_post_meta((int) $character_id, 'explore-character-images', true);
+
+        return true === is_array($images) && false === empty($images['static'])
+            ? (string) $images['static']
+            : '';
     }
 
     /**

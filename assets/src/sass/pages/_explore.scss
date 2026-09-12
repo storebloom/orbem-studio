@@ -1,3 +1,14 @@
+@mixin orbem-game-text {
+  color: #fff;
+
+  p, li, a, a:visited,
+  h1, h2, h3, h4, h5, h6,
+  span, strong, em, blockquote,
+  dt, dd, td, th, label {
+    color: inherit;
+  }
+}
+
 html {
   overflow: hidden;
   scroll-behavior: unset!important;
@@ -588,6 +599,8 @@ html {
     }
 
     .explore-overlay {
+      @include orbem-game-text;
+
       display: none;
 
       .you-died-message {
@@ -791,6 +804,12 @@ html {
     }
 
     .game-container {
+      @include orbem-game-text;
+
+      #settings {
+        color: inherit;
+      }
+
       background-size: cover;
       background-repeat: no-repeat;
       background-position: left top;
@@ -964,6 +983,9 @@ html {
 
       #explore-points {
         background: #ffffff94;
+
+        color: #2b2b2b;
+
         border-radius: 4px;
         display: flex;
         flex-direction: column;
@@ -1983,7 +2005,13 @@ html {
       }
     }
 
+    .game-over-notice {
+      @include orbem-game-text;
+    }
+
     .loading-screen {
+      @include orbem-game-text;
+
       background: lightblue;
       display: none;
       height: 100%;
