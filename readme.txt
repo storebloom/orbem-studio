@@ -4,7 +4,7 @@ Tags: game engine, rpg, video game, game-dev, narrative game
 Requires at least: 6.1
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.7.4
+Stable tag: 1.8.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -243,6 +243,15 @@ Documentation is available at https://orbem.studio/orbem-studio/docs/readme
 Tutorials are available on the Orbem Studio YouTube channel at https://youtube.com/@orbemstudio
 
 == Changelog ==
+
+= 1.8.0 =
+* Fix walking NPCs and enemies stacking up movement loops so they sped up, drifted off their path, or kept walking after being killed or after the player left the area; path movement now stops cleanly with the character.
+* Use a sensible default walking speed and pause for NPCs on a path when no speed has been set, instead of leaving them motionless.
+* Fix enemy projectiles being dragged along with the enemy that fired them; a shot now travels independently from where it was fired, and still ignores walls below the shooter in gravity areas.
+* Fix dialogue and cutscene portraits showing a broken image when a character has no featured image, falling back to the character's map sprite.
+* Replace the default lose message with a "Game Over" notice that clears itself after a few seconds and restarts the game, instead of a dialog that waits for a Try again click. Games with their own Lose Message explainer are unaffected.
+* Hide the points/missions HUD while it has nothing to show, and show it again as soon as a bar, total, or mission appears.
+* Keep game text readable on dark backgrounds across the overlay, loading screen, game over notice, and menus, and keep the points readout dark against its light background.
 
 = 1.7.4 =
 * Add a movement speed option for the main character: a character's existing Speed field now controls how fast the player moves as well as how they walk as an NPC, defaulting to 16, and switching to another character applies that character's own speed.

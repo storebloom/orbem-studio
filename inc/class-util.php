@@ -36,6 +36,16 @@ class Util
     /**
      * The explainer assigned to the "lose-message" placement area, or null.
      */
+    /**
+     * How long the default lose notice stays up before the game restarts.
+     *
+     * The default used to be "You lost." with a Try again button and no timer,
+     * which left a dead player sitting on a dialog waiting to be told what to
+     * do. A game with its own lose explainer still decides for itself — this is
+     * only the fallback for one that has never set a message.
+     */
+    public const LOSE_AUTO_CLOSE = 4000;
+
     public static function getLoseExplainer(): ?\WP_Post
     {
         $needle = 'lose-message';
@@ -74,7 +84,7 @@ class Util
             return do_blocks($lose_explainer->post_content) . $sound_html;
         }
 
-        return 'You lost. <button class="try-again">Try again</button>';
+        return 'Game Over';
     }
 
     /**

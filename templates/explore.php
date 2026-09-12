@@ -328,7 +328,9 @@ $orbem_studio_start_music                  = get_option('explore_start_music', f
 $orbem_studio_main_character               = get_option('explore_main_character', false);
 $orbem_studio_lose_explainer               = \OrbemStudio\Util::getLoseExplainer();
 $orbem_studio_lose_message                 = \OrbemStudio\Util::getLoseMessage($orbem_studio_lose_explainer);
-$orbem_studio_lose_auto_close              = null !== $orbem_studio_lose_explainer ? intval(get_post_meta($orbem_studio_lose_explainer->ID, 'explore-auto-close', true)) : 0;
+$orbem_studio_lose_auto_close              = null !== $orbem_studio_lose_explainer
+    ? intval(get_post_meta($orbem_studio_lose_explainer->ID, 'explore-auto-close', true))
+    : \OrbemStudio\Util::LOSE_AUTO_CLOSE;
 $orbem_studio_lose_the_end                 = null !== $orbem_studio_lose_explainer ? get_post_meta($orbem_studio_lose_explainer->ID, 'explore-the-end', true) : '';
 $orbem_studio_main_character_info          = Explore::getCharacterImages($orbem_studio_main_character);
 $orbem_studio_charge_glow_color            = $orbem_studio_main_character_info['charge-glow-color'] ?? '';
