@@ -4,7 +4,7 @@ Tags: game engine, rpg, video game, game-dev, narrative game
 Requires at least: 6.1
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.8.0
+Stable tag: 1.8.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -243,6 +243,12 @@ Documentation is available at https://orbem.studio/orbem-studio/docs/readme
 Tutorials are available on the Orbem Studio YouTube channel at https://youtube.com/@orbemstudio
 
 == Changelog ==
+
+= 1.8.1 =
+* Add patrolling runners: a runner enemy with a movement path now walks its route until the player comes within range, breaks off to chase them, and returns to its path if it lands no hit within its Chase Duration; each hit it lands restarts the timer.
+* Add a "Chase Duration" field (in milliseconds, defaulting to 4000) for runner enemies with a movement path.
+* Blocker enemies now hurt the player on contact like a hazard, using their own Damage Value, and are no longer pushed back when hit so they stay in the way they are blocking.
+* Fix hazard damage falling back to nothing when no damage value is set; hazards now cost at least one health per touch.
 
 = 1.8.0 =
 * Fix walking NPCs and enemies stacking up movement loops so they sped up, drifted off their path, or kept walking after being killed or after the player left the area; path movement now stops cleanly with the character.

@@ -1569,7 +1569,12 @@ class Explore
                 $breakable                      = 'breakable' === $interaction_type;
                 $collectable                    = 'collectable' === $interaction_type;
                 $draggable                      = 'draggable' === $interaction_type;
-                $is_hazard                      = 'hazard' === $interaction_type;
+                // A blocker holds a position and hurts anything that walks into
+                // it, which is a hazard that happens to be an enemy — so it is
+                // marked as one and the hazard handling does the rest.
+                $is_hazard                      = 'hazard' === $interaction_type
+                    || ('explore-enemy' === $explore_point->post_type
+                        && 'blocker' === ($explore_point_meta['explore-enemy-type'] ?? ''));
                 $clickable                      = 'clickable' === $interaction_type;
                 $is_strong                      = $explore_point_meta['explore-is-strong'] ?? '';
                 $is_strong                      = false === empty($is_strong) ? $is_strong : false;
@@ -1920,9 +1925,14 @@ class Explore
                         $enemy_weapon_type = $explore_point_meta['explore-weapon-weakness'] ?? '';
                         $attack_display_time = $explore_point_meta['explore-attack-display-time'] ?? '';
                         $damage_time         = 'end' === ($explore_point_meta['explore-damage-time'] ?? '') ? 'end' : 'start';
+                        $chase_duration      = $explore_point_meta['explore-chase-duration'] ?? '';
 
                         if (false === empty($attack_display_time)) {
                             $html .= ' data-attack-display-time="' . esc_attr($attack_display_time) . '"';
+                        }
+
+                        if (false === empty($chase_duration)) {
+                            $html .= ' data-chase-duration="' . esc_attr($chase_duration) . '"';
                         }
 
                         $html .= ' data-damage-time="' . esc_attr($damage_time) . '"';

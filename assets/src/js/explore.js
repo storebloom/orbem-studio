@@ -57,6 +57,12 @@ const DEFAULT_PROJECTILE_SPEED = 10;
 
 const DEFAULT_PATH_PAUSE = 0.175;
 
+const DEFAULT_CHASE_DURATION = 4000;
+
+const PATROL_CHASE_RANGE = 250;
+
+const PATROL_CHASE_COOLDOWN = 1500;
+
 // Retarts gif sprite from frame 1.
 function restartGifSprite(img) {
     'use strict';
@@ -572,7 +578,7 @@ function moveNPC(npc, cutscene, areaCutscene, cutPosition) {
                         return;
                     }
 
-                    if ('false' !== npc.dataset?.canmove) {
+                    if ('false' !== npc.dataset?.canmove && 'true' !== npc.dataset?.chasing) {
                         const currentImage = npc.querySelector(
                             '.character-icon.engage'
                         );
@@ -700,6 +706,10 @@ function moveNPC(npc, cutscene, areaCutscene, cutPosition) {
                         position = 0 < position ? position - 1 : pathCount;
 
                         setStaticNPCImage(moveDirection, npc);
+
+                        if ('true' === npc.dataset?.chasing) {
+                            delete npc.dataset.currentDirection;
+                        }
 
                         npc.style.left = currentWorldX + 'px';
                         npc.style.top = currentWorldY + 'px';
@@ -2423,6 +2433,10 @@ function hurtAnimationEnemy(enemy, pushAmount) {
             pushAmount = 0 !== pushAmount ? pushAmount - 10 : 0;
         }
 
+        if ('blocker' === enemy.dataset.enemyType) {
+            pushAmount = 0;
+        }
+
         switch (direction) {
             case 'right':
                 newLeft = currentLeft + pushAmount;
@@ -4003,6 +4017,7 @@ function startRunnerPunching(enemyEl) {
             }
 
             window.mcHurtCooldown = true;
+            enemyEl._chaseStartedAt = Date.now();
 
             // apply damage here
             const currentHealth = getCurrentPoints('health');
@@ -4044,6 +4059,109 @@ function stopRunnerEnemy(enemyEl) {
     // interval happened to be null at kill time, leaving the punch interval
     // running and dealing damage to the player after the enemy was dead.
     stopRunnerPunching(enemyEl);
+    stopPatrolWatch(enemyEl);
+    delete enemyEl.dataset.chasing;
+}
+
+function startPatrolWatch(enemyEl) {
+    'use strict';
+
+    if (!enemyEl || enemyEl._patrolWatchInt) {
+        return;
+    }
+
+    enemyEl._patrolWatchInt = setInterval(() => {
+        if (!document.body.contains(enemyEl)) {
+            stopPatrolWatch(enemyEl);
+            return;
+        }
+
+        if ('true' === enemyEl.dataset.chasing) {
+            const duration =
+                parseInt(enemyEl.dataset.chaseDuration, 10) || DEFAULT_CHASE_DURATION;
+
+            if (
+                Date.now() - enemyEl._chaseStartedAt >= duration &&
+                'true' !== enemyEl.dataset.attacking
+            ) {
+                endPatrolChase(enemyEl);
+            }
+
+            return;
+        }
+
+        if (
+            !enemyEl._pathInt ||
+            enemyEl._pathStopped ||
+            'true' === enemyEl.dataset.cutscenebreak ||
+            Date.now() < (enemyEl._chaseCooldownUntil || 0)
+        ) {
+            return;
+        }
+
+        if (isPlayerInChaseRange(enemyEl)) {
+            beginPatrolChase(enemyEl);
+        }
+    }, 100);
+}
+
+function stopPatrolWatch(enemyEl) {
+    'use strict';
+
+    if (!enemyEl || !enemyEl._patrolWatchInt) {
+        return;
+    }
+
+    clearInterval(enemyEl._patrolWatchInt);
+    enemyEl._patrolWatchInt = null;
+}
+
+function isPlayerInChaseRange(enemyEl) {
+    'use strict';
+
+    const mapCharacter = document.getElementById('map-character');
+
+    if (!mapCharacter) {
+        return false;
+    }
+
+    const playerX =
+        parseInt(mapCharacter.style.left, 10) + window.globalLeftPositionOffset;
+    const playerY =
+        parseInt(mapCharacter.style.top, 10) + window.globalTopPositionOffset;
+    const enemyX = enemyEl.offsetLeft + enemyEl.offsetWidth / 2;
+    const enemyY = enemyEl.offsetTop + enemyEl.offsetHeight / 2;
+
+    return Math.hypot(playerX - enemyX, playerY - enemyY) <= PATROL_CHASE_RANGE;
+}
+
+function beginPatrolChase(enemyEl) {
+    'use strict';
+
+    const left = enemyEl.offsetLeft;
+    const top = enemyEl.offsetTop;
+
+    enemyEl.dataset.chasing = 'true';
+    enemyEl._chaseStartedAt = Date.now();
+    enemyEl.style.transition = 'none';
+    enemyEl.style.left = left + 'px';
+    enemyEl.style.top = top + 'px';
+
+    makeNPCWander(enemyEl, enemyEl.dataset.speed, 0, true);
+}
+
+function endPatrolChase(enemyEl) {
+    'use strict';
+
+    if (enemyEl._wanderInt) {
+        clearInterval(enemyEl._wanderInt);
+        enemyEl._wanderInt = null;
+    }
+
+    stopRunnerPunching(enemyEl);
+
+    delete enemyEl.dataset.chasing;
+    enemyEl._chaseCooldownUntil = Date.now() + PATROL_CHASE_COOLDOWN;
 }
 
 function stopPathMovement(el) {
@@ -4104,8 +4222,12 @@ function engageEnemy(enemy, trigger) {
     }
 
     // Runner Type.
-    if ('runner' === enemyType) {
+    if ('runner' === enemyType && !enemy.dataset.path) {
         makeNPCWander(enemy, enemy.dataset.speed, 0, true);
+    }
+
+    if ('runner' === enemyType && enemy.dataset.path) {
+        startPatrolWatch(enemy);
     }
 
     // Boss type.
@@ -5687,9 +5809,9 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
                     false === canCharacterInteract(value, mapChar, 'hazard')
                 ) {
                     if (100 <= hazardCounter || 0 === hazardCounter) {
-                        const hurtAmount = value.dataset.value;
+                        const hurtAmount = parseInt(value.dataset.value, 10) || 1;
                         const currentHealth = getCurrentPoints('health');
-                        const newAmount = currentHealth - parseInt(hurtAmount);
+                        const newAmount = currentHealth - hurtAmount;
 
                         hurtAnimation();
 
