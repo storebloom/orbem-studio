@@ -152,7 +152,7 @@ Visual representation of the enemy. Same directional sprite system as characters
 Determines the enemy's behavior and combat style.
 
 **Options:**
-- `blocker` - Static enemy, no special abilities
+- `blocker` - Holds its position and hurts the player on contact, like a hazard. It is not pushed back when hit, so it never moves out of the way it is blocking
 - `shooter` - Fires projectiles at the player
 - `runner` - Chases and collides with the player
 - `boss` - Special boss fight mechanics
@@ -448,16 +448,19 @@ Remove After Cutscene: peace-treaty
 
 **Type:** `blocker`
 
-Static or patrolling enemies with no special abilities. Engage in melee combat when player approaches.
+An obstacle that hurts. A blocker holds the spot it is placed on and costs the player health whenever they touch it, the same way a hazard item does — it never chases and never attacks on its own.
 
 **Behavior:**
-- Static item/enemy or can follow path / wanders (based on configuration)
-- Does not attack
+- Hurts the player on contact, repeatedly while they stay against it, and pushes them back out
+- Damage per touch comes from its own Damage Value field
+- Not pushed back when hit, so it stays in the way it is blocking
+- Can still be damaged and defeated, if the player has a weapon
+- Static by default, and can follow a path or wander if configured
 
 **Best For:**
+- Sealing a gap or doorway the player has to deal with rather than walk through
 - Guard enemies
-- Obstacles that require combat to pass
-- Low-level encounters
+- Obstacles that cost something to pass
 
 **Example Configuration:**
 ```
@@ -683,6 +686,23 @@ Speed: 20
 - Create predictable patterns players can learn
 - Add brief pauses for realism
 - Position patrols to block important paths
+
+#### Patrolling Runners
+
+A runner with a path walks its route until the player comes within range, then breaks off and chases them. If it doesn't land a hit within its chase duration, it gives up and walks back to its path. Each hit it lands restarts the chase timer.
+
+**Field:** `explore-chase-duration`
+**Type:** Number (milliseconds)
+**Default:** 4000
+
+**Setup:**
+```
+Enemy Type: runner
+Wanderer: no
+Path: [multiple points]
+Repeat: yes
+Chase Duration: 4000
+```
 
 ### Roaming Enemies
 

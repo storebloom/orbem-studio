@@ -1409,6 +1409,10 @@ class Meta_Box {
                                         ],
                                         'When during the attack animation damage is dealt: at the start of the attack, or at the end once the attack display time has elapsed. Defaults to start.'
                                 ],
+                                'explore-chase-duration' => [
+                                        'number',
+                                        'Runner enemies with a movement path only. How long (in milliseconds) the enemy leaves its path to chase the player once they come in range. If it lands no hit in that time it returns to its path. Defaults to 4000.'
+                                ],
                         ],
 
                         'Weakness & Boss Patterns' => [
