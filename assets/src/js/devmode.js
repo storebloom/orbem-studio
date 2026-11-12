@@ -206,9 +206,34 @@ export function engageDevMode() {
         // Disable transition so the item follows the cursor instantly.
         draggedContainer.style.transition = 'none';
 
-        const rect = draggedContainer.getBoundingClientRect();
-        offsetX = event.clientX - rect.left;
-        offsetY = event.clientY - rect.top;
+        // Where the cursor sits relative to the item's *layout* position, not
+        // its rendered box.
+        //
+        // getBoundingClientRect() on a rotated element gives the axis-aligned
+        // box around it, whose corner is outside the element — while the drag
+        // below writes style.left/top, which are untransformed. Measuring
+        // against the rendered box and moving the layout box meant a turned
+        // asset jumped by the difference between the two the instant it was
+        // grabbed, and the more it was turned the further it jumped.
+        //
+        // Worked out by inverting the expression handleMouseMove() uses, so the
+        // two cannot disagree: whatever it does on the way out, this undoes on
+        // the way in, and the item stays exactly under the cursor at any angle.
+        const dragIsMenu  = 'menu' === draggedContainer.dataset.type;
+        const dragMapEl   = document.querySelector('.game-container');
+        const dragMapRect = dragMapEl.getBoundingClientRect();
+        const dragZoom    = dragIsMenu ? 1 : window.devZoom || 1;
+        const dragStyle   = window.getComputedStyle(draggedContainer);
+        const dragLeft    = parseFloat(dragStyle.left) || 0;
+        const dragTop     = parseFloat(dragStyle.top) || 0;
+
+        offsetX = dragIsMenu
+            ? event.clientX - dragLeft
+            : event.clientX - dragMapRect.left + dragMapEl.scrollLeft - dragLeft * dragZoom;
+
+        offsetY = dragIsMenu
+            ? event.clientY - dragTop
+            : event.clientY - dragMapRect.top + dragMapEl.scrollTop - dragTop * dragZoom;
 
         document.addEventListener('mousemove', handleMouseMove);
         document.addEventListener('mouseup', handleDragEnd);

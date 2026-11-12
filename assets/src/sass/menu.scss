@@ -564,9 +564,30 @@
             border-color: #63c667;
           }
 
+          &.needs-level,
+          &.needs-level:hover {
+            background: #4a4a4a;
+            border-color: #777;
+            cursor: not-allowed;
+            filter: none;
+            transform: none;
+          }
+
           &.is-drop {
             background: #7a3634;
             border-color: #e0574f;
+          }
+
+          &.is-use {
+            background: #2f5f86;
+            border-color: #5aa6dd;
+          }
+
+          &:disabled {
+            cursor: not-allowed;
+            filter: grayscale(.7);
+            opacity: .5;
+            transform: none;
           }
         }
       }

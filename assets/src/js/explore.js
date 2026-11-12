@@ -2,12 +2,24 @@
 
 import '../sass/menu.scss';
 import { engageDevMode } from './devmode';
+import { centerCamera } from './free-camera';
+import { startMultiplayer, hitPlayersInReach } from './multiplayer';
+import { startNpcPositions } from './npc-positions';
 
 let persistTimeout;
 // Per-mission debounce so one completion can't cancel another's pending timer.
 const saveMissionTimeouts = {};
 let saveMaterializedItemTimeout;
 const materializedItemsArray = [];
+
+// Conversations you can have again, by the id of the box that starts them.
+// Held here rather than on the element because the map is rebuilt from scratch
+// when you cross a door, and a character you were mid-sentence with should not
+// be forgotten or, worse, start over because the element carrying that fact
+// was replaced underneath us.
+const saidJustNow = new Set();
+const ACTION_REACH = 12;
+const saidJustNowApart = new Map();
 let persistItems = [];
 const source = '';
 let talkAudio = '';
@@ -56,6 +68,7 @@ const DEFAULT_PATH_SPEED = 60;
 const DEFAULT_PROJECTILE_SPEED = 10;
 
 const DEFAULT_PATH_PAUSE = 0.175;
+const NPC_AFK_HOLD = 5000;
 
 const DEFAULT_CHASE_DURATION = 4000;
 
@@ -321,9 +334,8 @@ document.addEventListener('DOMContentLoaded', function () {
             } else if (true === point.classList.contains('point-amount')) {
                 const newLevel = getCurrentLevel(amount);
                 if (OrbemOrder.levelMaps) {
-                    window.nextLevelPointAmount = JSON.parse(
-                        OrbemOrder.levelMaps
-                    )[newLevel];
+                    window.orbemLevel = newLevel;
+                    window.nextLevelPointAmount = nextLevelPoints(newLevel);
 
                     point.setAttribute('data-amount', amount);
                     gauge.style.width = getPointsGaugeAmount(amount);
@@ -578,7 +590,7 @@ function moveNPC(npc, cutscene, areaCutscene, cutPosition) {
                         return;
                     }
 
-                    if ('false' !== npc.dataset?.canmove && 'true' !== npc.dataset?.chasing) {
+                    if ('false' !== npc.dataset?.canmove && 'true' !== npc.dataset?.talkHold && 'true' !== npc.dataset?.chasing && !worldPaused()) {
                         const currentImage = npc.querySelector(
                             '.character-icon.engage'
                         );
@@ -744,6 +756,32 @@ function moveNPC(npc, cutscene, areaCutscene, cutPosition) {
     }
 }
 
+const sfxCache = {};
+
+function playSfx(name) {
+    'use strict';
+
+    const url = window.OrbemOrder?.sounds?.[name];
+
+    if (!url) {
+        return;
+    }
+
+    let sound = sfxCache[name];
+
+    if (!sound) {
+        sound = new Audio(url);
+        sound.preload = 'auto';
+        sfxCache[name] = sound;
+    }
+
+    sound.volume = undefined === window.sfxVolume ? 1 : window.sfxVolume;
+    sound.currentTime = 0;
+    sound.play().catch(() => {});
+}
+
+window.orbemSfx = playSfx;
+
 // Storage menu functionality.
 function engageStorageMenus() {
     'use strict';
@@ -774,6 +812,7 @@ function engageStorageMenus() {
 
                 // Select new tab.
                 storageTab.classList.add('engage');
+                playSfx('explore_sfx_tab');
 
                 const currentTabContent = document.querySelector(
                     '.storage-menu.engage'
@@ -807,6 +846,7 @@ function engageSettingsMenus() {
                     menuItems.forEach((menuItem) => {
                         menuItem.addEventListener('click', () => {
                             if ('true' !== menuItem.dataset.empty) {
+                                playSfx('explore_sfx_select');
                                 showItemDescription(menuItem);
                             }
                         });
@@ -819,6 +859,24 @@ function engageSettingsMenus() {
                     false === e.target.classList.contains('close-settings') &&
                     !e.target.closest('.character-item')
                 ) {
+                    if (!settingCog.classList.contains('engage')) {
+                        playSfx('explore_sfx_menu_open');
+
+                        settingCogs.forEach((otherCog) => {
+                            if (otherCog !== settingCog && otherCog.classList.contains('engage')) {
+                                otherCog.classList.remove('engage');
+
+                                if ('storage' === otherCog.id) {
+                                    const otherDescription = document.querySelector('.retrieval-points #item-description');
+
+                                    if (otherDescription) {
+                                        otherDescription.innerHTML = '';
+                                    }
+                                }
+                            }
+                        });
+                    }
+
                     settingCog.classList.add('engage');
                 }
             });
@@ -828,6 +886,7 @@ function engageSettingsMenus() {
                 .addEventListener('click', () => {
                     const description = document.querySelector('.retrieval-points #item-description');
                     settingCog.classList.remove('engage');
+                    playSfx('explore_sfx_menu_close');
 
                     if (description) {
                         description.innerHTML = '';
@@ -865,6 +924,8 @@ function engageSettingsMenus() {
         }
 
         updateSettings.addEventListener('click', () => {
+            playSfx('explore_sfx_button');
+
             if (musicSettings && sfxSettings && talkingSettings) {
                 saveSettings(
                     musicSettings.value,
@@ -897,8 +958,16 @@ function setStaticNPCImage(moveDirection, npc) {
 
 window.makeNPCWander = makeNPCWander;
 
+window.orbemFaceCharacter = (npc, direction, walking) => (walking ? setDirectionImage(npc, direction) : setStaticNPCImage(direction, npc));
+
 function makeNPCWander(npc, walkingSpeed, timeBetween, enemy) {
     'use strict';
+
+    // A spawner marked as a wanderer is marking its copies, not itself: the
+    // place enemies come from stays where it was put.
+    if (isSpawner(npc)) {
+        return;
+    }
 
     // Prevent a second wander loop if one is already running on this element.
     if (npc._wanderInt) {
@@ -915,6 +984,20 @@ function makeNPCWander(npc, walkingSpeed, timeBetween, enemy) {
     let collisionCount = 0;
     let preMoveDir = '';
     let swap = 0;
+    let standing = false;
+    let held = false;
+    let anchorLeft = parseFloat(npc.style.left) || 0;
+    let anchorTop = parseFloat(npc.style.top) || 0;
+    let anchorTicks = 0;
+
+    function stand(direction) {
+        if (direction) {
+            npc.dataset.currentDirection = direction;
+            setStaticNPCImage(direction, npc);
+        }
+
+        standing = true;
+    }
 
     function startRandomNpcPause() {
         const pauseTime =
@@ -942,7 +1025,10 @@ function makeNPCWander(npc, walkingSpeed, timeBetween, enemy) {
 
         if (
             'true' !== npc.dataset?.break &&
-            'true' !== npc.dataset?.cutscenebreak
+            'true' !== npc.dataset?.cutscenebreak &&
+            'false' !== npc.dataset?.canmove &&
+            'true' !== npc.dataset?.talkHold &&
+            !worldPaused()
         ) {
             if (true === enemy && '' === moveDir) {
                 startDir = getRandomDir(startDir, true, npc);
@@ -959,16 +1045,9 @@ function makeNPCWander(npc, walkingSpeed, timeBetween, enemy) {
             // Gravity for this entity is handled continuously by applyEntityGravity.
 
             if (true === enemy) {
-                const mapCharacter = document.getElementById('map-character');
-                const mapCharacterImage = document.querySelector('.map-character-icon.engage');
-
-                const targetLeft =
-                    parseInt(mapCharacter.style.left.replace('px', ''), 10) +
-                    (window.globalLeftPositionOffset - mapCharacterImage.width / 2);
-
-                const targetTop =
-                    parseInt(mapCharacter.style.top.replace('px', ''), 10) +
-                    (window.globalTopPositionOffset - mapCharacterImage.height / 2);
+                const target = enemyTargetPoint(npc) || { left: currentLeft, top: currentTop };
+                const targetLeft = target.left;
+                const targetTop = target.top;
 
                 const horizontalDiff = targetLeft - currentLeft;
                 const verticalDiff = targetTop - currentTop;
@@ -990,9 +1069,24 @@ function makeNPCWander(npc, walkingSpeed, timeBetween, enemy) {
                 }
             } else {
                 const activeDir = moveDir || startDir;
-                if (activeDir && activeDir !== npc.dataset.currentDirection) {
-                    npc.dataset.currentDirection = activeDir;
-                    setDirectionImage(npc, activeDir);
+
+                if (held) {
+                    held = false;
+                    standing = false;
+                    anchorLeft = parseFloat(currentLeft) || 0;
+                    anchorTop = parseFloat(currentTop) || 0;
+                    anchorTicks = 0;
+
+                    if (activeDir) {
+                        setDirectionImage(npc, activeDir);
+                    }
+                } else if (activeDir && activeDir !== npc.dataset.currentDirection) {
+                    if (standing) {
+                        stand(activeDir);
+                    } else {
+                        npc.dataset.currentDirection = activeDir;
+                        setDirectionImage(npc, activeDir);
+                    }
                 }
             }
 
@@ -1149,7 +1243,29 @@ function makeNPCWander(npc, walkingSpeed, timeBetween, enemy) {
                 moveDir = '';
                 swap++;
             }
+
+            if (false === enemy && ++anchorTicks >= 8) {
+                const nowLeft = parseFloat(npc.style.left) || 0;
+                const nowTop = parseFloat(npc.style.top) || 0;
+                const stalled = Math.abs(nowLeft - anchorLeft) + Math.abs(nowTop - anchorTop) < 3;
+
+                if (stalled && !standing) {
+                    stand(npc.dataset.currentDirection);
+                } else if (!stalled && standing) {
+                    standing = false;
+                    setDirectionImage(npc, npc.dataset.currentDirection || moveDir || startDir);
+                }
+
+                anchorLeft = nowLeft;
+                anchorTop = nowTop;
+                anchorTicks = 0;
+            }
         } else if (false === enemy) {
+            if (!held) {
+                held = true;
+                stand(npc.dataset.currentDirection);
+            }
+
             startDir = getRandomDir(startDir, enemy, npc);
         }
     }, walkingSpeed);
@@ -1162,6 +1278,103 @@ function pauseNpc(timeBetween, npc) {
     setTimeout(() => {
         npc.dataset.break = 'false';
     }, timeBetween);
+}
+
+// ─── Paused ──────────────────────────────────────────────────────────────────
+//
+// window.orbemPaused freezes the world, not only the player: nobody walks,
+// chases, punches or shoots, a boss holds its wave, and nothing already in the
+// air does any harm. For somebody standing in a game working on it — a builder
+// editing a boss that would otherwise kill them mid-edit. Set by whatever
+// opens that kind of menu; nothing in this plugin sets it, so a game that
+// never does plays exactly as it did.
+
+function worldPaused() {
+    return true === window.orbemPaused;
+}
+
+// ─── What an enemy goes for ──────────────────────────────────────────────────
+//
+// The player, unless there is somebody on the map with health of their own
+// (data-targetable, from a character's "explore-npc-health"): then whichever
+// of the two is closer. With nobody like that on the map, which is every game
+// made before this existed, every enemy behaves exactly as it always has.
+
+function targetableNpcs() {
+    return Array.from(
+        document.querySelectorAll('.default-map .map-item[data-targetable="yes"]')
+    ).filter((el) => 0 < parseInt(el.dataset.health || '0', 10));
+}
+
+/**
+ * Where an enemy is heading, as the top-left corner the chase code has always
+ * steered towards: the player's sprite, or an NPC's own box.
+ *
+ * @return {{left: number, top: number, npc: Element|null}|null}
+ */
+function enemyTargetPoint(enemyEl) {
+    const mapCharacter = document.getElementById('map-character');
+    const mapCharacterImage = document.querySelector('.map-character-icon.engage');
+    let best = null;
+
+    if (mapCharacter && mapCharacterImage) {
+        best = {
+            left: parseInt(mapCharacter.style.left, 10) + (window.globalLeftPositionOffset - mapCharacterImage.width / 2),
+            top: parseInt(mapCharacter.style.top, 10) + (window.globalTopPositionOffset - mapCharacterImage.height / 2),
+            npc: null,
+        };
+    }
+
+    const npcs = targetableNpcs();
+
+    if (!npcs.length || !enemyEl) {
+        return best;
+    }
+
+    const fromLeft = parseInt(enemyEl.style.left, 10) || enemyEl.offsetLeft;
+    const fromTop = parseInt(enemyEl.style.top, 10) || enemyEl.offsetTop;
+    const distance = (p) => Math.hypot(p.left - fromLeft, p.top - fromTop);
+
+    npcs.forEach((npc) => {
+        const point = {
+            left: parseInt(npc.style.left, 10) || npc.offsetLeft,
+            top: parseInt(npc.style.top, 10) || npc.offsetTop,
+            npc,
+        };
+
+        if (!best || distance(point) < distance(best)) {
+            best = point;
+        }
+    });
+
+    return best;
+}
+
+/** Take health off somebody being defended, and see them off at 0. */
+function hurtNpc(npc, amount) {
+    const health = Math.max(0, parseInt(npc.dataset.health || '0', 10) - (parseInt(amount, 10) || 0));
+    const full = parseInt(npc.dataset.healthamount || '1', 10) || 1;
+    const bar = npc.querySelector('.npc-health-bar');
+
+    if ('0' === npc.dataset.health) {
+        return;
+    }
+
+    npc.dataset.health = String(health);
+
+    if (bar) {
+        bar.style.width = Math.round((health / full) * 100) + '%';
+    }
+
+    npc.classList.add('hurt');
+    setTimeout(() => npc.classList.remove('hurt'), 400);
+
+    document.dispatchEvent(new CustomEvent('orbem:npc-hurt', { detail: { npc, health, full } }));
+
+    if (0 === health) {
+        npc.classList.add('defeated');
+        document.dispatchEvent(new CustomEvent('orbem:npc-defeated', { detail: { npc } }));
+    }
 }
 
 function getRandomDir(currentDir, enemy, enemyEl) {
@@ -1181,20 +1394,13 @@ function getRandomDir(currentDir, enemy, enemyEl) {
             return filteredDirs[randomIndex];
         }
 
-        const mapCharacter = document.getElementById('map-character');
-        const mapCharacterImage = document.querySelector(
-            '.map-character-icon.engage'
-        );
+        const target = enemyTargetPoint(enemyEl);
 
-        if (mapCharacter && mapCharacterImage) {
+        if (target) {
             const enemyLeft = parseInt(enemyEl.style.left.replace('px', ''), 10);
             const enemyTop = parseInt(enemyEl.style.top.replace('px', ''), 10);
-            const targetLeft =
-                parseInt(mapCharacter.style.left.replace('px', ''), 10) +
-                (window.globalLeftPositionOffset - mapCharacterImage.width / 2);
-            const targetTop =
-                parseInt(mapCharacter.style.top.replace('px', ''), 10) +
-                (window.globalTopPositionOffset - mapCharacterImage.height / 2);
+            const targetLeft = target.left;
+            const targetTop = target.top;
             const horizontalDiff = targetLeft - enemyLeft;
             const verticalDiff = targetTop - enemyTop;
             const absHorizontalDiff = Math.abs(horizontalDiff);
@@ -1239,8 +1445,8 @@ function addUserPoints(amount, type, position, collectable, missionName) {
     }
 
     // Make sure amount is always 100 or less. Not for points or money.
-    if (amount > 100 && 'point' !== type && 'money' !== type) {
-        amount = 100;
+    if (amount > barMax(type) && 'point' !== type && 'money' !== type) {
+        amount = barMax(type);
     }
 
     // Make sure amount is 0 if less than 0 for health
@@ -1322,6 +1528,37 @@ function dismissGameOver(gameOver) {
 }
 
 /**
+ * Hand the death over to whatever owns it, then go where it says.
+ *
+ * The bars are refilled and the remembered position forgotten on the server,
+ * so the reload that follows lands on the world's first area with a full HUD
+ * rather than back where the player died. Reloaded rather than moved in place
+ * because the area being returned to is not the one on screen — its map, its
+ * items and its walls all have to come with it.
+ *
+ * A failure here leaves the notice up rather than reloading into an unchanged
+ * game: a player looking at "you died" understands a button that has not done
+ * anything yet, and would not understand being put back exactly where they
+ * were with full health.
+ */
+function respawnAtHome() {
+    'use strict';
+
+    fetch(window.OrbemWorld.respawnUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': window.OrbemWorld.nonce },
+        credentials: 'same-origin',
+    })
+        .then(r => r.json())
+        .then((data) => {
+            if (data && data.success) {
+                window.location.href = OrbemOrder.gameURL;
+            }
+        })
+        .catch(() => {});
+}
+
+/**
  * Trigger the game over notice and add restart logic.
  */
 function triggerGameOver() {
@@ -1354,6 +1591,20 @@ function triggerGameOver() {
 
         persistItemRemoval('projectile', 'health', 100, 0, 'true', false);
 
+        // Somewhere else may own what happens after a death.
+        //
+        // Standing the player up where they fell is right for a single game,
+        // which is what this plugin is. On a network of worlds it is not: the
+        // room that killed you belongs to somebody else's game, and waking up
+        // at the top of it means death costs nothing and the retry happens
+        // somewhere the player never chose to be stuck. That network says so by
+        // localising OrbemWorld; nothing else does, so nothing else changes.
+        if (window.OrbemWorld && window.OrbemWorld.respawnUrl) {
+            respawnAtHome();
+
+            return;
+        }
+
         if (defaultMap) {
             // Reset user position.
             addUserCoordianate(
@@ -1378,6 +1629,186 @@ function triggerGameOver() {
             localStorage.setItem(storageKey, JSON.stringify(updated));
         });
     }
+}
+
+/**
+ * Show an explainer.
+ *
+ * @param {string}           slug    The explainer's slug.
+ * @param {HTMLElement|null} trigger The trigger walked into, if it was walked
+ *                                   into. Without one it is simply shown, and
+ *                                   not remembered as seen.
+ * @return {boolean} Whether there was one to show.
+ */
+function showExplainer(slug, trigger) {
+    'use strict';
+
+    const triggee = document.querySelector(
+        '.' + escClass(slug) + '-explainer-item'
+    );
+    let autoCloseTimeout;
+
+    // Shared close routine used by the click/key handler and the
+    // optional auto-close timer.
+    const finishClose = () => {
+        clearTimeout(autoCloseTimeout);
+        window.allowMovement = true;
+        window.allowHit = true;
+        triggee.classList.remove('show-explainer');
+        document.removeEventListener('keydown', closeExplainer);
+        document.removeEventListener('click', closeExplainer);
+
+        // "The End": closing this explainer restarts the game.
+        if ('yes' === triggee.dataset?.theEnd) {
+            restartGame();
+        }
+
+        const cutscene = document.querySelector('.cutscene-trigger[data-materializeexplainer="' + slug + '"]');
+
+        if (cutscene) {
+            cutscene.classList.add('enable');
+        }
+
+        if (
+            'yes' === trigger?.dataset?.muteMusic &&
+            window.currentMusic
+        ) {
+            window.currentMusic.play();
+        }
+    };
+
+    const closeExplainer = (event) => {
+        const clickClose = '1' === triggee.dataset?.clickclose ? true : !triggee.contains(event.target);
+        if (
+            (('keydown' === event.type &&
+                    'Space' === event.code) ||
+                'click' === event.type) &&
+            clickClose
+        ) {
+            finishClose();
+        }
+    };
+
+    if (triggee) {
+        triggee.classList.add('show-explainer');
+        trigger?.classList.add('already-hit');
+        window.allowMovement = false;
+        window.allowHit = false;
+        const firstExplainerText = triggee.querySelector('p');
+
+        centerCamera(triggee, {
+            behavior: 'instant',
+            block: 'center',
+            inline: 'center',
+        });
+
+        // Stop walking sound.
+        resetWalkSound();
+
+        if (firstExplainerText) {
+            const text = Array.from(
+                firstExplainerText.childNodes
+            )
+                .filter((node) => node.nodeType === Node.TEXT_NODE)
+                .map((node) => node.textContent)
+                .join('');
+            const mcVoice = document.getElementById('map-character')?.dataset?.voice;
+            const providedAudio =
+                document.getElementById(triggee.id + '-s') ?? false;
+
+            // Do text to speech.
+            makeTalk(text, mcVoice, providedAudio, true);
+        }
+
+        if (
+            'yes' === trigger?.dataset?.muteMusic &&
+            window.currentMusic
+        ) {
+            window.currentMusic.pause();
+        }
+
+        const arrow = triggee.querySelector('img');
+
+        if (arrow) {
+            const rotate = parseInt(arrow.dataset.rotate);
+            let animate1 = false;
+            let animate2 = false;
+            let animate3 = false;
+
+            if (arrow && rotate && 0 < rotate) {
+                if (0 < rotate && 90 >= rotate) {
+                    animate1 = `rotate(${rotate}deg) translate( 10px, -10px )`;
+                    animate2 = `rotate(${rotate}deg) translate( 10px, 10px )`;
+                    animate3 = `rotate(${rotate}deg) translate( 10px, -10px )`;
+                }
+
+                if (91 < rotate && 180 >= rotate) {
+                    animate1 = `rotate(${rotate}deg) translate( 0, 10px )`;
+                    animate2 = `rotate(${rotate}deg) translate( -10px, -10px )`;
+                    animate3 = `rotate(${rotate}deg) translate( 0, 10px )`;
+                }
+
+                if (181 < rotate && 270 >= rotate) {
+                    animate1 = `rotate(${rotate}deg) translate( -10px, 10px )`;
+                    animate2 = `rotate(${rotate}deg) translate( -10px, -10px )`;
+                    animate3 = `rotate(${rotate}deg) translate( -10px, 10px )`;
+                }
+
+                if (271 < rotate && 360 >= rotate) {
+                    animate1 = `rotate(${rotate}deg) translate( -10px, 0 )`;
+                    animate2 = `rotate(${rotate}deg) translate( -10px, -10px )`;
+                    animate3 = `rotate(${rotate}deg) translate( -10px, 0 )`;
+                }
+
+                if (false !== animate1) {
+                    const moveArrow = [
+                        { transform: animate1 },
+                        { transform: animate2 },
+                        { transform: animate3 },
+                    ];
+
+                    const arrowTiming = {
+                        duration: 1000,
+                        iterations: Infinity,
+                    };
+
+                    arrow.animate(moveArrow, arrowTiming);
+                }
+            }
+        }
+
+        // Close explainer on click.
+        document.addEventListener('click', closeExplainer);
+
+        // Close on action key
+        document.addEventListener('keydown', closeExplainer);
+
+        // Auto-close after the configured delay (milliseconds).
+        const autoCloseMs = parseInt(
+            triggee.dataset.autoClose,
+            10
+        );
+
+        if (0 < autoCloseMs) {
+            autoCloseTimeout = setTimeout(finishClose, autoCloseMs);
+        }
+
+        // Persist to avoid showing again on refresh — only when walked into. One
+        // shown by something else (a mission running out of time) may need to be
+        // shown again on the next try.
+        if (trigger) {
+            persistItemRemoval(
+                slug,
+                'point',
+                0,
+                2000,
+                '',
+                true
+            );
+        }
+    }
+
+    return !!triggee;
 }
 
 /**
@@ -1465,7 +1896,7 @@ function persistItemRemoval(item, type, amount, timeoutTime, reset, direct) {
             const jsonString = {
                 type,
                 item: persistItems,
-                amount,
+                amount: storedBarAmount(type, amount),
                 reset,
             };
 
@@ -1518,7 +1949,7 @@ function persistItemRemoval(item, type, amount, timeoutTime, reset, direct) {
 function getPointsGaugeAmount(amount) {
     'use strict';
 
-    return (amount / window.nextLevelPointAmount) * 100 + '%';
+    return Math.min(100, (amount / (window.nextLevelPointAmount || 1)) * 100) + '%';
 }
 
 /**
@@ -1533,6 +1964,16 @@ function saveMission(mission, value, position) {
     clearTimeout(saveMissionTimeouts[mission]);
 
     saveMissionTimeouts[mission] = setTimeout(() => {
+        // Somebody finished something.
+        //
+        // Announced rather than acted on, because what a finished mission
+        // *means* is not the engine's business — a world may want to pay for
+        // it, show something, or send the player somewhere, and none of that
+        // belongs in here. The engine says what happened and leaves it.
+        document.dispatchEvent(new CustomEvent('orbem:mission-complete', {
+            detail: { mission },
+        }));
+
         // Cross off mission.
         const theMission = document.querySelector(
             '.' + escClass(mission) + '-mission-item'
@@ -1601,9 +2042,10 @@ function saveMission(mission, value, position) {
                         const dragDest = document.querySelector(
                             '.' + escClass(hazardRemove) + '-drag-dest-map-item'
                         );
-                        document
-                            .querySelector('.' + escClass(hazardRemove) + '-map-item')
-                            .remove();
+                        const removedHazard = document.querySelector('.' + escClass(hazardRemove) + '-map-item');
+
+                        removedHazard.remove();
+                        itemGone(removedHazard);
 
                         if (dragDest) {
                             dragDest.remove();
@@ -1853,6 +2295,409 @@ function showNextMission(theMission) {
     }
 }
 
+// =========================================================================
+// Mission timers
+// =========================================================================
+//
+// A mission can give the player a number of seconds (data-timer). The count
+// starts when the mission appears in the list — at once for a first mission,
+// when the one before it is completed for a mission that follows another —
+// and completing it stops the count: that is the win. Running out plays the
+// mission's time-up cutscene, then shows its time-up explainer, whichever of
+// the two it has.
+//
+// Only play time counts: nothing runs down on the start screen, during a
+// cutscene or an explainer, or in a hidden tab.
+//
+// A timer belongs to the place its mission is in. Leaving the area ends it,
+// and coming back starts it again from the full time — which is also how a
+// player has another go after running out.
+//
+// For a logged-in player the time left is saved as it runs, alongside their
+// position: a refresh puts them back where they stood, so it gives them back
+// the time they had there, not a fresh clock. Running out is saved too (as
+// nothing left), so refreshing is not a way out of having run out.
+
+// How often a running clock is saved, besides when the page is left.
+const MISSION_TIMER_SAVE_EVERY = 5000;
+
+const missionTimers = new Map();
+// Missions that ran out while on this page, so leaving them clears the saved
+// "no time left" and coming back is a fresh try.
+const missionTimedOut = new Set();
+const missionTimeUps = [];
+let missionTimerTick = null;
+let missionTimerLast = 0;
+
+function missionSlugOf(el) {
+    'use strict';
+
+    const cls = Array.from(el.classList).find(
+        (c) => 'mission-item' !== c && c.endsWith('-mission-item')
+    );
+
+    return cls ? cls.slice(0, -'-mission-item'.length) : '';
+}
+
+function missionIsShowing(el) {
+    'use strict';
+
+    return (
+        (!el.classList.contains('next-mission') ||
+            el.classList.contains('engage')) &&
+        'line-through' !== el.style.textDecoration
+    );
+}
+
+function formatMissionTime(ms) {
+    'use strict';
+
+    const total = Math.max(0, Math.ceil(ms / 1000));
+    const minutes = Math.floor(total / 60);
+    const seconds = total % 60;
+
+    return minutes + ':' + String(seconds).padStart(2, '0');
+}
+
+function drawMissionTimer(timer) {
+    'use strict';
+
+    let clock = timer.el.querySelector('.mission-timer');
+
+    if (!clock) {
+        clock = document.createElement('span');
+        clock.className = 'mission-timer';
+        timer.el.appendChild(clock);
+    }
+
+    clock.textContent = formatMissionTime(timer.left);
+    clock.classList.toggle('is-low', 10000 >= timer.left);
+
+    drawTopClock();
+}
+
+function drawTopClock() {
+    'use strict';
+
+    let soonest = null;
+
+    missionTimers.forEach((timer) => {
+        if (timer.el.isConnected && (!soonest || timer.left < soonest.left)) {
+            soonest = timer;
+        }
+    });
+
+    let clock = document.getElementById('orbem-mission-clock');
+
+    if (!soonest) {
+        if (clock) {
+            clock.hidden = true;
+        }
+
+        return;
+    }
+
+    if (!clock) {
+        clock = document.createElement('div');
+        clock.id = 'orbem-mission-clock';
+        clock.setAttribute('role', 'timer');
+        document.body.appendChild(clock);
+    }
+
+    const above = Array.from(document.querySelectorAll('#orbem-boss-bar, #orbem-defend-banner'))
+        .filter((el) => !el.hidden && el.offsetHeight);
+    const top = above.reduce((lowest, el) => Math.max(lowest, el.getBoundingClientRect().bottom + 8), 0);
+
+    clock.style.top = top ? top + 'px' : '';
+    clock.textContent = formatMissionTime(soonest.left);
+    clock.classList.toggle('is-low', 10000 >= soonest.left);
+    clock.hidden = false;
+}
+
+/**
+ * Save the time left on one mission, or clear it (left = null).
+ *
+ * @param {string}      slug
+ * @param {number|null} left Milliseconds.
+ */
+function saveMissionTimer(slug, left) {
+    'use strict';
+
+    // Read from the page: this can run before anything has set isLoggedIn.
+    if (!document.querySelector('main[data-loggedin]') || !slug) {
+        return;
+    }
+
+    fetch(`${OrbemOrder.siteRESTURL}/mission-timer/`, {
+        method: 'POST',
+        credentials: 'same-origin',
+        // Still sent when this is the page being left.
+        keepalive: true,
+        headers: {
+            'Content-Type': 'application/json',
+            'X-WP-Nonce': OrbemOrder.orbemNonce,
+        },
+        body: JSON.stringify({
+            mission: slug,
+            left: null === left ? null : Math.max(0, Math.round(left)),
+        }),
+    }).catch(() => {});
+}
+
+function stopMissionTimer(slug) {
+    'use strict';
+
+    const timer = missionTimers.get(slug);
+
+    if (!timer) {
+        return;
+    }
+
+    missionTimers.delete(slug);
+    timer.el.querySelector('.mission-timer')?.remove();
+    saveMissionTimer(slug, null);
+    drawTopClock();
+}
+
+/**
+ * Start timers for missions that have just appeared, and end those whose
+ * mission is gone. Cheap enough to run on every change to the list.
+ */
+function syncMissionTimers() {
+    'use strict';
+
+    const present = new Set();
+
+    document
+        .querySelectorAll('.mission-list .mission-item[data-timer]')
+        .forEach((el) => {
+            const slug = missionSlugOf(el);
+            const seconds = parseInt(el.dataset.timer, 10);
+
+            if (!slug || !(0 < seconds)) {
+                return;
+            }
+
+            present.add(slug);
+
+            const timer = missionTimers.get(slug);
+
+            if (timer) {
+                timer.el = el;
+                return;
+            }
+
+            if ('yes' === el.dataset.timerDone || !missionIsShowing(el)) {
+                return;
+            }
+
+            // Time saved from before a refresh, used once: after that this
+            // page's own count is the one that is right.
+            const saved = parseInt(el.dataset.timerLeft, 10);
+            const left = 0 <= saved ? Math.min(saved, seconds * 1000) : seconds * 1000;
+
+            delete el.dataset.timerLeft;
+
+            const started = { el, left, saved: left };
+
+            missionTimers.set(slug, started);
+            drawMissionTimer(started);
+
+            if (isNaN(saved)) {
+                saveMissionTimer(slug, left);
+            }
+        });
+
+    missionTimers.forEach((timer, slug) => {
+        if (!present.has(slug)) {
+            stopMissionTimer(slug);
+        }
+    });
+
+    missionTimedOut.forEach((slug) => {
+        if (!present.has(slug)) {
+            missionTimedOut.delete(slug);
+            saveMissionTimer(slug, null);
+        }
+    });
+
+    if ((missionTimers.size || missionTimeUps.length) && !missionTimerTick) {
+        missionTimerLast = performance.now();
+        missionTimerTick = setInterval(tickMissionTimers, 250);
+    }
+}
+
+function missionTimeUp(slug, timer) {
+    'use strict';
+
+    missionTimers.delete(slug);
+    missionTimedOut.add(slug);
+    saveMissionTimer(slug, 0);
+    timer.el.dataset.timerDone = 'yes';
+    timer.el.classList.add('timed-out');
+    drawMissionTimer({ el: timer.el, left: 0 });
+    drawTopClock();
+
+    document.dispatchEvent(
+        new CustomEvent('orbem:mission-timeout', { detail: { mission: slug } })
+    );
+
+    if (timer.el.dataset.timerCutscene) {
+        missionTimeUps.push({ cutscene: timer.el.dataset.timerCutscene });
+    }
+
+    if (timer.el.dataset.timerExplainer) {
+        missionTimeUps.push({ explainer: timer.el.dataset.timerExplainer });
+    }
+}
+
+/**
+ * Play what running out leads to, one thing at a time, each once nothing
+ * else is showing. Something not in this area is skipped rather than kept
+ * waiting forever.
+ */
+function playMissionTimeUps() {
+    'use strict';
+
+    if (
+        !missionTimeUps.length ||
+        true !== window.allowMovement ||
+        document.querySelector('.map-cutscene.engage, .show-explainer')
+    ) {
+        return;
+    }
+
+    const next = missionTimeUps.shift();
+
+    if (next.cutscene) {
+        const cutscene = document.querySelector(
+            '.' + escClass(next.cutscene) + '-map-cutscene'
+        );
+
+        if (cutscene) {
+            // It is the consequence of running out, so it plays each time
+            // the player does, seen before or not.
+            cutscene.classList.remove('been-viewed');
+            engageCutscene(next.cutscene, false);
+        }
+
+        return;
+    }
+
+    if (next.explainer) {
+        showExplainer(next.explainer, null);
+    }
+}
+
+function tickMissionTimers() {
+    'use strict';
+
+    const now = performance.now();
+    const elapsed = now - missionTimerLast;
+
+    missionTimerLast = now;
+
+    const playing =
+        true === window.allowMovement &&
+        !document.hidden &&
+        !document.querySelector('.map-cutscene.engage, .show-explainer');
+
+    if (playing) {
+        missionTimers.forEach((timer, slug) => {
+            if (!timer.el.isConnected) {
+                return;
+            }
+
+            timer.left -= elapsed;
+
+            if (0 >= timer.left) {
+                missionTimeUp(slug, timer);
+            } else {
+                drawMissionTimer(timer);
+
+                if (MISSION_TIMER_SAVE_EVERY <= timer.saved - timer.left) {
+                    timer.saved = timer.left;
+                    saveMissionTimer(slug, timer.left);
+                }
+            }
+        });
+    }
+
+    playMissionTimeUps();
+    drawTopClock();
+
+    if (!missionTimers.size && !missionTimeUps.length) {
+        clearInterval(missionTimerTick);
+        missionTimerTick = null;
+    }
+}
+
+// Leaving the page — a refresh, or closing the tab — saves every running clock
+// where it stands.
+window.addEventListener('pagehide', () => {
+    missionTimers.forEach((timer, slug) => saveMissionTimer(slug, timer.left));
+});
+
+// Completing the mission is the win: the clock stops where it is, and is
+// marked done so the list changing around it does not start it again.
+document.addEventListener('orbem:mission-complete', (event) => {
+    playSfx('explore_sfx_mission');
+
+    const slug = event.detail?.mission || '';
+    const el = slug
+        ? document.querySelector('.' + escClass(slug) + '-mission-item')
+        : null;
+
+    if (el) {
+        el.dataset.timerDone = 'yes';
+    }
+
+    stopMissionTimer(slug);
+});
+
+function watchMissionTimers() {
+    'use strict';
+
+    // The list is rebuilt on every area change, and a following mission
+    // appears by gaining a class, so both are watched.
+    //
+    // Watched wherever it currently is. Walking through a door rewrites the
+    // whole game container from its own HTML, which replaces #missions with a
+    // copy — and an observer on the old one never saw the timed mission of
+    // the room just walked into, so its clock never started.
+    const onList = new MutationObserver(syncMissionTimers);
+    let watched = null;
+
+    const attach = () => {
+        const missions = document.getElementById('missions') || document.body;
+
+        if (missions === watched) {
+            return;
+        }
+
+        onList.disconnect();
+        watched = missions;
+        onList.observe(missions, {
+            childList: true,
+            subtree: true,
+            attributes: true,
+            attributeFilter: ['class'],
+        });
+
+        syncMissionTimers();
+    };
+
+    new MutationObserver(attach).observe(document.body, { childList: true, subtree: true });
+
+    attach();
+}
+
+if ('loading' === document.readyState) {
+    document.addEventListener('DOMContentLoaded', watchMissionTimers);
+} else {
+    watchMissionTimers();
+}
+
 function addCharacter(character) {
     'use strict';
 
@@ -1980,9 +2825,11 @@ function removeItemFromStorage(position, type) {
     const menuItem = document.querySelector(
         '.retrieval-points span[title="' + position + '"]'
     );
-    const itemCount = menuItem.getAttribute('data-count');
 
     if (menuItem) {
+        const itemCount = menuItem.getAttribute('data-count');
+        const itemId = menuItem.getAttribute('data-id');
+
         // if item count is above 1 then reduce count by 1 instead of removing.
         if (itemCount && 1 < itemCount) {
             menuItem.setAttribute('data-count', itemCount - 1);
@@ -1993,9 +2840,11 @@ function removeItemFromStorage(position, type) {
             menuItem.setAttribute('title', '');
             menuItem.setAttribute('data-empty', 'true');
             menuItem.setAttribute('data-count', '');
+            menuItem.classList.remove('equipped');
+            menuItem.innerHTML = '';
         }
 
-        saveStorageItem(0, position, type, 0, true);
+        saveStorageItem(itemId, position, type, 0, true);
     }
 }
 
@@ -2123,6 +2972,15 @@ function resetExplore() {
 function restartGame() {
     'use strict';
 
+    // Somewhere else may own what "The End" means. Wiping progress and going
+    // back to the beginning is right for a single game, which is what this
+    // plugin is; a network of worlds says otherwise — the end of a building's
+    // game is walking back out of the building — by defining this. Nothing
+    // else defines it, so nothing else changes.
+    if ('function' === typeof window.orbemTheEnd && true === window.orbemTheEnd()) {
+        return;
+    }
+
     resetExplore();
 
     setTimeout(() => {
@@ -2182,6 +3040,12 @@ function addUserCoordianate(left, top) {
 function hitEnemyWithWeapon(weaponEl, enemyEl) {
     'use strict';
 
+    hurtTheEnemy(weaponEl, enemyEl, weaponHitAreaOf(weaponEl));
+}
+
+function weaponHitAreaOf(weaponEl) {
+    'use strict';
+
     // For an equipped overlay weapon, use the weapon image's reach (centered on
     // the character) as the hit area instead of the pushed-out hitbox point, so
     // range matches what's on screen.
@@ -2229,7 +3093,116 @@ function hitEnemyWithWeapon(weaponEl, enemyEl) {
         };
     }
 
-    hurtTheEnemy(weaponEl, enemyEl, weaponHitArea);
+    return weaponHitArea;
+}
+
+/**
+ * What this swing costs whatever it lands on.
+ *
+ * Pulled out of hurtTheEnemy so that hitting a player and hitting an enemy
+ * read the same table. Two copies would be two things to keep in step, and
+ * the one that drifted would be the one nobody tests.
+ *
+ * @param  theWeapon
+ * @return {number}
+ */
+function attackStrengthOf(theWeapon) {
+    'use strict';
+
+    let attackType =
+        true === theWeapon.classList.contains('heavy-engage')
+            ? 'heavy'
+            : 'normal';
+
+    attackType =
+        true === theWeapon.classList.contains('charge-attack-engage')
+            ? 'charged'
+            : attackType;
+
+    return (
+        Math.round(parseInt(JSON.parse(theWeapon.dataset.strength)[attackType]) * statScale('strength')) +
+        window.attackMultiplier
+    );
+}
+
+function statScale(name) {
+    'use strict';
+
+    return Math.max(1, parseFloat((window.orbemPlayerStats || {})[name]) || 1);
+}
+
+let stepCarry = 0;
+
+function nextStep() {
+    'use strict';
+
+    const exact = window.moveSpeed * (window.orbemSpeedScale || 1) * statScale('speed') + stepCarry;
+    const whole = Math.floor(exact);
+
+    stepCarry = exact - whole;
+    window.orbemStep = whole;
+
+    return whole;
+}
+
+function stepSpeed() {
+    'use strict';
+
+    return window.orbemStep || window.moveSpeed;
+}
+
+function damageTaken(amount) {
+    'use strict';
+
+    const raw = parseInt(amount, 10) || 0;
+
+    if (0 >= raw) {
+        return 0;
+    }
+
+    const offset = parseInt(window.defenseMultiplier, 10) || 0;
+
+    return Math.max(1, Math.round((raw - offset) / statScale('defense')));
+}
+
+window.orbemDamageTaken = damageTaken;
+
+/**
+ * Offer this swing to any other player standing in it.
+ *
+ * Players are deliberately not `.map-item`, so they are not in the collision
+ * set the enemy passes iterate and have to be offered the swing separately.
+ * Both of the engine's damage timings come through here — the continuous one
+ * while the weapon is engaged, and the single pass at the end of the
+ * animation — because a fight should not depend on which one a character is
+ * configured for.
+ *
+ * Guarded rather than trusting `dataset.strength`: a magic element stands in
+ * for the weapon on some attacks and carries no strength table, and the enemy
+ * path never reaches those.
+ *
+ * @param weaponEl
+ */
+function swingAtPlayers(weaponEl) {
+    'use strict';
+
+    if (!weaponEl || !weaponEl.dataset || !weaponEl.dataset.strength) {
+        return;
+    }
+
+    let strength;
+
+    try {
+        strength = attackStrengthOf(weaponEl);
+    } catch (e) {
+        return;
+    }
+
+    if (!strength) {
+        return;
+    }
+
+    hitPlayersInReach(weaponHitAreaOf(weaponEl), strength, elementsOverlap);
 }
 
 /**
@@ -2248,12 +3221,225 @@ function hitEnemiesInReach(weaponEl) {
     document.querySelectorAll('.enemy-item').forEach((enemyEl) => {
         hitEnemyWithWeapon(weaponEl, enemyEl);
     });
+
+    // And anybody else standing in it, where the area allows fighting. The
+    // same swing, the same strength and the same overlap test an enemy gets —
+    // multiplayer decides only whether there is anybody there to hit.
+    swingAtPlayers(weaponEl);
+}
+
+function damageEnemy(value, attackStrength, weaponName, remote) {
+    'use strict';
+
+    const enemyHealth = value.dataset.health;
+    const enemyFullHealth = value.dataset.healthamount;
+    const enemyMission = value.dataset.mission;
+
+    const newHealth =
+        0 <= enemyHealth - attackStrength
+            ? enemyHealth - attackStrength
+            : 0;
+
+    const weaponType = value.dataset.weapon ?? '';
+    const enemyHealthBar = value.querySelector('.enemy-health-bar-wrapper');
+
+    if (
+        remote ||
+        ('' !== weaponType &&
+            weaponName === weaponType) ||
+        '' === weaponType
+    ) {
+        if (!remote) {
+            value.dataset.nextAllowedHit = String(Date.now() + 1000);
+        }
+
+        value.setAttribute('data-health', newHealth);
+
+        if ('true' !== value.dataset.spawned) {
+            document.dispatchEvent(new CustomEvent('orbem:enemy-hurt', {
+                detail: { enemy: value, name: cleanClassName(value.className), amount: attackStrength, remote },
+            }));
+        }
+
+        updateBossBar(value);
+
+        // A boss with its bar across the screen does not need one
+        // over its head too.
+        if (enemyHealthBar && 'yes' !== value.dataset.bossBar) {
+            if ('block' !== enemyHealthBar.style.display) {
+                enemyHealthBar.style.display = 'block';
+            }
+
+            const enemyHealthPercent = parseInt(
+                (parseInt(value.dataset.health) / parseInt(value.dataset.healthamount)) * 100
+            );
+
+            if (enemyHealthPercent) {
+                enemyHealthBar.querySelector('.enemy-health-bar').style.width =
+                    enemyHealthPercent + '%';
+            }
+        }
+    }
+
+    if ('boss' === value.getAttribute('data-enemy-type') && !bossSequence(value)) {
+        if (
+            newHealth <= enemyFullHealth * 0.75 &&
+            !value._secondWaveHit
+        ) {
+            value._secondWaveHit = true;
+            updateBossWave(value);
+        } else if (
+            newHealth <= enemyFullHealth * 0.5 &&
+            !value._thirdWaveHit
+        ) {
+            value._thirdWaveHit = true;
+            updateBossWave(value);
+        } else if (
+            newHealth <= enemyFullHealth * 0.25 &&
+            !value._fourthWaveHit
+        ) {
+            value._fourthWaveHit = true;
+            updateBossWave(value);
+        }
+    }
+
+    playHurtSound(value);
+
+    if (0 === newHealth) {
+        const spawnedCopy = 'true' === value.dataset.spawned;
+
+        // Anything keeping count — waves, a score — listens here
+        // rather than watching the map.
+        document.dispatchEvent(new CustomEvent('orbem:enemy-defeated', {
+            detail: {
+                enemy: value,
+                spawned: spawnedCopy,
+                spawner: spawnedCopy ? document.getElementById(value.dataset.spawnedFrom) : null,
+            },
+        }));
+
+        // Grant the reward defined for killing this enemy.
+        const rewardAmount = parseInt(value.dataset.rewardValue || '0', 10);
+        const rewardType = value.dataset.type;
+
+        if (0 < rewardAmount && rewardType) {
+            runPointAnimation(value, cleanClassName(value.className), true, rewardAmount, '');
+        }
+
+        stopShooterEnemy(value);
+        stopRunnerEnemy(value);
+        stopPathMovement(value);
+        stopBossSequence(value);
+
+        if (value._pulsewaveInterval) {
+            clearInterval(value._pulsewaveInterval);
+            value._pulsewaveInterval = null;
+        }
+
+        const enemyName = cleanClassName(value.className);
+        const deadImage = value.querySelector('#' + escClass(enemyName) + 'dead');
+
+        if (deadImage && deadImage?.src && '' !== deadImage.getAttribute('src')) {
+            enemyHealthBar.style.display = 'none';
+            const currentEnemyImage = value.querySelector('.character-icon.engage');
+            currentEnemyImage.classList.remove('engage');
+            deadImage.classList.add('engage');
+            value.style.zIndex = '0';
+
+            setTimeout(() => {
+                value.remove();
+
+                if (!spawnedCopy) {
+                    saveEnemyMission(enemyMission, value);
+                }
+            }, 2000);
+        } else {
+            value.remove();
+
+            if (!spawnedCopy) {
+                saveEnemyMission(enemyMission, value);
+            }
+        }
+
+        // A copy shares its spawner's name. Saving it as defeated
+        // would take the spawner off the map for good.
+        if (spawnedCopy) {
+            return;
+        }
+
+        const position = cleanClassName(value.className);
+        const filehref = `${OrbemOrder.siteRESTURL}/enemy/`;
+
+        const jsonString = {
+            health: 0,
+            position,
+        };
+
+        if (false !== isLoggedIn) {
+            fetch(filehref, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-WP-Nonce': OrbemOrder.orbemNonce,
+                },
+                body: JSON.stringify(jsonString),
+            }).then((response) => {
+                if (!response.ok) {
+                    throw new Error(
+                        'Network response was not ok ' + response.statusText
+                    );
+                }
+            });
+        }
+    } else {
+        hurtAnimationEnemy(value, attackStrength);
+    }
+}
+
+window.orbemHurtEnemy = function (name, amount) {
+    const enemy = Array.from(document.querySelectorAll('[data-genre="explore-enemy"]:not([data-spawned="true"])'))
+        .find((el) => cleanClassName(el.className) === name);
+
+    if (!enemy || !enemy.isConnected || 0 >= parseInt(enemy.dataset.health || '0', 10)) {
+        return false;
+    }
+
+    damageEnemy(enemy, parseInt(amount, 10) || 0, '', true);
+
+    return true;
+};
+
+window.orbemItemName = (classes) => cleanClassName(String(classes || ''));
+
+window.orbemRemoveItem = function (name) {
+    const item = document.querySelector('.' + escClass(name) + '-map-item');
+
+    if (!item) {
+        return false;
+    }
+
+    document.querySelector('.' + escClass(name) + '-drag-dest-map-item')?.remove();
+    item.remove();
+
+    return true;
+};
+
+function itemGone(item) {
+    if (item) {
+        document.dispatchEvent(new CustomEvent('orbem:item-gone', {
+            detail: { item, name: cleanClassName(item.className) },
+        }));
+    }
 }
 
 const hurtTheEnemy = (function () {
     'use strict';
 
     return function (theWeapon, value, hitArea) {
+        if (isSpawner(value)) {
+            return;
+        }
+
         // The overlap test can use a separate hit area (e.g. the equipped
         // weapon image's reach) while damage/type still come from theWeapon.
         const overlapTarget = hitArea || theWeapon;
@@ -2270,144 +3456,7 @@ const hurtTheEnemy = (function () {
                 'explore-enemy' === value.dataset.genre &&
                 false === theWeapon.classList.contains('protection')
             ) {
-                const enemyHealth = value.dataset.health;
-                const enemyFullHealth = value.dataset.healthamount;
-                const enemyMission = value.dataset.mission;
-
-                let attackType =
-                    true === theWeapon.classList.contains('heavy-engage')
-                        ? 'heavy'
-                        : 'normal';
-
-                attackType =
-                    true === theWeapon.classList.contains('charge-attack-engage')
-                        ? 'charged'
-                        : attackType;
-
-                const attackStrength =
-                    parseInt(JSON.parse(theWeapon.dataset.strength)[attackType]) +
-                    window.attackMultiplier;
-
-                const newHealth =
-                    0 <= enemyHealth - attackStrength
-                        ? enemyHealth - attackStrength
-                        : 0;
-
-                const weaponType = value.dataset.weapon ?? '';
-                const enemyHealthBar = value.querySelector('.enemy-health-bar-wrapper');
-
-                if (
-                    ('' !== weaponType &&
-                        theWeapon.dataset.weapon === weaponType) ||
-                    '' === weaponType
-                ) {
-                    value.dataset.nextAllowedHit = String(now + 1000);
-                    value.setAttribute('data-health', newHealth);
-
-                    if (enemyHealthBar) {
-                        if ('block' !== enemyHealthBar.style.display) {
-                            enemyHealthBar.style.display = 'block';
-                        }
-
-                        const enemyHealthPercent = parseInt(
-                            (parseInt(value.dataset.health) / parseInt(value.dataset.healthamount)) * 100
-                        );
-
-                        if (enemyHealthPercent) {
-                            enemyHealthBar.querySelector('.enemy-health-bar').style.width =
-                                enemyHealthPercent + '%';
-                        }
-                    }
-                }
-
-                if ('boss' === value.getAttribute('data-enemy-type')) {
-                    if (
-                        newHealth <= enemyFullHealth * 0.75 &&
-                        !value._secondWaveHit
-                    ) {
-                        value._secondWaveHit = true;
-                        updateBossWave(value);
-                    } else if (
-                        newHealth <= enemyFullHealth * 0.5 &&
-                        !value._thirdWaveHit
-                    ) {
-                        value._thirdWaveHit = true;
-                        updateBossWave(value);
-                    } else if (
-                        newHealth <= enemyFullHealth * 0.25 &&
-                        !value._fourthWaveHit
-                    ) {
-                        value._fourthWaveHit = true;
-                        updateBossWave(value);
-                    }
-                }
-
-                playHurtSound(value);
-
-                if (0 === newHealth) {
-                    // Grant the reward defined for killing this enemy.
-                    const rewardAmount = parseInt(value.dataset.rewardValue || '0', 10);
-                    const rewardType = value.dataset.type;
-
-                    if (0 < rewardAmount && rewardType) {
-                        runPointAnimation(value, cleanClassName(value.className), true, rewardAmount, '');
-                    }
-
-                    stopShooterEnemy(value);
-                    stopRunnerEnemy(value);
-                    stopPathMovement(value);
-
-                    if (value._pulsewaveInterval) {
-                        clearInterval(value._pulsewaveInterval);
-                        value._pulsewaveInterval = null;
-                    }
-
-                    const enemyName = cleanClassName(value.className);
-                    const deadImage = value.querySelector('#' + escClass(enemyName) + 'dead');
-
-                    if (deadImage && deadImage?.src && '' !== deadImage.getAttribute('src')) {
-                        enemyHealthBar.style.display = 'none';
-                        const currentEnemyImage = value.querySelector('.character-icon.engage');
-                        currentEnemyImage.classList.remove('engage');
-                        deadImage.classList.add('engage');
-                        value.style.zIndex = '0';
-
-                        setTimeout(() => {
-                            value.remove();
-                            saveEnemyMission(enemyMission, value);
-                        }, 2000);
-                    } else {
-                        value.remove();
-                        saveEnemyMission(enemyMission, value);
-                    }
-
-                    const position = cleanClassName(value.className);
-                    const filehref = `${OrbemOrder.siteRESTURL}/enemy/`;
-
-                    const jsonString = {
-                        health: 0,
-                        position,
-                    };
-
-                    if (false !== isLoggedIn) {
-                        fetch(filehref, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-WP-Nonce': OrbemOrder.orbemNonce,
-                            },
-                            body: JSON.stringify(jsonString),
-                        }).then((response) => {
-                            if (!response.ok) {
-                                throw new Error(
-                                    'Network response was not ok ' + response.statusText
-                                );
-                            }
-                        });
-                    }
-                } else {
-                    hurtAnimationEnemy(value, attackStrength);
-                }
+                damageEnemy(value, attackStrengthOf(theWeapon), theWeapon.dataset.weapon, false);
             }
         }
     };
@@ -2479,7 +3528,7 @@ function hurtAnimationEnemy(enemy, pushAmount) {
         // After computing newTop/newLeft from the hit force...
         const collisionWalls = document.querySelectorAll(
             '.map-character-icon.engage, .default-map svg rect, .map-item' +
-            ':not([data-wanderer="yes"]):not(.explainer-container):not(.materialize-item-trigger):not(.drag-dest):not([data-trigger="true"]):not(.currently-dragging):not([data-passable="true"].no-point):not(.passable):not([data-genre="explore-sign"]):not([data-foreground="true"]):not([data-background="true"])'
+            ':not([data-wanderer="yes"]):not(.explainer-container):not(.materialize-item-trigger):not(.drag-dest):not([data-trigger="true"]):not(.currently-dragging):not([data-passable="true"].no-point):not([data-passable="true"][data-collectable="true"]):not(.passable):not([data-genre="explore-sign"]):not([data-foreground="true"]):not([data-background="true"])'
         );
 
         const clampedPosition = clampToWalls(collisionWalls, enemy, newTop, newLeft);
@@ -2505,11 +3554,15 @@ function clampToWalls(collisionWalls, enemy, newTop, newLeft) {
         // Skip self
         if (wall === enemy) return;
 
-        // Get wall bounds — handle both DOM elements and plain objects
-        const wLeft   = wall.offsetLeft;
-        const wTop    = wall.offsetTop;
-        const wRight  = wall.offsetLeft + wall.offsetWidth;
-        const wBottom = wall.offsetTop  + wall.offsetHeight;
+        // Get wall bounds — handle DOM elements, SVG map rects and plain
+        // objects. An unmeasured SVG rect yields NaN bounds, which skips the
+        // no-overlap return (NaN comparisons are false) and clamps the enemy
+        // to NaN.
+        const wallBox = collisionBox(wall, { offsetLeft: eLeft, offsetTop: eTop, offsetWidth: eRight - eLeft, offsetHeight: eBottom - eTop });
+        const wLeft   = wallBox.offsetLeft;
+        const wTop    = wallBox.offsetTop;
+        const wRight  = wallBox.offsetLeft + wallBox.offsetWidth;
+        const wBottom = wallBox.offsetTop  + wallBox.offsetHeight;
 
         // No overlap — nothing to clamp
         if (eRight <= wLeft || eLeft >= wRight ||
@@ -2565,6 +3618,260 @@ function playHurtSound(character) {
     }
 }
 
+window.orbemApplyDayNight = function (dayNight) {
+    const container = document.querySelector('.game-container');
+
+    if (!container) {
+        return;
+    }
+
+    setDayNightData(container, dayNight);
+
+    const world = container.querySelector('.game-world');
+    const scale = parseFloat(container.dataset.areaScale) || 1;
+
+    if (world && (1 !== scale || dayNightWanted(container))) {
+        applyDayNight();
+        return;
+    }
+
+    if (world) {
+        const defaultMap = world.querySelector('.default-map');
+
+        container
+            .querySelectorAll(':scope > .map-cutscene, :scope > .minigame, :scope > .communication-wrapper')
+            .forEach((overlay) => {
+                defaultMap?.appendChild(overlay);
+            });
+    }
+
+    applyAreaScale(scale);
+};
+
+function setDayNightData(container, dayNight) {
+    'use strict';
+
+    if (!container) {
+        return;
+    }
+
+    const clock = dayNight || {};
+
+    container.dataset.dayNight = clock.mode || '';
+    container.dataset.dayNightCycle = clock.minutes || 60;
+    container.dataset.dayNightEpoch = clock.epoch || 0;
+    container.dataset.dayNightOffset = clock.offset || 0;
+    container.dataset.dayNightNow = clock.now || '';
+}
+
+function setWeatherData(container, weather) {
+    'use strict';
+
+    if (!container) {
+        return;
+    }
+
+    const sky = weather || {};
+
+    container.dataset.weather = (sky.kinds || []).join(' ');
+    container.dataset.weatherFrequency = sky.frequency || 'always';
+    container.dataset.weatherSeed = sky.seed || 0;
+    container.dataset.weatherNow = sky.now || '';
+}
+
+function weatherWanted(container) {
+    'use strict';
+
+    return '' !== (container?.dataset.weather || '');
+}
+
+function dayNightWanted(container) {
+    'use strict';
+
+    return ['cycle', 'dusk', 'night'].includes(container?.dataset.dayNight || '');
+}
+
+function dayNightHour(container) {
+    'use strict';
+
+    const minutes = parseFloat(container.dataset.dayNightCycle) || 60;
+    const epoch = parseFloat(container.dataset.dayNightEpoch) || 0;
+    const offset = parseFloat(container.dataset.dayNightOffset) || 0;
+    const now = Date.now() + (window.dayNightSkew || 0);
+    const day = (now - epoch) / (minutes * 60000) + offset;
+
+    return ((day % 1) + 1) % 1 * 24;
+}
+
+function dayNightLook(hour) {
+    'use strict';
+
+    const night = [1, 1, 22, 32, 95, 0.74];
+    const twilight = [1, 1, 70, 72, 150, 0.6];
+    const dawn = [1, 1, 235, 175, 135, 0.28];
+    const day = [1, 1, 255, 255, 255, 0];
+    const dusk = [1, 1, 215, 120, 75, 0.4];
+    const stops = [
+        [0, night],
+        [4.5, night],
+        [5.3, twilight],
+        [6, dawn],
+        [8, day],
+        [17, day],
+        [18.75, dusk],
+        [19.6, twilight],
+        [20.5, night],
+        [24, night],
+    ];
+
+    let i = 0;
+
+    while (i < stops.length - 2 && hour >= stops[i + 1][0]) {
+        i++;
+    }
+
+    const [fromHour, from] = stops[i];
+    const [toHour, to] = stops[i + 1];
+    const t = toHour > fromHour ? Math.min(1, Math.max(0, (hour - fromHour) / (toHour - fromHour))) : 0;
+    const mix = from.map((value, k) => value + (to[k] - value) * t);
+
+    return {
+        brightness: mix[0].toFixed(3),
+        saturate: mix[1].toFixed(3),
+        tint: `rgba(${Math.round(mix[2])}, ${Math.round(mix[3])}, ${Math.round(mix[4])}, ${mix[5].toFixed(3)})`,
+    };
+}
+
+function applyDayNight() {
+    'use strict';
+
+    const container = document.querySelector('.game-container');
+
+    clearInterval(window.dayNightTimer);
+    clearInterval(window.dayNightLightTimer);
+
+    if (!container) {
+        return;
+    }
+
+    if (container.dataset.dayNightNow) {
+        window.dayNightSkew = parseFloat(container.dataset.dayNightNow) - Date.now();
+        container.dataset.dayNightNow = '';
+    }
+
+    const world = container.querySelector('.game-world');
+    let shade = world?.querySelector(':scope > .day-night-shade');
+
+    if (!world || false === dayNightWanted(container)) {
+        shade?.remove();
+
+        if (world) {
+            world.style.filter = '';
+            world.style.isolation = '';
+        }
+
+        return;
+    }
+
+    if (!shade) {
+        shade = document.createElement('div');
+        shade.className = 'day-night-shade';
+        shade.style.cssText =
+            'position:absolute;inset:0;pointer-events:none;mix-blend-mode:multiply;' +
+            'z-index:2147483646;transition:background-color 1s linear;';
+        world.appendChild(shade);
+    }
+
+    world.style.isolation = 'isolate';
+    world.style.transition = 'filter 1s linear';
+
+    const mode = container.dataset.dayNight;
+    const paint = () => {
+        const look = dayNightLook('cycle' === mode ? dayNightHour(container) : ('dusk' === mode ? 18.75 : 0));
+
+        world.style.filter = '';
+        shade.style.backgroundColor = look.tint;
+        shade.dataset.dark = parseFloat(look.tint.split(',')[3]) > 0.02 ? 'yes' : '';
+    };
+
+    paint();
+    paintLights(world, shade);
+
+    if ('cycle' === mode) {
+        window.dayNightTimer = setInterval(paint, 1000);
+    }
+
+    window.dayNightLightTimer = setInterval(() => paintLights(world, shade), 100);
+}
+
+function paintLights(world, shade) {
+    'use strict';
+
+    if (!world.isConnected || !shade.isConnected) {
+        clearInterval(window.dayNightLightTimer);
+        return;
+    }
+
+    const lights = [];
+
+    if ('yes' === shade.dataset.dark) {
+        world.querySelectorAll('.default-map [data-illuminate]').forEach((el) => {
+            const radius = parseInt(el.dataset.illuminate, 10) || 0;
+
+            if (0 < radius && el.offsetWidth && 'none' !== el.style.display) {
+                lights.push([el.offsetLeft + el.offsetWidth / 2, el.offsetTop + el.offsetHeight / 2, radius]);
+            }
+        });
+
+        const weapon = document.querySelector('.map-weapon');
+        const mapChar = document.getElementById('map-character');
+        const held = weapon ? parseInt(weapon.dataset.light, 10) || 0 : 0;
+
+        if (0 < held && mapChar) {
+            const facing = String(mapChar.className).match(/\b(up|down|left|right)-dir\b/);
+            const ahead = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] }[facing ? facing[1] : 'down'];
+
+            lights.push([
+                mapChar.offsetLeft + (window.globalLeftPositionOffset || 0) + ahead[0] * held * 0.35,
+                mapChar.offsetTop + (window.globalTopPositionOffset || 0) + ahead[1] * held * 0.35,
+                held,
+            ]);
+        }
+    }
+
+    const layers = [];
+
+    lights.forEach(([x, y, r]) => layers.push({
+        image: `radial-gradient(circle ${Math.round(r)}px at ${Math.round(x)}px ${Math.round(y)}px, transparent 0, transparent ${Math.round(r * 0.45)}px, #000 ${Math.round(r)}px)`,
+        size: '100% 100%',
+        position: '0 0',
+        composite: 'intersect',
+    }));
+
+    if (layers.length) {
+        layers.push({ image: 'linear-gradient(#000, #000)', size: '100% 100%', position: '0 0', composite: 'add' });
+    }
+
+    const mask = layers.map(l => l.image + ' ' + l.position + ' / ' + l.size).join(', ');
+
+    if (shade.dataset.mask === mask) {
+        return;
+    }
+
+    shade.dataset.mask = mask;
+
+    const set = (name, value) => {
+        shade.style[name] = value;
+        shade.style['webkit' + name.charAt(0).toUpperCase() + name.slice(1)] = value;
+    };
+
+    set('maskImage', layers.length ? layers.map(l => l.image).join(', ') : 'none');
+    set('maskSize', layers.map(l => l.size).join(', '));
+    set('maskPosition', layers.map(l => l.position).join(', '));
+    set('maskRepeat', 'no-repeat');
+    shade.style.maskComposite = layers.map(l => l.composite).join(', ');
+}
+
 /**
  * Pull new area html.
  *
@@ -2606,7 +3913,11 @@ function applyAreaScale(scale) {
 
     let world = container.querySelector('.game-world');
 
-    if (1 === scale) {
+    if (1 === scale && false === dayNightWanted(container) && false === weatherWanted(container)) {
+        clearInterval(window.dayNightTimer);
+        clearInterval(window.dayNightLightTimer);
+        world?.querySelector(':scope > .day-night-shade')?.remove();
+
         // Unwrap: return the world elements to the container, drop the layer.
         if (world) {
             while (world.firstChild) {
@@ -2671,6 +3982,8 @@ function applyAreaScale(scale) {
                 container.appendChild(overlay);
             });
     }
+
+    applyDayNight();
 }
 
 const enterNewArea = (function () {
@@ -2912,6 +4225,8 @@ const enterNewArea = (function () {
                             // (and the camera centers on the scaled character).
                             // Runs here rather than at the end of this block so a
                             // later error can't skip the wrapping.
+                            setDayNightData(container, newMapItems['day-night']);
+                            setWeatherData(container, newMapItems.weather);
                             applyAreaScale(newMapItems['area-scale']);
 
                             // Engage walking.
@@ -3005,6 +4320,8 @@ const enterNewArea = (function () {
                             // Apply gravity to items marked with explore-gravity = yes.
                             applyItemGravity();
 
+                            cycleInteractedImages();
+
                             // Apply gravity to all characters and enemies in the area.
                             applyEntityGravity();
 
@@ -3027,6 +4344,10 @@ const enterNewArea = (function () {
 
                             if (allFirstDialogues) {
                                 allFirstDialogues.forEach((firstDialogue) => {
+                                    if (isBranchLine(firstDialogue)) {
+                                        return;
+                                    }
+
                                     firstDialogue.classList.add('engage');
                                 });
                             }
@@ -3143,7 +4464,25 @@ const enterNewArea = (function () {
                         characterItem.className =
                             newMapItems['start-direction'] + '-dir';
 
-                        characterItem.scrollIntoView({
+                        // Remember where this area put them, now, rather than
+                        // waiting for them to move.
+                        //
+                        // Coordinates are saved a second after the player stops
+                        // walking, which never happens if they arrive somewhere
+                        // and stand still — so the remembered position went on
+                        // describing the area they had left. Refreshing then
+                        // dropped them at those coordinates inside the new
+                        // area: through a wall, across the level from the way
+                        // out, or anywhere else that spot happens to be.
+                        //
+                        // Harmless before anything was saved at all. It is the
+                        // first thing a player notices now that it is.
+                        addUserCoordianate(
+                            characterItem.style.left,
+                            characterItem.style.top
+                        );
+
+                        centerCamera(characterItem, {
                             behavior: 'instant',
                             block: 'center',
                             inline: 'center',
@@ -3291,6 +4630,7 @@ const showItemDescription = (function () {
             const filehref = `${OrbemOrder.siteRESTURL}/get-item-description/`;
             const jsonString = {
                 id,
+                name: item.getAttribute('title') || '',
             };
 
             fetch(filehref, {
@@ -3336,37 +4676,67 @@ const showItemDescription = (function () {
                     dropButton.textContent = 'Drop';
                     dropButton.classList.add('storage-item-button', 'is-drop');
 
-                    // Replace current description content. Show Equip only when
-                    // the item is not already equipped, Unequip only when it is.
-                    description.innerHTML = newItemDescription;
-                    description.appendChild(dropButton);
-
-                    if (selectedItem.classList.contains('equipped')) {
-                        description.appendChild(unequipButton);
-                    } else {
-                        description.appendChild(equipButton);
-                    }
-
-                    // Add use and drop features.
-                    const useButton = description.querySelector('.use-button');
                     const itemId = selectedItem.getAttribute('data-id');
                     const name = selectedItem.getAttribute('title');
                     const amount = selectedItem.getAttribute('data-value');
                     const selectedType = selectedItem.getAttribute('data-type');
+                    const isConsumable = isPointItemType(selectedType);
 
-                    // Add points.
-                    if (useButton && selectedItem) {
-                        if (100 > getCurrentPoints(selectedType)) {
-                            useButton.addEventListener('click', () => {
-                                runPointAnimation(selectedItem, name);
-                                description.innerHTML = '';
-                            });
+                    // Replace current description content. A health/mana/power
+                    // item is spent rather than worn, so it offers Use; anything
+                    // else shows Equip, or Unequip when it is already equipped.
+                    description.innerHTML = newItemDescription;
+                    description.appendChild(dropButton);
+
+                    const useButton = isConsumable
+                        ? document.createElement('button')
+                        : description.querySelector('.use-button');
+
+                    if (isConsumable) {
+                        useButton.textContent = 'Use';
+                        useButton.classList.add('storage-item-button', 'is-use');
+
+                        if (barMax(selectedType) <= getCurrentPoints(selectedType)) {
+                            useButton.disabled = true;
+                            useButton.title = 'Your ' + selectedType + ' is already full';
                         }
+
+                        description.appendChild(useButton);
+                    } else if ('ingredients' === selectedType) {
+                        equipButton.remove();
+                    } else if (selectedItem.classList.contains('equipped')) {
+                        description.appendChild(unequipButton);
+                    } else {
+                        const needed = levelNeeded(itemId);
+
+                        if (needed) {
+                            equipButton.disabled = true;
+                            equipButton.textContent = 'Level ' + needed;
+                            equipButton.title = 'Reach level ' + needed + ' to equip this';
+                            equipButton.classList.add('needs-level');
+                        }
+
+                        description.appendChild(equipButton);
+                    }
+
+                    // Spend the item: top the bar up, then clear the slot.
+                    if (useButton && selectedItem) {
+                        useButton.addEventListener('click', () => {
+                            if (barMax(selectedType) <= getCurrentPoints(selectedType)) {
+                                playSfx('explore_sfx_denied');
+                                return;
+                            }
+
+                            playSfx('explore_sfx_use');
+                            runPointAnimation(selectedItem, name);
+                            description.innerHTML = '';
+                        });
                     }
 
                     // Drop item.
                     if (dropButton) {
                         dropButton.addEventListener('click', () => {
+                            playSfx('explore_sfx_drop');
                             removeItemFromStorage(name, selectedType);
                             description.innerHTML = '';
 
@@ -3381,6 +4751,13 @@ const showItemDescription = (function () {
                     // Equip button.
                     if (equipButton) {
                         equipButton.addEventListener('click', () => {
+                            if (levelNeeded(itemId)) {
+                                playSfx('explore_sfx_denied');
+                                return;
+                            }
+
+                            playSfx('explore_sfx_equip');
+
                             const currentCharacter = document.querySelector(
                                 '.map-character-icon.engage'
                             ).dataset.currentchar;
@@ -3434,6 +4811,8 @@ const showItemDescription = (function () {
                     // Unequip.
                     if (unequipButton) {
                         unequipButton.addEventListener('click', () => {
+                            playSfx('explore_sfx_unequip');
+
                             const selectedItem = document.querySelector(
                                 '.storage-item.engage'
                             );
@@ -3566,6 +4945,7 @@ function applyWeaponToPlayer(source) {
     currentWeapon.dataset.motion = source.dataset.motion || 'swing';
     currentWeapon.dataset.facing = source.dataset.facing || '';
     currentWeapon.dataset.resting = source.dataset.resting || 'in-hand';
+    currentWeapon.dataset.light = source.dataset.light || '0';
     currentWeapon.dataset.range = source.dataset.range || '0';
     currentWeapon.style.setProperty(
         '--weapon-range',
@@ -3677,6 +5057,11 @@ function getCharacterSprite(baseId) {
  */
 function changeWeapon(selectedItem) {
     'use strict';
+
+    if (selectedItem && levelNeeded(selectedItem.dataset?.id)) {
+        playSfx('explore_sfx_denied');
+        return;
+    }
 
     applyWeaponToPlayer(selectedItem);
 }
@@ -3808,6 +5193,8 @@ function playSong(path, name) {
 function selectNewCharacter(character) {
     'use strict';
 
+    playSfx('explore_sfx_character');
+
     const charImage = character.querySelector('img');
     charImage.removeAttribute('srcset');
     const currentCharacter = document.querySelector('#map-character');
@@ -3849,7 +5236,22 @@ function selectNewCharacter(character) {
             character.querySelector('.character-name').textContent = mcName;
         }
 
+        window.defenseMultiplier = 'defense' === currentCharacter.dataset?.ability ? 10 : 0;
+
         switch (currentCharacter.dataset?.ability) {
+            case 'defense':
+                window.moveSpeed = 3;
+                window.attackMultiplier = 0;
+                movementIntFunc();
+
+                changeWeapon(
+                    document.querySelector(
+                        '.storage-item[title="' +
+                        currentCharacter.dataset?.weapon +
+                        '"]'
+                    )
+                );
+                break;
             case 'speed':
                 window.moveSpeed = 5;
                 window.attackMultiplier = 5;
@@ -3974,10 +5376,17 @@ function stopRunnerPunching(enemyEl, letAttackFinish) {
     delete enemyEl.dataset.attacking;
 }
 
-function startRunnerPunching(enemyEl) {
+function startRunnerPunching(enemyEl, npc) {
     'use strict';
 
-    if (!enemyEl || enemyEl._runnerPunchInt) {
+    if (!enemyEl) {
+        return;
+    }
+
+    // Who the swing lands on: an NPC being defended, or the player.
+    enemyEl._punchTarget = npc || null;
+
+    if (enemyEl._runnerPunchInt) {
         return;
     }
 
@@ -3992,6 +5401,10 @@ function startRunnerPunching(enemyEl) {
         if (!document.body.contains(enemyEl)) {
             clearInterval(enemyEl._runnerPunchInt);
             enemyEl._runnerPunchInt = null;
+            return;
+        }
+
+        if (worldPaused()) {
             return;
         }
 
@@ -4012,6 +5425,11 @@ function startRunnerPunching(enemyEl) {
 
         // Hurt main.
         const hurtMainCharacter = () => {
+            if (enemyEl._punchTarget) {
+                hurtNpc(enemyEl._punchTarget, strength);
+                return;
+            }
+
             if (window.mcHurtCooldown) {
                 return;
             }
@@ -4021,7 +5439,7 @@ function startRunnerPunching(enemyEl) {
 
             // apply damage here
             const currentHealth = getCurrentPoints('health');
-            const newAmount = parseInt(currentHealth, 10) - parseInt(strength, 10);
+            const newAmount = parseInt(currentHealth, 10) - damageTaken(strength);
             hurtAnimation();
             addUserPoints(newAmount, 'health', 'enemy', '');
 
@@ -4073,6 +5491,10 @@ function startPatrolWatch(enemyEl) {
     enemyEl._patrolWatchInt = setInterval(() => {
         if (!document.body.contains(enemyEl)) {
             stopPatrolWatch(enemyEl);
+            return;
+        }
+
+        if (worldPaused()) {
             return;
         }
 
@@ -4197,8 +5619,209 @@ window.engageEnemy = engageEnemy;
  * @param enemy
  * @param trigger
  */
+// ─── Spawners ────────────────────────────────────────────────────────────────
+//
+// An enemy with data-spawner="yes" is not on the map itself. It is the place
+// copies of it come from: one every `interval` seconds, from its own top/left,
+// never more than `alive` at once, until `amount` have been sent — or for as
+// long as the area is open when amount is 0.
+//
+// Copies are ordinary enemies in every way but two: they carry
+// data-spawned="true", and their deaths are not saved, because a copy shares
+// its spawner's name and saving it would mark the spawner itself defeated.
+//
+// Something else on the page can run a spawner instead — a game deciding when
+// each wave starts and what it looks like. It says so through
+// window.orbemOwnsSpawner(el), and drives it through window.orbemSpawners.
+// With nothing claiming it, a spawner starts on its own like any enemy.
+
+const spawnerStates = new Map();
+
+/** A wandering copy's pace when its spawner gives none: an NPC's walk. */
+const SPAWN_WANDER = { speed: 30, between: 2 };
+
+function isSpawner(el) {
+    return 'yes' === el?.dataset?.spawner;
+}
+
+function spawnerIsOwned(el) {
+    return 'function' === typeof window.orbemOwnsSpawner && true === window.orbemOwnsSpawner(el);
+}
+
+function spawnerOptions(el, overrides) {
+    const o = overrides || {};
+
+    return {
+        amount: Math.max(0, parseInt(o.amount ?? el.dataset.spawnAmount ?? '0', 10) || 0),
+        interval: Math.max(0.2, parseFloat(o.interval ?? el.dataset.spawnInterval ?? '2') || 2),
+        alive: Math.max(1, parseInt(o.alive ?? el.dataset.spawnAlive ?? '8', 10) || 8),
+        // Per-start changes: what the copies look like and are.
+        images: o.images || null,
+        type: o.type || null,
+        health: o.health || null,
+        width: o.width || null,
+        height: o.height || null,
+    };
+}
+
+function stopSpawner(el) {
+    const state = spawnerStates.get(el);
+
+    if (state) {
+        clearInterval(state.timer);
+        spawnerStates.delete(el);
+    }
+}
+
+function spawnCopy(el, state) {
+    const opts = state.opts;
+    const copy = el.cloneNode(true);
+    const name = cleanClassName(el.className);
+
+    state.sent += 1;
+
+    copy.id = el.id + '-s' + state.sent;
+    delete copy.dataset.spawner;
+    delete copy.dataset.spawnAmount;
+    delete copy.dataset.spawnInterval;
+    delete copy.dataset.spawnAlive;
+    copy.dataset.spawned = 'true';
+    copy.dataset.spawnedFrom = el.id;
+    copy.style.display = '';
+
+    if (opts.type) {
+        copy.dataset.enemyType = opts.type;
+    }
+
+    if (opts.health) {
+        copy.dataset.healthamount = String(opts.health);
+    }
+
+    copy.dataset.health = copy.dataset.healthamount;
+
+    // The shot a spawner carries is a template, as it is on any shooter: shown
+    // only as the copies it fires, never as itself.
+    copy.querySelectorAll(':scope > .projectile').forEach((shot) => {
+        shot.style.display = 'none';
+    });
+
+    if (opts.width) {
+        copy.style.width = opts.width + 'px';
+    }
+
+    if (opts.height) {
+        copy.style.height = opts.height + 'px';
+    }
+
+    // A new look: each frame by its direction, falling back to standing.
+    if (opts.images) {
+        copy.querySelectorAll('img.character-icon').forEach((img) => {
+            const direction = img.id.startsWith(name) ? img.id.slice(name.length) : '';
+            const src = opts.images[direction] || opts.images.static;
+
+            if (src) {
+                img.src = src;
+            }
+
+            if (opts.width) {
+                img.width = opts.width;
+            }
+
+            if (opts.height) {
+                img.height = opts.height;
+            }
+        });
+    }
+
+    el.parentNode.appendChild(copy);
+    state.copies.add(copy);
+
+    document.dispatchEvent(new CustomEvent('orbem:enemy-spawned', { detail: { enemy: copy, spawner: el } }));
+
+    engageEnemy(copy, false);
+
+    // A wanderer walks about the way any wanderer does — freely, not after
+    // anybody — which the engine only starts for the ones on the map when an
+    // area loads. A runner keeps its chase instead: engageEnemy has started it.
+    if ('yes' === copy.dataset.wanderer && 'runner' !== copy.dataset.enemyType) {
+        makeNPCWander(copy, copy.dataset.speed || SPAWN_WANDER.speed, copy.dataset.timebetween || SPAWN_WANDER.between, false);
+    }
+}
+
+function startSpawner(el, overrides) {
+    stopSpawner(el);
+
+    const state = { opts: spawnerOptions(el, overrides), sent: 0, copies: new Set(), timer: null };
+
+    spawnerStates.set(el, state);
+
+    const tick = () => {
+        // Gone with the area it was in: walking through a door rebuilds the map.
+        if (!document.body.contains(el)) {
+            stopSpawner(el);
+            return;
+        }
+
+        state.copies.forEach((copy) => {
+            if (!document.body.contains(copy) || '0' === copy.dataset.health) {
+                state.copies.delete(copy);
+            }
+        });
+
+        const finished = 0 < state.opts.amount && state.sent >= state.opts.amount;
+
+        if (finished) {
+            if (0 === state.copies.size) {
+                stopSpawner(el);
+                document.dispatchEvent(new CustomEvent('orbem:spawner-done', { detail: { spawner: el, sent: state.sent } }));
+            }
+
+            return;
+        }
+
+        // Not while the game is paused for a conversation or a menu.
+        if (false === window.allowMovement || worldPaused() || state.copies.size >= state.opts.alive) {
+            return;
+        }
+
+        spawnCopy(el, state);
+    };
+
+    state.timer = setInterval(tick, state.opts.interval * 1000);
+    tick();
+}
+
+window.orbemSpawners = {
+    start: (el, overrides) => startSpawner(el, overrides),
+    stop: (el) => stopSpawner(el),
+    // Take every copy off the map, as when a game ends.
+    clear: (el) => {
+        stopSpawner(el);
+        document.querySelectorAll('[data-spawned-from="' + el.id + '"]').forEach(copy => copy.remove());
+    },
+    running: (el) => spawnerStates.has(el),
+};
+
 function engageEnemy(enemy, trigger) {
     'use strict';
+
+    // A spawner is where enemies come from, not an enemy: engaging it starts
+    // the copies, unless something on the page has said it runs this one.
+    if (isSpawner(enemy)) {
+        if (trigger) {
+            trigger.remove();
+        }
+
+        // A moment's grace first, so a game whose script loads after the
+        // engine has the chance to claim it. Then only if nothing has.
+        setTimeout(() => {
+            if (document.body.contains(enemy) && !spawnerIsOwned(enemy) && !spawnerStates.has(enemy)) {
+                startSpawner(enemy);
+            }
+        }, 1000);
+
+        return;
+    }
 
     const enemyType = enemy.getAttribute('data-enemy-type');
     const enemySound = enemy.querySelector(':scope > audio');
@@ -4230,9 +5853,15 @@ function engageEnemy(enemy, trigger) {
         startPatrolWatch(enemy);
     }
 
-    // Boss type.
+    // Boss type: its waves in order and on a clock, or as its health drops.
     if ('boss' === enemyType) {
-        updateBossWave(enemy);
+        showBossBar(enemy);
+
+        if (bossSequence(enemy)) {
+            startBossSequence(enemy);
+        } else {
+            updateBossWave(enemy);
+        }
     }
 }
 
@@ -4289,33 +5918,417 @@ function updateBossWave(enemy) {
         enemy._bossWaveCount = 0;
     }
 
-    // Remove current wave classes.
     if (bossWaves) {
-        bossWaves.forEach((bossWave) => {
-            enemy.classList.remove(bossWave + '-wave-engage');
-        });
-
-        enemy.classList.add(bossWaves[enemy._bossWaveCount] + '-wave-engage');
-
-        if ('pulse-wave' === bossWaves[enemy._bossWaveCount]) {
-            enemy._pulsewaveInterval = setInterval(() => {
-                enemy.classList.toggle('pulse-in');
-            }, 13000);
-        } else if (enemy._pulsewaveInterval) {
-            clearInterval(enemy._pulsewaveInterval);
-            enemy._pulsewaveInterval = null;
-            enemy.classList.remove('pulse-in');
-        }
-
-        if ('projectile' === bossWaves[enemy._bossWaveCount]) {
-            engageShooter(enemy);
-        } else {
-            stopShooterEnemy(enemy);
-            updatePunchImage(enemy, false);
-        }
+        applyBossWave(enemy, bossWaves[enemy._bossWaveCount]);
     }
 
     enemy._bossWaveCount++;
+}
+
+// ─── Boss waves ──────────────────────────────────────────────────────────────
+//
+// What a boss is doing right now: one wave at a time. A boss either moves to
+// its next wave as its health drops (updateBossWave, the original way) or, with
+// data-boss-sequence, plays its waves in order for so many seconds each and
+// starts again from the top for as long as the fight lasts.
+
+const BOSS_WAVES = ['projectile', 'pulse-wave', 'rush', 'auto-shoot'];
+
+/** How a rush plays: the wind-up, the charge, and the rest after it. */
+const BOSS_RUSH = { windup: 700, speed: 900, overshoot: 260, rest: 900, step: 12, contact: 400 };
+
+/** How an auto-shoot sprays: a shot every `every` ms, a full turn every `turn` ms. */
+const BOSS_SPRAY = { every: 120, turn: 3600, speed: 650, reach: 1600 };
+
+/**
+ * A boss's rush and spray at its difficulty, 1 to 10.
+ *
+ * 5 is exactly the values above, which is every boss without a difficulty.
+ * Each step up charges faster with less warning and less rest, and sprays
+ * faster shots more often; each step down the other way.
+ */
+function bossTuning(enemy) {
+    const level = Math.min(10, Math.max(1, parseInt(enemy.dataset.bossDifficulty || '5', 10) || 5));
+    const step = level - 5;
+
+    return {
+        rush: {
+            ...BOSS_RUSH,
+            speed: BOSS_RUSH.speed + step * 80,
+            windup: BOSS_RUSH.windup - step * 60,
+            rest: BOSS_RUSH.rest - step * 80,
+        },
+        spray: {
+            ...BOSS_SPRAY,
+            every: BOSS_SPRAY.every - step * 14,
+            speed: BOSS_SPRAY.speed + step * 50,
+        },
+    };
+}
+
+/** Stop whatever wave a boss is in, so the next starts clean. */
+function endBossWave(enemy) {
+    BOSS_WAVES.forEach((wave) => enemy.classList.remove(wave + '-wave-engage'));
+
+    if (enemy._pulsewaveInterval) {
+        clearInterval(enemy._pulsewaveInterval);
+        enemy._pulsewaveInterval = null;
+    }
+
+    enemy.classList.remove('pulse-in');
+    stopShooterEnemy(enemy);
+    stopBossRush(enemy);
+    stopBossSpray(enemy);
+    updatePunchImage(enemy, false);
+}
+
+function applyBossWave(enemy, wave) {
+    endBossWave(enemy);
+
+    if (!wave) {
+        return;
+    }
+
+    enemy.classList.add(wave + '-wave-engage');
+
+    if ('pulse-wave' === wave) {
+        enemy._pulsewaveInterval = setInterval(() => {
+            enemy.classList.toggle('pulse-in');
+        }, 13000);
+    }
+
+    if ('projectile' === wave) {
+        engageShooter(enemy);
+    }
+
+    if ('rush' === wave) {
+        startBossRush(enemy);
+    }
+
+    if ('auto-shoot' === wave) {
+        startBossSpray(enemy);
+    }
+
+    document.dispatchEvent(new CustomEvent('orbem:boss-wave', { detail: { boss: enemy, wave } }));
+}
+
+// ─── A boss's bar ────────────────────────────────────────────────────────────
+//
+// data-boss-bar="yes": the boss's name and health across the top of the
+// screen for the length of the fight, instead of the small bar over its head.
+// One fight at a time; it goes when the boss does, or when the player walks
+// out of its area.
+
+function showBossBar(boss) {
+    if ('yes' !== boss.dataset.bossBar) {
+        return;
+    }
+
+    let bar = document.getElementById('orbem-boss-bar');
+
+    if (!bar) {
+        bar = document.createElement('div');
+        bar.id = 'orbem-boss-bar';
+        bar.innerHTML = '<span class="orbem-boss-bar__name"></span><span class="orbem-boss-bar__track"><span class="orbem-boss-bar__fill"></span></span>';
+        document.body.appendChild(bar);
+    }
+
+    bar._boss = boss;
+    bar.querySelector('.orbem-boss-bar__name').textContent = boss.dataset.bossName || '';
+    bar.hidden = false;
+    updateBossBar(boss);
+
+    clearInterval(bar._watch);
+    bar._watch = setInterval(() => {
+        if (!document.body.contains(boss) || '0' === boss.dataset.health) {
+            hideBossBar(boss);
+        }
+    }, 300);
+}
+
+function updateBossBar(boss) {
+    const bar = document.getElementById('orbem-boss-bar');
+
+    if (!bar || bar._boss !== boss) {
+        return;
+    }
+
+    const full = parseInt(boss.dataset.healthamount, 10) || 1;
+    const now = Math.max(0, parseInt(boss.dataset.health, 10) || 0);
+
+    bar.querySelector('.orbem-boss-bar__fill').style.width = Math.round((now / full) * 100) + '%';
+}
+
+function hideBossBar(boss) {
+    const bar = document.getElementById('orbem-boss-bar');
+
+    if (bar && (!boss || bar._boss === boss)) {
+        // Long enough to see it empty.
+        updateBossBar(boss || bar._boss);
+        clearInterval(bar._watch);
+        setTimeout(() => {
+            if (bar._boss === boss || !boss) {
+                bar.hidden = true;
+                bar._boss = null;
+            }
+        }, '0' === (boss && boss.dataset.health) ? 1200 : 0);
+    }
+}
+
+/** The boss's waves in order, or null for a boss that changes on its health. */
+function bossSequence(enemy) {
+    try {
+        const steps = JSON.parse(enemy.dataset.bossSequence || 'null');
+
+        return Array.isArray(steps) && steps.length ? steps : null;
+    } catch (e) {
+        return null;
+    }
+}
+
+function startBossSequence(enemy) {
+    const steps = bossSequence(enemy);
+
+    if (!steps || enemy._bossSequence) {
+        return;
+    }
+
+    const state = { index: 0, until: Date.now() + (parseFloat(steps[0].seconds) || 8) * 1000 };
+
+    enemy._bossSequence = state;
+    applyBossWave(enemy, steps[0].wave);
+
+    state.timer = setInterval(() => {
+        if (!document.body.contains(enemy) || '0' === enemy.dataset.health) {
+            stopBossSequence(enemy);
+            return;
+        }
+
+        // Paused for a conversation or a menu: the wave waits too.
+        if (false === window.allowMovement || worldPaused()) {
+            state.until += 250;
+            return;
+        }
+
+        if (Date.now() < state.until) {
+            return;
+        }
+
+        // The last wave done and both still standing: from the top again.
+        state.index = (state.index + 1) % steps.length;
+        state.until = Date.now() + (parseFloat(steps[state.index].seconds) || 8) * 1000;
+        applyBossWave(enemy, steps[state.index].wave);
+    }, 250);
+}
+
+function stopBossSequence(enemy) {
+    if (enemy._bossSequence) {
+        clearInterval(enemy._bossSequence.timer);
+        enemy._bossSequence = null;
+    }
+
+    endBossWave(enemy);
+}
+
+/**
+ * Rush: wind up, then charge straight at whoever the boss is after, hurting
+ * like a hazard while it charges — the engine's own hazard touch, so the hurt
+ * and the knock-back are exactly a hazard's. Walls stop it. Then a rest, and
+ * again.
+ */
+function startBossRush(enemy) {
+    stopBossRush(enemy);
+
+    const RUSH = bossTuning(enemy).rush;
+    const rush = { phase: 'windup', until: performance.now() + RUSH.windup, last: performance.now() };
+
+    enemy._bossRush = rush;
+    enemy.classList.add('boss-rush-windup');
+
+    const frame = (now) => {
+        if (enemy._bossRush !== rush || !document.body.contains(enemy) || '0' === enemy.dataset.health) {
+            return;
+        }
+
+        const dt = Math.min(0.05, (now - rush.last) / 1000);
+        rush.last = now;
+        rush.raf = requestAnimationFrame(frame);
+
+        if (false === window.allowMovement || worldPaused()) {
+            rush.until += dt * 1000;
+            rush.contactUntil = (rush.contactUntil || 0) + dt * 1000;
+            return;
+        }
+
+        if ('windup' === rush.phase && now >= rush.until) {
+            const target = enemyTargetPoint(enemy);
+
+            if (!target) {
+                rush.until = now + RUSH.windup;
+                return;
+            }
+
+            const fromLeft = parseFloat(enemy.style.left) || enemy.offsetLeft;
+            const fromTop = parseFloat(enemy.style.top) || enemy.offsetTop;
+            const dx = target.left - fromLeft;
+            const dy = target.top - fromTop;
+            const distance = Math.hypot(dx, dy) || 1;
+
+            rush.phase = 'charge';
+            rush.dir = { x: dx / distance, y: dy / distance };
+            rush.left = distance + RUSH.overshoot;
+
+            enemy.classList.remove('boss-rush-windup');
+            enemy.classList.add('boss-rush-charge');
+            enemy.dataset.hazard = 'true';
+
+            if (typeof setDirectionImage === 'function') {
+                setDirectionImage(enemy, Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up'));
+            }
+
+            return;
+        }
+
+        if ('charge' === rush.phase) {
+            let travel = Math.min(rush.left, RUSH.speed * dt);
+            let hit = false;
+
+            // In small steps, so a fast charge cannot pass through a wall.
+            while (travel > 0 && !hit) {
+                const step = Math.min(RUSH.step, travel);
+                const nextLeft = (parseFloat(enemy.style.left) || 0) + rush.dir.x * step;
+                const nextTop = (parseFloat(enemy.style.top) || 0) + rush.dir.y * step;
+                const final = blockMovement(nextTop, nextLeft, enemy, true);
+
+                enemy.style.left = final.left + 'px';
+                enemy.style.top = final.top + 'px';
+
+                hit = true === final.collide;
+                travel -= step;
+                rush.left -= step;
+            }
+
+            if (hit || rush.left <= 0) {
+                rush.phase = 'rest';
+                rush.until = now + RUSH.rest;
+                // Still dangerous for a moment. Running into the player is
+                // what stops a charge (the engine keeps enemies out of the
+                // player), and the hazard touch is checked on the engine's
+                // own tick — gone in the same frame, the hit never landed.
+                rush.contactUntil = now + RUSH.contact;
+                enemy.classList.remove('boss-rush-charge');
+            }
+
+            return;
+        }
+
+        if ('rest' === rush.phase && 'true' === enemy.dataset.hazard && now >= rush.contactUntil) {
+            delete enemy.dataset.hazard;
+        }
+
+        if ('rest' === rush.phase && now >= rush.until) {
+            rush.phase = 'windup';
+            rush.until = now + RUSH.windup;
+            enemy.classList.add('boss-rush-windup');
+        }
+    };
+
+    rush.raf = requestAnimationFrame(frame);
+}
+
+function stopBossRush(enemy) {
+    if (enemy._bossRush) {
+        cancelAnimationFrame(enemy._bossRush.raf);
+        enemy._bossRush = null;
+    }
+
+    enemy.classList.remove('boss-rush-windup', 'boss-rush-charge');
+
+    // Not a hazard once it is not charging — a sword's reach of it is fair.
+    if ('true' === enemy.dataset.hazard) {
+        delete enemy.dataset.hazard;
+    }
+}
+
+/**
+ * Auto-shoot: a steady stream of the boss's shots in one direction while the
+ * direction turns a full circle, like a turret spinning as it fires.
+ *
+ * Each shot flies a fixed distance at a fixed speed. The ordinary shot is
+ * timed by how far away the player is, which would make a spiral uneven, so
+ * these are thrown here and handed to the same tracking every shot gets:
+ * stopped by walls, hurting the player or somebody being defended.
+ */
+function startBossSpray(enemy) {
+    stopBossSpray(enemy);
+
+    const template = enemy.querySelector(':scope > .projectile');
+
+    if (!template) {
+        return;
+    }
+
+    template.style.display = 'none';
+
+    const SPRAY = bossTuning(enemy).spray;
+
+    let angle = 0;
+
+    enemy._bossSpray = setInterval(() => {
+        if (!document.body.contains(enemy) || '0' === enemy.dataset.health) {
+            stopBossSpray(enemy);
+            return;
+        }
+
+        if (false === window.allowMovement || worldPaused()) {
+            return;
+        }
+
+        angle = (angle + (360 * SPRAY.every) / SPRAY.turn) % 360;
+        fireBossShot(enemy, template, angle, SPRAY);
+    }, SPRAY.every);
+}
+
+function stopBossSpray(enemy) {
+    if (enemy._bossSpray) {
+        clearInterval(enemy._bossSpray);
+        enemy._bossSpray = null;
+    }
+}
+
+function fireBossShot(enemy, template, degrees, SPRAY = BOSS_SPRAY) {
+    const shot = template.cloneNode(true);
+    const img = shot.querySelector('img');
+    const width = img ? (parseInt(img.style.width, 10) || 0) : 0;
+    const height = img ? (parseInt(img.style.height, 10) || 0) : 0;
+    const radians = (degrees * Math.PI) / 180;
+    const dx = Math.cos(radians) * SPRAY.reach;
+    const dy = Math.sin(radians) * SPRAY.reach;
+
+    shot.classList.add('shooting');
+    shot.style.display = '';
+    shot.style.position = 'absolute';
+    shot.style.left = Math.round(enemy.offsetLeft + (enemy.offsetWidth - width) / 2) + 'px';
+    shot.style.top = Math.round(enemy.offsetTop + (enemy.offsetHeight - height) / 2) + 'px';
+    shot.style.transition = `transform ${SPRAY.reach / SPRAY.speed}s linear`;
+
+    if (img) {
+        img.style.transform = 'rotate(' + degrees + 'deg)';
+    }
+
+    (enemy.parentElement || document.querySelector('.game-container')).prepend(shot);
+
+    // The next frame, so the transition has somewhere to start from.
+    requestAnimationFrame(() => {
+        shot.style.transform = `translate(${dx}px, ${dy}px)`;
+    });
+
+    trackProjectile(
+        shot,
+        document.querySelectorAll('.default-map svg rect, .protection, .map-character-icon.engage, #map-weapon img, [data-genre="explore-point"], [data-genre="explore-wall"]'),
+        true,
+        enemy
+    );
 }
 
 function engageShooter(enemy) {
@@ -4336,17 +6349,23 @@ function engageShooter(enemy) {
         parseInt(enemy.dataset.attackDisplayTime, 10) || 500;
 
     enemy._shooterInt = setInterval(() => {
+        if (worldPaused()) {
+            return;
+        }
+
         updatePunchImage(enemy, true);
 
         setTimeout(() => {
             updatePunchImage(enemy, false);
         }, attackDisplayTime);
 
-        const mapCharacter = document.querySelector('.map-character-icon.engage');
-        const mapCharacterLeft =
-            mapCharacter.getBoundingClientRect().left + mapCharacter.width / 2;
-        const mapCharacterTop =
-            mapCharacter.getBoundingClientRect().top + mapCharacter.width / 2;
+        const target = enemyTargetPoint(enemy);
+        const aimAt = target && target.npc
+            ? target.npc
+            : document.querySelector('.map-character-icon.engage');
+        const aimRect = target && target.npc ? aimAt.getBoundingClientRect() : unscaledRect(aimAt);
+        const mapCharacterLeft = aimRect.left + aimRect.width / 2;
+        const mapCharacterTop = aimRect.top + (target && target.npc ? aimRect.height / 2 : aimRect.width / 2);
 
         if (projectileTemplate) {
             shootProjectile(
@@ -4506,13 +6525,17 @@ function trackProjectile(projectile, collisionWalls, isProjectile, spawner) {
                 belowSpawnWalls.delete(wall);
             }
 
-            if (enemyOverlap(projectile, wall, container) && false === wall.className.includes('trigger') && 'true' !== wall.dataset.passable) {
+            // className on an SVG map rect is an SVGAnimatedString with no
+            // includes(), so it is normalised to a string first.
+            if (enemyOverlap(projectile, wall, container) && false === String(wall.className?.baseVal ?? wall.className ?? '').includes('trigger') && 'true' !== wall.dataset?.passable) {
                 // If projectile collides with player than take health of player.
+                // Not while the world is paused: it lands, and does nothing.
                 if (
                     true === wall.classList.contains('map-character-icon') &&
-                    false === projectile.classList.contains('map-weapon')
+                    false === projectile.classList.contains('map-weapon') &&
+                    !worldPaused()
                 ) {
-                    const enemyValue = parseInt(projectile.dataset.value);
+                    const enemyValue = damageTaken(projectile.dataset.value);
 
                     // Immediately remove the projectile when hits.
                     const currentHealth = document.querySelector(
@@ -4550,6 +6573,23 @@ function trackProjectile(projectile, collisionWalls, isProjectile, spawner) {
 
                 // Link weapon back to player.
                 window.weaponConnection = true;
+            }
+        }
+
+        // Somebody being defended is not in the walls list, so is looked for
+        // separately. Not the player's own thrown weapon.
+        if (false === projectile.classList.contains('map-weapon')) {
+            const victim = targetableNpcs().find((npcEl) => enemyOverlap(projectile, npcEl, container));
+
+            // One hit per shot: it is gone the moment it lands, or it would
+            // hurt them again on every frame it took to pass through.
+            if (victim) {
+                if (!worldPaused()) {
+                    hurtNpc(victim, projectile.dataset.value);
+                }
+
+                projectile.remove();
+                return;
             }
         }
 
@@ -4736,9 +6776,12 @@ function trackWeaponProjectile(projectile, collisionWalls) {
                 continue;
             }
 
+            // className on an SVG element is an SVGAnimatedString, which has
+            // no includes() — reading it here would throw the moment a map
+            // rect entered the projectile loop.
             if (
-                wall.className.includes('trigger') ||
-                'true' === wall.dataset.passable
+                String(wall.className?.baseVal ?? wall.className ?? '').includes('trigger') ||
+                'true' === wall.dataset?.passable
             ) {
                 continue;
             }
@@ -4982,6 +7025,34 @@ function pathPause(value) {
     return Number.isFinite(pause) && 0 < pause ? pause : DEFAULT_PATH_PAUSE;
 }
 
+function unscaledRect(el) {
+    'use strict';
+
+    const rect = el.getBoundingClientRect();
+    const style = window.getComputedStyle(el);
+
+    if (!style.transform || 'none' === style.transform || !el.offsetWidth) {
+        return rect;
+    }
+
+    const m = new DOMMatrixReadOnly(style.transform);
+    const sx = m.a || 1;
+    const sy = m.d || 1;
+
+    if (Math.abs(sx - 1) < 0.001 && Math.abs(sy - 1) < 0.001) {
+        return rect;
+    }
+
+    const k = rect.width / (el.offsetWidth * sx);
+    const [ox, oy] = style.transformOrigin.split(' ').map(parseFloat);
+    const left = rect.left - ox * k * (1 - sx);
+    const top = rect.top - oy * k * (1 - sy);
+    const width = el.offsetWidth * k;
+    const height = el.offsetHeight * k;
+
+    return { left, top, width, height, right: left + width, bottom: top + height };
+}
+
 /**
  *
  * @param  element
@@ -5059,8 +7130,12 @@ function addNoPoints() {
                     }
                 }
 
-                // Add special class for cutscenes.
-                if (cutSceneItem) {
+                // Add special class for cutscenes. Something you can do
+                // again is exempt: a record that it once played is not a
+                // reason to refuse it now, and marking it viewed here is what
+                // would stop a character with several conversations from ever
+                // starting one after their first had been heard.
+                if (cutSceneItem && 'yes' !== cutSceneItem.dataset?.repeat) {
                     cutSceneItem.classList.add('been-viewed');
                 }
 
@@ -5257,6 +7332,17 @@ function materializeGravity(el) {
 function engageUntriggeredEnemies() {
     const enemies = document.querySelectorAll('.enemy-item[data-genre="explore-enemy"]');
     enemies.forEach((enemy) => {
+        // A spawner is hidden on purpose, so it is judged by its trigger alone.
+        if (isSpawner(enemy)) {
+            const spawnerName = cleanClassName(enemy.className);
+
+            if (!document.querySelector('.' + escClass(spawnerName) + '-trigger-map-item')) {
+                engageEnemy(enemy, false);
+            }
+
+            return;
+        }
+
         // Skip enemies hidden by their own CSS (data-showaftermission etc.).
         // Use getComputedStyle so a display:none on .game-container (the outer
         // wrapper) doesn't accidentally hide all enemies at startup.
@@ -5332,6 +7418,10 @@ export function engageExploreGame() {
 
     if (allFirstDialogues) {
         allFirstDialogues.forEach((firstDialogue) => {
+            if (isBranchLine(firstDialogue)) {
+                return;
+            }
+
             firstDialogue.classList.add('engage');
         });
     }
@@ -5357,6 +7447,7 @@ export function engageExploreGame() {
 
     // Set attack multiplier default.
     window.attackMultiplier = 0;
+    window.defenseMultiplier = 0;
 
     // Set points running to false by default.
     window.runningPointFunction = false;
@@ -5461,6 +7552,8 @@ export function engageExploreGame() {
     // Must run after movementIntFunc so window.gravityMode is set.
     applyItemGravity();
 
+    cycleInteractedImages();
+
     // Apply gravity to all characters and enemies in the area.
     applyEntityGravity();
 
@@ -5551,7 +7644,7 @@ export function engageExploreGame() {
                 (parseInt(mapChar.style.left) - (window.globalLeftPositionOffset - Math.round(_iconW / 2))) + 'px';
         }
 
-        mapChar.scrollIntoView({
+        centerCamera(mapChar, {
             behavior: 'instant',
             block: 'center',
             inline: 'center',
@@ -5749,6 +7842,12 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
     const weaponOverlay = weaponEl.querySelector('.weapon-overlay');
     const damageAtEnd = 'end' === mapChar.dataset.damageTime;
 
+    // Other players, once per pass rather than once per item: they are not in
+    // `modal` below, and swingAtPlayers does its own looking.
+    if (weaponEl.classList.contains('engage') && false === damageAtEnd) {
+        swingAtPlayers(weaponEl);
+    }
+
     if (0 < modal.length && false === window.noTouch) {
         // Overlap check for map item.
         modal.forEach((value) => {
@@ -5781,7 +7880,7 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
             const indicator = document.querySelector('.indicator-icon');
             const characterName = cleanClassName(value.className);
             const cutsceneEl = document.querySelector(
-                `.map-cutscene[data-character="${characterName}"]`
+                `.map-cutscene[data-character="${characterName}"]:not([data-triggertype="none"])`
             );
 
             const finalCharPos = {
@@ -5790,6 +7889,10 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
                 offsetTop: mapChar.offsetTop + (window.globalTopPositionOffset - box.offsetHeight / 2),
                 offsetHeight: box.offsetHeight,
             };
+
+            if (value.dataset.passDepth) {
+                sortByDepth(value, finalCharPos);
+            }
 
             // A just-dropped weapon can't be re-collected until the player
             // steps off it, so replacing a weapon doesn't instantly re-equip
@@ -5803,13 +7906,14 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
             }
 
             // Touching with buffer.
-            if (value && box && 'true' === value.dataset.hazard && theHazardOverlap(box, value, (value?.offsetParent && 'boss' === value.offsetParent.dataset.enemyType))) {
+            if (!worldPaused() && value && box && 'true' === value.dataset.hazard && theHazardOverlap(box, value, (value?.offsetParent && 'boss' === value.offsetParent.dataset.enemyType))) {
                 // If in hazard set to true.
                 if (
                     false === canCharacterInteract(value, mapChar, 'hazard')
                 ) {
                     if (100 <= hazardCounter || 0 === hazardCounter) {
-                        const hurtAmount = parseInt(value.dataset.value, 10) || 1;
+                        const hazardHurt = parseInt(value.dataset.value, 10) || 1;
+                        const hurtAmount = value.closest('.enemy-item') ? damageTaken(hazardHurt) : hazardHurt;
                         const currentHealth = getCurrentPoints('health');
                         const newAmount = currentHealth - hurtAmount;
 
@@ -5858,7 +7962,11 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
                 }
             }
 
-            if (value && box && elementsOverlap(finalCharPos, value, 5)) {
+            const touchBox = window.orbemDepthSort && value?.dataset?.passDepth && 'explore-character' === value.dataset.genre
+                ? { offsetLeft: value.offsetLeft, offsetTop: value.offsetTop, offsetWidth: value.offsetWidth, offsetHeight: value.offsetHeight }
+                : value;
+
+            if (value && box && elementsOverlap(finalCharPos, touchBox, 5)) {
                 // Pause NPC from moving if touching MC.
                 if (
                     'explore-character' === value.dataset.genre &&
@@ -5866,8 +7974,15 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
                     cutsceneEl
                 ) {
 
+                    npcNear(value, 'body', true);
+
                     if (false === value.classList.contains('passable')) {
-                        value.dataset.canmove = 'false';
+                        if (holdNpc(value)) {
+                            value.dataset.canmove = 'false';
+                        } else if ('false' === value.dataset.canmove) {
+                            value.dataset.canmove = 'true';
+                            releaseNpc(value);
+                        }
                     }
 
                     const cutsceneTrigger = document.getElementById(
@@ -5879,22 +7994,94 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
                         cutsceneEl &&
                         false ===
                         cutsceneEl.classList.contains('been-viewed') &&
-                        'engagement' !== cutsceneEl.dataset.triggertype
+                        'none' !== cutsceneEl.dataset.triggertype &&
+                        false === value.classList.contains('engage')
                     ) {
-                        engageCutscene(cutsceneEl, false);
+                        const talkName = (String(cutsceneEl.className).match(/([a-z0-9-]+)-map-cutscene/) || [])[1] || '';
+
+                        triggerIndicator(value, true, { dataset: { triggee: talkName } }, false);
+
+                        if (indicator && indicator.dataset.cutscene === talkName) {
+                            value.classList.add('engage');
+                        }
                     }
                 }
 
                 if (true === value.classList.contains('communicate-trigger')) {
                     engageCommunicate(value?.dataset.triggee, value);
                 }
-            } else if ('false' === value.dataset?.canmove) {
-                // Reset NPC to allow movement.
-                value.dataset.canmove = 'true';
+
+                // Somebody keeping a shop opens it when you reach them.
+                if (value.dataset?.shop && !value.dataset.shopJustClosed) {
+                    openShop(Number(value.dataset.shop), value);
+                }
+            } else {
+                // Walked away from a shopkeeper, so their shop can open again.
+                if (value.dataset?.shopJustClosed) {
+                    delete value.dataset.shopJustClosed;
+                }
+
+                if ('explore-character' === value.dataset?.genre) {
+                    npcNear(value, 'body', false);
+                }
+
+                if ('false' === value.dataset?.canmove) {
+                    // Reset NPC to allow movement.
+                    value.dataset.canmove = 'true';
+                    releaseNpc(value);
+                }
             }
 
-            if (value && box && elementsOverlap(finalCharPos, value, 0)) {
-                // Add indicator if touching sign.
+            // Somebody you have just spoken to is available again once you
+            // have actually left them. Measured here, against the box that
+            // starts the conversation, rather than off the back of a nearby
+            // branch: standing still next to a character must hold the
+            // conversation shut, and walking off must open it, and nothing
+            // else about the pass should be able to decide either.
+            if (box && value.classList.contains('cutscene-trigger') && value.dataset.triggee) {
+                const talkScene = document.querySelector('.' + escClass(value.dataset.triggee) + '-map-cutscene');
+                const speaker = talkScene && talkScene.dataset.character
+                    ? document.querySelector('.' + escClass(talkScene.dataset.character) + '-map-item')
+                    : null;
+
+                if (speaker && 'explore-character' === speaker.dataset.genre) {
+                    const inTalkBox = elementsOverlap(finalCharPos, value, 0);
+
+                    npcNear(speaker, 'talk', inTalkBox);
+
+                    const holding = inTalkBox && holdNpc(speaker) ? 'true' : '';
+
+                    if ((speaker.dataset.talkHold || '') !== holding) {
+                        speaker.dataset.talkHold = holding;
+                        releaseNpc(speaker);
+                    }
+                }
+            }
+
+            if (box && value.classList.contains('cutscene-trigger')) {
+                const talkKey = value.id || cleanClassName(value.className);
+
+                if (saidJustNow.has(talkKey)) {
+                    if (elementsOverlap(finalCharPos, value, 0)) {
+                        saidJustNowApart.delete(talkKey);
+                    } else if (!saidJustNowApart.has(talkKey)) {
+                        saidJustNowApart.set(talkKey, Date.now());
+                    } else if (Date.now() - saidJustNowApart.get(talkKey) > 5000) {
+                        saidJustNow.delete(talkKey);
+                        saidJustNowApart.delete(talkKey);
+                    }
+                }
+            }
+
+            const actionReach = value && box && (
+                'explore-sign' === value.dataset.genre ||
+                'yes' === value.dataset.crafting ||
+                'yes' === value.dataset.interact ||
+                ('explore-area' === value.dataset.genre && 'yes' === value.dataset.interactToEnter) ||
+                (true === value.classList.contains('no-point') && undefined !== value.dataset?.minigame)
+            ) && elementsOverlap(value.dataset.passDepth ? feetBox(finalCharPos) : finalCharPos, value, ACTION_REACH);
+
+            if (actionReach) {
                 if (
                     'explore-sign' === value.dataset.genre &&
                     false === value.classList.contains('engage')
@@ -5904,7 +8091,50 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
                     window.allowHit = false;
                 }
 
-                // Indicate if you touch minigame item trigger.
+                if ('yes' === value.dataset.crafting && false === value.classList.contains('engage')) {
+                    triggerIndicator(value, false, false, false);
+
+                    if (indicator && indicator.dataset.sign === cleanClassName(value.className)) {
+                        indicator.dataset.sign = '';
+                        indicator.dataset.crafting = 'yes';
+                        value.classList.add('engage');
+                    }
+                }
+
+                if ('explore-area' === value.dataset.genre && 'yes' === value.dataset.interactToEnter) {
+                    const fromFront = enteredFromAllowedSide(value, finalCharPos);
+
+                    if (fromFront && false === value.classList.contains('engage')) {
+                        triggerIndicator(value, false, false, false);
+
+                        if (indicator && indicator.dataset.sign === cleanClassName(value.className)) {
+                            indicator.dataset.sign = '';
+                            indicator.dataset.enter = value.id;
+                            value.classList.add('engage');
+                        }
+                    }
+
+                    if (!fromFront && true === value.classList.contains('engage')) {
+                        value.classList.remove('engage');
+
+                        if (indicator && indicator.dataset.enter === value.id) {
+                            indicator.dataset.enter = '';
+                            indicator.classList.remove('engage');
+                            window.allowHit = true;
+                        }
+                    }
+                }
+
+                if ('yes' === value.dataset.interact && false === value.classList.contains('engage')) {
+                    triggerIndicator(value, false, false, false);
+
+                    if (indicator && indicator.dataset.sign === cleanClassName(value.className)) {
+                        indicator.dataset.sign = '';
+                        indicator.dataset.interact = value.id;
+                        value.classList.add('engage');
+                    }
+                }
+
                 if (
                     true === value.classList.contains('no-point') &&
                     undefined !== value.dataset?.minigame
@@ -5912,9 +8142,23 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
                     triggerIndicator(value, false, false, true);
                     value.classList.add('engage');
                 }
+            }
 
+            if (value && box && elementsOverlap(value.dataset.passDepth ? feetBox(finalCharPos) : finalCharPos, value, 0)) {
                 // Check if collided point is enterable.
                 if ('explore-area' === value.getAttribute('data-genre')) {
+                    if ('yes' === value.dataset.interactToEnter) {
+                        return;
+                    }
+
+                    if (!enteredFromAllowedSide(value, finalCharPos)) {
+                        return;
+                    }
+
+                    if ('function' === typeof window.orbemMayEnter && false === window.orbemMayEnter(value)) {
+                        return;
+                    }
+
                     enterExplorePoint(value, 'false');
 
                     return;
@@ -5950,166 +8194,7 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
                     true === value.classList.contains('explainer-trigger') &&
                     false === value.classList.contains('already-hit')
                 ) {
-                    const triggee = document.querySelector(
-                        '.' + escClass(value.dataset.triggee) + '-explainer-item'
-                    );
-                    let autoCloseTimeout;
-
-                    // Shared close routine used by the click/key handler and the
-                    // optional auto-close timer.
-                    const finishClose = () => {
-                        clearTimeout(autoCloseTimeout);
-                        window.allowMovement = true;
-                        window.allowHit = true;
-                        triggee.classList.remove('show-explainer');
-                        document.removeEventListener('keydown', closeExplainer);
-                        document.removeEventListener('click', closeExplainer);
-
-                        // "The End": closing this explainer restarts the game.
-                        if ('yes' === triggee.dataset?.theEnd) {
-                            restartGame();
-                        }
-
-                        const cutscene = document.querySelector('.cutscene-trigger[data-materializeexplainer="' + value.dataset.triggee + '"]');
-
-                        if (cutscene) {
-                            cutscene.classList.add('enable');
-                        }
-
-                        if (
-                            'yes' === value.dataset?.muteMusic &&
-                            window.currentMusic
-                        ) {
-                            window.currentMusic.play();
-                        }
-                    };
-
-                    const closeExplainer = (event) => {
-                        const clickClose = '1' === triggee.dataset?.clickclose ? true : !triggee.contains(event.target);
-                        if (
-                            (('keydown' === event.type &&
-                                    'Space' === event.code) ||
-                                'click' === event.type) &&
-                            clickClose
-                        ) {
-                            finishClose();
-                        }
-                    };
-
-                    if (triggee) {
-                        triggee.classList.add('show-explainer');
-                        value.classList.add('already-hit');
-                        window.allowMovement = false;
-                        window.allowHit = false;
-                        const firstExplainerText = triggee.querySelector('p');
-
-                        triggee.scrollIntoView({
-                            behavior: 'instant',
-                            block: 'center',
-                            inline: 'center',
-                        });
-
-                        // Stop walking sound.
-                        resetWalkSound();
-
-                        if (firstExplainerText) {
-                            const text = Array.from(
-                                firstExplainerText.childNodes
-                            )
-                                .filter((node) => node.nodeType === Node.TEXT_NODE)
-                                .map((node) => node.textContent)
-                                .join('');
-                            const mcVoice = mapChar.dataset.voice;
-                            const providedAudio =
-                                document.getElementById(triggee.id + '-s') ?? false;
-
-                            // Do text to speech.
-                            makeTalk(text, mcVoice, providedAudio, true);
-                        }
-
-                        if (
-                            'yes' === value.dataset?.muteMusic &&
-                            window.currentMusic
-                        ) {
-                            window.currentMusic.pause();
-                        }
-
-                        const arrow = triggee.querySelector('img');
-
-                        if (arrow) {
-                            const rotate = parseInt(arrow.dataset.rotate);
-                            let animate1 = false;
-                            let animate2 = false;
-                            let animate3 = false;
-
-                            if (arrow && rotate && 0 < rotate) {
-                                if (0 < rotate && 90 >= rotate) {
-                                    animate1 = `rotate(${rotate}deg) translate( 10px, -10px )`;
-                                    animate2 = `rotate(${rotate}deg) translate( 10px, 10px )`;
-                                    animate3 = `rotate(${rotate}deg) translate( 10px, -10px )`;
-                                }
-
-                                if (91 < rotate && 180 >= rotate) {
-                                    animate1 = `rotate(${rotate}deg) translate( 0, 10px )`;
-                                    animate2 = `rotate(${rotate}deg) translate( -10px, -10px )`;
-                                    animate3 = `rotate(${rotate}deg) translate( 0, 10px )`;
-                                }
-
-                                if (181 < rotate && 270 >= rotate) {
-                                    animate1 = `rotate(${rotate}deg) translate( -10px, 10px )`;
-                                    animate2 = `rotate(${rotate}deg) translate( -10px, -10px )`;
-                                    animate3 = `rotate(${rotate}deg) translate( -10px, 10px )`;
-                                }
-
-                                if (271 < rotate && 360 >= rotate) {
-                                    animate1 = `rotate(${rotate}deg) translate( -10px, 0 )`;
-                                    animate2 = `rotate(${rotate}deg) translate( -10px, -10px )`;
-                                    animate3 = `rotate(${rotate}deg) translate( -10px, 0 )`;
-                                }
-
-                                if (false !== animate1) {
-                                    const moveArrow = [
-                                        { transform: animate1 },
-                                        { transform: animate2 },
-                                        { transform: animate3 },
-                                    ];
-
-                                    const arrowTiming = {
-                                        duration: 1000,
-                                        iterations: Infinity,
-                                    };
-
-                                    arrow.animate(moveArrow, arrowTiming);
-                                }
-                            }
-                        }
-
-                        // Close explainer on click.
-                        document.addEventListener('click', closeExplainer);
-
-                        // Close on action key
-                        document.addEventListener('keydown', closeExplainer);
-
-                        // Auto-close after the configured delay (milliseconds).
-                        const autoCloseMs = parseInt(
-                            triggee.dataset.autoClose,
-                            10
-                        );
-
-                        if (0 < autoCloseMs) {
-                            autoCloseTimeout = setTimeout(finishClose, autoCloseMs);
-                        }
-
-                        // Persist to avoid showing again on refresh.
-                        persistItemRemoval(
-                            value.dataset.triggee,
-                            'point',
-                            0,
-                            2000,
-                            '',
-                            true
-                        );
-                    }
+                    showExplainer(value.dataset.triggee, value);
                 }
 
                 // NPC Walking Path Trigger.
@@ -6189,6 +8274,8 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
                     false === value.classList.contains('engage') &&
                     theCutScene &&
                     false === theCutScene.classList.contains('been-viewed') &&
+                    !saidJustNow.has(value.id || cleanClassName(value.className)) &&
+                    'none' !== value.dataset.triggertype &&
                     true === value.classList.contains('cutscene-trigger')
                 ) {
                     const triggerType = value.dataset.triggertype;
@@ -6203,17 +8290,26 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 
                         engageCutscene(position, false);
 
-                        // Persist trigger so it isn't triggerable again.
-                        if ('' === position) {
-                            saveMaterializedItem(area, [
-                                cleanClassName(value.className),
-                            ]);
-                        }
+                        // Something you can do again — talking to somebody —
+                        // keeps its trigger and is not written down as spent.
+                        // It is held off only until the player has stepped
+                        // away, or standing next to a character would start
+                        // the conversation over the moment it ended.
+                        if ('yes' === value.dataset?.repeat) {
+                            saidJustNow.add(value.id || cleanClassName(value.className));
+                            saidJustNowApart.delete(value.id || cleanClassName(value.className));
+                        } else {
+                            // Persist trigger so it isn't triggerable again.
+                            if ('' === position) {
+                                saveMaterializedItem(area, [
+                                    cleanClassName(value.className),
+                                ]);
+                            }
 
-                        // Remove trigger.
-                        value.remove();
+                            // Remove trigger.
+                            value.remove();
+                        }
                     } else {
-                        value.classList.add('engage');
                         let characterEl = '.' + escClass(theCutScene.dataset?.character) + '-map-item';
 
                         if (theCutScene.dataset?.character === window.mainCharacter) {
@@ -6225,6 +8321,10 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
                             value,
                             false
                         );
+
+                        if (indicator && indicator.dataset.cutscene === value.dataset.triggee) {
+                            value.classList.add('engage');
+                        }
                     }
                 }
 
@@ -6272,6 +8372,7 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
                 // remove item on collision if collectable.
                 if ('true' === value.dataset.collectable && 'no' !== value.dataset.disappear) {
                     value.remove();
+                    itemGone(value);
                     redirectAfterInteraction(value);
                 } else if ('true' === value.dataset.collectable && 'no' === value.dataset.disappear) {
                     interactWithItem(value, mapChar);
@@ -6288,8 +8389,10 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
                     hazardGauge.classList.remove('engage');
                 }, 100);
             } else if (
-                true === value.classList.contains('engage') ||
-                true === value.classList.contains('dragme')
+                !actionReach && (
+                    true === value.classList.contains('engage') ||
+                    true === value.classList.contains('dragme')
+                )
             ) {
                 value.classList.remove('engage');
                 value.classList.remove('dragme');
@@ -6428,6 +8531,7 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
                         'no' !== value.dataset?.disappear
                     ) {
                         value.remove();
+                        itemGone(value);
                     } else if (value && 'true' !== value.dataset.clickable) {
                         interactWithItem(value, mapChar);
                     }
@@ -6482,8 +8586,8 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
                     window.attackContext.weaponType,
                     window.attackContext.attackType
                 );
-
-                if (punchSprite) {
+                
+                if (punchSprite && !punchSprite.classList.contains('engage')) {
                     mapChar
                         .querySelectorAll('.map-character-icon.engage')
                         .forEach((img) => img.classList.remove('engage'));
@@ -6936,6 +9040,7 @@ function interactWithItem(item) {
         'explore-sign' !== item.dataset.genre
     ) {
         item.style.display = 'none';
+        itemGone(item);
     }
 
     // If disappear set to false change image.
@@ -6981,6 +9086,47 @@ function swapInteractedImage(item) {
 
         item.classList.add('interacted-with');
     }
+}
+
+function cycleInteractedImages() {
+    'use strict';
+
+    document.querySelectorAll('.default-map [data-interacted-every]').forEach((item) => {
+        const every = parseInt(item.dataset.interactedEvery, 10) || 0;
+        const hold = parseInt(item.dataset.interactedHold, 10) || every;
+
+        if (0 >= every || 'yes' === item.dataset.interactedCycling) {
+            return;
+        }
+
+        item.dataset.interactedCycling = 'yes';
+
+        const stopped = () => !item.isConnected || item.classList.contains('interacted-with');
+
+        const swap = () => {
+            if (stopped()) {
+                delete item.dataset.interactedCycling;
+                return;
+            }
+
+            const background = item.style.background;
+            const backgroundSize = item.style.backgroundSize;
+
+            item.style.background = `url(${item.dataset.interacted}) no-repeat`;
+            item.style.backgroundSize = 'cover';
+
+            setTimeout(() => {
+                if (!item.classList.contains('interacted-with')) {
+                    item.style.background = background;
+                    item.style.backgroundSize = backgroundSize;
+                }
+
+                setTimeout(swap, every);
+            }, hold);
+        };
+
+        setTimeout(swap, every);
+    });
 }
 
 function saveMaterializedItem(area, materializedItemsArray) {
@@ -7066,13 +9212,17 @@ function triggerIndicator(indicateMe, isCutscene, trigger, isMinigame) {
             leftPosition = (parseInt(indicateMe.parentElement.style.left.replace('px', '')) + window.globalLeftPositionOffset) - (indicateMe.offsetWidth / 2);
         }
 
-        const width = indicateMe.getBoundingClientRect().width / 2 - 7.5;
+        const width = indicateMe.offsetWidth / 2 - (indicator.offsetWidth || 15) / 2;
         const positionName = cleanClassName(indicateMe.className);
 
         if (indicator) {
             indicator.classList.add('engage');
             indicator.style.left = width + parseInt(leftPosition) + 'px';
-            indicator.style.top = parseInt(topPosition) - 25 + 'px';
+            indicator.style.top = parseInt(topPosition) - Math.round(25 / (window.areaScale || 1)) + 'px';
+
+            indicator.dataset.crafting = '';
+            indicator.dataset.interact = '';
+            indicator.dataset.enter = '';
 
             if (true === isCutscene) {
                 indicator.dataset.sign = '';
@@ -7164,7 +9314,10 @@ function storeExploreItem(item) {
     const type = item.dataset.type
     const value = item.dataset.value
     const id = item.id;
-    const name = cleanClassName(item.className);
+    // An item can name the storage entry it belongs to (data-store-as) when its
+    // own class name is not that — a copy of something, say, that should stack
+    // with the original rather than fill a slot of its own.
+    const name = item.dataset.storeAs || cleanClassName(item.className);
     const menuItem = document.createElement('span');
     const menuType = getMenuType(type);
     const menu = document.querySelector(
@@ -7177,14 +9330,26 @@ function storeExploreItem(item) {
         currentPoints = thePoints ? thePoints.getAttribute('data-amount') : 0;
     }
 
+    // Something with a storage entry of its own always goes to storage, rather
+    // than being used up the moment it is walked into.
     if (
         'gear' !== type &&
-        ('health' === type || 'mana' === type) &&
-        100 > currentPoints
+        !item.dataset.storeAs &&
+        true === isPointItemType(type) &&
+        barMax(type) > currentPoints
     ) {
         runPointAnimation(item, name, false, (parseInt(currentPoints) + parseInt(value)), '' )
 
         return;
+    }
+
+    if (!['point', 'money'].includes(type) || item.dataset.storeAs) {
+        showGain({
+            label: item.dataset.title || name.replace(/-/g, ' '),
+            amount: 1,
+            image: item.dataset.image || '',
+            kind: type || 'items',
+        });
     }
 
     // Add menu attributes.
@@ -7258,12 +9423,23 @@ function storeExploreItem(item) {
             );
             menuItem.setAttribute('data-ammo-cost', item.dataset.ammoCost || '0');
             menuItem.setAttribute('data-sound', item.dataset.sound || '');
+            menuItem.setAttribute('data-light', item.dataset.light || '0');
         }
 
         const itemImage = document.createElement('img');
 
         itemImage.setAttribute('src', item.dataset.image);
         itemImage.setAttribute('width', '80px');
+        itemImage.style.objectFit = 'contain';
+        menuItem.append(itemImage);
+    } else if (item.dataset.image) {
+        // Items show what they are too, not an empty-looking slot.
+        const itemImage = document.createElement('img');
+
+        itemImage.setAttribute('src', item.dataset.image);
+        itemImage.setAttribute('alt', name);
+        itemImage.setAttribute('width', '30px');
+        itemImage.setAttribute('height', '30px');
         itemImage.style.objectFit = 'contain';
         menuItem.append(itemImage);
     }
@@ -7273,6 +9449,12 @@ function storeExploreItem(item) {
     // (the weapons tab is disabled, or the storage menu is hidden entirely),
     // equip it immediately. Only one non-default weapon can be held this way,
     // so equipping the new one replaces (drops) any weapon already equipped.
+    if ('weapons' === type && !menu && levelNeeded(id)) {
+        playSfx('explore_sfx_denied');
+        showGain({ label: 'Reach level ' + levelNeeded(id) + ' to use this', amount: 0, kind: 'level' });
+        return;
+    }
+
     if ('weapons' === type && !menu) {
         // Drop whatever weapon is currently held back onto the map before
         // equipping the new one (only one weapon can be carried this way).
@@ -7344,6 +9526,7 @@ function storeExploreItem(item) {
                 menu.prepend(menuItem);
                 menuItem.addEventListener('click', () => {
                     if ('true' !== menuItem.dataset.empty) {
+                        playSfx('explore_sfx_select');
                         showItemDescription(menuItem);
                     }
                 });
@@ -7390,6 +9573,158 @@ function setPreviousCutsceneArea(cutsceneName) {
  * @param position
  * @param areaCutscene
  */
+/**
+ * Walking a conversation that forks.
+ *
+ * A cutscene used to be a straight line: engage a paragraph, and when the
+ * player presses on, engage its next sibling. A Dialogue Path block turns that
+ * line into a tree, and these are the three questions the tree asks.
+ *
+ * The rule the whole thing rests on: a path's first line is the offer, and the
+ * rest of it is what follows from taking that offer. Paths side by side are
+ * choices side by side.
+ */
+const DIALOGUE_PATH = 'orbem-dialogue-path';
+const DIALOGUE_LINE = 'wp-block-orbem-paragraph-mp3';
+const CONVERSATION = 'orbem-conversation';
+
+/**
+ * Which of a character's conversations to have this time.
+ *
+ * A cutscene with no Conversation blocks is one conversation — every cutscene
+ * written before they existed, and every simple one written since — so this
+ * answers with the cutscene itself and nothing downstream has to care.
+ *
+ * With several, they are taken in turn and start again at the end, so a
+ * character works through what they have to say rather than picking at random
+ * and repeating themselves anyway. Where they have got to is remembered per
+ * browser: it is a nicety rather than progress, and it is not worth a round
+ * trip to the server or a row in anybody's account to remember which of three
+ * greetings somebody heard last.
+ *
+ * @param  {Element} cutscene
+ * @return {Element} The conversation to play, which may be the cutscene.
+ */
+function pickConversation(cutscene) {
+    const all = [...cutscene.querySelectorAll('.' + CONVERSATION)]
+        .filter(el => !el.parentElement.closest('.' + CONVERSATION));
+
+    if (!all.length) {
+        return cutscene;
+    }
+
+    const key = 'orbem-said-' + (cutscene.id || cleanClassName(cutscene.className));
+    let next = 0;
+
+    try {
+        next = (parseInt(window.localStorage.getItem(key), 10) || 0) % all.length;
+        window.localStorage.setItem(key, String((next + 1) % all.length));
+    } catch (e) {
+        // Private window, blocked storage, a browser having a bad day. Taking
+        // the first one is a worse conversation, not a broken one.
+        next = 0;
+    }
+
+    all.forEach((el, index) => {
+        el.classList.toggle('is-saying', index === next);
+    });
+
+    return all[next];
+}
+
+/**
+ * Whether a line belongs to a branch rather than to the conversation itself.
+ *
+ * The opening line of a cutscene is engaged on load so there is something on
+ * screen to read. That is found with `:first-of-type`, which means "first span
+ * among its siblings" — and a branch's opening line is also the first span
+ * among *its* siblings, so once cutscenes could contain Dialogue Paths the
+ * same query engaged every choice in the conversation at once and the whole
+ * thing appeared stacked down the screen.
+ *
+ * Asked as a question about the element rather than fixed in the selector,
+ * because the lines are not direct children of the cutscene — there is a
+ * wrapper in between — so scoping with `>` silently matches nothing at all.
+ */
+function isBranchLine(el) {
+    return !!el.closest('.' + DIALOGUE_PATH);
+}
+
+function isDialoguePath(el) {
+    return !!el && !!el.classList && el.classList.contains(DIALOGUE_PATH);
+}
+
+/**
+ * Whether an element is a line of the conversation.
+ *
+ * The same two things the cutscene player collects as dialogue: a bare
+ * paragraph, or a dialogue block. Everything else inside the cutscene box —
+ * the portraits, the name badges, the edit handle — is furniture.
+ */
+function isDialogueLine(el) {
+    return !!el && ('P' === el.tagName || (!!el.classList && el.classList.contains(DIALOGUE_LINE)));
+}
+
+/** The line a path opens with, which is the choice the player is shown. */
+function dialogueOffer(path) {
+    return path ? [...path.children].find(isDialogueLine) || null : null;
+}
+
+/** Every branch offered at this point: the run of paths standing together. */
+function dialogueChoicesAt(el) {
+    const paths = [];
+    let node = el;
+
+    while (isDialoguePath(node)) {
+        paths.push(node);
+        node = node.nextElementSibling;
+    }
+
+    return paths;
+}
+
+/**
+ * What comes after a line, climbing out of any branch it finishes.
+ *
+ * The climb is the part worth reading twice. When a chosen branch runs out,
+ * the branches sitting beside it are the offers the player did not take — so
+ * they are stepped over rather than walked into. Without that, choosing the
+ * first of three options would play the other two straight afterwards.
+ */
+function afterDialogue(current, root) {
+    let node = current;
+
+    while (node && node !== root) {
+        let next = node.nextElementSibling;
+
+        if (isDialoguePath(node)) {
+            while (isDialoguePath(next)) {
+                next = next.nextElementSibling;
+            }
+        }
+
+        // Step over anything that is not part of the conversation.
+        //
+        // The climb leaves the wrapper the lines sit in and continues among
+        // the cutscene's own children, which include the portraits, the name
+        // badges and the edit handle. Returning one of those "spoke" it as a
+        // blank line: the conversation appeared to be over but the cutscene
+        // was still running, so movement stayed locked until another press
+        // finally ran off the end.
+        while (next && !isDialogueLine(next) && !isDialoguePath(next)) {
+            next = next.nextElementSibling;
+        }
+
+        if (next) {
+            return next;
+        }
+
+        node = node.parentElement;
+    }
+
+    return null;
+}
+
 function playCutscene(position, areaCutscene) {
     'use strict';
 
@@ -7411,7 +9746,12 @@ function playCutscene(position, areaCutscene) {
         (undefined === cutscene.dataset?.video ||
             'false' === cutscene.dataset?.video)
     ) {
-        const dialogues = cutscene.querySelectorAll(
+        // One of the things this character might say, and the only part of
+        // the cutscene anything below should look at. With no Conversation
+        // blocks in it this is the cutscene, which is what it always was.
+        const said = pickConversation(cutscene);
+
+        const dialogues = said.querySelectorAll(
             'p, .wp-block-orbem-paragraph-mp3'
         );
         const mc = document.getElementById('map-character');
@@ -7431,7 +9771,7 @@ function playCutscene(position, areaCutscene) {
 
             if (npc) {
                 setTimeout(() => {
-                    npc.scrollIntoView({
+                    centerCamera(npc, {
                         behavior: 'smooth',
                         block: 'nearest',
                     });
@@ -7455,14 +9795,36 @@ function playCutscene(position, areaCutscene) {
             // Stop walk sound during cutscene.
             resetWalkSound();
 
-            let textContainer = dialogues[0];
+            // Engage this conversation's opening line.
+            //
+            // The pass that runs at page load cannot do it: which of a
+            // character's conversations is being had is decided here, when
+            // they are talked to, so at load it would have to guess — and
+            // guessing means the wrong line is on screen behind the right one.
+            cutscene
+                .querySelectorAll('.wp-block-orbem-paragraph-mp3.engage')
+                .forEach((line) => line.classList.remove('engage'));
+
+            const opener = [...dialogues].find(
+                (line) =>
+                    line.classList
+                    && line.classList.contains('wp-block-orbem-paragraph-mp3')
+                    && !isBranchLine(line)
+            ) || dialogues[0];
+
+            if (opener && opener.classList) {
+                opener.classList.add('engage');
+            }
+
+            let textContainer = opener;
 
             // on load.
             if (
-                dialogues[0] &&
-                dialogues[0].classList.contains('wp-block-orbem-paragraph-mp3')
+                opener &&
+                opener.classList &&
+                opener.classList.contains('wp-block-orbem-paragraph-mp3')
             ) {
-                textContainer = dialogues[0].querySelector('p');
+                textContainer = opener.querySelector('p');
             }
 
             const text = textContainer.innerText;
@@ -7502,7 +9864,118 @@ function playCutscene(position, areaCutscene) {
 
             typeWriter(textContainer, text, 0);
 
+            /**
+             * Say one line, whichever branch it is in.
+             *
+             * Lifted out of the advance below so that the empty-branch case in
+             * showChoices can speak a line without a second copy of the
+             * typewriter, the voice and the dialogue box to keep in step.
+             */
+            const engageLine = (line) => {
+                line.classList.add('engage');
+
+                let providedAudio = line.querySelector('audio');
+                providedAudio = providedAudio ?? false;
+
+                // A bare <p> is its own text; a dialogue block holds one.
+                const nextP = line.querySelector('p') || line;
+                const text = nextP.innerText;
+
+                nextP.innerText = '';
+                typeWriter(nextP, text, 0);
+
+                moveDialogueBox();
+                makeTalk(text, line.dataset.voice, providedAudio, false);
+            };
+
+            /**
+             * Offer the branches and wait.
+             *
+             * Nothing advances while this is up: the auto-advance interval is
+             * cleared and the click and key handlers are held off, because a
+             * question that answers itself if you are still pressing on from
+             * the last line is not a question.
+             */
+            const showChoices = (paths) => {
+                clearInterval(window.nextDialogueTimeout);
+                clearTimeout(typeWriterTimeout);
+
+                // These are the player's own words, so whoever was speaking
+                // stops being on screen: their portrait and their name badge
+                // both belong to the line that has just finished, and leaving
+                // them up reads as the NPC offering the player's replies.
+                cutscene.querySelectorAll('.cut-character.engage, .character-name.engage')
+                    .forEach((el) => el.classList.remove('engage'));
+
+                const list = document.createElement('div');
+                list.className = 'orbem-dialogue-choices';
+
+                // No name and no portrait over the player's own options. A
+                // name badge tells you who is talking, and the player already
+                // knows: these are the things they themselves can say.
+
+                paths.forEach((path) => {
+                    const offer = dialogueOffer(path);
+
+                    if (!offer) {
+                        return;
+                    }
+
+                    const option = document.createElement('button');
+                    option.type = 'button';
+                    option.className = 'orbem-dialogue-choice';
+                    option.textContent = (offer.querySelector('p') || offer).innerText;
+
+                    option.addEventListener('click', (event) => {
+                        // The cutscene listens for clicks to move on, and this
+                        // click is an answer rather than a nudge.
+                        event.stopPropagation();
+                        playSfx('explore_sfx_select');
+
+                        list.remove();
+
+                        // The chosen line is not played back. Picking it was
+                        // the player saying it — they have just read it and
+                        // acted on it, and showing it again is asking them to
+                        // click through their own words. What they want next
+                        // is the reply.
+                        //
+                        // Marking it as where we are and advancing keeps that
+                        // in one place: stepping out of a branch, skipping the
+                        // offers not taken, running into a further question or
+                        // ending the conversation all stay the business of the
+                        // advance below. It never appears, because the advance
+                        // clears it before anything is painted.
+                        offer.classList.add('engage');
+                        nextDialogue();
+                    });
+
+                    list.appendChild(option);
+                });
+
+                // Nothing to offer — every branch was empty. Carry on rather
+                // than leaving the player looking at a box with no way out.
+                if (!list.children.length) {
+                    const past = afterDialogue(paths[paths.length - 1], cutscene);
+
+                    if (past) {
+                        engageLine(past);
+                    }
+
+                    return;
+                }
+
+                cutscene.appendChild(list);
+            };
+
             const nextDialogue = () => {
+                // A question is on screen. Pressing on does not answer it.
+                if (cutscene.querySelector('.orbem-dialogue-choices')) {
+                    return;
+                }
+
+                playSfx('explore_sfx_dialogue');
+
                 if ('' !== source) {
                     source.stop();
                 }
@@ -7518,32 +9991,35 @@ function playCutscene(position, areaCutscene) {
                 const currentDialogue = cutscene.querySelector(
                     'p.engage, .wp-block-orbem-paragraph-mp3.engage'
                 );
-                const nextDialogue = currentDialogue.nextElementSibling;
+                const nextDialogue = afterDialogue(currentDialogue, said);
 
                 dialogues.forEach((dialogue) => {
                     dialogue.classList.remove('engage');
                 });
 
+                // A branch, or several standing together: ask rather than play.
+                if (isDialoguePath(nextDialogue)) {
+                    showChoices(dialogueChoicesAt(nextDialogue));
+
+                    return;
+                }
+
                 if (nextDialogue) {
-                    nextDialogue.classList.add('engage');
-
-                    let providedAudio = nextDialogue.querySelector('audio');
-                    providedAudio = providedAudio ?? false;
-
-                    const nextP = nextDialogue.querySelector('p');
-                    const text = nextP.innerText;
-
-                    nextP.innerText = '';
-                    typeWriter(nextP, text, 0);
-
-                    moveDialogueBox();
-                    makeTalk(text, nextDialogue.dataset.voice, providedAudio, false);
+                    engageLine(nextDialogue);
                 } else {
                     clearTimeout(typeWriterTimeout);
                     clearInterval(window.nextDialogueTimeout);
 
                     // At end of dialogue. Close cutscene and make walking available.
                     cutscene.classList.remove('engage');
+
+                    // Something you can do again is not finished with just
+                    // because it finished. Clearing this is what lets the next
+                    // conversation be had at all — the trigger will not fire
+                    // against a cutscene that has been viewed.
+                    if ('yes' === cutscene.dataset?.repeat) {
+                        cutscene.classList.remove('been-viewed');
+                    }
                     cutscene.removeEventListener('click', cutsceneKeys);
                     document.removeEventListener('keydown', cutsceneKeys);
 
@@ -7574,7 +10050,11 @@ function playCutscene(position, areaCutscene) {
                     window.allowMovement = true;
 
                     // reset dialogue.
-                    dialogues[0].classList.add('engage');
+                    cutscene.querySelector('.orbem-dialogue-choices')?.remove();
+
+                    if (opener && opener.classList) {
+                        opener.classList.add('engage');
+                    }
 
                     // After cutscene.
                     afterCutscene(cutscene, areaCutscene, character);
@@ -7668,6 +10148,8 @@ function playCutscene(position, areaCutscene) {
                         if (currentCharName) {
                             currentCharName.classList.remove('engage');
                             theCharacterName.classList.add('engage');
+                        } else if (theCharacterName && '' === firstText) {
+                            theCharacterName.classList.add('engage');
                         }
                     }
                 } else if (mc) {
@@ -7678,14 +10160,14 @@ function playCutscene(position, areaCutscene) {
                         '.engage.character-name'
                     );
 
-                    if (currentCharImage && currentCharName) {
-                        currentCharName.classList.remove('engage');
-                        currentCharImage.classList.remove('engage');
-                        theCharacterImage.classList.add('engage');
-                        theCharacterName.classList.add('engage');
+                    if ((currentCharImage && currentCharName) || ('' === firstText && !currentCharImage && !currentCharName)) {
+                        currentCharName?.classList.remove('engage');
+                        currentCharImage?.classList.remove('engage');
+                        theCharacterImage?.classList.add('engage');
+                        theCharacterName?.classList.add('engage');
 
                         setTimeout(() => {
-                            currentCharImage.scrollIntoView({
+                            centerCamera(currentCharImage || theCharacterImage, {
                                 behavior: 'smooth',
                                 block: 'nearest',
                             });
@@ -8075,6 +10557,94 @@ function applyLanguageTranslations(root) {
  * @param position
  * @param areaCutscene
  */
+/**
+ * Start a cutscene by name, from outside the engine.
+ *
+ * Everything in here starts a conversation by being walked into, which is the
+ * right way for a doorway or a person and the wrong way for a scripted moment
+ * — somebody turning up to tell the player something that has just become
+ * true. There was no way to ask for one, so anything wanting to script a
+ * moment had to fake a trigger box and hope the player wandered into it.
+ *
+ * Narrow on purpose: a name and nothing else. What decides that the moment has
+ * come is the caller's business.
+ *
+ * @param {string} name The cutscene's slug.
+ */
+/**
+ * Walk out through a doorway, from outside the engine.
+ *
+ * Takes the doorway itself — the element the player would have walked into —
+ * so everything about leaving is the engine's own: the area it leads to, the
+ * spot outside it puts you down on, the map it loads. A caller that worked out
+ * those for itself would be a second way of leaving a building, and the two
+ * would disagree the first time either changed.
+ *
+ * @param {Element} door The doorway element.
+ */
+window.orbemLeaveThrough = function (door) {
+    if (!door || !door.className) {
+        return false;
+    }
+
+    enterExplorePoint(door, 'false');
+
+    return true;
+};
+
+/**
+ * Finish a mission from outside the engine.
+ *
+ * For a game that decides for itself when it has been won — the last wave
+ * beaten, the clock survived — rather than by an item picked up or an enemy
+ * beaten. Exactly what reaching the goal would do: the same request, the same
+ * announcement, so whatever a finished mission means elsewhere happens here
+ * too. The request is one anybody could already send.
+ *
+ * @param {string} slug The mission's slug.
+ */
+window.orbemCompleteMission = function (slug) {
+    if (!slug) {
+        return false;
+    }
+
+    saveMission(String(slug), null, '');
+
+    return true;
+};
+
+/**
+ * End the player, the way losing all their health does: the game-over and
+ * whatever the world does after a death. For a game that decides on a death
+ * the engine cannot see — being crushed, say.
+ */
+window.orbemKillPlayer = function (reason) {
+    if (false === window.allowMovement && document.querySelector('.game-over-notice[style*="block"]')) {
+        return false;
+    }
+
+    hurtAnimation();
+    addUserPoints(0, 'health', String(reason || 'killed'), false, '');
+
+    return true;
+};
+
+window.orbemPlayCutscene = function (name) {
+    if (!name || document.querySelector('.map-cutscene.engage')) {
+        return false;
+    }
+
+    const cutscene = document.querySelector('.' + escClass(name) + '-map-cutscene');
+
+    if (!cutscene || cutscene.classList.contains('been-viewed')) {
+        return false;
+    }
+
+    engageCutscene(name, false);
+
+    return true;
+};
+
 function engageCutscene(position, areaCutscene) {
     'use strict';
 
@@ -8178,6 +10748,17 @@ function faceNPC(mapCharacter, npc, cutscene) {
         direction = mcTop > npcBottom ? 'up' : direction;
         direction = mcBottom < npcTop ? 'down' : direction;
 
+        if (false === direction) {
+            const across = ((mcLeft + mcRight) / 2 - (npcLeft + npcRight) / 2) / Math.max(1, npcEl.offsetWidth);
+            const down = ((mcTop + mcBottom) / 2 - (npcTop + npcBottom) / 2) / Math.max(1, npcEl.offsetHeight);
+
+            if (Math.abs(across) > Math.abs(down)) {
+                direction = across > 0 ? 'left' : 'right';
+            } else {
+                direction = down > 0 ? 'up' : 'down';
+            }
+        }
+
         switch (direction) {
             case 'left':
                 npcDirection = 'right';
@@ -8197,6 +10778,10 @@ function faceNPC(mapCharacter, npc, cutscene) {
             setStaticMCImage(mapCharacter, direction, false);
 
             if ('no' !== cutscene.dataset?.npcfaceme) {
+                if (undefined === npcEl.dataset.facedFrom) {
+                    npcEl.dataset.facedFrom = npcEl.querySelector('.character-icon.engage')?.id || '';
+                }
+
                 setStaticNPCImage(npcDirection, npcEl);
             }
         }
@@ -8226,6 +10811,20 @@ function afterCutscene(cutscene, areaCutscene, character) {
             : false;
     const indicator = document.querySelector('.indicator-icon');
     const communicateDevice = cutscene.dataset?.communicate;
+
+    if (cutsceneCharacter && undefined !== cutsceneCharacter.dataset.facedFrom) {
+        const before = cutsceneCharacter.dataset.facedFrom
+            ? document.getElementById(cutsceneCharacter.dataset.facedFrom)
+            : null;
+        const facing = cutsceneCharacter.querySelector('.character-icon.engage');
+
+        delete cutsceneCharacter.dataset.facedFrom;
+
+        if (before && before !== facing && cutsceneCharacter.contains(before)) {
+            facing?.classList.remove('engage');
+            before.classList.add('engage');
+        }
+    }
     const materializeCutscenes = document.querySelectorAll(
         '[data-materializecutscene="' + cutsceneName + '"]'
     );
@@ -8569,6 +11168,518 @@ function playJumpSound() {
     }
 }
 
+// =============================================================================
+// Shops
+// =============================================================================
+//
+// Walk up to somebody keeping a shop and it opens. Everything shown comes from
+// the server when it opens and again after every purchase, because what is on
+// the shelf, what it costs and how many are left are the shop's business and
+// not something the page should be holding an opinion about.
+
+let shopOpenFor = null;
+let shopTab = 'buy';
+
+/**
+ * Open the shop this character keeps.
+ *
+ * Movement stops while it is open, the way it does for a cutscene: a player
+ * reading a price list is not walking, and a shopkeeper you are standing on
+ * would otherwise re-open the shop on every frame.
+ */
+async function openCrafting() {
+    'use strict';
+
+    if (document.getElementById('orbem-crafting')) {
+        return;
+    }
+
+    playSfx('explore_sfx_menu_open');
+    window.allowMovement = false;
+
+    const data = await craftingRequest('/crafting/', {});
+
+    renderCrafting(data && data.success ? data.recipes : [], '');
+}
+
+async function craftingRequest(path, body) {
+    'use strict';
+
+    try {
+        const res = await fetch(`${OrbemOrder.siteRESTURL}${path}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': OrbemOrder.orbemNonce },
+            credentials: 'same-origin',
+            body: JSON.stringify(body),
+        });
+
+        return await res.json();
+    } catch (e) {
+        return null;
+    }
+}
+
+function closeCrafting() {
+    'use strict';
+
+    if (document.getElementById('orbem-crafting')) {
+        playSfx('explore_sfx_menu_close');
+    }
+
+    document.getElementById('orbem-crafting')?.remove();
+    window.allowMovement = true;
+}
+
+function renderCrafting(recipes, message) {
+    'use strict';
+
+    document.getElementById('orbem-crafting')?.remove();
+
+    const panel = document.createElement('div');
+    panel.id = 'orbem-crafting';
+    panel.innerHTML = `
+        <div class="orbem-shop-inner">
+            <header>
+                <strong>Crafting</strong>
+                <button type="button" class="orbem-shop-close" aria-label="Close">✕</button>
+            </header>
+            <ul class="orbem-shop-items">${recipes.map(craftingRow).join('')}</ul>
+            ${recipes.length ? '' : '<p class="orbem-shop-empty">Nothing can be crafted yet.</p>'}
+            <p class="orbem-shop-message" data-message${message ? '' : ' hidden'}>${escapeShopText(message)}</p>
+        </div>
+    `;
+
+    panel.querySelector('.orbem-shop-close').addEventListener('click', closeCrafting);
+
+    panel.querySelectorAll('[data-craft]').forEach((button) => {
+        button.addEventListener('click', async () => {
+            panel.querySelectorAll('[data-craft]').forEach(b => { b.disabled = true; });
+
+            const result = await craftingRequest('/crafting/craft/', { id: Number(button.dataset.craft) });
+
+            if (result && result.success && result.storage) {
+                refreshStorageSlots(result.storage);
+            }
+
+            playSfx(result && result.success ? 'explore_sfx_craft' : 'explore_sfx_denied');
+
+            if (result && result.success) {
+                showGain({ label: result.name, amount: 1, image: result.image || '', kind: 'crafted' });
+                document.dispatchEvent(new CustomEvent('orbem:crafted', { detail: result }));
+            }
+
+            const after = result && result.recipes
+                ? result.recipes
+                : ((await craftingRequest('/crafting/', {})) || {}).recipes || recipes;
+
+            renderCrafting(after, result && result.success
+                ? (result.message || `Crafted ${result.name}.`)
+                : ((result && result.message) || 'That did not work.'));
+        });
+    });
+
+    document.body.appendChild(panel);
+}
+
+function craftingRow(recipe) {
+    'use strict';
+
+    const needs = recipe.needs.map(need => `
+        <span class="orbem-crafting-need${need.have < need.amount ? ' is-short' : ''}">
+            ${need.image ? `<img src="${encodeURI(need.image)}" alt="" />` : ''}
+            ${escapeShopText(need.name)} ${need.have}/${need.amount}
+        </span>`).join('');
+
+    return `
+        <li class="orbem-shop-item${recipe.craftable ? '' : ' is-sold-out'}">
+            ${recipe.image ? `<img src="${encodeURI(recipe.image)}" alt="" />` : '<span class="orbem-shop-noimage"></span>'}
+            <span class="orbem-shop-name">${escapeShopText(recipe.name)}<span class="orbem-crafting-needs">${needs}</span></span>
+            <button type="button" data-craft="${recipe.id}"${recipe.craftable ? '' : ' disabled'}>Craft</button>
+        </li>
+    `;
+}
+
+async function openShop(shopId, keeper) {
+    'use strict';
+
+    if (shopOpenFor) {
+        return;
+    }
+
+    shopOpenFor = shopId;
+    shopTab = 'buy';
+    window.allowMovement = false;
+    playSfx('explore_sfx_menu_open');
+
+    const shop = await fetchShop(shopId);
+
+    if (!shop) {
+        closeShop(keeper);
+
+        return;
+    }
+
+    renderShop(shop, keeper);
+}
+
+async function fetchShop(shopId) {
+    'use strict';
+
+    try {
+        const res = await fetch(`${OrbemOrder.siteRESTURL}/shop/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': OrbemOrder.orbemNonce },
+            credentials: 'same-origin',
+            body: JSON.stringify({ shop: shopId }),
+        });
+
+        const data = await res.json();
+
+        return data && data.success ? data.data : null;
+    } catch (e) {
+        return null;
+    }
+}
+
+function closeShop(keeper) {
+    'use strict';
+
+    if (document.getElementById('orbem-shop')) {
+        playSfx('explore_sfx_menu_close');
+    }
+
+    document.getElementById('orbem-shop')?.remove();
+    shopOpenFor = null;
+    window.allowMovement = true;
+
+    // Remembered on the keeper so standing against them does not re-open it
+    // the instant it closes. Cleared when the player walks off.
+    if (keeper) {
+        keeper.dataset.shopJustClosed = '1';
+    }
+}
+
+function renderShop(shop, keeper) {
+    'use strict';
+
+    document.getElementById('orbem-shop')?.remove();
+
+    const panel = document.createElement('div');
+    panel.id = 'orbem-shop';
+    panel.innerHTML = `
+        <div class="orbem-shop-inner">
+            <header>
+                <strong>${escapeShopText(shop.name)}</strong>
+                <span class="orbem-shop-money" data-money>${shop.money}</span>
+                <button type="button" class="orbem-shop-close" aria-label="Close">✕</button>
+            </header>
+            ${shop.greeting ? `<p class="orbem-shop-greeting">${escapeShopText(shop.greeting)}</p>` : ''}
+            <nav class="orbem-shop-tabs">
+                <button type="button" data-shop-tab="buy"${'buy' === shopTab ? ' class="is-active"' : ''}>Buy</button>
+                <button type="button" data-shop-tab="sell"${'sell' === shopTab ? ' class="is-active"' : ''}>Sell</button>
+            </nav>
+            ${'sell' === shopTab
+                ? `<ul class="orbem-shop-items">${(shop.sell || []).map(shopSellRow).join('')}</ul>
+                   ${(shop.sell || []).length ? '' : '<p class="orbem-shop-empty">Nothing you carry is wanted here.</p>'}`
+                : `<ul class="orbem-shop-items">${shop.items.map(item => shopRow(item, shop.money)).join('')}</ul>
+                   ${shop.items.length ? '' : '<p class="orbem-shop-empty">Nothing for sale just now.</p>'}`}
+            <p class="orbem-shop-message" data-message hidden></p>
+        </div>
+    `;
+
+    panel.querySelector('.orbem-shop-close').addEventListener('click', () => closeShop(keeper));
+
+    panel.querySelectorAll('[data-shop-tab]').forEach((button) => {
+        button.addEventListener('click', () => {
+            playSfx('explore_sfx_tab');
+            shopTab = button.dataset.shopTab;
+            renderShop(shop, keeper);
+        });
+    });
+
+    panel.querySelectorAll('[data-buy]').forEach((button) => {
+        button.addEventListener('click', () => buyFromShop(shop.shop, Number(button.dataset.buy), keeper));
+    });
+
+    panel.querySelectorAll('[data-sell]').forEach((button) => {
+        button.addEventListener('click', () => sellToShop(shop.shop, button.dataset.sell, keeper));
+    });
+
+    document.body.appendChild(panel);
+}
+
+/** One line of the price list. */
+function shopRow(item, money) {
+    'use strict';
+
+    const stock = item.unlimited
+        ? ''
+        : (item.soldOut
+            ? `<span class="orbem-shop-stock">Sold out${null === item.restocksIn ? '' : ` · back in ${item.restocksIn}m`}</span>`
+            : `<span class="orbem-shop-stock">${item.left} left</span>`);
+
+    const tooDear = !item.soldOut && Number(money) < Number(item.price);
+
+    return `
+        <li class="orbem-shop-item${item.soldOut ? ' is-sold-out' : ''}${tooDear ? ' is-too-dear' : ''}">
+            ${item.image ? `<img src="${encodeURI(item.image)}" alt="" />` : '<span class="orbem-shop-noimage"></span>'}
+            <span class="orbem-shop-name">${escapeShopText(item.name)}${stock}</span>
+            <button type="button" data-buy="${item.index}"${item.soldOut || tooDear ? ' disabled' : ''}${tooDear ? ' title="Not enough money"' : ''}>${item.price}</button>
+        </li>
+    `;
+}
+
+function shopSellRow(item) {
+    'use strict';
+
+    return `
+        <li class="orbem-shop-item">
+            ${item.image ? `<img src="${encodeURI(item.image)}" alt="" />` : '<span class="orbem-shop-noimage"></span>'}
+            <span class="orbem-shop-name">${escapeShopText(item.name)}<span class="orbem-shop-stock">You have ${item.count}</span></span>
+            <button type="button" data-sell="${escapeShopText(item.slug)}">${item.price}</button>
+        </li>
+    `;
+}
+
+async function sellToShop(shopId, slug, keeper) {
+    'use strict';
+
+    const panel = document.getElementById('orbem-shop');
+
+    if (!panel) {
+        return;
+    }
+
+    panel.querySelectorAll('[data-sell]').forEach(b => { b.disabled = true; });
+
+    let result = null;
+
+    try {
+        const res = await fetch(`${OrbemOrder.siteRESTURL}/shop/sell/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': OrbemOrder.orbemNonce },
+            credentials: 'same-origin',
+            body: JSON.stringify({ shop: shopId, slug }),
+        });
+
+        result = await res.json();
+    } catch (e) {
+        result = null;
+    }
+
+    if (result && result.success && result.storage) {
+        refreshStorageSlots(result.storage);
+    }
+
+    playSfx(result && result.success ? 'explore_sfx_sell' : 'explore_sfx_denied');
+
+    if (result && result.success) {
+        showGain(pointGainLine('money', result.price));
+    }
+
+    const shop = await fetchShop(shopId);
+
+    if (shop) {
+        renderShop(shop, keeper);
+        syncMoneyBar(shop.money);
+    }
+
+    const message = document.querySelector('#orbem-shop [data-message]');
+
+    if (message) {
+        message.textContent = result && result.success
+            ? `Sold ${result.name} for ${result.price}.`
+            : ((result && result.message) || 'That did not work.');
+        message.hidden = false;
+    }
+}
+
+/**
+ * Buy one thing, then show what the server says the shop looks like now.
+ *
+ * Re-asked rather than adjusted in place: a purchase can empty a shelf, start a
+ * restock clock and change what is affordable, and guessing at all three here
+ * is how a shop ends up showing something it will not sell.
+ */
+async function buyFromShop(shopId, index, keeper) {
+    'use strict';
+
+    const panel = document.getElementById('orbem-shop');
+
+    if (!panel) {
+        return;
+    }
+
+    panel.querySelectorAll('[data-buy]').forEach(b => { b.disabled = true; });
+
+    let result = null;
+
+    try {
+        const res = await fetch(`${OrbemOrder.siteRESTURL}/shop/buy/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-WP-Nonce': OrbemOrder.orbemNonce },
+            credentials: 'same-origin',
+            body: JSON.stringify({ shop: shopId, index }),
+        });
+
+        result = await res.json();
+    } catch (e) {
+        result = null;
+    }
+
+    if (result && result.success && result.storage) {
+        refreshStorageSlots(result.storage);
+    }
+
+    playSfx(result && result.success ? 'explore_sfx_buy' : 'explore_sfx_denied');
+
+    if (result && result.success) {
+        showGain({ label: result.name, amount: 1, image: result.image || '', kind: 'bought' });
+    }
+
+    const shop = await fetchShop(shopId);
+
+    if (shop) {
+        renderShop(shop, keeper);
+        syncMoneyBar(shop.money);
+    }
+
+    const message = document.querySelector('#orbem-shop [data-message]');
+
+    if (message) {
+        message.textContent = result && result.success
+            ? `Bought ${result.name}.`
+            : ((result && result.message) || 'That did not work.');
+        message.hidden = false;
+    }
+}
+
+window.refreshStorageSlots = (html) => refreshStorageSlots(html);
+
+window.orbemRefreshStorage = (html) => refreshStorageSlots(html);
+
+function refreshStorageSlots(html) {
+    'use strict';
+
+    const fresh = document.createElement('div');
+    fresh.innerHTML = html;
+
+    fresh.querySelectorAll('.storage-menu[data-menu]').forEach((freshMenu) => {
+        const menu = document.querySelector('.storage-menu[data-menu="' + freshMenu.dataset.menu + '"]');
+
+        if (!menu) {
+            return;
+        }
+
+        const slots = Array.from(menu.querySelectorAll(':scope > .storage-item'));
+
+        Array.from(freshMenu.querySelectorAll(':scope > .storage-item')).forEach((freshSlot, i) => {
+            const slot = slots[i];
+
+            if (!slot) {
+                menu.appendChild(freshSlot);
+                return;
+            }
+
+            Array.from(slot.attributes).forEach((attr) => {
+                if ('class' !== attr.name && !freshSlot.hasAttribute(attr.name)) {
+                    slot.removeAttribute(attr.name);
+                }
+            });
+
+            Array.from(freshSlot.attributes).forEach((attr) => {
+                if ('class' !== attr.name) {
+                    slot.setAttribute(attr.name, attr.value);
+                }
+            });
+
+            const engaged = slot.classList.contains('engage');
+
+            slot.className = freshSlot.className;
+            slot.classList.toggle('engage', engaged);
+            slot.innerHTML = freshSlot.innerHTML;
+        });
+    });
+}
+
+/** Keep the HUD honest about what was just spent. */
+function syncMoneyBar(amount) {
+    'use strict';
+
+    const bar = document.querySelector('#explore-points .money-amount');
+
+    if (bar) {
+        bar.dataset.amount = String(amount);
+        const label = bar.querySelector('.money-count, span');
+
+        if (label) {
+            label.textContent = String(amount);
+        }
+    }
+}
+
+/** Titles and greetings are the builder's words, printed as words. */
+function escapeShopText(value) {
+    'use strict';
+
+    const box = document.createElement('div');
+    box.textContent = String(value ?? '');
+
+    return box.innerHTML;
+}
+
+/**
+ * Whether the player reached this trigger from the side that opens.
+ *
+ * A building with a door on its front should not be enterable by walking into
+ * its back wall. The side they came in through is the one they have pushed
+ * least far past — walk up to a door and you are barely over its edge, while
+ * the other three edges are a whole building away.
+ *
+ * Without the attribute every side opens, which is how area triggers behaved
+ * before there was a front to have, and what an open gateway still wants.
+ *
+ * @param  {Element} trigger
+ * @param  {object}  mover    the walker's box in playfield coordinates, not
+ *                            the sprite element — a sprite's own offsetLeft is
+ *                            measured inside #map-character and says nothing
+ *                            about where on the map it is standing.
+ * @return {boolean}
+ */
+function enteredFromAllowedSide(trigger, mover) {
+    'use strict';
+
+    const side = trigger.dataset ? trigger.dataset.entrySide : '';
+
+    if (!side || 'any' === side) {
+        return true;
+    }
+
+    const t = collisionBox(trigger, mover);
+    const m = collisionBox(mover);
+
+    if (!t || !m || undefined === t.offsetLeft || undefined === m.offsetLeft) {
+        return true;
+    }
+
+    const overlap = {
+        left:   (m.offsetLeft + m.offsetWidth) - t.offsetLeft,
+        right:  (t.offsetLeft + t.offsetWidth) - m.offsetLeft,
+        top:    (m.offsetTop + m.offsetHeight) - t.offsetTop,
+        bottom: (t.offsetTop + t.offsetHeight) - m.offsetTop,
+    };
+
+    let from = 'left';
+
+    for (const name of ['right', 'top', 'bottom']) {
+        if (overlap[name] < overlap[from]) {
+            from = name;
+        }
+    }
+
+    return from === side;
+}
+
 /**
  * Enter an explore position if it is enterable.
  * @param value
@@ -8582,6 +11693,14 @@ export function enterExplorePoint(value, mapUrl) {
         undefined !== value.className ? cleanClassName(value.className) : value;
     mapUrl = 'false' !== mapUrl ? mapUrl : value.getAttribute('data-map-url');
 
+    // Some triggers say where you come out. An exit does: walking out of a
+    // building should leave you standing in front of it, not at whatever spot
+    // the area outside happens to start people at. Absent on everything else,
+    // which then starts where it always did.
+    const landing = value && value.getAttribute
+        ? value.getAttribute('data-nextarea-position')
+        : null;
+
     // Add data point to button.
     const weaponEl = document.querySelector('.map-weapon');
 
@@ -8589,7 +11708,8 @@ export function enterExplorePoint(value, mapUrl) {
         weaponEl.style.display = 'none';
     }
 
-    enterNewArea(position, weaponEl, mapUrl, false, window.crewCharacters);
+    playSfx('explore_sfx_door');
+    enterNewArea(position, weaponEl, mapUrl, landing || false, window.crewCharacters);
 }
 
 /**
@@ -8878,7 +11998,41 @@ function movementIntFunc() {
             clearInterval(window.buttonShow);
         });
 
+    // Other people, if this game is played with any. Started here because this
+    // is the point at which there is a character with a position worth
+    // reporting; it decides for itself whether multiplayer is on.
+    startMultiplayer();
+
+    // Put the characters back where this player left them, and keep noting
+    // where they get to.
+    startNpcPositions();
+
+    // Being hit by another player is being hit. It goes through the same door
+    // an enemy's punch does — the same cooldown, the same hurt animation, the
+    // same addUserPoints — so everything that already hangs off losing health,
+    // dying included, needs to know nothing about multiplayer.
+    document.addEventListener('orbem:player-hit', (event) => {
+        const damage = parseInt(event.detail?.damage, 10);
+
+        if (!damage || window.mcHurtCooldown) {
+            return;
+        }
+
+        window.mcHurtCooldown = true;
+
+        const currentHealth = getCurrentPoints('health');
+
+        hurtAnimation();
+        addUserPoints(parseInt(currentHealth, 10) - damageTaken(damage), 'health', 'player', '');
+
+        setTimeout(() => {
+            window.mcHurtCooldown = false;
+        }, 1000);
+    });
+
     window.movementInt = setInterval(function () {
+        nextStep();
+
         const box = document.getElementById('map-character');
         const weapon = document.querySelector('.map-weapon');
         const leftVal = box.style.left;
@@ -8942,7 +12096,7 @@ function movementIntFunc() {
                     d[87] ? 87 : 38,
                     d[83] ? 83 : 40,
                     d,
-                    window.moveSpeed,
+                    stepSpeed(),
                     $newest
                 );
             }
@@ -8951,7 +12105,7 @@ function movementIntFunc() {
                 d[65] ? 65 : 37,
                 d[68] ? 68 : 39,
                 d,
-                window.moveSpeed,
+                stepSpeed(),
                 $newest
             );
             box.style.top = myTop + 'px';
@@ -8976,9 +12130,89 @@ function movementIntFunc() {
                 }
             }
 
-            box.scrollIntoView({ block: 'nearest' });
+            showAirbornePose(box, Object.values(d).includes(true));
+
+            centerCamera(box.querySelector('.orbem-camera-frame') || box, { block: 'nearest' });
         }
     }, characterSpeed);
+}
+
+/**
+ * In a gravity room, the character in the air: its jump pose going up and its
+ * fall pose coming down — when it has them (the `{dir}-jump` and `{dir}-fall`
+ * images). A character without them looks exactly as it always did.
+ *
+ * No key of its own: jumping is the up key in a gravity room, and this only
+ * follows the physics. Always shown facing sideways — up is the jump, not a
+ * way to face — so it uses the last way the character faced left or right.
+ * Not over an attack, a drag or being hurt, which have poses of their own.
+ *
+ * Runs every movement tick, after walking has picked its picture, so it wins
+ * while airborne and steps aside on landing.
+ *
+ * @param {HTMLElement} box    #map-character.
+ * @param {boolean}     moving Whether a movement key is held — landing then
+ *                             goes straight back to walking, not via standing.
+ */
+let airbornePose = null;
+let airborneSide = 'right';
+let airborneTicks = 0;
+
+function showAirbornePose(box, moving) {
+    'use strict';
+
+    if (!window.gravityMode || !box) {
+        return;
+    }
+
+    if (box.classList.contains('left-dir')) {
+        airborneSide = 'left';
+    } else if (box.classList.contains('right-dir')) {
+        airborneSide = 'right';
+    }
+
+    // Off the ground, not merely slow: at the top of a jump the speed passes
+    // through nothing, and going by speed would stand the character up in
+    // mid-air. A tick or two off the ground is a step down, not a jump.
+    airborneTicks = window.isGrounded ? 0 : airborneTicks + 1;
+
+    const airborne =
+        (airborneTicks > 2 || window.jumpVelocity < -1) &&
+        !window.attackContext &&
+        !window.mcHurtCooldown &&
+        '' === (window.isDragging || '');
+
+    if (!airborne) {
+        if (airbornePose) {
+            airbornePose = null;
+
+            if (!moving) {
+                setStaticMCImage(box, airborneSide, false);
+            }
+        }
+
+        return;
+    }
+
+    const pose = getCharacterSprite(
+        window.mainCharacter +
+            '-' +
+            airborneSide +
+            (window.jumpVelocity < 0 ? '-jump' : '-fall')
+    );
+
+    if (!pose || '' === pose.getAttribute('src')) {
+        return;
+    }
+
+    if (!pose.classList.contains('engage')) {
+        box.querySelectorAll('.map-character-icon.engage').forEach((img) => {
+            img.classList.remove('engage');
+        });
+        pose.classList.add('engage');
+    }
+
+    airbornePose = pose;
 }
 
 /**
@@ -9621,6 +12855,36 @@ function characterHitEvent(event) {
                 indicator.dataset.cutscene = '';
             }
 
+            if ('yes' === indicator.dataset.crafting) {
+                indicator.dataset.crafting = '';
+                openCrafting();
+            }
+
+            if (indicator.dataset.interact) {
+                const interactWith = document.getElementById(indicator.dataset.interact);
+
+                indicator.dataset.interact = '';
+                indicator.classList.remove('engage');
+                interactWith?.classList.remove('engage');
+
+                if (interactWith) {
+                    document.dispatchEvent(new CustomEvent('orbem:interact', { detail: { id: interactWith.id, element: interactWith } }));
+                }
+            }
+
+            if (indicator.dataset.enter) {
+                const door = document.getElementById(indicator.dataset.enter);
+
+                indicator.dataset.enter = '';
+                indicator.classList.remove('engage');
+                door?.classList.remove('engage');
+                window.allowHit = true;
+
+                if (door && ('function' !== typeof window.orbemMayEnter || false !== window.orbemMayEnter(door))) {
+                    enterExplorePoint(door, 'false');
+                }
+            }
+
             if (sign && '' !== sign) {
                 engageSign(sign);
                 indicator.dataset.sign = '';
@@ -9659,6 +12923,10 @@ function blockMovement(top, left, box, enemy) {
     const finalTop = top;
     const finalLeft = left;
     const mainChar = box !== false ? '.map-character-icon.engage, ' : '';
+    const otherWanderers =
+        box && 'yes' === box.dataset?.wanderer && !box.classList.contains('enemy-item')
+            ? ', .map-item[data-wanderer="yes"]:not(.enemy-item)'
+            : '';
     const mainCharEl = document.getElementById('map-character');
     box = box ? box : document.querySelector('.map-character-icon.engage');
     const hazardClass =
@@ -9670,7 +12938,8 @@ function blockMovement(top, left, box, enemy) {
         mainChar +
         '.default-map svg rect, .map-item' +
         hazardClass +
-        ':not([data-wanderer="yes"]):not(.explainer-container):not(.materialize-item-trigger):not(.drag-dest):not([data-trigger="true"]):not(.currently-dragging):not([data-passable="true"].no-point):not(.passable):not([data-genre="explore-sign"]):not([data-foreground="true"]):not([data-background="true"]), .enemy-item:not([data-enemy-type="runner"])'
+        ':not([data-wanderer="yes"]):not(.explainer-container):not(.materialize-item-trigger):not(.drag-dest):not([data-trigger="true"]):not(.currently-dragging):not([data-passable="true"].no-point):not([data-passable="true"][data-collectable="true"]):not(.passable):not([data-genre="explore-sign"]):not([data-foreground="true"]):not([data-background="true"]), .enemy-item:not([data-enemy-type="runner"])' +
+        otherWanderers
     );
 
     return getBlockDirection(
@@ -9870,6 +13139,13 @@ function getBlockDirection(
     ) {
         touchingMainChar = true;
         startRunnerPunching(box);
+    } else if (true === enemy && 'runner' === box.dataset.enemyType) {
+        const victim = targetableNpcs().find((npcEl) => elementsOverlap(finalAttackPos, npcEl, 0));
+
+        if (victim) {
+            touchingMainChar = true;
+            startRunnerPunching(box, victim);
+        }
     }
 
     if (
@@ -9880,27 +13156,39 @@ function getBlockDirection(
     ) {
         collisionWalls.forEach((collisionWallEle) => {
             let collisionWall = collisionWallEle;
+            let moverPos = collisionWallEle.dataset?.passDepth ? feetBox(finalCharPos) : finalCharPos;
 
             if (mapImage.id === collisionWall.id) {
                 collisionWall = true === enemy ? mainCharBodyPos : mainCharPos;
+
+                if (window.orbemDepthSort && true === npc && box.dataset?.passDepth) {
+                    collisionWall = feetBox(collisionWall);
+                    moverPos = feetBox(finalCharPos);
+                }
             }
 
             if (
                 box !== collisionWallEle &&
-                elementsOverlap(finalCharPos, collisionWall, 0)
+                elementsOverlap(moverPos, collisionWall, 0)
             ) {
+                // Same measurement elementsOverlap just used. Read straight
+                // off the element, a map rect reports undefined here, every
+                // direction test below turns NaN/false, and the player is
+                // marked as colliding with no edge to be pushed off.
+                const wallBox = collisionBox(collisionWall, moverPos);
+
                 const collisionWallRight =
-                    collisionWall.offsetLeft + collisionWall.offsetWidth;
-                const collisionWallLeft = collisionWall.offsetLeft;
-                const collisionWallTop = collisionWall.offsetTop;
+                    wallBox.offsetLeft + wallBox.offsetWidth;
+                const collisionWallLeft = wallBox.offsetLeft;
+                const collisionWallTop = wallBox.offsetTop;
                 const collisionWallBottom =
-                    collisionWall.offsetTop + collisionWall.offsetHeight;
+                    wallBox.offsetTop + wallBox.offsetHeight;
                 const characterRight =
-                    finalCharPos.offsetLeft + finalCharPos.offsetWidth;
-                const characterLeft = finalCharPos.offsetLeft;
-                const characterTop = finalCharPos.offsetTop;
+                    moverPos.offsetLeft + moverPos.offsetWidth;
+                const characterLeft = moverPos.offsetLeft;
+                const characterTop = moverPos.offsetTop;
                 const characterBottom =
-                    finalCharPos.offsetTop + finalCharPos.offsetHeight;
+                    moverPos.offsetTop + moverPos.offsetHeight;
 
                 final.collide = true;
                 box.dataset.collide = 'true';
@@ -9920,7 +13208,7 @@ function getBlockDirection(
                     collisionWallLeft < characterRight &&
                     collisionWallRight > characterRight;
 
-                let adjust = true === enemy ? 5 : window.moveSpeed;
+                let adjust = true === enemy ? 5 : stepSpeed();
                 adjust = true === npc ? 1 : adjust;
 
                 if (
@@ -9987,6 +13275,196 @@ function getBlockDirection(
  * @param  buffer
  * @return {boolean}
  */
+const collisionBoxCache = new WeakMap();
+
+/**
+ * Offset geometry for a collision candidate, in playfield pixels.
+ *
+ * HTML elements answer with offsetLeft/Top/Width/Height and are handed back
+ * untouched. SVG elements have none of those properties: reading them gives
+ * undefined, every comparison in elementsOverlap turns NaN, each of the four
+ * escape clauses evaluates false, and the function reports an overlap from
+ * anywhere on the map. That is why the `.default-map svg rect` selectors have
+ * never actually stopped anybody — they stopped everybody, everywhere.
+ *
+ * getBBox() reports the same rectangle in SVG user units, and the map SVG is
+ * drawn at viewBox="0 0 5000 4517" over a 5000x4517 box, so one user unit is
+ * one playfield pixel — the space offsetLeft already reports in. CSS
+ * transforms (explore-area-scale) move neither measure, so they stay
+ * comparable under scaling.
+ *
+ * Measured once per element and cached, because getBBox forces layout:
+ * 1500 rects cost 2.46ms uncached and 0.30ms cached, against a 16.7ms frame.
+ * Map rects are static geometry on a locked layer, so the box cannot go stale
+ * while the element lives; entering a new area re-parses the container, which
+ * makes fresh elements and lets the WeakMap drop the old ones on its own.
+ *
+ * @param  el
+ * @return {object}
+ */
+function collisionBox(el, against) {
+    'use strict';
+
+    if (against && window.orbemSolidBox && el && el.dataset && undefined !== el.offsetLeft) {
+        const solid = window.orbemSolidBox(el, collisionBox(el), collisionBox(against));
+
+        if (solid) {
+            return solid;
+        }
+    }
+
+    if (el && el.dataset && el.dataset.passDepth && undefined !== el.offsetLeft) {
+        return passBox(el);
+    }
+
+    if (!el || undefined !== el.offsetLeft || !el.ownerSVGElement || 'function' !== typeof el.getBBox) {
+        return el;
+    }
+
+    let box = collisionBoxCache.get(el);
+
+    if (!box) {
+        const bbox = el.getBBox();
+
+        box = {
+            offsetLeft:   bbox.x,
+            offsetTop:    bbox.y,
+            offsetWidth:  bbox.width,
+            offsetHeight: bbox.height,
+        };
+
+        collisionBoxCache.set(el, box);
+    }
+
+    return box;
+}
+
+function passBox(el) {
+    'use strict';
+
+    const depth = parseFloat(el.dataset.passDepth) || 0;
+    const width = el.offsetWidth;
+    const height = el.offsetHeight;
+    const box = { offsetLeft: el.offsetLeft, offsetTop: el.offsetTop, offsetWidth: width, offsetHeight: height };
+
+    if (0 >= depth) {
+        return box;
+    }
+
+    switch (el.dataset.passSide || 'top') {
+        case 'bottom':
+            box.offsetHeight = Math.max(1, height - depth);
+            break;
+        case 'left':
+            box.offsetLeft += Math.min(depth, width - 1);
+            box.offsetWidth = Math.max(1, width - depth);
+            break;
+        case 'right':
+            box.offsetWidth = Math.max(1, width - depth);
+            break;
+        default:
+            box.offsetTop += Math.min(depth, height - 1);
+            box.offsetHeight = Math.max(1, height - depth);
+    }
+
+    return box;
+}
+
+function npcIsHeld(npc) {
+    'use strict';
+
+    return 'false' === npc.dataset.canmove || 'true' === npc.dataset.talkHold;
+}
+
+function npcNear(npc, part, near) {
+    'use strict';
+
+    npc._near = npc._near || {};
+    npc._near[part] = near;
+
+    if (!npc._near.body && !npc._near.talk) {
+        npc._afkLeft = false;
+        npc._heldSince = 0;
+    }
+}
+
+function holdNpc(npc) {
+    'use strict';
+
+    const now = Date.now();
+
+    if (npc._afkLeft) {
+        return false;
+    }
+
+    if (!npc._heldSince || document.querySelector('.map-cutscene.engage')) {
+        npc._heldSince = now;
+    }
+
+    if (now - npc._heldSince > NPC_AFK_HOLD) {
+        npc._afkLeft = true;
+        return false;
+    }
+
+    const held = window.heldNpc;
+
+    if (held && held !== npc && held.isConnected && npcIsHeld(held)) {
+        return false;
+    }
+
+    window.heldNpc = npc;
+
+    return true;
+}
+
+function releaseNpc(npc) {
+    'use strict';
+
+    if (window.heldNpc === npc && !npcIsHeld(npc)) {
+        window.heldNpc = null;
+    }
+}
+
+function feetBox(pos) {
+    'use strict';
+
+    const height = Math.min(24, Math.max(8, pos.offsetHeight * 0.15));
+
+    return {
+        offsetLeft: pos.offsetLeft + pos.offsetWidth * 0.2,
+        offsetWidth: pos.offsetWidth * 0.6,
+        offsetTop: pos.offsetTop + pos.offsetHeight - height,
+        offsetHeight: height,
+    };
+}
+
+function sortByDepth(item, player) {
+    'use strict';
+
+    if (window.orbemDepthSort) {
+        return;
+    }
+
+    const side = item.dataset.passSide || 'top';
+
+    if ('top' !== side && 'bottom' !== side) {
+        return;
+    }
+
+    if (undefined === item.dataset.passLayer) {
+        item.dataset.passLayer = item.style.zIndex || window.getComputedStyle(item).zIndex || '1';
+    }
+
+    const solid = passBox(item);
+    const feet = player.offsetTop + player.offsetHeight;
+    const behind = feet < solid.offsetTop + solid.offsetHeight;
+    const zIndex = behind ? String(Math.max(2, parseInt(item.dataset.passLayer, 10) || 1)) : '0';
+
+    if (item.style.zIndex !== zIndex) {
+        item.style.zIndex = zIndex;
+    }
+}
+
 function elementsOverlap(rect1, rect2, buffer) {
     'use strict';
 
@@ -9994,23 +13472,28 @@ function elementsOverlap(rect1, rect2, buffer) {
     const isEnemy = rect1?.classList ? rect1.classList.contains('enemy-item') : false;
     const hitboxInset = (isMainCharacter && isEnemy) ? (parseFloat(rect2.offsetParent.dataset.hitboxInset) || 0) : 0;
 
-    const rect1Right  = rect1.offsetLeft + rect1.offsetWidth;
-    const rect1Left   = rect1.offsetLeft;
-    const rect1Top    = rect1.offsetTop;
-    const rect1Bottom = rect1.offsetTop  + rect1.offsetHeight;
+    // Either side can be the obstacle: the map rect is rect1 for projectiles
+    // and rect2 for movement, so both go through the same measurement.
+    const box1 = collisionBox(rect1, rect2);
+    const box2 = collisionBox(rect2, rect1);
+
+    const rect1Right  = box1.offsetLeft + box1.offsetWidth;
+    const rect1Left   = box1.offsetLeft;
+    const rect1Top    = box1.offsetTop;
+    const rect1Bottom = box1.offsetTop  + box1.offsetHeight;
 
     // Gravity areas keep the sprite's true bottom so ground contact is honest.
     const bottomInset = window.gravityMode ? 0 : hitboxInset;
 
-    const rect2Right  = rect2.offsetLeft + rect2.offsetWidth  - hitboxInset;
-    const rect2Left   = rect2.offsetLeft                      + hitboxInset;
-    const rect2Top    = rect2.offsetTop                       + hitboxInset;
-    const rect2Bottom = rect2.offsetTop  + rect2.offsetHeight - bottomInset;
+    const rect2Right  = box2.offsetLeft + box2.offsetWidth  - hitboxInset;
+    const rect2Left   = box2.offsetLeft                     + hitboxInset;
+    const rect2Top    = box2.offsetTop                      + hitboxInset;
+    const rect2Bottom = box2.offsetTop  + box2.offsetHeight - bottomInset;
 
     return (
         false ===
         (rect1Right  + buffer < rect2Left   - buffer ||
-            rect1Left   + buffer > rect2Right  - buffer ||
+            rect1Left   - buffer > rect2Right  + buffer ||
             rect1Bottom + buffer < rect2Top    - buffer ||
             rect1Top    - buffer > rect2Bottom + buffer)
     );
@@ -10081,14 +13564,22 @@ function theHazardOverlap(el1, el2, isParent) {
  *
  * @param type type.
  */
+function isPointItemType(type) {
+    'use strict';
+
+    return ['health', 'mana', 'power'].includes(type);
+}
+
 function getMenuType(type) {
     'use strict';
 
     const menuTypes = {
         health: 'items',
         mana: 'items',
+        power: 'items',
         gear: 'gear',
         weapons: 'weapons',
+        ingredients: 'ingredients',
     };
 
     return menuTypes[type];
@@ -10141,23 +13632,9 @@ function runPointAnimation(
             // Add level check.
             const oldLevel = getCurrentLevel(currentPoints);
             const newLevel = getCurrentLevel(newPoints);
-            window.nextLevelPointAmount = JSON.parse(OrbemOrder.levelMaps)[
-                newLevel
-                ];
+            window.nextLevelPointAmount = nextLevelPoints(newLevel);
 
-            // If new level is different from the old, then set UI to new.
-            if (oldLevel !== newLevel) {
-                const currentLevelEl = document.querySelector('.current-level');
-
-                if (currentLevelEl) {
-                    currentLevelEl.textContent = 'lvl. ' + newLevel;
-
-                    const nextLevelPoints =
-                        document.querySelector('.next-level-points');
-
-                    nextLevelPoints.textContent = window.nextLevelPointAmount;
-                }
-            }
+            levelUp(Math.max(oldLevel, window.orbemLevel || 1), newLevel);
 
             // Update point count.
             const myPoints = document.querySelector('.my-points');
@@ -10178,7 +13655,7 @@ function runPointAnimation(
         const collectable = value.classList.contains('storage-item');
 
         // Play sound effect for points.
-        playPointSound(positionType);
+        playPointSound(positionType, objectAmount);
 
         // Add new point count to DB.
         addUserPoints(
@@ -10191,10 +13668,23 @@ function runPointAnimation(
     }
 }
 
-function playPointSound(pointType) {
+function playPointSound(pointType, amount) {
     'use strict';
 
     const character = document.getElementById('map-character');
+
+    if (gainFeedOn()) {
+        showGain(pointGainLine(pointType, amount));
+
+        const feedSound = document.getElementById('ching');
+
+        if (feedSound) {
+            feedSound.volume = window.sfxVolume;
+            feedSound.play();
+        }
+
+        return false;
+    }
 
     // Show point graphic.
     character.classList.add('point');
@@ -10226,6 +13716,124 @@ function playPointSound(pointType) {
     }
 
     return false;
+}
+
+const GAIN_FEED_SPACING = 220;
+const GAIN_FEED_LINGER = 4000;
+const GAIN_FEED_MOST = 8;
+const gainFeedQueue = [];
+let gainFeedTimer = null;
+
+function gainFeedOn() {
+    'use strict';
+
+    return 'yes' === OrbemOrder.gainFeed;
+}
+
+function pointGainLine(pointType, amount) {
+    'use strict';
+
+    const labels = { point: 'Points', money: 'Money', health: 'Health', mana: 'Mana', power: 'Power' };
+    const moneyImage = document.querySelector('#explore-points .money-image');
+
+    return {
+        label: labels[pointType] || 'Points',
+        amount: parseInt(amount, 10) || 0,
+        image: 'money' === pointType && moneyImage ? moneyImage.getAttribute('src') : '',
+        kind: pointType || 'point',
+    };
+}
+
+function showGain(lines) {
+    'use strict';
+
+    if (!gainFeedOn()) {
+        return false;
+    }
+
+    (Array.isArray(lines) ? lines : [lines]).forEach((line) => {
+        if (line && (line.label || line.amount)) {
+            gainFeedQueue.push(line);
+        }
+    });
+
+    if (!gainFeedTimer) {
+        nextGainLine();
+    }
+
+    return true;
+}
+
+window.orbemGain = (lines) => showGain(lines);
+
+function nextGainLine() {
+    'use strict';
+
+    const line = gainFeedQueue.shift();
+
+    if (!line) {
+        gainFeedTimer = null;
+
+        return;
+    }
+
+    let feed = document.getElementById('gain-feed');
+
+    if (!feed) {
+        feed = document.createElement('div');
+        feed.id = 'gain-feed';
+        feed.setAttribute('aria-live', 'polite');
+        document.body.appendChild(feed);
+    }
+
+    const row = document.createElement('div');
+    const amount = parseInt(line.amount, 10);
+
+    row.className = 'gain-line';
+    row.dataset.kind = String(line.kind || '');
+
+    if (line.image) {
+        const icon = document.createElement('img');
+
+        icon.src = line.image;
+        icon.alt = '';
+        row.appendChild(icon);
+    } else if ('money' === line.kind) {
+        const icon = document.createElement('span');
+
+        icon.className = 'gain-symbol';
+        icon.textContent = '$';
+        row.appendChild(icon);
+    }
+
+    if (!isNaN(amount) && 0 !== amount) {
+        const count = document.createElement('span');
+
+        count.className = 'gain-amount';
+        count.textContent = (0 < amount ? '+' : '') + amount;
+        row.appendChild(count);
+    }
+
+    const label = document.createElement('span');
+
+    label.className = 'gain-label';
+    label.textContent = String(line.label || '');
+    row.appendChild(label);
+
+    feed.appendChild(row);
+
+    while (feed.children.length > GAIN_FEED_MOST) {
+        feed.firstElementChild.remove();
+    }
+
+    requestAnimationFrame(() => row.classList.add('engage'));
+
+    setTimeout(() => {
+        row.classList.add('leaving');
+        setTimeout(() => row.remove(), 400);
+    }, GAIN_FEED_LINGER);
+
+    gainFeedTimer = setTimeout(nextGainLine, GAIN_FEED_SPACING);
 }
 
 /**
@@ -10727,22 +14335,180 @@ function directCharacter(topDown, leftRight, mapCharacter) {
 function getCurrentLevel(currentPoints) {
     'use strict';
 
-    if (OrbemOrder.levelMaps) {
-        const levels = JSON.parse(OrbemOrder.levelMaps);
+    const points = parseInt(currentPoints, 10) || 0;
+    let level = 1;
 
-        for (const key in levels) {
-            if (
-                (currentPoints > levels[key] &&
-                    currentPoints < levels[parseInt(key) + 1]) ||
-                currentPoints === levels[key]
-            ) {
-                return parseInt(key) + 1;
-            }
-        }
+    if (OrbemOrder.levelMaps) {
+        JSON.parse(OrbemOrder.levelMaps)
+            .map((threshold) => parseInt(threshold, 10) || 0)
+            .sort((a, b) => a - b)
+            .forEach((threshold, index) => {
+                if (points >= threshold) {
+                    level = index + 1;
+                }
+            });
     }
 
-    return 1;
+    return level;
 }
+
+function nextLevelPoints(level) {
+    'use strict';
+
+    const levels = OrbemOrder.levelMaps ? JSON.parse(OrbemOrder.levelMaps) : [];
+
+    return levels[level] ?? levels[levels.length - 1] ?? 1;
+}
+
+function barMax(type) {
+    'use strict';
+
+    const bar = document.querySelector(`#explore-points .${type}-amount`);
+
+    return (bar && parseInt(bar.style.width, 10)) || 100;
+}
+
+function storedBarAmount(type, amount) {
+    'use strict';
+
+    if ('health' !== type && 'mana' !== type) {
+        return amount;
+    }
+
+    return parseInt(amount, 10) - (barMax(type) - 100);
+}
+
+function levelNeeded(itemId) {
+    'use strict';
+
+    const needed = parseInt((OrbemOrder.useLevels || {})[itemId], 10) || 0;
+
+    return needed > (window.orbemLevel || 1) ? needed : 0;
+}
+
+window.orbemLevelNeeded = levelNeeded;
+
+function levelUp(oldLevel, newLevel) {
+    'use strict';
+
+    if (newLevel <= oldLevel) {
+        return;
+    }
+
+    window.orbemLevel = newLevel;
+    window.nextLevelPointAmount = nextLevelPoints(newLevel);
+
+    playSfx('explore_sfx_level_up');
+
+    const currentLevelEl = document.querySelector('.current-level');
+
+    if (currentLevelEl) {
+        currentLevelEl.textContent = 'lvl. ' + newLevel;
+    }
+
+    const nextLevelEl = document.querySelector('.next-level-points');
+
+    if (nextLevelEl) {
+        nextLevelEl.textContent = window.nextLevelPointAmount;
+    }
+
+    const growth = (newLevel - oldLevel) * (parseInt(OrbemOrder.levelHealth, 10) || 0);
+    const healthBar = document.querySelector('#explore-points .health-amount');
+
+    if (0 < growth && healthBar) {
+        const amount = (parseInt(healthBar.dataset.amount, 10) || 0) + growth;
+
+        healthBar.style.width = barMax('health') + growth + 'px';
+        healthBar.dataset.amount = amount;
+
+        const gauge = healthBar.querySelector('.gauge');
+
+        if (gauge) {
+            gauge.style.width = amount + 'px';
+        }
+
+        healthBar.classList.add('grew');
+        setTimeout(() => healthBar.classList.remove('grew'), 2000);
+    }
+
+    showGain({ label: 'Level ' + newLevel, amount: 0, kind: 'level' });
+
+    document.dispatchEvent(new CustomEvent('orbem:level-up', {
+        detail: { level: newLevel, from: oldLevel, health: growth },
+    }));
+}
+
+function showPlayerPoints(newPoints) {
+    'use strict';
+
+    const bar = document.querySelector('#explore-points .point-amount');
+    const points = parseInt(newPoints, 10) || 0;
+    const oldLevel = window.orbemLevel || getCurrentLevel(bar ? bar.dataset.amount : 0);
+    const newLevel = getCurrentLevel(points);
+
+    if (OrbemOrder.explorePoints?.point) {
+        OrbemOrder.explorePoints.point.points = points;
+    }
+
+    window.nextLevelPointAmount = nextLevelPoints(newLevel);
+
+    if (bar) {
+        bar.dataset.amount = points;
+
+        const gauge = bar.querySelector('.gauge');
+
+        if (gauge) {
+            gauge.style.width = getPointsGaugeAmount(points);
+        }
+
+        bar.classList.add('engage');
+        setTimeout(() => bar.classList.remove('engage'), 2000);
+    }
+
+    const myPoints = document.querySelector('.my-points');
+
+    if (myPoints) {
+        myPoints.textContent = points;
+    }
+
+    levelUp(oldLevel, newLevel);
+}
+
+window.orbemShowPoints = showPlayerPoints;
+
+function addPlayerPoints(amount, label) {
+    'use strict';
+
+    const gained = parseInt(amount, 10) || 0;
+    const bar = document.querySelector('#explore-points .point-amount');
+
+    if (0 >= gained || !bar) {
+        return 0;
+    }
+
+    const total = (parseInt(bar.dataset.amount, 10) || 0) + gained;
+
+    showPlayerPoints(total);
+
+    if (label && gainFeedOn()) {
+        showGain({ label, amount: gained, kind: 'point' });
+
+        const ching = document.getElementById('ching');
+
+        if (ching) {
+            ching.volume = window.sfxVolume ?? 1;
+            ching.play().catch(() => {});
+        }
+    } else {
+        playPointSound('point', gained);
+    }
+
+    addUserPoints(total, 'point', 'xp', false, '');
+
+    return total;
+}
+
+window.orbemAddPoints = addPlayerPoints;
 
 /**
  *  Recharge power.
@@ -11180,9 +14946,11 @@ function checkIfHazardHurts() {
 
     setInterval(() => {
         if (true === inHazard) {
-            const hurtAmount = window.theHazardValue;
+            const hurtAmount = hazardItem && hazardItem.classList?.contains('enemy-item')
+                ? damageTaken(window.theHazardValue)
+                : parseInt(window.theHazardValue);
             const currentHealth = getCurrentPoints('health');
-            const newAmount = parseInt(currentHealth) - parseInt(hurtAmount);
+            const newAmount = parseInt(currentHealth) - hurtAmount;
             hurtAnimation();
 
             addUserPoints(newAmount, 'health', 'hazard', '');

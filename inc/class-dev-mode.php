@@ -334,7 +334,7 @@ class Dev_Mode
     {
         $user = wp_get_current_user();
 
-        if (!current_user_can('manage_options')) {
+        if (!Explore::canBuild()) {
             return '';
         }
 

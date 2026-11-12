@@ -53,6 +53,14 @@ class Plugin extends Plugin_Base {
 		$classes = array(
             new Util( $this ),
 			new Explore( $this ),
+            // Shops: a list of things for sale, kept by a character.
+            new Shop( $this ),
+            // Crafting: things made from ingredients, at a crafting table.
+            new Crafting( $this ),
+            // Multiplayer: the other people standing in the same area.
+            new Multiplayer( $this ),
+            // Where the characters were when this player left.
+            new NPC_Positions( $this ),
             $meta_box,
             new Dev_Mode( $this, $meta_box ),
             new Menu( $this, $telemetry ),
@@ -120,7 +128,7 @@ class Plugin extends Plugin_Base {
 	 */
 	public function enqueueAdminAssets(): void
     {
-        if (true === current_user_can('manage_options') && (str_starts_with(get_post_type(), 'explore-')) || 'toplevel_page_orbem-studio' === get_current_screen()->base) {
+        if (true === current_user_can('manage_options') && (str_starts_with(get_post_type(), 'explore-')) || in_array(get_current_screen()->base, ['toplevel_page_orbem-studio', 'orbem-studio_page_orbem-sound-effects'], true)) {
             self::enqueueScript('orbem-order/admin');
             self::enqueueScript('orbem-order/required');
             self::enqueueStyle('orbem-order/admin');
@@ -264,6 +272,9 @@ class Plugin extends Plugin_Base {
                 'exploreMaterializedItems' => $current_materialized_items,
                 'exploreAbilities' => $explore_abilities,
                 'levelMaps' => wp_json_encode(Explore::getLevelMap()),
+                'currentLevel' => Explore::getCurrentLevel(),
+                'levelHealth' => Explore::levelHealth(),
+                'useLevels' => Explore::useLevels(),
                 'gameURL' => get_permalink(get_page_by_path(get_option('explore_game_page', ''))),
                 'wpThemeURL' => str_replace(['https://', 'http://', 'www'], '', get_home_url()),
                 'defaultWeapon' => $default_weapon,
@@ -271,6 +282,17 @@ class Plugin extends Plugin_Base {
                 'orbemNonce' => wp_create_nonce('wp_rest'),
                 'siteRESTURL' => rest_url('orbemorder/v1'),
                 'previousCutsceneArea' => get_user_meta($current_user_id, 'explore_previous_cutscene_area', true),
+                // Everything the client needs before it decides whether to
+                // start talking to anybody. Sent always, off by default, so
+                // the code that reads it does not have to guess.
+                'multiplayer' => Multiplayer::settings(),
+                // Off unless the game turns it on (the "Minimap" game option).
+                'minimap' => 'Yes' === (string) get_option('explore_minimap', 'No') ? 'yes' : 'no',
+                'gainFeed' => 'Yes' === (string) get_option('explore_gain_feed', 'No') ? 'yes' : 'no',
+                'sounds' => Menu::getSoundUrls(),
+                // Only for somebody signed in: there is nowhere to keep this
+                // otherwise, and the client takes its absence as "do not".
+                'npcPositions' => $current_user_id ? NPC_Positions::all($current_user_id) : null,
                 'musicNames' => wp_json_encode($music_names)
             ]
         );
@@ -445,6 +467,13 @@ class Plugin extends Plugin_Base {
         if (in_array($post_type, ['explore-cutscene', 'explore-communicate'], true)) {
             return [
                 'orbem/paragraph-mp3',
+                // A branch of the conversation. Its first line is the choice
+                // the player is offered; the rest is what follows from taking
+                // it. Paths side by side are choices side by side.
+                'orbem/dialogue-path',
+                // Several of these and the character takes turns between
+                // them. None, and the cutscene is one conversation.
+                'orbem/conversation',
                 'core/video',
             ];
         }

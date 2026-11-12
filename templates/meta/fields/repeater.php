@@ -26,6 +26,20 @@ $orbem_studio_allowed_tags['input'] = [
     'required'    => true,
     'data-*'      => true,
 ];
+$orbem_studio_allowed_tags['select'] = [
+    'name'     => true,
+    'id'       => true,
+    'class'    => true,
+    'multiple' => true,
+    'disabled' => true,
+    'required' => true,
+    'data-*'   => true,
+];
+$orbem_studio_allowed_tags['option'] = [
+    'value'    => true,
+    'selected' => true,
+    'disabled' => true,
+];
 ?>
 <p>
 <label>

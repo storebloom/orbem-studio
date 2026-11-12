@@ -33,6 +33,93 @@ function useExploreVoiceMeta(postId) {
 	);
 }
 
+const lineAttributes = {
+	content: {
+		type: 'string',
+		source: 'html',
+		selector: 'p',
+	},
+	mp3Url: {
+		type: 'string',
+		default: '',
+	},
+	selectedCharacter: {
+		type: 'number',
+		default: null,
+	},
+	selectedVoice: {
+		type: 'string',
+		default: '',
+	},
+	triggerPath: {
+		type: 'boolean',
+		default: false,
+	},
+	translations: {
+		type: 'array',
+		default: [],
+	},
+};
+
+/**
+ * One line, as saved.
+ *
+ * `keepEmptyVoice` is false only for the deprecated shape below: lines the
+ * editor saved while it was still setting the voice to null, which wrote no
+ * data-voice at all.
+ */
+function saveLine(attributes, keepEmptyVoice) {
+	const { content, mp3Url, selectedCharacter, selectedVoice, translations } =
+		attributes;
+	const characterClass = selectedCharacter
+		? `explore-character-${selectedCharacter}`
+		: '';
+	const validTranslations = (translations || []).filter(
+		(t) => t.lang && t.content
+	);
+
+	return (
+		<span
+			className={characterClass}
+			{...(keepEmptyVoice || selectedVoice
+				? { 'data-voice': selectedVoice }
+				: {})}
+			{...(attributes.triggerPath
+				? { 'data-triggerpath': 'true' }
+				: {})}
+		>
+			<RichText.Content tagName='p' value={content} />
+			{mp3Url && (
+				<audio
+					controls
+					src={mp3Url}
+					style={{ position: 'absolute', left: '-56000px' }}
+				/>
+			)}
+			{validTranslations.map((t, i) => (
+				<span
+					key={i}
+					className='lang-translation'
+					data-lang={t.lang}
+					style={{ display: 'none' }}
+				>
+					<p>{t.content}</p>
+					{t.mp3Url && (
+						<audio
+							controls
+							src={t.mp3Url}
+							style={{
+								position: 'absolute',
+								left: '-56000px',
+							}}
+						/>
+					)}
+				</span>
+			))}
+		</span>
+	);
+}
+
 registerBlockType('orbem/paragraph-mp3', {
 	title: __('Paragraph with MP3', 'custom'),
 	description: __('A paragraph block with an MP3 upload option.', 'custom'),
@@ -41,33 +128,7 @@ registerBlockType('orbem/paragraph-mp3', {
 	supports: {
 		html: false,
 	},
-	attributes: {
-		content: {
-			type: 'string',
-			source: 'html',
-			selector: 'p',
-		},
-		mp3Url: {
-			type: 'string',
-			default: '',
-		},
-		selectedCharacter: {
-			type: 'number',
-			default: null,
-		},
-		selectedVoice: {
-			type: 'string',
-			default: '',
-		},
-		triggerPath: {
-			type: 'boolean',
-			default: false,
-		},
-		translations: {
-			type: 'array',
-			default: [],
-		},
-	},
+	attributes: lineAttributes,
 
 	edit: ({ attributes, setAttributes }) => {
 		const characters = useSelect((select) => {
@@ -81,13 +142,13 @@ registerBlockType('orbem/paragraph-mp3', {
 		const { content, mp3Url, selectedCharacter, selectedVoice, translations } =
 			attributes;
 
-		const voiceMeta = useExploreVoiceMeta(selectedCharacter);
+		// Never null: the attribute is a string, so a saved null is thrown
+		// away on the next load, save() then writes data-voice="" where the
+		// post has none, and the block reports itself invalid. A line with no
+		// character — or one whose character has not loaded yet — has no voice.
+		const voiceMeta = useExploreVoiceMeta(selectedCharacter) ?? '';
 
-		if (
-			selectedVoice !== voiceMeta ||
-			undefined === selectedVoice ||
-			null === selectedVoice
-		) {
+		if (selectedVoice !== voiceMeta) {
 			setAttributes({ selectedVoice: voiceMeta });
 		}
 
@@ -352,55 +413,18 @@ registerBlockType('orbem/paragraph-mp3', {
 		);
 	},
 
-	save: ({ attributes }) => {
-		const { content, mp3Url, selectedCharacter, selectedVoice, translations } =
-			attributes;
-		const characterClass = selectedCharacter
-			? `explore-character-${selectedCharacter}`
-			: '';
-		const validTranslations = (translations || []).filter(
-			(t) => t.lang && t.content
-		);
+	save: ({ attributes }) => saveLine(attributes, true),
 
-		return (
-			<span
-				className={characterClass}
-				data-voice={selectedVoice}
-				{...(attributes.triggerPath
-					? { 'data-triggerpath': 'true' }
-					: {})}
-			>
-				<RichText.Content tagName='p' value={content} />
-				{mp3Url && (
-					<audio
-						controls
-						src={mp3Url}
-						style={{ position: 'absolute', left: '-56000px' }}
-					/>
-				)}
-				{validTranslations.map((t, i) => (
-					<span
-						key={i}
-						className='lang-translation'
-						data-lang={t.lang}
-						style={{ display: 'none' }}
-					>
-						<p>{t.content}</p>
-						{t.mp3Url && (
-							<audio
-								controls
-								src={t.mp3Url}
-								style={{
-									position: 'absolute',
-									left: '-56000px',
-								}}
-							/>
-						)}
-					</span>
-				))}
-			</span>
-		);
-	},
+	// Lines saved with "selectedVoice": null and so no data-voice. The editor
+	// recognises them by this, and upgrades them on open instead of calling
+	// them invalid.
+	deprecated: [
+		{
+			attributes: lineAttributes,
+			supports: { html: false },
+			save: ({ attributes }) => saveLine(attributes, false),
+		},
+	],
 });
 
 // ─── Translation support for core/paragraph and core/heading ─────────────────

@@ -14,7 +14,12 @@ use OrbemStudio\Explore;
  * @var boolean $orbem_studio_player_name
  */
 
-if (true === $orbem_studio_is_admin) {
+// Jumping straight into a level skips whatever setup is still owed, so the
+// selector stays hidden until that setup is done with.
+$orbem_studio_show_levels = true === $orbem_studio_is_admin
+    && false === (bool) apply_filters('orbem_hide_level_selector', false);
+
+if ($orbem_studio_show_levels) {
     $orbem_studio_areas = get_posts(['post_type' => 'explore-area', 'posts_per_page' => -1, 'fields' => ['ids', 'post_name']]);
 }
 
@@ -96,7 +101,7 @@ $orbem_studio_signin_desktop_class = empty($orbem_studio_signin_screen_mobile) ?
             </div>
         <?php endif; ?>
     </div>
-    <?php if (true === $orbem_studio_is_admin) : ?>
+    <?php if ($orbem_studio_show_levels) : ?>
     <button type="button" id="select-level">Level Selector</button>
         <div class="level-selector" data-first="<?php echo esc_attr($orbem_studio_first_area); ?>">
             <?php foreach($orbem_studio_areas as $orbem_studio_area): ?>

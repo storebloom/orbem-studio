@@ -696,6 +696,14 @@ class Menu
                 ],
                 [
                         'parent_slug' => $parent_slug,
+                        'page_title' => 'Sound Effects',
+                        'menu_title' => 'Sound Effects',
+                        'capability' => 'edit_posts',
+                        'menu_slug'  => 'orbem-sound-effects',
+                        'callback'   => [$this, 'settingsPage'],
+                ],
+                [
+                        'parent_slug' => $parent_slug,
                         'page_title' => 'Custom CSS',
                         'menu_title' => 'Custom CSS',
                         'capability' => 'edit_posts',
@@ -973,12 +981,17 @@ class Menu
                 'explore_main_character' => ['select', 'Main Character', 'Your main character that users will control first.', $characters],
                 'explore_default_weapon' => ['select', 'Default Weapon', 'The starting weapon your main character will have. (Can be "fist" for no weapon)', $weapons],
                 'explore_require_login' => ['select', 'Require Login', 'Require users to login in order to play. "Both" gives a "logged out" option.', ['Yes', 'No', 'Both']],
+                'explore_multiplayer' => ['select', 'Multiplayer', 'Let players who are logged in and standing in the same area see each other. Requires login.', ['No', 'Yes']],
+                'explore_gain_feed' => ['select', 'Pickup feed', 'Show what the player gets — money, points, items, anything collected, bought, crafted or won — as a list down the right side of the screen, one line per thing in the order it arrived, each fading away after a few seconds. Replaces the little words that pop up over the player.', ['No', 'Yes']],
+                'explore_minimap' => ['select', 'Minimap', 'Show a small map of the area in the corner of the screen: its walls, doorways and the things in it, the people and enemies moving about, and the player as an arrow. Players click it to make it bigger.', ['No', 'Yes']],
+                'explore_multiplayer_cap' => ['number', 'Players visible at once', 'How many other players one person sees before the rest are left out. The nearest are kept. Higher costs more on slower devices; 16 is a sensible ceiling.'],
                 'explore_player_name' => ['select', 'Add player name input', 'Do you want to add an input field where people can enter their names to use for character and dialogues?', ['Yes', 'No']],
                 'explore_autoplay_cutscene' => ['select', 'Autoplay cutscene dialogue', 'Do you want your cutscene dialogue to automatically go to the next line as it completes?', ['Yes', 'No']],
                 'explore_google_login_client_id' => ['text', 'Google Login ClientID', 'Add your Google client id to allow SSO login. (Search google how if you this is confusing)'],
                 'explore_google_tts_api_key' => ['text', 'Google TTS API Key', 'Add your Google TTS API key to allow cutscenes and explainers to talk using text to speech.'],
+                'explore_level_health' => ['number', 'Health per level', 'How much longer the health bar gets (and how much more health the player has) at every level they reach. Levels come from the points bar. Empty or 0: health never grows.'],
                 'explore_hud_bars'     => ['multiselect', 'HUD bars', 'Choose which bars you wish to use for your game.', ['health', 'mana', 'power', 'money', 'points']],
-                'explore_storage_tabs' => ['multiselect', 'Storage tabs', 'Choose which storage tabs your storage menu should offer.', ['items', 'weapons', 'gear']],
+                'explore_storage_tabs' => ['multiselect', 'Storage tabs', 'Choose which storage tabs your storage menu should offer. Ingredients are what crafting tables make things from.', ['items', 'weapons', 'gear', 'ingredients']],
                 'explore_settings_icon' => ['upload', 'Settings Icon', 'Override settings icon in HUD'],
                 'explore_hide_storage' => ['checkbox', 'Hide Storage Menu', 'If checked the storage menu will not appear in HUD.'],
                 'explore_storage_icon' => ['upload', 'Storage Menu Icon', 'Override storage menu icon in HUD'],
@@ -1005,9 +1018,130 @@ class Menu
                 'explore_start_music' => ['upload', 'Start Screen Music', 'The music that will play after the intro video and on the start screen.'],
                 'explore_signin_screen' => ['upload', 'Sign In Screen Background Image', 'The image/video that will show on the start screen.'],
                 'explore_signin_screen_mobile' => ['upload', 'Mobile Sign In Screen Background Image', 'The image/video that will show on the start screen on mobile devices.'],
-                'explore_walking_sound' => ['upload', 'Walking Sound Effect', 'The sound that will play when your main character walks.'],
-                'explore_points_sound' => ['upload', 'Sound When Points Are Given', 'The sound that will play when you complete a mission or collect something.']
         ];
+    }
+
+    /**
+     * The game's own sound effects, for the Sound Effects page.
+     *
+     * @return array
+     */
+    public static function getSoundSettings(): array
+    {
+        return [
+                'explore_walking_sound' => ['upload', 'Walking', 'Loops while the main character walks.'],
+                'explore_points_sound' => ['upload', 'Points / collecting', 'Plays when points or money are given: completing a mission, collecting something.'],
+                'explore_sfx_door' => ['upload', 'Doors', 'Plays when the player goes through a door into another area, and back out.'],
+                'explore_sfx_menu_open' => ['upload', 'Menu open', 'Opening the settings, storage, crewmate, shop or crafting menu.'],
+                'explore_sfx_menu_close' => ['upload', 'Menu close', 'Closing any of those menus.'],
+                'explore_sfx_tab' => ['upload', 'Menu tab', 'Switching tabs in a menu: storage tabs, the shop\'s buy and sell.'],
+                'explore_sfx_button' => ['upload', 'Menu button', 'Pressing any other button in a menu, such as saving settings.'],
+                'explore_sfx_select' => ['upload', 'Select', 'Selecting something: an item in storage, a crewmate, an answer in a conversation.'],
+                'explore_sfx_equip' => ['upload', 'Equip', 'Equipping a weapon or gear from storage.'],
+                'explore_sfx_unequip' => ['upload', 'Unequip', 'Taking a weapon or gear off.'],
+                'explore_sfx_use' => ['upload', 'Use item', 'Using a health, mana or power item from storage.'],
+                'explore_sfx_drop' => ['upload', 'Drop', 'Dropping an item from storage, or a weapon onto the map.'],
+                'explore_sfx_buy' => ['upload', 'Buy', 'Buying something in a shop.'],
+                'explore_sfx_sell' => ['upload', 'Sell', 'Selling something to a shop.'],
+                'explore_sfx_craft' => ['upload', 'Craft', 'Crafting something.'],
+                'explore_sfx_denied' => ['upload', 'Not allowed', 'Something cannot be done: too little money, nothing to craft with, a full bar.'],
+                'explore_sfx_mission' => ['upload', 'Mission complete', 'A mission is completed.'],
+                'explore_sfx_level_up' => ['upload', 'Level up', 'The player reaches a new level.'],
+                'explore_sfx_character' => ['upload', 'Switch character', 'Switching to another crewmate.'],
+                'explore_sfx_dialogue' => ['upload', 'Next line', 'Moving on to the next line of a conversation.'],
+        ];
+    }
+
+    /**
+     * Every section of the Sound Effects page: the game's own, then any an
+     * extension adds with the orbem_studio_sound_sections filter, as
+     * ['slug' => ['title' => '', 'description' => '', 'fields' => [option => ['upload', label, help]]]].
+     *
+     * @return array
+     */
+    public static function getSoundSections(): array
+    {
+        $extra = apply_filters('orbem_studio_sound_sections', []);
+
+        return array_merge(
+                [
+                        'game' => [
+                                'title' => 'Game sound effects',
+                                'description' => 'Played by the game everywhere. Leave one empty for silence.',
+                                'fields' => self::getSoundSettings(),
+                        ],
+                ],
+                is_array($extra) ? $extra : []
+        );
+    }
+
+    /**
+     * Every sound effect that has a file, by option name, for the game page.
+     *
+     * @return array
+     */
+    public static function getSoundUrls(): array
+    {
+        $urls = [];
+
+        foreach (self::getSoundSections() as $section) {
+            foreach (array_keys((array) ($section['fields'] ?? [])) as $option) {
+                $url = (string) get_option($option, '');
+
+                if ('' !== $url) {
+                    $urls[$option] = esc_url($url);
+                }
+            }
+        }
+
+        return $urls;
+    }
+
+    /**
+     * @action admin_init
+     * @return void
+     */
+    public function registerSoundOptions(): void
+    {
+        foreach (self::getSoundSections() as $slug => $section) {
+            add_settings_section('sound_section_' . sanitize_key($slug), $section['title'] ?? '', function () use ($section) {
+                if (!empty($section['description'])) {
+                    echo '<p>' . esc_html($section['description']) . '</p>';
+                }
+            }, 'sound_options');
+
+            foreach ((array) ($section['fields'] ?? []) as $key => $value) {
+                register_setting('sound_options', $key, [
+                        'sanitize_callback' => 'esc_url_raw',
+                ]);
+
+                add_settings_field(
+                        $key,
+                        $value[1] ?? $key,
+                        function () use ($key, $value) {
+                            $sound = (string) get_option($key, '');
+                            ?>
+                            <div class="explore-image-field">
+                                <?php if ('' !== $sound) : ?>
+                                    <audio controls preload="none" src="<?php echo esc_url($sound); ?>"></audio>
+                                    <br>
+                                <?php endif; ?>
+                                <sub><?php echo esc_html($value[2] ?? ''); ?></sub>
+                                <p>
+                                    <input type="text" id="<?php echo esc_attr($key); ?>" name="<?php echo esc_attr($key); ?>" value="<?php echo esc_attr($sound); ?>" class="widefat explore-upload-field" readonly />
+                                </p>
+                                <p>
+                                    <button type="button" class="upload_image_button button"><?php esc_html_e('Select Sound', 'orbem-studio'); ?></button>
+                                    <button type="button" class="remove_image_button button"><?php esc_html_e('Remove Sound', 'orbem-studio'); ?></button>
+                                </p>
+                            </div>
+                            <?php
+                        },
+                        'sound_options',
+                        'sound_section_' . sanitize_key($slug)
+                );
+            }
+        }
     }
 
     /**
@@ -1165,6 +1299,10 @@ class Menu
             $page_title    = 'Custom CSS';
             $option_group  = 'custom_css_options';
             $option_page   = 'custom_css_options';
+        } elseif ('orbem-studio_page_orbem-sound-effects' === $page) {
+            $page_title    = 'Sound Effects';
+            $option_group  = 'sound_options';
+            $option_page   = 'sound_options';
         } else {
             $page_title    = 'Game Options';
             $option_group  = 'game_options';
