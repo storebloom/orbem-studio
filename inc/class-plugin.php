@@ -282,16 +282,13 @@ class Plugin extends Plugin_Base {
                 'orbemNonce' => wp_create_nonce('wp_rest'),
                 'siteRESTURL' => rest_url('orbemorder/v1'),
                 'previousCutsceneArea' => get_user_meta($current_user_id, 'explore_previous_cutscene_area', true),
-                // Everything the client needs before it decides whether to
-                // start talking to anybody. Sent always, off by default, so
-                // the code that reads it does not have to guess.
+                // Everything the client needs before it decides whether to start talking to anybody.
                 'multiplayer' => Multiplayer::settings(),
                 // Off unless the game turns it on (the "Minimap" game option).
                 'minimap' => 'Yes' === (string) get_option('explore_minimap', 'No') ? 'yes' : 'no',
                 'gainFeed' => 'Yes' === (string) get_option('explore_gain_feed', 'No') ? 'yes' : 'no',
                 'sounds' => Menu::getSoundUrls(),
-                // Only for somebody signed in: there is nowhere to keep this
-                // otherwise, and the client takes its absence as "do not".
+                // Only for somebody signed in: there is nowhere to keep this otherwise, and the client takes its absence as "do not".
                 'npcPositions' => $current_user_id ? NPC_Positions::all($current_user_id) : null,
                 'musicNames' => wp_json_encode($music_names)
             ]
@@ -467,12 +464,9 @@ class Plugin extends Plugin_Base {
         if (in_array($post_type, ['explore-cutscene', 'explore-communicate'], true)) {
             return [
                 'orbem/paragraph-mp3',
-                // A branch of the conversation. Its first line is the choice
-                // the player is offered; the rest is what follows from taking
-                // it. Paths side by side are choices side by side.
+                // A branch of the conversation.
                 'orbem/dialogue-path',
-                // Several of these and the character takes turns between
-                // them. None, and the cutscene is one conversation.
+                // Several of these and the character takes turns between them.
                 'orbem/conversation',
                 'core/video',
             ];

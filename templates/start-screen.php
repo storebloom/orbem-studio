@@ -14,8 +14,7 @@ use OrbemStudio\Explore;
  * @var boolean $orbem_studio_player_name
  */
 
-// Jumping straight into a level skips whatever setup is still owed, so the
-// selector stays hidden until that setup is done with.
+// Jumping straight into a level skips whatever setup is still owed, so the selector stays hidden until that setup is done with.
 $orbem_studio_show_levels = true === $orbem_studio_is_admin
     && false === (bool) apply_filters('orbem_hide_level_selector', false);
 

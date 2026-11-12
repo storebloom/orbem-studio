@@ -1053,9 +1053,7 @@ class Menu
     }
 
     /**
-     * Every section of the Sound Effects page: the game's own, then any an
-     * extension adds with the orbem_studio_sound_sections filter, as
-     * ['slug' => ['title' => '', 'description' => '', 'fields' => [option => ['upload', label, help]]]].
+     * Every section of the Sound Effects page.
      *
      * @return array
      */

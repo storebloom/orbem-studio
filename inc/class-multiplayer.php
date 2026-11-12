@@ -2,42 +2,6 @@
 /**
  * Multiplayer: seeing the other people who are here.
  *
- * Off by default, and turned on for a whole game rather than per area — "is
- * this a game you play with other people" is a fact about the game, not
- * something that should change as you walk through a door.
- *
- * WHAT THIS IS AND IS NOT
- *
- * It is presence. Everyone standing in the same area sees everyone else
- * standing in it, moving as they move. It is not a shared simulation: doors,
- * items, enemies and missions stay each player's own, so two people in one
- * room are two games running side by side with the other person drawn in.
- * That is the honest scope of what a WordPress site can keep in step, and it
- * is most of what "there are other people here" feels like.
- *
- * WHY POLLING LIVES HERE
- *
- * A socket server is the better transport and it is not one this plugin can
- * assume: it ships to anyone with a WordPress site, and most of them cannot
- * run a long-lived process next to it. So the engine owns a transport that
- * works everywhere — a REST endpoint you tell where you are and which answers
- * with who else is there — and the network that can run a socket server
- * replaces it by filtering `orbem_multiplayer_transport`. Nothing above this
- * knows which one it got.
- *
- * WHY THE STORE IS A TRANSIENT
- *
- * Presence is worth nothing a moment after it is written, so it never goes in
- * a table. One transient per area holds everybody in it, which is a single
- * read and a single write per tick — and on a site with a persistent object
- * cache, which is what a busy one will have, it never touches the database at
- * all.
- *
- * Two players writing at the same instant can lose one of the two updates.
- * That is left alone deliberately: the cost is one stale tick for one player,
- * the next tick corrects it, and the locking needed to prevent it would cost
- * more than the thing it prevents.
- *
  * @package OrbemStudio
  */
 
@@ -54,7 +18,7 @@ class Multiplayer
     /** How often a client should report in, in milliseconds. */
     public const TICK = 250;
 
-    /** Whether fighting is allowed here. Per area, because a town is not an arena. */
+    /** Whether fighting is allowed here. */
     public const PVP_META = 'explore-pvp';
 
     public $plugin;
@@ -64,9 +28,7 @@ class Multiplayer
         $this->plugin = $plugin;
     }
 
-    // =========================================================================
     // Settings
-    // =========================================================================
 
     /** Whether this game is played with other people in it. */
     public static function enabled(): bool
@@ -74,14 +36,7 @@ class Multiplayer
         return 'Yes' === (string) get_option('explore_multiplayer', 'No');
     }
 
-    /**
-     * How many other players to draw.
-     *
-     * A cap rather than everybody, because the cost of a crowd is paid by the
-     * slowest device in it. Past the cap the nearest are kept — the people you
-     * can see are the people you are next to, which is the useful half of a
-     * crowd and the half that would be missed.
-     */
+    /** How many other players to draw. */
     public static function cap(): int
     {
         $cap = (int) get_option('explore_multiplayer_cap', self::CAP);
@@ -89,12 +44,7 @@ class Multiplayer
         return (int) apply_filters('orbem_multiplayer_cap', $cap > 0 ? $cap : self::CAP);
     }
 
-    /**
-     * Whether players may fight each other in this area.
-     *
-     * Off unless the area says otherwise. A builder who has not thought about
-     * it has made somewhere to walk around, not somewhere to be killed.
-     */
+    /** Whether players may fight each other in this area. */
     public static function pvp(string $area): bool
     {
         $post = get_page_by_path($area, OBJECT, 'explore-area');
@@ -106,18 +56,7 @@ class Multiplayer
         return 'yes' === strtolower((string) get_post_meta($post->ID, self::PVP_META, true));
     }
 
-    /**
-     * Every area where fighting is allowed.
-     *
-     * Sent up front rather than answered per area, because the socket
-     * transport never asks the server a question — it pushes positions and
-     * nothing else — and an area change does not reload the page. A client
-     * that had to ask would either be wrong for a moment after every door or
-     * need a round trip the socket was meant to remove.
-     *
-     * The list is short by construction: it is the areas a builder deliberately
-     * turned fighting on in, not every area that exists.
-     */
+    /** Every area where fighting is allowed. */
     public static function pvpAreas(): array
     {
         $areas = get_posts([
@@ -132,12 +71,7 @@ class Multiplayer
         return array_map(static fn(\WP_Post $a): string => $a->post_name, $areas);
     }
 
-    /**
-     * Every area played alone. None, unless something says otherwise.
-     *
-     * Sent up front for the same reason as the fighting areas: the client
-     * must know the moment it walks through a door, without asking.
-     */
+    /** Every area played alone. */
     public static function soloAreas(): array
     {
         return array_values(array_unique(array_map('strval', (array) apply_filters('orbem_multiplayer_solo_areas', []))));
@@ -152,20 +86,16 @@ class Multiplayer
             'tick'    => (int) apply_filters('orbem_multiplayer_tick', self::TICK),
             'pvp'     => '' !== $area && self::pvp($area),
             'pvpAreas' => self::enabled() ? self::pvpAreas() : [],
-            // Areas where nobody else is drawn and you are drawn to nobody,
-            // even with multiplayer on: a game meant to be played alone.
+            // Areas where nobody else is drawn and you are drawn to nobody, even with multiplayer on.
             'soloAreas' => self::enabled() ? self::soloAreas() : [],
             // Who "you" are, so a client never draws itself as somebody else.
             'me'      => Explore::playerId(),
-            // The network swaps this for a socket url. Empty means "talk to
-            // the REST endpoint below", which every install can do.
+            // The network swaps this for a socket url.
             'socket'  => (string) apply_filters('orbem_multiplayer_transport', ''),
         ];
     }
 
-    // =========================================================================
     // Who is where
-    // =========================================================================
 
     private static function key(string $area): string
     {
@@ -187,44 +117,24 @@ class Multiplayer
 
     private static function store(string $area, array $roster): void
     {
-        // Twice the stale window, so the key outlives the people in it and a
-        // quiet area cleans itself up rather than being swept by anything.
+        // Twice the stale window, so the key outlives the people in it and a quiet area cleans itself up rather than being swept by anything.
         set_transient(self::key($area), $roster, self::STALE * 2);
     }
 
-    /**
-     * Say where you are, and find out who else is here.
-     *
-     * One call because they are one thought, and because a player who told the
-     * world where they were and then asked who was there would be paying for
-     * two round trips to learn one thing.
-     */
+    /** Say where you are, and find out who else is here. */
     public static function tick(int $user_id, string $area, array $at): array
     {
         if ($user_id <= 0 || '' === $area || !self::enabled()) {
             return [];
         }
 
-        // Cleaned once, here, so whichever roster answers below is handed
-        // the same safe values.
+        // Cleaned once, here, so whichever roster answers below is handed the same safe values.
         $at['attack']       = self::attackCount($at['attack'] ?? 0);
         $at['attackSprite'] = self::slot($at['attackSprite'] ?? '');
         $at['weapon']       = self::weapon($at['weapon'] ?? null);
         $at['said']         = self::said($at['said'] ?? []);
 
-        /**
-         * Somewhere better to keep the roster.
-         *
-         * A network running a realtime service has players held in it that
-         * this will never see, and two rosters means the people in one are
-         * invisible to the people in the other — which is not an edge case:
-         * it happens on every reconnect and to anybody whose network will not
-         * hold a socket. So whatever answers here answers for everybody, and
-         * the transient below is what a plain WordPress install uses because
-         * it has nothing else.
-         *
-         * Returning null means "no, use the built-in one".
-         */
+        /** Somewhere better to keep the roster. */
         $elsewhere = apply_filters('orbem_multiplayer_roster', null, $user_id, $area, $at);
 
         if (is_array($elsewhere)) {
@@ -257,16 +167,7 @@ class Multiplayer
         return self::nearest($roster, $at, self::cap());
     }
 
-    /**
-     * The name of a sprite slot, and nothing that could be anything else.
-     *
-     * A slot is how a player says what they look like right now — `static-left`,
-     * `down`, `right-punch-sword-heavy`. It is handed back to other clients,
-     * which use it to look up an element id, so it is held to the characters an
-     * id can contain and a length no real slot reaches. Nothing here needs to
-     * know what the slots are, which is the point: art added later works
-     * without this changing.
-     */
+    /** The name of a sprite slot, and nothing that could be anything else. */
     private static function slot($raw): string
     {
         $slot = is_scalar($raw) ? strtolower((string) $raw) : '';
@@ -281,13 +182,7 @@ class Multiplayer
         return is_numeric($raw) ? max(0, min(1000000000, (int) $raw)) : 0;
     }
 
-    /**
-     * What somebody is holding, held to what a weapon can be.
-     *
-     * Handed back to every other client, which puts the picture in an img and
-     * the rest in data attributes and lengths, so each part is kept to the
-     * shape it is used as: a web address, a few known words, small numbers.
-     */
+    /** What somebody is holding, held to what a weapon can be. */
     private static function weapon($raw): ?array
     {
         if (!is_array($raw)) {
@@ -332,13 +227,7 @@ class Multiplayer
         return in_array($dir, ['up', 'down', 'left', 'right'], true) ? $dir : 'down';
     }
 
-    /**
-     * The closest few, named and dressed.
-     *
-     * Sorted before the cap is applied rather than after, so a crowded area
-     * shows you the people around you instead of whichever rows happened to be
-     * stored first.
-     */
+    /** The closest few, named and dressed. */
     private static function nearest(array $roster, array $at, int $cap): array
     {
         $left = (int) ($at['left'] ?? 0);
@@ -370,13 +259,7 @@ class Multiplayer
         return $out;
     }
 
-    /**
-     * What to call somebody.
-     *
-     * Their display name, or the name they typed at the start screen if the
-     * game asks for one — the same name their own dialogue uses, so a player
-     * is called one thing everywhere.
-     */
+    /** What to call somebody. */
     private static function nameOf(int $user_id): string
     {
         $chosen = (string) get_user_meta($user_id, 'explore_player_name', true);
@@ -392,13 +275,6 @@ class Multiplayer
 
     /**
      * Who is standing in an area, by id.
-     *
-     * Asked separately from tick() because asking that would also announce the
-     * asker as being somewhere, and checking whether a punch is allowed should
-     * not move anybody. The filter exists for the same reason tick()'s does: a
-     * network holding its roster in a realtime service has players in it this
-     * will never see, and validating a hit against a list that is missing half
-     * the world refuses hits that plainly landed.
      *
      * @return int[]
      */
@@ -430,9 +306,7 @@ class Multiplayer
         self::store($area, $roster);
     }
 
-    // =========================================================================
     // Fighting
-    // =========================================================================
 
     /** Where a player's unread hits wait for them. */
     private static function inbox(int $user_id): string
@@ -440,32 +314,7 @@ class Multiplayer
         return 'orbem_hits_' . $user_id;
     }
 
-    /**
-     * One player hits another.
-     *
-     * The attacker's browser decides it connected and says so; this decides
-     * whether it was allowed to and passes it on. That split is deliberate:
-     * the engine already resolves a hit in the browser and duplicating its
-     * collision on the server would mean two rules to keep in step, so what is
-     * checked here is everything a lie could gain — that the area allows
-     * fighting, that the victim is really in it, and that the damage is a
-     * number this game hands out.
-     *
-     * WHY THIS DOES NOT SUBTRACT THE HEALTH
-     *
-     * The victim's own browser does, through the same path an enemy's punch
-     * takes. That is worth more than doing it here: being hurt already means
-     * the hurt animation, the HUD, the death that follows and everything a
-     * world hangs off dying, and a second place that writes health would be a
-     * second place all of that has to be remembered. One writer, one pipeline,
-     * and a hit from a player is a hit like any other by the time it lands.
-     *
-     * A modified client can claim a hit it did not land, and a modified victim
-     * can ignore one. Those are the same trade in both directions, taken with
-     * eyes open while worlds are small and played among people who chose to be
-     * there together, and the shape below is where an authoritative check goes
-     * when it stops being true.
-     */
+    /** One player hits another. */
     public static function hit(int $attacker, int $victim, string $area, int $damage): array
     {
         if (!self::enabled() || !self::pvp($area)) {
@@ -476,9 +325,7 @@ class Multiplayer
             return ['success' => false, 'message' => __('Nobody to hit.', 'orbem-studio')];
         }
 
-        // Both have to be standing in the same room. It is the same roster the
-        // drawing uses, so anybody you can see you can hit and anybody you
-        // cannot, you cannot — which only holds if it really is the same one.
+        // Both have to be standing in the same room.
         $present = self::present($area);
 
         if (!in_array($attacker, $present, true) || !in_array($victim, $present, true)) {
@@ -496,27 +343,13 @@ class Multiplayer
 
         self::deliver($victim, $blow);
 
-        /**
-         * Somebody was hit by somebody else.
-         *
-         * Where a world hangs what a fight means — who gets the credit, what
-         * the loser drops, whether it is worth logging — and where the socket
-         * transport picks the blow up to push it straight at the victim.
-         */
+        /** Somebody was hit by somebody else. */
         do_action('orbem_multiplayer_hit', $victim, $blow, $area);
 
         return ['success' => true, 'victim' => $victim, 'damage' => $damage];
     }
 
-    /**
-     * Leave a hit where the victim will find it.
-     *
-     * The queue is what the polling transport reads on its next tick. A socket
-     * client is told directly and never looks, so the entry expires unread —
-     * which is why this is a short-lived transient and not a table. Being hit
-     * while your browser is shut is a hit that did not happen, and that is the
-     * right answer rather than a punch waiting for you tomorrow.
-     */
+    /** Leave a hit where the victim will find it. */
     private static function deliver(int $victim, array $blow): void
     {
         $waiting = get_transient(self::inbox($victim));
@@ -529,18 +362,12 @@ class Multiplayer
         set_transient(self::inbox($victim), $waiting, self::STALE * 2);
     }
 
-    // =========================================================================
     // Said to the room
-    // =========================================================================
 
     /** What has been said to a player's room and not yet carried back to them. */
     private static array $heard = [];
 
-    /**
-     * What a client says to its room, kept small: at most 20 things a tick,
-     * each an object of no more than a kilobyte. The engine relays it and does
-     * not read it — whatever listens decides what it means.
-     */
+    /** What a client says to its room, kept small. */
     private static function said($raw): array
     {
         $out = [];
@@ -570,10 +397,7 @@ class Multiplayer
         set_transient(self::saidBox($to), array_slice($waiting, -100), self::STALE * 2);
     }
 
-    /**
-     * Something said to this player's room that arrived some other way — from
-     * a realtime service holding the roster (see orbem_multiplayer_roster).
-     */
+    /** Something said to this player's room that arrived some other way. */
     public static function heard(array $said): void
     {
         foreach ($said as $one) {
@@ -613,9 +437,6 @@ class Multiplayer
         return $waiting;
     }
 
-    // =========================================================================
-    // REST
-    // =========================================================================
 
     /**
      * @action rest_api_init
@@ -630,8 +451,7 @@ class Multiplayer
             'permission_callback' => '__return_true',
         ]);
 
-        // Where fighting is allowed, asked again now and then: it can be
-        // switched while people are playing, and the page is not reloaded.
+        // Where fighting is allowed, asked again now and then.
         register_rest_route($namespace, '/presence/pvp-areas/', [
             'methods'             => 'GET',
             'callback'            => [$this, 'restPvpAreas'],
@@ -670,8 +490,7 @@ class Multiplayer
                 'weapon' => $data['weapon'] ?? null,
                 'said'   => $data['said'] ?? [],
             ]),
-            // Anything that hit them since they last asked. The socket
-            // transport gets these pushed instead and never reads this.
+            // Anything that hit them since they last asked.
             'hits'    => self::drain($player),
             // And what the others in the room said, the same way.
             'said'    => self::drainSaid($player),
@@ -684,8 +503,7 @@ class Multiplayer
         return rest_ensure_response([
             'success'  => true,
             'pvpAreas' => self::enabled() ? self::pvpAreas() : [],
-            // Areas where nobody else is drawn and you are drawn to nobody,
-            // even with multiplayer on: a game meant to be played alone.
+            // Areas where nobody else is drawn and you are drawn to nobody, even with multiplayer on.
             'soloAreas' => self::enabled() ? self::soloAreas() : [],
         ]);
     }

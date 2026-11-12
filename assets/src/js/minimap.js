@@ -1,45 +1,4 @@
-/**
- * A small map of the area you are standing in.
- *
- * Without one, a big area hides everything past the edge of the screen: the
- * door to the next place, the building over the hill, the thing you were sent
- * to find. This draws the whole area in the corner — its map, the walls, the
- * doors, the things in it — with the player as an arrow pointing the way they
- * are walking, and a faint box for what is on screen right now.
- *
- * Turned on per game (the "Minimap" game option). Off, none of this runs.
- *
- * WHAT IS DRAWN
- *
- * Read off the page, not fetched: what is on the map is what the engine has
- * drawn, in the places it has them now — moved by drags, gravity and wandering
- * since the database last heard. Everything is in the area's own coordinates,
- * the same left/top the engine positions things with, scaled down to fit.
- *
- * Things that stay put — the map, roads and other ground drawn over it, walls,
- * doors, scenery, items — are drawn once into a layer and redrawn when the
- * area changes, or every so often in case something was built or picked up.
- * Things that move — people, enemies, the player — are drawn over that layer
- * several times a second.
- *
- * Only what a player could see: anything hidden (display:none, invisible, a
- * spawner, a trigger, an item not yet materialised) is left off, so the map
- * shows where to go, not what is secret.
- *
- * WALKING BETWEEN AREAS
- *
- * The map lives outside the game container, which is rebuilt from its own HTML
- * on every area change, so it is never thrown away with the room — it notices
- * the room is different and draws the new one.
- *
- * THE TIME OF DAY
- *
- * Under the map, in an area with a day and night cycle: the whole day as a
- * strip, night to dawn to day to dusk and back, with a mark at the time now,
- * and how long until it gets dark or light. Read off the same clock the
- * engine lights the area by (the game container's day-night data, kept in
- * step with the server), so the meter and the sky always agree.
- */
+/** A small map of the area you are standing in. */
 
 /* global OrbemOrder */
 
@@ -156,9 +115,7 @@ function kindOf(el) {
     return null;
 }
 
-// =============================================================================
 // Drawing
-// =============================================================================
 
 /** Pictures read from CSS backgrounds, loaded once each. */
 const pictures = new Map();
@@ -183,10 +140,7 @@ function covers(el, area) {
     return box.width >= area.width * 0.5 && box.height >= area.height * 0.5;
 }
 
-/**
- * The picture a thing that covers the area shows — a road, a drawn wall —
- * whether it is an image inside it or its own CSS background.
- */
+/** The picture a thing that covers the area shows. */
 function coverImage(el) {
     const img = el.querySelector('img:not(.character-icon)');
 
@@ -199,17 +153,7 @@ function coverImage(el) {
     return bg ? picture(bg[1]) : null;
 }
 
-/**
- * The ground: the area's map picture and everything drawn over the whole of
- * it (roads, drawn walls), shrunk to the minimap once and kept.
- *
- * These are playfield-sized pictures, 5000 × 4517. Shrinking them is cheap
- * while the browser still has them decoded, and costs most of a second when
- * it has let them go and must decode them again — which froze the game,
- * player and all, every so often. So they are shrunk again only when one of
- * them changes: another area, another size, a road redrawn, a picture that
- * has finished loading.
- */
+/** The ground: the area's map picture and everything drawn over the whole of it. */
 function drawGround(area, width, height, covering) {
     const map = mapImage();
     const ready = (img) => !!(img && img.complete && img.naturalWidth);
@@ -244,8 +188,7 @@ function drawGround(area, width, height, covering) {
         try {
             ctx.drawImage(map, 0, 0, width, height);
         } catch (e) {
-            // A picture from a host that does not allow reading it back is
-            // still drawable; one that failed to load simply is not.
+            // A picture from a host that does not allow reading it back is still drawable.
         }
     }
 
@@ -431,9 +374,7 @@ function drawMoving() {
     }
 }
 
-// =============================================================================
 // The time of day
-// =============================================================================
 
 /** When it counts as getting light, and getting dark: mid-dawn and mid-dusk. */
 const LIGHT_AT = 6;
@@ -502,9 +443,7 @@ function drawTime(box) {
     }
 }
 
-// =============================================================================
 // The loop
-// =============================================================================
 
 function build() {
     const root = document.createElement('div');

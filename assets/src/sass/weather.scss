@@ -1,5 +1,4 @@
-// Weather (see weather.js). Every moving part is a transform or an opacity,
-// so it all runs on the GPU without repainting.
+// Weather (see weather.js).
 
 #orbem-weather {
   inset: 0;
@@ -49,8 +48,7 @@
     }
   }
 
-  // Pinned to the map by weather.js, to within one tile; big enough to cover
-  // the screen however far it is shifted and however far the fall has got.
+  // Pinned to the map by weather.js, to within one tile.
   .ow-wx-layer {
     height: calc(100% + 2 * var(--th));
     left: 0;
@@ -178,8 +176,7 @@
   }
 }
 
-// Somebody who asked their system for less motion: no far layers, no drift,
-// a soft flash and no bolt.
+// Somebody who asked their system for less motion: no far layers, no drift, a soft flash and no bolt.
 @media (prefers-reduced-motion: reduce) {
   #orbem-weather {
     .ow-wx-far,

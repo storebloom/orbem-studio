@@ -13,10 +13,6 @@ let saveMaterializedItemTimeout;
 const materializedItemsArray = [];
 
 // Conversations you can have again, by the id of the box that starts them.
-// Held here rather than on the element because the map is rebuilt from scratch
-// when you cross a door, and a character you were mid-sentence with should not
-// be forgotten or, worse, start over because the element carrying that fact
-// was replaced underneath us.
 const saidJustNow = new Set();
 const ACTION_REACH = 12;
 const saidJustNowApart = new Map();
@@ -963,8 +959,7 @@ window.orbemFaceCharacter = (npc, direction, walking) => (walking ? setDirection
 function makeNPCWander(npc, walkingSpeed, timeBetween, enemy) {
     'use strict';
 
-    // A spawner marked as a wanderer is marking its copies, not itself: the
-    // place enemies come from stays where it was put.
+    // A spawner marked as a wanderer is marking its copies, not itself.
     if (isSpawner(npc)) {
         return;
     }
@@ -1281,24 +1276,12 @@ function pauseNpc(timeBetween, npc) {
 }
 
 // ─── Paused ──────────────────────────────────────────────────────────────────
-//
-// window.orbemPaused freezes the world, not only the player: nobody walks,
-// chases, punches or shoots, a boss holds its wave, and nothing already in the
-// air does any harm. For somebody standing in a game working on it — a builder
-// editing a boss that would otherwise kill them mid-edit. Set by whatever
-// opens that kind of menu; nothing in this plugin sets it, so a game that
-// never does plays exactly as it did.
 
 function worldPaused() {
     return true === window.orbemPaused;
 }
 
 // ─── What an enemy goes for ──────────────────────────────────────────────────
-//
-// The player, unless there is somebody on the map with health of their own
-// (data-targetable, from a character's "explore-npc-health"): then whichever
-// of the two is closer. With nobody like that on the map, which is every game
-// made before this existed, every enemy behaves exactly as it always has.
 
 function targetableNpcs() {
     return Array.from(
@@ -1307,8 +1290,7 @@ function targetableNpcs() {
 }
 
 /**
- * Where an enemy is heading, as the top-left corner the chase code has always
- * steered towards: the player's sprite, or an NPC's own box.
+ * Where an enemy is heading, as the top-left corner the chase code has always steered towards.
  *
  * @return {{left: number, top: number, npc: Element|null}|null}
  */
@@ -1527,20 +1509,7 @@ function dismissGameOver(gameOver) {
     }
 }
 
-/**
- * Hand the death over to whatever owns it, then go where it says.
- *
- * The bars are refilled and the remembered position forgotten on the server,
- * so the reload that follows lands on the world's first area with a full HUD
- * rather than back where the player died. Reloaded rather than moved in place
- * because the area being returned to is not the one on screen — its map, its
- * items and its walls all have to come with it.
- *
- * A failure here leaves the notice up rather than reloading into an unchanged
- * game: a player looking at "you died" understands a button that has not done
- * anything yet, and would not understand being put back exactly where they
- * were with full health.
- */
+/** Hand the death over to whatever owns it, then go where it says. */
 function respawnAtHome() {
     'use strict';
 
@@ -1592,13 +1561,6 @@ function triggerGameOver() {
         persistItemRemoval('projectile', 'health', 100, 0, 'true', false);
 
         // Somewhere else may own what happens after a death.
-        //
-        // Standing the player up where they fell is right for a single game,
-        // which is what this plugin is. On a network of worlds it is not: the
-        // room that killed you belongs to somebody else's game, and waking up
-        // at the top of it means death costs nothing and the retry happens
-        // somewhere the player never chose to be stuck. That network says so by
-        // localising OrbemWorld; nothing else does, so nothing else changes.
         if (window.OrbemWorld && window.OrbemWorld.respawnUrl) {
             respawnAtHome();
 
@@ -1634,10 +1596,8 @@ function triggerGameOver() {
 /**
  * Show an explainer.
  *
- * @param {string}           slug    The explainer's slug.
- * @param {HTMLElement|null} trigger The trigger walked into, if it was walked
- *                                   into. Without one it is simply shown, and
- *                                   not remembered as seen.
+ * @param {string} slug The explainer's slug.
+ * @param {HTMLElement|null} trigger The trigger walked into, if it was walked into.
  * @return {boolean} Whether there was one to show.
  */
 function showExplainer(slug, trigger) {
@@ -1648,8 +1608,7 @@ function showExplainer(slug, trigger) {
     );
     let autoCloseTimeout;
 
-    // Shared close routine used by the click/key handler and the
-    // optional auto-close timer.
+    // Shared close routine used by the click/key handler and the optional auto-close timer.
     const finishClose = () => {
         clearTimeout(autoCloseTimeout);
         window.allowMovement = true;
@@ -1793,9 +1752,7 @@ function showExplainer(slug, trigger) {
             autoCloseTimeout = setTimeout(finishClose, autoCloseMs);
         }
 
-        // Persist to avoid showing again on refresh — only when walked into. One
-        // shown by something else (a mission running out of time) may need to be
-        // shown again on the next try.
+        // Persist to avoid showing again on refresh — only when walked into.
         if (trigger) {
             persistItemRemoval(
                 slug,
@@ -1965,11 +1922,6 @@ function saveMission(mission, value, position) {
 
     saveMissionTimeouts[mission] = setTimeout(() => {
         // Somebody finished something.
-        //
-        // Announced rather than acted on, because what a finished mission
-        // *means* is not the engine's business — a world may want to pay for
-        // it, show something, or send the player somewhere, and none of that
-        // belongs in here. The engine says what happened and leaves it.
         document.dispatchEvent(new CustomEvent('orbem:mission-complete', {
             detail: { mission },
         }));
@@ -2295,35 +2247,13 @@ function showNextMission(theMission) {
     }
 }
 
-// =========================================================================
 // Mission timers
-// =========================================================================
-//
-// A mission can give the player a number of seconds (data-timer). The count
-// starts when the mission appears in the list — at once for a first mission,
-// when the one before it is completed for a mission that follows another —
-// and completing it stops the count: that is the win. Running out plays the
-// mission's time-up cutscene, then shows its time-up explainer, whichever of
-// the two it has.
-//
-// Only play time counts: nothing runs down on the start screen, during a
-// cutscene or an explainer, or in a hidden tab.
-//
-// A timer belongs to the place its mission is in. Leaving the area ends it,
-// and coming back starts it again from the full time — which is also how a
-// player has another go after running out.
-//
-// For a logged-in player the time left is saved as it runs, alongside their
-// position: a refresh puts them back where they stood, so it gives them back
-// the time they had there, not a fresh clock. Running out is saved too (as
-// nothing left), so refreshing is not a way out of having run out.
 
 // How often a running clock is saved, besides when the page is left.
 const MISSION_TIMER_SAVE_EVERY = 5000;
 
 const missionTimers = new Map();
-// Missions that ran out while on this page, so leaving them clears the saved
-// "no time left" and coming back is a fresh try.
+// Missions that ran out while on this page, so leaving them clears the saved "no time left" and coming back is a fresh try.
 const missionTimedOut = new Set();
 const missionTimeUps = [];
 let missionTimerTick = null;
@@ -2417,7 +2347,7 @@ function drawTopClock() {
 /**
  * Save the time left on one mission, or clear it (left = null).
  *
- * @param {string}      slug
+ * @param {string} slug
  * @param {number|null} left Milliseconds.
  */
 function saveMissionTimer(slug, left) {
@@ -2459,10 +2389,7 @@ function stopMissionTimer(slug) {
     drawTopClock();
 }
 
-/**
- * Start timers for missions that have just appeared, and end those whose
- * mission is gone. Cheap enough to run on every change to the list.
- */
+/** Start timers for missions that have just appeared, and end those whose mission is gone. */
 function syncMissionTimers() {
     'use strict';
 
@@ -2491,8 +2418,7 @@ function syncMissionTimers() {
                 return;
             }
 
-            // Time saved from before a refresh, used once: after that this
-            // page's own count is the one that is right.
+            // Time saved from before a refresh, used once: after that this page's own count is the one that is right.
             const saved = parseInt(el.dataset.timerLeft, 10);
             const left = 0 <= saved ? Math.min(saved, seconds * 1000) : seconds * 1000;
 
@@ -2551,11 +2477,7 @@ function missionTimeUp(slug, timer) {
     }
 }
 
-/**
- * Play what running out leads to, one thing at a time, each once nothing
- * else is showing. Something not in this area is skipped rather than kept
- * waiting forever.
- */
+/** Play what running out leads to, one thing at a time, each once nothing else is showing. */
 function playMissionTimeUps() {
     'use strict';
 
@@ -2575,8 +2497,7 @@ function playMissionTimeUps() {
         );
 
         if (cutscene) {
-            // It is the consequence of running out, so it plays each time
-            // the player does, seen before or not.
+            // It is the consequence of running out, so it plays each time the player does, seen before or not.
             cutscene.classList.remove('been-viewed');
             engageCutscene(next.cutscene, false);
         }
@@ -2632,14 +2553,12 @@ function tickMissionTimers() {
     }
 }
 
-// Leaving the page — a refresh, or closing the tab — saves every running clock
-// where it stands.
+// Leaving the page — a refresh, or closing the tab — saves every running clock where it stands.
 window.addEventListener('pagehide', () => {
     missionTimers.forEach((timer, slug) => saveMissionTimer(slug, timer.left));
 });
 
-// Completing the mission is the win: the clock stops where it is, and is
-// marked done so the list changing around it does not start it again.
+// Completing the mission is the win.
 document.addEventListener('orbem:mission-complete', (event) => {
     playSfx('explore_sfx_mission');
 
@@ -2658,13 +2577,7 @@ document.addEventListener('orbem:mission-complete', (event) => {
 function watchMissionTimers() {
     'use strict';
 
-    // The list is rebuilt on every area change, and a following mission
-    // appears by gaining a class, so both are watched.
-    //
-    // Watched wherever it currently is. Walking through a door rewrites the
-    // whole game container from its own HTML, which replaces #missions with a
-    // copy — and an observer on the old one never saw the timed mission of
-    // the room just walked into, so its clock never started.
+    // The list is rebuilt on every area change, and a following mission appears by gaining a class, so both are watched.
     const onList = new MutationObserver(syncMissionTimers);
     let watched = null;
 
@@ -2972,11 +2885,7 @@ function resetExplore() {
 function restartGame() {
     'use strict';
 
-    // Somewhere else may own what "The End" means. Wiping progress and going
-    // back to the beginning is right for a single game, which is what this
-    // plugin is; a network of worlds says otherwise — the end of a building's
-    // game is walking back out of the building — by defining this. Nothing
-    // else defines it, so nothing else changes.
+    // Somewhere else may own what "The End" means.
     if ('function' === typeof window.orbemTheEnd && true === window.orbemTheEnd()) {
         return;
     }
@@ -3099,11 +3008,7 @@ function weaponHitAreaOf(weaponEl) {
 /**
  * What this swing costs whatever it lands on.
  *
- * Pulled out of hurtTheEnemy so that hitting a player and hitting an enemy
- * read the same table. Two copies would be two things to keep in step, and
- * the one that drifted would be the one nobody tests.
- *
- * @param  theWeapon
+ * @param theWeapon
  * @return {number}
  */
 function attackStrengthOf(theWeapon) {
@@ -3170,17 +3075,6 @@ window.orbemDamageTaken = damageTaken;
 /**
  * Offer this swing to any other player standing in it.
  *
- * Players are deliberately not `.map-item`, so they are not in the collision
- * set the enemy passes iterate and have to be offered the swing separately.
- * Both of the engine's damage timings come through here — the continuous one
- * while the weapon is engaged, and the single pass at the end of the
- * animation — because a fight should not depend on which one a character is
- * configured for.
- *
- * Guarded rather than trusting `dataset.strength`: a magic element stands in
- * for the weapon on some attacks and carries no strength table, and the enemy
- * path never reaches those.
- *
  * @param weaponEl
  */
 function swingAtPlayers(weaponEl) {
@@ -3206,8 +3100,7 @@ function swingAtPlayers(weaponEl) {
 }
 
 /**
- * Deal the player's attack damage to every enemy currently in reach. Used for
- * the "end" damage time, where one pass runs as the attack animation finishes.
+ * Deal the player's attack damage to every enemy currently in reach.
  *
  * @param weaponEl
  */
@@ -3222,9 +3115,7 @@ function hitEnemiesInReach(weaponEl) {
         hitEnemyWithWeapon(weaponEl, enemyEl);
     });
 
-    // And anybody else standing in it, where the area allows fighting. The
-    // same swing, the same strength and the same overlap test an enemy gets —
-    // multiplayer decides only whether there is anybody there to hit.
+    // And anybody else standing in it, where the area allows fighting.
     swingAtPlayers(weaponEl);
 }
 
@@ -3263,8 +3154,7 @@ function damageEnemy(value, attackStrength, weaponName, remote) {
 
         updateBossBar(value);
 
-        // A boss with its bar across the screen does not need one
-        // over its head too.
+        // A boss with its bar across the screen does not need one over its head too.
         if (enemyHealthBar && 'yes' !== value.dataset.bossBar) {
             if ('block' !== enemyHealthBar.style.display) {
                 enemyHealthBar.style.display = 'block';
@@ -3308,8 +3198,7 @@ function damageEnemy(value, attackStrength, weaponName, remote) {
     if (0 === newHealth) {
         const spawnedCopy = 'true' === value.dataset.spawned;
 
-        // Anything keeping count — waves, a score — listens here
-        // rather than watching the map.
+        // Anything keeping count — waves, a score — listens here rather than watching the map.
         document.dispatchEvent(new CustomEvent('orbem:enemy-defeated', {
             detail: {
                 enemy: value,
@@ -3361,8 +3250,7 @@ function damageEnemy(value, attackStrength, weaponName, remote) {
             }
         }
 
-        // A copy shares its spawner's name. Saving it as defeated
-        // would take the spawner off the map for good.
+        // A copy shares its spawner's name.
         if (spawnedCopy) {
             return;
         }
@@ -3440,8 +3328,7 @@ const hurtTheEnemy = (function () {
             return;
         }
 
-        // The overlap test can use a separate hit area (e.g. the equipped
-        // weapon image's reach) while damage/type still come from theWeapon.
+        // The overlap test can use a separate hit area.
         const overlapTarget = hitArea || theWeapon;
 
         if (value && theWeapon && elementsOverlap(overlapTarget, value, 0)) {
@@ -3554,10 +3441,7 @@ function clampToWalls(collisionWalls, enemy, newTop, newLeft) {
         // Skip self
         if (wall === enemy) return;
 
-        // Get wall bounds — handle DOM elements, SVG map rects and plain
-        // objects. An unmeasured SVG rect yields NaN bounds, which skips the
-        // no-overlap return (NaN comparisons are false) and clamps the enemy
-        // to NaN.
+        // Get wall bounds — handle DOM elements, SVG map rects and plain objects.
         const wallBox = collisionBox(wall, { offsetLeft: eLeft, offsetTop: eTop, offsetWidth: eRight - eLeft, offsetHeight: eBottom - eTop });
         const wLeft   = wallBox.offsetLeft;
         const wTop    = wallBox.offsetTop;
@@ -4464,19 +4348,7 @@ const enterNewArea = (function () {
                         characterItem.className =
                             newMapItems['start-direction'] + '-dir';
 
-                        // Remember where this area put them, now, rather than
-                        // waiting for them to move.
-                        //
-                        // Coordinates are saved a second after the player stops
-                        // walking, which never happens if they arrive somewhere
-                        // and stand still — so the remembered position went on
-                        // describing the area they had left. Refreshing then
-                        // dropped them at those coordinates inside the new
-                        // area: through a wall, across the level from the way
-                        // out, or anywhere else that spot happens to be.
-                        //
-                        // Harmless before anything was saved at all. It is the
-                        // first thing a player notices now that it is.
+                        // Remember where this area put them, now, rather than waiting for them to move.
                         addUserCoordianate(
                             characterItem.style.left,
                             characterItem.style.top
@@ -4682,9 +4554,7 @@ const showItemDescription = (function () {
                     const selectedType = selectedItem.getAttribute('data-type');
                     const isConsumable = isPointItemType(selectedType);
 
-                    // Replace current description content. A health/mana/power
-                    // item is spent rather than worn, so it offers Use; anything
-                    // else shows Equip, or Unequip when it is already equipped.
+                    // Replace current description content.
                     description.innerHTML = newItemDescription;
                     description.appendChild(dropButton);
 
@@ -5620,20 +5490,6 @@ window.engageEnemy = engageEnemy;
  * @param trigger
  */
 // ─── Spawners ────────────────────────────────────────────────────────────────
-//
-// An enemy with data-spawner="yes" is not on the map itself. It is the place
-// copies of it come from: one every `interval` seconds, from its own top/left,
-// never more than `alive` at once, until `amount` have been sent — or for as
-// long as the area is open when amount is 0.
-//
-// Copies are ordinary enemies in every way but two: they carry
-// data-spawned="true", and their deaths are not saved, because a copy shares
-// its spawner's name and saving it would mark the spawner itself defeated.
-//
-// Something else on the page can run a spawner instead — a game deciding when
-// each wave starts and what it looks like. It says so through
-// window.orbemOwnsSpawner(el), and drives it through window.orbemSpawners.
-// With nothing claiming it, a spawner starts on its own like any enemy.
 
 const spawnerStates = new Map();
 
@@ -5699,8 +5555,7 @@ function spawnCopy(el, state) {
 
     copy.dataset.health = copy.dataset.healthamount;
 
-    // The shot a spawner carries is a template, as it is on any shooter: shown
-    // only as the copies it fires, never as itself.
+    // The shot a spawner carries is a template, as it is on any shooter.
     copy.querySelectorAll(':scope > .projectile').forEach((shot) => {
         shot.style.display = 'none';
     });
@@ -5740,9 +5595,7 @@ function spawnCopy(el, state) {
 
     engageEnemy(copy, false);
 
-    // A wanderer walks about the way any wanderer does — freely, not after
-    // anybody — which the engine only starts for the ones on the map when an
-    // area loads. A runner keeps its chase instead: engageEnemy has started it.
+    // A wanderer walks about the way any wanderer does.
     if ('yes' === copy.dataset.wanderer && 'runner' !== copy.dataset.enemyType) {
         makeNPCWander(copy, copy.dataset.speed || SPAWN_WANDER.speed, copy.dataset.timebetween || SPAWN_WANDER.between, false);
     }
@@ -5805,15 +5658,13 @@ window.orbemSpawners = {
 function engageEnemy(enemy, trigger) {
     'use strict';
 
-    // A spawner is where enemies come from, not an enemy: engaging it starts
-    // the copies, unless something on the page has said it runs this one.
+    // A spawner is where enemies come from, not an enemy.
     if (isSpawner(enemy)) {
         if (trigger) {
             trigger.remove();
         }
 
-        // A moment's grace first, so a game whose script loads after the
-        // engine has the chance to claim it. Then only if nothing has.
+        // A moment's grace first, so a game whose script loads after the engine has the chance to claim it.
         setTimeout(() => {
             if (document.body.contains(enemy) && !spawnerIsOwned(enemy) && !spawnerStates.has(enemy)) {
                 startSpawner(enemy);
@@ -5926,11 +5777,6 @@ function updateBossWave(enemy) {
 }
 
 // ─── Boss waves ──────────────────────────────────────────────────────────────
-//
-// What a boss is doing right now: one wave at a time. A boss either moves to
-// its next wave as its health drops (updateBossWave, the original way) or, with
-// data-boss-sequence, plays its waves in order for so many seconds each and
-// starts again from the top for as long as the fight lasts.
 
 const BOSS_WAVES = ['projectile', 'pulse-wave', 'rush', 'auto-shoot'];
 
@@ -5940,13 +5786,7 @@ const BOSS_RUSH = { windup: 700, speed: 900, overshoot: 260, rest: 900, step: 12
 /** How an auto-shoot sprays: a shot every `every` ms, a full turn every `turn` ms. */
 const BOSS_SPRAY = { every: 120, turn: 3600, speed: 650, reach: 1600 };
 
-/**
- * A boss's rush and spray at its difficulty, 1 to 10.
- *
- * 5 is exactly the values above, which is every boss without a difficulty.
- * Each step up charges faster with less warning and less rest, and sprays
- * faster shots more often; each step down the other way.
- */
+/** A boss's rush and spray at its difficulty, 1 to 10. */
 function bossTuning(enemy) {
     const level = Math.min(10, Math.max(1, parseInt(enemy.dataset.bossDifficulty || '5', 10) || 5));
     const step = level - 5;
@@ -6013,11 +5853,6 @@ function applyBossWave(enemy, wave) {
 }
 
 // ─── A boss's bar ────────────────────────────────────────────────────────────
-//
-// data-boss-bar="yes": the boss's name and health across the top of the
-// screen for the length of the fight, instead of the small bar over its head.
-// One fight at a time; it goes when the boss does, or when the player walks
-// out of its area.
 
 function showBossBar(boss) {
     if ('yes' !== boss.dataset.bossBar) {
@@ -6130,12 +5965,7 @@ function stopBossSequence(enemy) {
     endBossWave(enemy);
 }
 
-/**
- * Rush: wind up, then charge straight at whoever the boss is after, hurting
- * like a hazard while it charges — the engine's own hazard touch, so the hurt
- * and the knock-back are exactly a hazard's. Walls stop it. Then a rest, and
- * again.
- */
+/** Rush: wind up, then charge straight at whoever the boss is after, hurting like a hazard while it charges. */
 function startBossRush(enemy) {
     stopBossRush(enemy);
 
@@ -6211,10 +6041,7 @@ function startBossRush(enemy) {
             if (hit || rush.left <= 0) {
                 rush.phase = 'rest';
                 rush.until = now + RUSH.rest;
-                // Still dangerous for a moment. Running into the player is
-                // what stops a charge (the engine keeps enemies out of the
-                // player), and the hazard touch is checked on the engine's
-                // own tick — gone in the same frame, the hit never landed.
+                // Still dangerous for a moment.
                 rush.contactUntil = now + RUSH.contact;
                 enemy.classList.remove('boss-rush-charge');
             }
@@ -6250,15 +6077,7 @@ function stopBossRush(enemy) {
     }
 }
 
-/**
- * Auto-shoot: a steady stream of the boss's shots in one direction while the
- * direction turns a full circle, like a turret spinning as it fires.
- *
- * Each shot flies a fixed distance at a fixed speed. The ordinary shot is
- * timed by how far away the player is, which would make a spiral uneven, so
- * these are thrown here and handed to the same tracking every shot gets:
- * stopped by walls, hurting the player or somebody being defended.
- */
+/** Auto-shoot: a steady stream of the boss's shots in one direction while the direction turns a full circle, like a turret spinning as it fires. */
 function startBossSpray(enemy) {
     stopBossSpray(enemy);
 
@@ -6343,8 +6162,7 @@ function engageShooter(enemy) {
         projectileTemplate.style.display = 'none';
     }
 
-    // Per-enemy attack display time (ms) so animated (GIF) attack sprites can
-    // finish; empty keeps the default.
+    // Per-enemy attack display time (ms) so animated (GIF) attack sprites can finish; empty keeps the default.
     const attackDisplayTime =
         parseInt(enemy.dataset.attackDisplayTime, 10) || 500;
 
@@ -6384,6 +6202,7 @@ function engageShooter(enemy) {
 
 /**
  * Shoot the projectile.
+ *
  * @param projectile
  * @param mapCharacterLeft
  * @param mapCharacterTop
@@ -6412,9 +6231,7 @@ function shootProjectile(
     newProjectile.style.transform = '';
     newProjectile.style.display = '';
 
-    // Weapon projectiles: if the weapon defines a dedicated projectile image,
-    // show that on the flying clone; otherwise fall back to throwing the weapon
-    // image itself (the `.weapon-overlay`). Spells use their own projectile art.
+    // Weapon projectiles: if the weapon defines a dedicated projectile image, show that on the flying clone.
     if (true !== spell) {
         newProjectile.classList.remove(
             'weapon-swing',
@@ -6525,11 +6342,9 @@ function trackProjectile(projectile, collisionWalls, isProjectile, spawner) {
                 belowSpawnWalls.delete(wall);
             }
 
-            // className on an SVG map rect is an SVGAnimatedString with no
-            // includes(), so it is normalised to a string first.
+            // className on an SVG map rect is an SVGAnimatedString with no includes(), so it is normalised to a string first.
             if (enemyOverlap(projectile, wall, container) && false === String(wall.className?.baseVal ?? wall.className ?? '').includes('trigger') && 'true' !== wall.dataset?.passable) {
                 // If projectile collides with player than take health of player.
-                // Not while the world is paused: it lands, and does nothing.
                 if (
                     true === wall.classList.contains('map-character-icon') &&
                     false === projectile.classList.contains('map-weapon') &&
@@ -6576,13 +6391,11 @@ function trackProjectile(projectile, collisionWalls, isProjectile, spawner) {
             }
         }
 
-        // Somebody being defended is not in the walls list, so is looked for
-        // separately. Not the player's own thrown weapon.
+        // Somebody being defended is not in the walls list, so is looked for separately.
         if (false === projectile.classList.contains('map-weapon')) {
             const victim = targetableNpcs().find((npcEl) => enemyOverlap(projectile, npcEl, container));
 
-            // One hit per shot: it is gone the moment it lands, or it would
-            // hurt them again on every frame it took to pass through.
+            // One hit per shot: it is gone the moment it lands, or it would hurt them again on every frame it took to pass through.
             if (victim) {
                 if (!worldPaused()) {
                     hurtNpc(victim, projectile.dataset.value);
@@ -6776,9 +6589,7 @@ function trackWeaponProjectile(projectile, collisionWalls) {
                 continue;
             }
 
-            // className on an SVG element is an SVGAnimatedString, which has
-            // no includes() — reading it here would throw the moment a map
-            // rect entered the projectile loop.
+            // className on an SVG element is an SVGAnimatedString, which has no includes().
             if (
                 String(wall.className?.baseVal ?? wall.className ?? '').includes('trigger') ||
                 'true' === wall.dataset?.passable
@@ -7130,11 +6941,7 @@ function addNoPoints() {
                     }
                 }
 
-                // Add special class for cutscenes. Something you can do
-                // again is exempt: a record that it once played is not a
-                // reason to refuse it now, and marking it viewed here is what
-                // would stop a character with several conversations from ever
-                // starting one after their first had been heard.
+                // Add special class for cutscenes.
                 if (cutSceneItem && 'yes' !== cutSceneItem.dataset?.repeat) {
                     cutSceneItem.classList.add('been-viewed');
                 }
@@ -7842,8 +7649,7 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
     const weaponOverlay = weaponEl.querySelector('.weapon-overlay');
     const damageAtEnd = 'end' === mapChar.dataset.damageTime;
 
-    // Other players, once per pass rather than once per item: they are not in
-    // `modal` below, and swingAtPlayers does its own looking.
+    // Other players, once per pass rather than once per item.
     if (weaponEl.classList.contains('engage') && false === damageAtEnd) {
         swingAtPlayers(weaponEl);
     }
@@ -8032,12 +7838,7 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
                 }
             }
 
-            // Somebody you have just spoken to is available again once you
-            // have actually left them. Measured here, against the box that
-            // starts the conversation, rather than off the back of a nearby
-            // branch: standing still next to a character must hold the
-            // conversation shut, and walking off must open it, and nothing
-            // else about the pass should be able to decide either.
+            // Somebody you have just spoken to is available again once you have actually left them.
             if (box && value.classList.contains('cutscene-trigger') && value.dataset.triggee) {
                 const talkScene = document.querySelector('.' + escClass(value.dataset.triggee) + '-map-cutscene');
                 const speaker = talkScene && talkScene.dataset.character
@@ -8290,11 +8091,7 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
 
                         engageCutscene(position, false);
 
-                        // Something you can do again — talking to somebody —
-                        // keeps its trigger and is not written down as spent.
-                        // It is held off only until the player has stepped
-                        // away, or standing next to a character would start
-                        // the conversation over the moment it ended.
+                        // Something you can do again — talking to somebody — keeps its trigger and is not written down as spent.
                         if ('yes' === value.dataset?.repeat) {
                             saidJustNow.add(value.id || cleanClassName(value.className));
                             saidJustNowApart.delete(value.id || cleanClassName(value.className));
@@ -9314,9 +9111,7 @@ function storeExploreItem(item) {
     const type = item.dataset.type
     const value = item.dataset.value
     const id = item.id;
-    // An item can name the storage entry it belongs to (data-store-as) when its
-    // own class name is not that — a copy of something, say, that should stack
-    // with the original rather than fill a slot of its own.
+    // An item can name the storage entry it belongs to.
     const name = item.dataset.storeAs || cleanClassName(item.className);
     const menuItem = document.createElement('span');
     const menuType = getMenuType(type);
@@ -9330,8 +9125,7 @@ function storeExploreItem(item) {
         currentPoints = thePoints ? thePoints.getAttribute('data-amount') : 0;
     }
 
-    // Something with a storage entry of its own always goes to storage, rather
-    // than being used up the moment it is walked into.
+    // Something with a storage entry of its own always goes to storage, rather than being used up the moment it is walked into.
     if (
         'gear' !== type &&
         !item.dataset.storeAs &&
@@ -9573,17 +9367,7 @@ function setPreviousCutsceneArea(cutsceneName) {
  * @param position
  * @param areaCutscene
  */
-/**
- * Walking a conversation that forks.
- *
- * A cutscene used to be a straight line: engage a paragraph, and when the
- * player presses on, engage its next sibling. A Dialogue Path block turns that
- * line into a tree, and these are the three questions the tree asks.
- *
- * The rule the whole thing rests on: a path's first line is the offer, and the
- * rest of it is what follows from taking that offer. Paths side by side are
- * choices side by side.
- */
+/** Walking a conversation that forks. */
 const DIALOGUE_PATH = 'orbem-dialogue-path';
 const DIALOGUE_LINE = 'wp-block-orbem-paragraph-mp3';
 const CONVERSATION = 'orbem-conversation';
@@ -9591,18 +9375,7 @@ const CONVERSATION = 'orbem-conversation';
 /**
  * Which of a character's conversations to have this time.
  *
- * A cutscene with no Conversation blocks is one conversation — every cutscene
- * written before they existed, and every simple one written since — so this
- * answers with the cutscene itself and nothing downstream has to care.
- *
- * With several, they are taken in turn and start again at the end, so a
- * character works through what they have to say rather than picking at random
- * and repeating themselves anyway. Where they have got to is remembered per
- * browser: it is a nicety rather than progress, and it is not worth a round
- * trip to the server or a row in anybody's account to remember which of three
- * greetings somebody heard last.
- *
- * @param  {Element} cutscene
+ * @param {Element} cutscene
  * @return {Element} The conversation to play, which may be the cutscene.
  */
 function pickConversation(cutscene) {
@@ -9620,8 +9393,7 @@ function pickConversation(cutscene) {
         next = (parseInt(window.localStorage.getItem(key), 10) || 0) % all.length;
         window.localStorage.setItem(key, String((next + 1) % all.length));
     } catch (e) {
-        // Private window, blocked storage, a browser having a bad day. Taking
-        // the first one is a worse conversation, not a broken one.
+        // Private window, blocked storage, a browser having a bad day.
         next = 0;
     }
 
@@ -9632,20 +9404,7 @@ function pickConversation(cutscene) {
     return all[next];
 }
 
-/**
- * Whether a line belongs to a branch rather than to the conversation itself.
- *
- * The opening line of a cutscene is engaged on load so there is something on
- * screen to read. That is found with `:first-of-type`, which means "first span
- * among its siblings" — and a branch's opening line is also the first span
- * among *its* siblings, so once cutscenes could contain Dialogue Paths the
- * same query engaged every choice in the conversation at once and the whole
- * thing appeared stacked down the screen.
- *
- * Asked as a question about the element rather than fixed in the selector,
- * because the lines are not direct children of the cutscene — there is a
- * wrapper in between — so scoping with `>` silently matches nothing at all.
- */
+/** Whether a line belongs to a branch rather than to the conversation itself. */
 function isBranchLine(el) {
     return !!el.closest('.' + DIALOGUE_PATH);
 }
@@ -9654,13 +9413,7 @@ function isDialoguePath(el) {
     return !!el && !!el.classList && el.classList.contains(DIALOGUE_PATH);
 }
 
-/**
- * Whether an element is a line of the conversation.
- *
- * The same two things the cutscene player collects as dialogue: a bare
- * paragraph, or a dialogue block. Everything else inside the cutscene box —
- * the portraits, the name badges, the edit handle — is furniture.
- */
+/** Whether an element is a line of the conversation. */
 function isDialogueLine(el) {
     return !!el && ('P' === el.tagName || (!!el.classList && el.classList.contains(DIALOGUE_LINE)));
 }
@@ -9683,14 +9436,7 @@ function dialogueChoicesAt(el) {
     return paths;
 }
 
-/**
- * What comes after a line, climbing out of any branch it finishes.
- *
- * The climb is the part worth reading twice. When a chosen branch runs out,
- * the branches sitting beside it are the offers the player did not take — so
- * they are stepped over rather than walked into. Without that, choosing the
- * first of three options would play the other two straight afterwards.
- */
+/** What comes after a line, climbing out of any branch it finishes. */
 function afterDialogue(current, root) {
     let node = current;
 
@@ -9704,13 +9450,6 @@ function afterDialogue(current, root) {
         }
 
         // Step over anything that is not part of the conversation.
-        //
-        // The climb leaves the wrapper the lines sit in and continues among
-        // the cutscene's own children, which include the portraits, the name
-        // badges and the edit handle. Returning one of those "spoke" it as a
-        // blank line: the conversation appeared to be over but the cutscene
-        // was still running, so movement stayed locked until another press
-        // finally ran off the end.
         while (next && !isDialogueLine(next) && !isDialoguePath(next)) {
             next = next.nextElementSibling;
         }
@@ -9746,9 +9485,7 @@ function playCutscene(position, areaCutscene) {
         (undefined === cutscene.dataset?.video ||
             'false' === cutscene.dataset?.video)
     ) {
-        // One of the things this character might say, and the only part of
-        // the cutscene anything below should look at. With no Conversation
-        // blocks in it this is the cutscene, which is what it always was.
+        // One of the things this character might say, and the only part of the cutscene anything below should look at.
         const said = pickConversation(cutscene);
 
         const dialogues = said.querySelectorAll(
@@ -9796,11 +9533,6 @@ function playCutscene(position, areaCutscene) {
             resetWalkSound();
 
             // Engage this conversation's opening line.
-            //
-            // The pass that runs at page load cannot do it: which of a
-            // character's conversations is being had is decided here, when
-            // they are talked to, so at load it would have to guess — and
-            // guessing means the wrong line is on screen behind the right one.
             cutscene
                 .querySelectorAll('.wp-block-orbem-paragraph-mp3.engage')
                 .forEach((line) => line.classList.remove('engage'));
@@ -9864,13 +9596,7 @@ function playCutscene(position, areaCutscene) {
 
             typeWriter(textContainer, text, 0);
 
-            /**
-             * Say one line, whichever branch it is in.
-             *
-             * Lifted out of the advance below so that the empty-branch case in
-             * showChoices can speak a line without a second copy of the
-             * typewriter, the voice and the dialogue box to keep in step.
-             */
+            /** Say one line, whichever branch it is in. */
             const engageLine = (line) => {
                 line.classList.add('engage');
 
@@ -9888,31 +9614,19 @@ function playCutscene(position, areaCutscene) {
                 makeTalk(text, line.dataset.voice, providedAudio, false);
             };
 
-            /**
-             * Offer the branches and wait.
-             *
-             * Nothing advances while this is up: the auto-advance interval is
-             * cleared and the click and key handlers are held off, because a
-             * question that answers itself if you are still pressing on from
-             * the last line is not a question.
-             */
+            /** Offer the branches and wait. */
             const showChoices = (paths) => {
                 clearInterval(window.nextDialogueTimeout);
                 clearTimeout(typeWriterTimeout);
 
-                // These are the player's own words, so whoever was speaking
-                // stops being on screen: their portrait and their name badge
-                // both belong to the line that has just finished, and leaving
-                // them up reads as the NPC offering the player's replies.
+                // These are the player's own words, so whoever was speaking stops being on screen.
                 cutscene.querySelectorAll('.cut-character.engage, .character-name.engage')
                     .forEach((el) => el.classList.remove('engage'));
 
                 const list = document.createElement('div');
                 list.className = 'orbem-dialogue-choices';
 
-                // No name and no portrait over the player's own options. A
-                // name badge tells you who is talking, and the player already
-                // knows: these are the things they themselves can say.
+                // No name and no portrait over the player's own options.
 
                 paths.forEach((path) => {
                     const offer = dialogueOffer(path);
@@ -9927,25 +9641,13 @@ function playCutscene(position, areaCutscene) {
                     option.textContent = (offer.querySelector('p') || offer).innerText;
 
                     option.addEventListener('click', (event) => {
-                        // The cutscene listens for clicks to move on, and this
-                        // click is an answer rather than a nudge.
+                        // The cutscene listens for clicks to move on, and this click is an answer rather than a nudge.
                         event.stopPropagation();
                         playSfx('explore_sfx_select');
 
                         list.remove();
 
-                        // The chosen line is not played back. Picking it was
-                        // the player saying it — they have just read it and
-                        // acted on it, and showing it again is asking them to
-                        // click through their own words. What they want next
-                        // is the reply.
-                        //
-                        // Marking it as where we are and advancing keeps that
-                        // in one place: stepping out of a branch, skipping the
-                        // offers not taken, running into a further question or
-                        // ending the conversation all stay the business of the
-                        // advance below. It never appears, because the advance
-                        // clears it before anything is painted.
+                        // The chosen line is not played back.
                         offer.classList.add('engage');
                         nextDialogue();
                     });
@@ -9953,8 +9655,7 @@ function playCutscene(position, areaCutscene) {
                     list.appendChild(option);
                 });
 
-                // Nothing to offer — every branch was empty. Carry on rather
-                // than leaving the player looking at a box with no way out.
+                // Nothing to offer — every branch was empty.
                 if (!list.children.length) {
                     const past = afterDialogue(paths[paths.length - 1], cutscene);
 
@@ -10013,10 +9714,7 @@ function playCutscene(position, areaCutscene) {
                     // At end of dialogue. Close cutscene and make walking available.
                     cutscene.classList.remove('engage');
 
-                    // Something you can do again is not finished with just
-                    // because it finished. Clearing this is what lets the next
-                    // conversation be had at all — the trigger will not fire
-                    // against a cutscene that has been viewed.
+                    // Something you can do again is not finished with just because it finished.
                     if ('yes' === cutscene.dataset?.repeat) {
                         cutscene.classList.remove('been-viewed');
                     }
@@ -10560,25 +10258,10 @@ function applyLanguageTranslations(root) {
 /**
  * Start a cutscene by name, from outside the engine.
  *
- * Everything in here starts a conversation by being walked into, which is the
- * right way for a doorway or a person and the wrong way for a scripted moment
- * — somebody turning up to tell the player something that has just become
- * true. There was no way to ask for one, so anything wanting to script a
- * moment had to fake a trigger box and hope the player wandered into it.
- *
- * Narrow on purpose: a name and nothing else. What decides that the moment has
- * come is the caller's business.
- *
  * @param {string} name The cutscene's slug.
  */
 /**
  * Walk out through a doorway, from outside the engine.
- *
- * Takes the doorway itself — the element the player would have walked into —
- * so everything about leaving is the engine's own: the area it leads to, the
- * spot outside it puts you down on, the map it loads. A caller that worked out
- * those for itself would be a second way of leaving a building, and the two
- * would disagree the first time either changed.
  *
  * @param {Element} door The doorway element.
  */
@@ -10595,12 +10278,6 @@ window.orbemLeaveThrough = function (door) {
 /**
  * Finish a mission from outside the engine.
  *
- * For a game that decides for itself when it has been won — the last wave
- * beaten, the clock survived — rather than by an item picked up or an enemy
- * beaten. Exactly what reaching the goal would do: the same request, the same
- * announcement, so whatever a finished mission means elsewhere happens here
- * too. The request is one anybody could already send.
- *
  * @param {string} slug The mission's slug.
  */
 window.orbemCompleteMission = function (slug) {
@@ -10613,11 +10290,7 @@ window.orbemCompleteMission = function (slug) {
     return true;
 };
 
-/**
- * End the player, the way losing all their health does: the game-over and
- * whatever the world does after a death. For a game that decides on a death
- * the engine cannot see — being crushed, say.
- */
+/** End the player, the way losing all their health does: the game-over and whatever the world does after a death. */
 window.orbemKillPlayer = function (reason) {
     if (false === window.allowMovement && document.querySelector('.game-over-notice[style*="block"]')) {
         return false;
@@ -11168,25 +10841,12 @@ function playJumpSound() {
     }
 }
 
-// =============================================================================
 // Shops
-// =============================================================================
-//
-// Walk up to somebody keeping a shop and it opens. Everything shown comes from
-// the server when it opens and again after every purchase, because what is on
-// the shelf, what it costs and how many are left are the shop's business and
-// not something the page should be holding an opinion about.
 
 let shopOpenFor = null;
 let shopTab = 'buy';
 
-/**
- * Open the shop this character keeps.
- *
- * Movement stops while it is open, the way it does for a cutscene: a player
- * reading a price list is not walking, and a shopkeeper you are standing on
- * would otherwise re-open the shop on every frame.
- */
+/** Open the shop this character keeps. */
 async function openCrafting() {
     'use strict';
 
@@ -11352,8 +11012,7 @@ function closeShop(keeper) {
     shopOpenFor = null;
     window.allowMovement = true;
 
-    // Remembered on the keeper so standing against them does not re-open it
-    // the instant it closes. Cleared when the player walks off.
+    // Remembered on the keeper so standing against them does not re-open it the instant it closes.
     if (keeper) {
         keeper.dataset.shopJustClosed = '1';
     }
@@ -11494,13 +11153,7 @@ async function sellToShop(shopId, slug, keeper) {
     }
 }
 
-/**
- * Buy one thing, then show what the server says the shop looks like now.
- *
- * Re-asked rather than adjusted in place: a purchase can empty a shelf, start a
- * restock clock and change what is affordable, and guessing at all three here
- * is how a shop ends up showing something it will not sell.
- */
+/** Buy one thing, then show what the server says the shop looks like now. */
 async function buyFromShop(shopId, index, keeper) {
     'use strict';
 
@@ -11631,19 +11284,8 @@ function escapeShopText(value) {
 /**
  * Whether the player reached this trigger from the side that opens.
  *
- * A building with a door on its front should not be enterable by walking into
- * its back wall. The side they came in through is the one they have pushed
- * least far past — walk up to a door and you are barely over its edge, while
- * the other three edges are a whole building away.
- *
- * Without the attribute every side opens, which is how area triggers behaved
- * before there was a front to have, and what an open gateway still wants.
- *
- * @param  {Element} trigger
- * @param  {object}  mover    the walker's box in playfield coordinates, not
- *                            the sprite element — a sprite's own offsetLeft is
- *                            measured inside #map-character and says nothing
- *                            about where on the map it is standing.
+ * @param {Element} trigger
+ * @param {object} mover the walker's box in playfield coordinates, not the sprite element — a sprite's own offsetLeft is measured inside #map-character and says nothing about where on the map it is standing.
  * @return {boolean}
  */
 function enteredFromAllowedSide(trigger, mover) {
@@ -11693,10 +11335,7 @@ export function enterExplorePoint(value, mapUrl) {
         undefined !== value.className ? cleanClassName(value.className) : value;
     mapUrl = 'false' !== mapUrl ? mapUrl : value.getAttribute('data-map-url');
 
-    // Some triggers say where you come out. An exit does: walking out of a
-    // building should leave you standing in front of it, not at whatever spot
-    // the area outside happens to start people at. Absent on everything else,
-    // which then starts where it always did.
+    // Some triggers say where you come out.
     const landing = value && value.getAttribute
         ? value.getAttribute('data-nextarea-position')
         : null;
@@ -11998,19 +11637,13 @@ function movementIntFunc() {
             clearInterval(window.buttonShow);
         });
 
-    // Other people, if this game is played with any. Started here because this
-    // is the point at which there is a character with a position worth
-    // reporting; it decides for itself whether multiplayer is on.
+    // Other people, if this game is played with any.
     startMultiplayer();
 
-    // Put the characters back where this player left them, and keep noting
-    // where they get to.
+    // Put the characters back where this player left them, and keep noting where they get to.
     startNpcPositions();
 
-    // Being hit by another player is being hit. It goes through the same door
-    // an enemy's punch does — the same cooldown, the same hurt animation, the
-    // same addUserPoints — so everything that already hangs off losing health,
-    // dying included, needs to know nothing about multiplayer.
+    // Being hit by another player is being hit.
     document.addEventListener('orbem:player-hit', (event) => {
         const damage = parseInt(event.detail?.damage, 10);
 
@@ -12138,21 +11771,10 @@ function movementIntFunc() {
 }
 
 /**
- * In a gravity room, the character in the air: its jump pose going up and its
- * fall pose coming down — when it has them (the `{dir}-jump` and `{dir}-fall`
- * images). A character without them looks exactly as it always did.
+ * In a gravity room, the character in the air.
  *
- * No key of its own: jumping is the up key in a gravity room, and this only
- * follows the physics. Always shown facing sideways — up is the jump, not a
- * way to face — so it uses the last way the character faced left or right.
- * Not over an attack, a drag or being hurt, which have poses of their own.
- *
- * Runs every movement tick, after walking has picked its picture, so it wins
- * while airborne and steps aside on landing.
- *
- * @param {HTMLElement} box    #map-character.
- * @param {boolean}     moving Whether a movement key is held — landing then
- *                             goes straight back to walking, not via standing.
+ * @param {HTMLElement} box #map-character.
+ * @param {boolean} moving Whether a movement key is held — landing then goes straight back to walking, not via standing.
  */
 let airbornePose = null;
 let airborneSide = 'right';
@@ -12171,9 +11793,7 @@ function showAirbornePose(box, moving) {
         airborneSide = 'right';
     }
 
-    // Off the ground, not merely slow: at the top of a jump the speed passes
-    // through nothing, and going by speed would stand the character up in
-    // mid-air. A tick or two off the ground is a step down, not a jump.
+    // Off the ground, not merely slow.
     airborneTicks = window.isGrounded ? 0 : airborneTicks + 1;
 
     const airborne =
@@ -13171,10 +12791,7 @@ function getBlockDirection(
                 box !== collisionWallEle &&
                 elementsOverlap(moverPos, collisionWall, 0)
             ) {
-                // Same measurement elementsOverlap just used. Read straight
-                // off the element, a map rect reports undefined here, every
-                // direction test below turns NaN/false, and the player is
-                // marked as colliding with no edge to be pushed off.
+                // Same measurement elementsOverlap just used.
                 const wallBox = collisionBox(collisionWall, moverPos);
 
                 const collisionWallRight =
@@ -13280,26 +12897,7 @@ const collisionBoxCache = new WeakMap();
 /**
  * Offset geometry for a collision candidate, in playfield pixels.
  *
- * HTML elements answer with offsetLeft/Top/Width/Height and are handed back
- * untouched. SVG elements have none of those properties: reading them gives
- * undefined, every comparison in elementsOverlap turns NaN, each of the four
- * escape clauses evaluates false, and the function reports an overlap from
- * anywhere on the map. That is why the `.default-map svg rect` selectors have
- * never actually stopped anybody — they stopped everybody, everywhere.
- *
- * getBBox() reports the same rectangle in SVG user units, and the map SVG is
- * drawn at viewBox="0 0 5000 4517" over a 5000x4517 box, so one user unit is
- * one playfield pixel — the space offsetLeft already reports in. CSS
- * transforms (explore-area-scale) move neither measure, so they stay
- * comparable under scaling.
- *
- * Measured once per element and cached, because getBBox forces layout:
- * 1500 rects cost 2.46ms uncached and 0.30ms cached, against a 16.7ms frame.
- * Map rects are static geometry on a locked layer, so the box cannot go stale
- * while the element lives; entering a new area re-parses the container, which
- * makes fresh elements and lets the WeakMap drop the old ones on its own.
- *
- * @param  el
+ * @param el
  * @return {object}
  */
 function collisionBox(el, against) {
@@ -13472,8 +13070,7 @@ function elementsOverlap(rect1, rect2, buffer) {
     const isEnemy = rect1?.classList ? rect1.classList.contains('enemy-item') : false;
     const hitboxInset = (isMainCharacter && isEnemy) ? (parseFloat(rect2.offsetParent.dataset.hitboxInset) || 0) : 0;
 
-    // Either side can be the obstacle: the map rect is rect1 for projectiles
-    // and rect2 for movement, so both go through the same measurement.
+    // Either side can be the obstacle.
     const box1 = collisionBox(rect1, rect2);
     const box2 = collisionBox(rect2, rect1);
 

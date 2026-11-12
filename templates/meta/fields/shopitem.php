@@ -4,18 +4,10 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 /**
  * One row's "what is being sold", inside a shop's repeater.
  *
- * A select of everything a player can end up holding, which is the same three
- * types storage accepts — sell a player something storage cannot keep and it
- * disappears the moment they buy it.
- *
- * Its own template rather than the shared select, because that one takes its
- * options from the field definition and has no notion of the repeat index, so
- * every row would be named the same and only the last would survive the save.
- *
- * @var string         $orbem_studio_key
+ * @var string $orbem_studio_key
  * @var boolean|string $orbem_studio_main_key
- * @var boolean|int    $orbem_studio_repeat_index
- * @var array          $orbem_studio_meta_values
+ * @var boolean|int $orbem_studio_repeat_index
+ * @var array $orbem_studio_meta_values
  */
 
 $orbem_studio_final_key   = $orbem_studio_key;

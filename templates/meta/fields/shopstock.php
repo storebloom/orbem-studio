@@ -4,14 +4,10 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 /**
  * Whether a row's stock runs out, inside a shop's repeater.
  *
- * Separate from the count because "unlimited" is not a number, and encoding it
- * as one — nought meaning endless, say — makes sold out and never runs out the
- * same value.
- *
- * @var string         $orbem_studio_key
+ * @var string $orbem_studio_key
  * @var boolean|string $orbem_studio_main_key
- * @var boolean|int    $orbem_studio_repeat_index
- * @var array          $orbem_studio_meta_values
+ * @var boolean|int $orbem_studio_repeat_index
+ * @var array $orbem_studio_meta_values
  */
 
 $orbem_studio_final_key   = $orbem_studio_key;

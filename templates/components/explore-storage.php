@@ -200,11 +200,7 @@ if ('on' === $orbem_studio_storage_tabs_items) {
                             ?>
                             class="storage-item<?php echo $orbem_studio_current_gear || true === $orbem_studio_current_weapon ? ' equipped' : ''; ?><?php echo $orbem_studio_is_default_weapon ? ' default-weapon' : ''; ?>">
                         <?php
-                        // Every stored thing shows what it is — items as well
-                        // as gear and weapons, or a slot holding a potion is an
-                        // empty-looking box. Filterable because a network can
-                        // store things picked up on another site, and a post id
-                        // from there means a different post here.
+                        // Every stored thing shows what it is.
                         $orbem_studio_item_image = '';
 
                         if (false === empty($orbem_studio_item['name'])) {

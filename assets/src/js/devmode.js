@@ -206,19 +206,7 @@ export function engageDevMode() {
         // Disable transition so the item follows the cursor instantly.
         draggedContainer.style.transition = 'none';
 
-        // Where the cursor sits relative to the item's *layout* position, not
-        // its rendered box.
-        //
-        // getBoundingClientRect() on a rotated element gives the axis-aligned
-        // box around it, whose corner is outside the element — while the drag
-        // below writes style.left/top, which are untransformed. Measuring
-        // against the rendered box and moving the layout box meant a turned
-        // asset jumped by the difference between the two the instant it was
-        // grabbed, and the more it was turned the further it jumped.
-        //
-        // Worked out by inverting the expression handleMouseMove() uses, so the
-        // two cannot disagree: whatever it does on the way out, this undoes on
-        // the way in, and the item stays exactly under the cursor at any angle.
+        // Where the cursor sits relative to the item's *layout* position, not its rendered box.
         const dragIsMenu  = 'menu' === draggedContainer.dataset.type;
         const dragMapEl   = document.querySelector('.game-container');
         const dragMapRect = dragMapEl.getBoundingClientRect();

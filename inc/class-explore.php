@@ -89,8 +89,7 @@ class Explore
             'permission_callback' => $permission_callback
         ]);
 
-        // Time left on a mission's timer, kept with the player's position so
-        // a refresh does not hand them a full clock mid-mission.
+        // Time left on a mission's timer, kept with the player's position so a refresh does not hand them a full clock mid-mission.
         register_rest_route($namespace, '/mission-timer/', [
             'methods'             => 'POST',
             'callback'            => [$this, 'saveMissionTimer'],
@@ -189,6 +188,7 @@ class Explore
 
     /**
      * Whether the person looking builds this game, and so gets dev mode.
+     *
      * @return bool
      */
     public static function canBuild(): bool
@@ -379,10 +379,7 @@ class Explore
             }
 
             if ('communicate' !== $type) {
-                // Money may be owned elsewhere — see money(). Whatever owns it
-                // moves the coin and answers with the balance that resulted, so
-                // what is written below stays a true cache of it. Refusals come
-                // back as the unchanged balance, which is what should be shown.
+                // Money may be owned elsewhere — see money().
                 if ('money' === $type) {
                     $amount = (int) apply_filters('orbem_money_write', $amount, $userid);
                 }
@@ -821,8 +818,7 @@ class Explore
             ]);
         }
 
-        // A removal only needs the name to find the slot, and the item's post
-        // may well be gone by then.
+        // A removal only needs the name to find the slot, and the item's post may well be gone by then.
         if (false === $remove && ('' === $id || !get_post($id))) {
             return rest_ensure_response([
                 'success' => false,
@@ -1020,10 +1016,7 @@ class Explore
         $is_admin = self::canBuild();
         $dev_mode = '';
 
-        // `include`, not `include_once`: these are templates being rendered into
-        // a buffer, not libraries being defined. Asked for a second area in the
-        // same process, a once-only include silently prints nothing and the
-        // area arrives with no styles, no missions and no characters.
+        // `include`, not `include_once`: these are templates being rendered into a buffer, not libraries being defined.
         ob_start();
         include $this->plugin->dir_path . '/templates/style-scripts.php';
         $area_item_styles_scripts = ob_get_clean();
@@ -1104,8 +1097,7 @@ class Explore
         // Get content from the new explore-area post type.
         $item_obj = false !== $item ? get_post($item) : null;
 
-        // Storage belongs to the account, so an id saved in another world
-        // can name a different post here, or none: find it by its name.
+        // Storage belongs to the account, so an id saved in another world can name a different post here, or none.
         if ('' !== $name && (!$item_obj || $item_obj->post_name !== $name || false === in_array($item_obj->post_type, $types, true))) {
             $item_obj = null;
 
@@ -1200,12 +1192,7 @@ class Explore
     /**
      * Save, or clear, the time left on one mission's timer.
      *
-     * Kept for as long as the player's position is: a player who refreshes in
-     * the middle of a timed mission is put back where they stood, so they get
-     * back the time they had there too, not a fresh clock.
-     *
-     * @param \WP_REST_Request $request mission (slug) and left (milliseconds,
-     *                                  or null to clear).
+     * @param \WP_REST_Request $request mission (slug) and left (milliseconds, or null to clear).
      * @return \WP_REST_Response
      */
     public function saveMissionTimer(\WP_REST_Request $request): \WP_REST_Response
@@ -1512,8 +1499,7 @@ class Explore
     }
 
     /**
-     * How far a light reaches, in pixels, or 0 for something that gives none:
-     * an item set to light up at night, or a weapon that is a light source.
+     * How far a light reaches, in pixels, or 0 for something that gives none.
      *
      * @param int $post_id
      * @return int
@@ -1537,16 +1523,7 @@ class Explore
     }
 
     /**
-     * The weather an area has: which kinds, how often, and what the page needs
-     * to agree with everybody else in the area on when it comes.
-     *
-     * 'kinds' is any of drizzle, rain, snow, wind and lightning (a storm:
-     * rain with lightning). Several take turns rather than falling at once;
-     * wind can join a turn or have its own. 'frequency' is always, often,
-     * occasionally or rarely. All of it is worked out from one clock: 'seed'
-     * (the area) and 'now' (the server's time) let every player's page agree.
-     *
-     * Filtered (orbem_weather), so a network of games can set it from elsewhere.
+     * The weather an area has: which kinds, how often, and what the page needs to agree with everybody else in the area on when it comes.
      *
      * @param int $area_id
      * @return array{kinds: string[], frequency: string, seed: int, now: int}
@@ -1575,16 +1552,6 @@ class Explore
 
     /**
      * How an area is lit, for the page.
-     *
-     * 'mode' is '' (not at all), 'cycle', or a time of day it stays at: 'day',
-     * 'dusk' or 'night'. A cycle is one clock for everybody — the server's —
-     * so two players in the same area see the same time: 'epoch' (ms) is when
-     * the clock's first day began, 'offset' how far into the day (0–1) this
-     * area is ahead of it, and 'now' the server's time, which the page keeps
-     * time from rather than trusting its own.
-     *
-     * Filtered (orbem_day_night), so a network of games can run every area on
-     * one shared clock and set each one's own hour.
      *
      * @param int $area_id
      * @return array{mode: string, minutes: float, epoch: int, offset: float, now: int}
@@ -1622,14 +1589,7 @@ class Explore
     /**
      * Everybody who speaks in a cutscene, however deep they speak.
      *
-     * A cutscene's portraits and name badges are built from this list, and it
-     * used to read only the top level of the content — which was every line
-     * there was until a conversation could branch. Now a Dialogue Path holds
-     * lines of its own, and anybody who only speaks inside one had no portrait
-     * and no name badge: they talked as nobody. The player is the common case,
-     * since replies are theirs and replies are always inside a branch.
-     *
-     * @param  array $blocks Parsed blocks.
+     * @param array $blocks Parsed blocks.
      * @return array Character ids, in the order they first speak.
      */
     private static function speakersIn(array $blocks): array
@@ -1834,15 +1794,6 @@ class Explore
                 $is_strong                      = $explore_point_meta['explore-is-strong'] ?? '';
                 $is_strong                      = false === empty($is_strong) ? $is_strong : false;
                 // Per-area placement, falling back to the single position.
-                //
-                // An item stands in every area its `explore-area` meta lists,
-                // at one set of coordinates, which is right for everything that
-                // exists in one place. An area's own trigger is the exception:
-                // it is the doorway into that area *and*, standing inside the
-                // area it leads to, the way back out. Those are two different
-                // spots, and with one pair of keys moving either moved both.
-                //
-                // Anything without the per-area keys behaves exactly as before.
                 $top                            = $explore_point_meta['explore-top-' . $area] ?? $explore_point_meta['explore-top'] ?? '';
                 $left                           = $explore_point_meta['explore-left-' . $area] ?? $explore_point_meta['explore-left'] ?? '';
                 $height                         = $explore_point_meta['explore-height-' . $area] ?? $explore_point_meta['explore-height'] ?? '';
@@ -1966,18 +1917,7 @@ class Explore
 
                         $html .= ' data-map-url="' . esc_attr($map_url) . '"';
 
-                        // Where to stand on arrival, when this trigger has an
-                        // opinion about it. Per-area for the same reason the
-                        // position is: one trigger can be the doorway into a
-                        // place and the way back out of it, and walking out
-                        // should put you in front of what you walked out of
-                        // rather than wherever that area happens to start.
-                        //
-                        // Same shape the cutscenes use, so it lands in the same
-                        // code path on the other side.
-                        // Which side lets you in. Absent means every side, which
-                        // is how every area trigger behaved before the field
-                        // existed and is what an area with no front still wants.
+                        // Where to stand on arrival, when this trigger has an opinion about it.
                         $entry_side = $explore_point_meta['explore-entry-side'] ?? '';
 
                         if ('' !== $entry_side && 'any' !== $entry_side) {
@@ -2020,8 +1960,7 @@ class Explore
                         $html .= ' data-wanderer="' . esc_attr($wanderer) . '"';
                     }
 
-                    // Somebody enemies can go for. Only written when given
-                    // health, so every other character renders as before.
+                    // Somebody enemies can go for.
                     $npc_health = 'explore-character' === $explore_point->post_type ? (int) ($explore_point_meta['explore-npc-health'] ?? 0) : 0;
 
                     if (0 < $npc_health) {
@@ -2029,12 +1968,6 @@ class Explore
                     }
 
                     // Explore character crew mate.
-                    // A shopkeeper carries the shop they keep, so walking up
-                    // to them is all it takes to open it. The id rather than
-                    // the goods: what is on the shelf, what it costs and how
-                    // many are left are all decided when the shop is asked for,
-                    // and none of it is a thing the page should be carrying
-                    // around where it can be edited.
                     if ('explore-character' === $explore_point->post_type) {
                         $shop = get_page_by_path(
                             (string) ($explore_point_meta['explore-shop'] ?? ''),
@@ -2083,8 +2016,7 @@ class Explore
                     $pass_side  = (string) ($explore_point_meta['explore-pass-side'] ?? '') ?: 'top';
                     $pass_depth = intval($explore_point_meta['explore-pass-depth'] ?? 0);
 
-                    // Left empty, all but its last tenth: walked behind, bumped
-                    // into at the base.
+                    // Left empty, all but its last tenth: walked behind, bumped into at the base.
                     if (0 >= $pass_depth) {
                         $pass_span  = intval($explore_point_meta[in_array($pass_side, ['left', 'right'], true) ? 'explore-width' : 'explore-height'] ?? 0);
                         $pass_depth = (int) round($pass_span * 0.9);
@@ -2225,23 +2157,19 @@ class Explore
                         $html .= ' data-collectable="true"';
                     }
 
-                    // The storage entry it goes into when picked up, when that
-                    // is not its own name: one of several copies of a thing,
-                    // say, that should stack with the thing itself.
+                    // The storage entry it goes into when picked up, when that is not its own name.
                     $store_as = (string) get_post_meta($explore_point->ID, 'explore-store-as', true);
 
                     if ('' !== $store_as) {
                         $html .= ' data-store-as="' . esc_attr($store_as) . '"';
                     }
 
-                    // A crafting table, a workbench: walk up and press the
-                    // action key to open the crafting menu.
+                    // A crafting table, a workbench: walk up and press the action key to open the crafting menu.
                     if ('crafting' === $interaction_type) {
                         $html .= ' data-crafting="yes"';
                     }
 
-                    // Anything else worked with the action key: the page is
-                    // told (orbem:interact) and a plugin decides what it does.
+                    // Anything else worked with the action key: the page is told (orbem:interact) and a plugin decides what it does.
                     if ('interact' === $interaction_type) {
                         $html .= ' data-interact="yes"';
                     }
@@ -2320,9 +2248,7 @@ class Explore
 
                         $html .= ' data-health="' . esc_attr($health) . '" data-healthamount="' . esc_attr($health) . '" data-enemyspeed="' . esc_attr($enemy_speed) . '" data-enemy-type="' . esc_attr($explore_enemy_type) . '"';
 
-                        // A spawner is not an enemy on the map but the place
-                        // copies of it come from. Only written for spawners,
-                        // so every other enemy renders exactly as before.
+                        // A spawner is not an enemy on the map but the place copies of it come from.
                         if ('yes' === ($explore_point_meta['explore-spawner'] ?? '')) {
                             $spawn_interval = (float) ($explore_point_meta['explore-spawn-interval'] ?? 0);
                             $spawn_alive    = (int) ($explore_point_meta['explore-spawn-alive'] ?? 0);
@@ -2354,8 +2280,6 @@ class Explore
                         $html .= wp_kses_post($wave_html) . '"';
 
                         // The waves in order, each for its seconds, looping.
-                        // Only written when set, so a boss without one
-                        // switches on its health exactly as before.
                         $boss_sequence = [];
 
                         foreach ((array) ($explore_point_meta['explore-boss-sequence'] ?? []) as $step) {
@@ -2421,9 +2345,6 @@ class Explore
                     }
 
                     // Projectile html for enemy.
-                    // A spawner may send shooters whatever it is itself — a
-                    // game can change the type of each wave — so it carries
-                    // the shot too.
                     if ('explore-enemy' === $explore_point->post_type && ('shooter' === $explore_enemy_type || true === $barrage_wave || 'yes' === ($explore_point_meta['explore-spawner'] ?? ''))) {
                         $projectile = $explore_point_meta['explore-projectile'] ?? '';
 
@@ -2709,9 +2630,7 @@ class Explore
                 $html .= ' data-mission="' . esc_attr($mission_cutscene) . '"';
             }
 
-            // Something you can do again, rather than a story beat that
-            // happens once. Read by the player to decide whether to put the
-            // trigger away after it fires.
+            // Something you can do again, rather than a story beat that happens once.
             if ($cutscene_repeats) {
                 $html .= ' data-repeat="yes"';
             }
@@ -2877,10 +2796,6 @@ class Explore
             $path_trigger_width  = false === empty($cutscene_trigger['width']) && 0 !== $cutscene_trigger['width'] ? $cutscene_trigger['width'] : '0';
 
             // Trigger Cutscene.
-            // A repeating cutscene is never spent, so a record that it once
-            // fired must not take its trigger away. Without this, a character
-            // who was given a second conversation after somebody had already
-            // heard their first would have nothing to start it with.
             if (false === in_array( '0', [$path_trigger_width, $path_trigger_height], true) && (false === $is_cutscene_triggered || $cutscene_repeats)) {
                 $html .= '<div id="' . esc_attr($explore_cutscene->ID) . '-t" class="cutscene-trigger wp-block-group map-item ' . esc_attr($explore_cutscene->post_name) . '-cutscene-trigger-map-item is-layout-flow wp-block-group-is-layout-flow"';
                 $html .= ' style="left:' . esc_attr($path_trigger_left) . 'px;top:' . esc_attr($path_trigger_top) . 'px;height:' . esc_attr($path_trigger_height) . 'px; width:' . esc_attr($path_trigger_width) . 'px;"';
@@ -3608,18 +3523,6 @@ class Explore
     /**
      * What a player has to spend.
      *
-     * Money is the one score that is not really the game's. Points, health and
-     * mana belong to the game being played; money is carried between games and
-     * spent wherever, so a network of worlds wants to own it centrally and keep
-     * a single supply honest. This plugin on its own has nowhere to put that,
-     * so it keeps the number in explore_points like every other bar — and asks
-     * first whether something else owns it.
-     *
-     * Nothing answers on a standalone install, so the stored value is the
-     * answer and nothing changes. Where something does answer, the stored value
-     * becomes a cache of what it said, which keeps the HUD drawable even if
-     * that something goes away later.
-     *
      * @param int $user_id
      * @return int
      */
@@ -3633,14 +3536,7 @@ class Explore
         return (int) apply_filters('orbem_money_balance', $stored, $user_id);
     }
 
-    /**
-     * Set what a player has, through whatever owns money.
-     *
-     * The same path a collected coin takes, so a shop and a coin on the ground
-     * cannot end up disagreeing about where money comes from or goes. The
-     * stored value is updated to whatever the owner said it became, which for
-     * a refusal is the balance they already had.
-     */
+    /** Set what a player has, through whatever owns money. */
     public static function setMoney(int $user_id, int $amount): int
     {
         $amount = (int) apply_filters('orbem_money_write', max(0, $amount), $user_id);
@@ -3739,9 +3635,7 @@ class Explore
         return self::levelOf(is_array($meta) && isset($meta['point']['points']) ? (int) $meta['point']['points'] : 0);
     }
 
-    /**
-     * The level a number of points reaches: the last threshold it is at or past.
-     */
+    /** The level a number of points reaches: the last threshold it is at or past. */
     public static function levelOf(int $points): int
     {
         $levels = self::getLevelMap();
@@ -3763,28 +3657,19 @@ class Explore
         return $level;
     }
 
-    /**
-     * How much longer the health bar gets at every level after the first.
-     * The "Health per level" game option; 0, the default, leaves it alone.
-     */
+    /** How much longer the health bar gets at every level after the first. */
     public static function levelHealth(): int
     {
         return max(0, (int) apply_filters('orbem_level_health', (int) get_option('explore_level_health', 0)));
     }
 
-    /**
-     * The level a weapon or piece of gear needs before it can be equipped
-     * ("Level to use"); 0 when anybody can.
-     */
+    /** The level a weapon or piece of gear needs before it can be equipped ("Level to use"); 0 when anybody can. */
     public static function useLevel(int $item_id): int
     {
         return $item_id ? max(0, (int) get_post_meta($item_id, 'explore-use-level', true)) : 0;
     }
 
-    /**
-     * Every weapon and piece of gear in this game that needs a level, by id,
-     * so the storage menu can say so before anybody tries.
-     */
+    /** Every weapon and piece of gear in this game that needs a level, by id, so the storage menu can say so before anybody tries. */
     public static function useLevels(): array
     {
         $ids = get_posts([
@@ -3820,13 +3705,10 @@ class Explore
     {
         Plugin::enqueueScript('orbem-order/paragraph-mp3-block');
 
-        // The branch a conversation can fork into. Loaded beside the line
-        // block rather than on its own hook because the two are only useful
-        // together: a path with no lines in it is an empty box.
+        // The branch a conversation can fork into.
         Plugin::enqueueScript('orbem-order/dialogue-path-block');
 
-        // And the container that lets a character have more than one thing to
-        // say, so they are not the same every time you talk to them.
+        // And the container that lets a character have more than one thing to say, so they are not the same every time you talk to them.
         Plugin::enqueueScript('orbem-order/conversation-block');
     }
 
@@ -4064,25 +3946,8 @@ class Explore
     /**
      * Every per-item rule for one area.
      *
-     * THE ONLY PLACE THESE RULES ARE WRITTEN.
-     *
-     * An area arrives two ways and a player cannot tell which: a full page
-     * load, and walking through a door, which fetches the area and swaps
-     * #map-item-styles without reloading anything. Both need the same rules,
-     * and for a long time they had their own copies of this loop — which
-     * drifted, because a change only ever got made to whichever one the bug
-     * was reported against. The copies disagreed about wall textures, about
-     * per-area sizes, and about which types get a background at all, so a wall
-     * lost its surface and a door lost its size the moment anybody walked
-     * anywhere, and both came back on refresh.
-     *
-     * So there is one of them now. templates/style-scripts.php calls this and
-     * does nothing else; generateDynamicStyles() calls this and adds the
-     * game's own custom CSS. Anything new about how an item is drawn goes here
-     * and is true both ways by construction rather than by remembering.
-     *
-     * @param array  $explore_points Items in the area.
-     * @param string $position       The area being drawn, for per-area values.
+     * @param array $explore_points Items in the area.
+     * @param string $position The area being drawn, for per-area values.
      * @return string
      */
     public static function itemStyles($explore_points, string $position): string
@@ -4104,9 +3969,7 @@ class Explore
                 continue;
             }
 
-            // Per-area placement: an area's own trigger is a doorway in one
-            // place and the way back out of somewhere else, and those are
-            // neither the same size nor in the same spot.
+            // Per-area placement: an area's own trigger is a doorway in one place and the way back out of somewhere else, and those are neither the same size nor in the same spot.
             $top    = self::placement($point->ID, 'explore-top', $area_key);
             $left   = self::placement($point->ID, 'explore-left', $area_key);
             $height = self::placement($point->ID, 'explore-height', $area_key);
@@ -4114,9 +3977,7 @@ class Explore
 
             $type = 'explore-enemy' === $point->post_type ? '.enemy-item' : '.map-item';
 
-            // Only the types whose picture *is* their thumbnail. An area's
-            // thumbnail is its collision geometry, which is not a picture of
-            // anything and must never be painted onto its doorway.
+            // Only the types whose picture *is* their thumbnail.
             $bg_url = in_array($point->post_type, ['explore-weapon', 'explore-point', 'explore-sign'], true)
                 ? (string) get_the_post_thumbnail_url($point->ID)
                 : '';
@@ -4129,8 +3990,7 @@ class Explore
                 $thumb_id = get_post_thumbnail_id($point->ID);
 
                 if ($thumb_id) {
-                    // Redrawing writes over the same file, so without this the
-                    // browser keeps showing the picture from before the edit.
+                    // Redrawing writes over the same file, so without this the browser keeps showing the picture from before the edit.
                     $bg_url .= '?v=' . get_post_modified_time('U', false, $thumb_id);
                 }
             }
@@ -4155,24 +4015,13 @@ class Explore
         return $css;
     }
 
-    /**
-     * Whether a measurement is worth writing.
-     *
-     * placement() answers 'px' for a value nobody has set, and `height: px` is
-     * not a length — the browser drops the declaration, which is how a door
-     * ended up with no size and could be neither seen nor walked into.
-     */
+    /** Whether a measurement is worth writing. */
     private static function hasLength(string $value): bool
     {
         return '' !== $value && 'px' !== $value && '0px' !== $value;
     }
 
-    /**
-     * How a wall's surface is painted, if it has one.
-     *
-     * A wall with no texture, or one set to "invisible", is exactly that: the
-     * barrier is still there and nothing is drawn on it.
-     */
+    /** How a wall's surface is painted, if it has one. */
     private static function wallTextureCss($point): string
     {
         if ('explore-wall' !== $point->post_type) {
@@ -4208,11 +4057,10 @@ class Explore
     /**
      * One placement value, preferring the one written for this area.
      *
-     * @param int    $post_id
+     * @param int $post_id
      * @param string $key
      * @param string $area
-     * @return string A CSS length, or 'px' when nothing is set — which is what
-     *                the caller already treats as "leave it out".
+     * @return string A CSS length, or 'px' when nothing is set — which is what the caller already treats as "leave it out".
      */
     private static function placement(int $post_id, string $key, string $area): string
     {

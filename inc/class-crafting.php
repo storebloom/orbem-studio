@@ -2,18 +2,6 @@
 /**
  * Crafting: making things out of ingredients.
  *
- * An ingredient (`explore-ingredients`) is a base material — wood, stone,
- * cloth. Anything a player can keep — an item, gear, a weapon — can carry a
- * recipe (`explore-recipe`): which ingredients, and how many of each. At a
- * crafting table (an item whose interaction type is "crafting") the player
- * sees every recipe in the game, what each needs and what they have, and
- * crafts what they can afford: the ingredients leave their storage and the
- * thing arrives in it.
- *
- * Ingredients are kept in storage like anything else, in a tab of their own,
- * and are named by slug — so a recipe reads the same in every place an
- * ingredient of that name exists.
- *
  * @package OrbemStudio
  */
 
@@ -67,10 +55,7 @@ class Crafting
         return $recipe;
     }
 
-    /**
-     * Everything that can be crafted, as the crafting menu shows it: what
-     * each needs, what the player has of it, and whether they can make it.
-     */
+    /** Everything that can be crafted, as the crafting menu shows it. */
     public static function recipes(int $user_id): array
     {
         $have  = self::holding($user_id);
@@ -120,10 +105,7 @@ class Crafting
             ];
         }
 
-        /**
-         * What the crafting menu lists for this player — for a plugin that
-         * keeps some recipes back until they are earned.
-         */
+        /** What the crafting menu lists for this player. */
         return array_values((array) apply_filters('orbem_craft_recipes', $out, $user_id));
     }
 
@@ -145,9 +127,7 @@ class Crafting
             return ['success' => false, 'message' => __('That cannot be crafted.', 'orbem-studio')];
         }
 
-        /**
-         * Whether this player may make this: true, or why not.
-         */
+        /** Whether this player may make this: true, or why not. */
         $allowed = apply_filters('orbem_can_craft', true, $post, $user_id);
 
         if (true !== $allowed) {
@@ -188,20 +168,14 @@ class Crafting
 
         update_user_meta($user_id, 'explore_storage', $storage);
 
-        /**
-         * Where the made thing goes. Null puts it in storage; anything else
-         * is a plugin having put it somewhere itself, and is handed back to
-         * the page with the answer.
-         */
+        /** Where the made thing goes. */
         $delivered = apply_filters('orbem_craft_deliver', null, $post, $user_id);
 
         if (null === $delivered) {
             Shop::give($user_id, $post);
         }
 
-        /**
-         * Something was crafted — for a plugin that keeps count.
-         */
+        /** Something was crafted — for a plugin that keeps count. */
         do_action('orbem_crafted', $post_id, $user_id, $recipe);
 
         return [
@@ -215,9 +189,6 @@ class Crafting
         ];
     }
 
-    // =========================================================================
-    // REST
-    // =========================================================================
 
     /**
      * @action rest_api_init

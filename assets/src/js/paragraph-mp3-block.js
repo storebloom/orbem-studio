@@ -61,13 +61,7 @@ const lineAttributes = {
 	},
 };
 
-/**
- * One line, as saved.
- *
- * `keepEmptyVoice` is false only for the deprecated shape below: lines the
- * editor saved while it was still setting the voice to null, which wrote no
- * data-voice at all.
- */
+/** One line, as saved. */
 function saveLine(attributes, keepEmptyVoice) {
 	const { content, mp3Url, selectedCharacter, selectedVoice, translations } =
 		attributes;
@@ -142,10 +136,7 @@ registerBlockType('orbem/paragraph-mp3', {
 		const { content, mp3Url, selectedCharacter, selectedVoice, translations } =
 			attributes;
 
-		// Never null: the attribute is a string, so a saved null is thrown
-		// away on the next load, save() then writes data-voice="" where the
-		// post has none, and the block reports itself invalid. A line with no
-		// character — or one whose character has not loaded yet — has no voice.
+		// Never null: the attribute is a string, so a saved null is thrown away on the next load, save() then writes data-voice="" where the post has none, and the block reports itself invalid.
 		const voiceMeta = useExploreVoiceMeta(selectedCharacter) ?? '';
 
 		if (selectedVoice !== voiceMeta) {
@@ -415,9 +406,7 @@ registerBlockType('orbem/paragraph-mp3', {
 
 	save: ({ attributes }) => saveLine(attributes, true),
 
-	// Lines saved with "selectedVoice": null and so no data-voice. The editor
-	// recognises them by this, and upgrades them on open instead of calling
-	// them invalid.
+	// Lines saved with "selectedVoice": null and so no data-voice.
 	deprecated: [
 		{
 			attributes: lineAttributes,

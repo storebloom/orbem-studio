@@ -399,14 +399,7 @@ include plugin_dir_path(__FILE__) . 'plugin-header.php';
         }
         ?>
         <?php
-        // Free camera. Lets a builder let go of the character and look around
-        // their own map, so a trigger on the far side can be reached and
-        // finished without walking the whole route there first.
-        //
-        // Builders only, and deliberately not part of the game: reaching a
-        // task without making the journey is the whole point when you are
-        // building it and cheating when you are playing it. Fixed rather than
-        // in the HUD row, because the HUD is hidden when a game has no bars.
+        // Free camera.
         ?>
         <?php if (true === $orbem_studio_is_admin) : ?>
             <button type="button" id="free-camera-toggle" aria-pressed="false"
@@ -589,11 +582,7 @@ include plugin_dir_path(__FILE__) . 'plugin-header.php';
         <div class="default-map" data-iscutscene="<?php echo esc_attr($orbem_studio_is_area_cutscene); ?>" data-startleft="<?php echo false === empty($orbem_studio_explore_area_start_left) ? esc_attr($orbem_studio_explore_area_start_left) : ''; ?>" data-starttop="<?php echo false === empty($orbem_studio_explore_area_start_top) ? esc_attr($orbem_studio_explore_area_start_top) : ''; ?>">
             <?php if (false !== $orbem_studio_explore_area): ?>
                 <?php
-                // The allowlist above, not wp_kses_post(): WordPress's default
-                // post tags contain no SVG at all, so every <svg> and <rect> in
-                // an area's map was being thrown away here before it reached
-                // the page. Collision reads those rects, which is a third
-                // reason the map SVG has never stopped anyone.
+                // The allowlist above, not wp_kses_post().
                 echo wp_kses(Explore::getMapSVG($orbem_studio_explore_area), $orbem_studio_allowed_tags);
                 ?>
                 <?php echo wp_kses(html_entity_decode(Explore::getMapItemHTML($orbem_studio_explore_points, ($orbem_studio_explore_area ? $orbem_studio_explore_area->post_name : ''))), $orbem_studio_allowed_tags); ?>

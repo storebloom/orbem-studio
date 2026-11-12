@@ -1,54 +1,4 @@
-/**
- * Weather: drizzle, rain, snow, wind and lightning over an area.
- *
- * An area's builder picks the kinds (explore-weather) and how often they come
- * (explore-frequency). The engine keeps them on the game container as data,
- * the same way it keeps the time of day, and updates them on every area
- * change. This reads that data and shows the weather; nothing else in the
- * game knows it is raining.
- *
- * DRAWN WITH CSS
- *
- * Each kind is one or two layers (near and far). A layer is a tile of drops
- * or flakes, drawn once as an SVG and repeated as a background, and a CSS
- * animation slides it exactly one tile down (and across, in wind) and starts
- * again. The repeat makes that seamless, and only transform and opacity ever
- * change, so the browser moves the layers on the GPU without repainting.
- *
- * ON THE MAP, NOT THE SCREEN
- *
- * The weather is pinned to the map: each layer is shifted by where the area's
- * map is on screen (to within one tile, which is all a repeating pattern
- * needs). Walk up and the snow moves down with the ground while it falls,
- * rather than hanging in front of the camera and seeming to rise. That shift
- * is the one thing worked out every frame, and only while there is weather.
- *
- * WHEN IT COMES
- *
- * "Always" never clears. The others are counted in days of the area's clock
- * (the day-night cycle's: in a world on Orbem Standard Time, its biome's
- * day). Each day has up to MOST stretches of weather — Rarely one, Often
- * three — and how many, from none to that, is a hash of the area and the
- * day, so some days stay clear. The day is shared out evenly between that
- * day's stretches; each lasts a few hours (SPELL) somewhere in its share,
- * with clear sky either side, so two never run together.
- *
- * WHICH, WHEN SEVERAL ARE CHOSEN
- *
- * They take turns, a stretch each (under "Always", a CYCLE each), rather
- * than all falling at once: rain one time, snow the next. Lightning is a storm (rain with lightning) and takes
- * its own turn. Wind is the exception: it can join another's turn (about half
- * of them, by the hash) and also has turns of its own. Changing from one to
- * the next fades the old out before the new comes in, even under "Always".
- *
- * The clock is the server's (data-weather-now), so every player in an area
- * gets the same weather at the same time. It fades in and out over a few
- * seconds, as a CSS transition.
- *
- * Under the HUD (z 9; menus are 10 and up) and over the world. The engine
- * wraps any area with weather in its world layer (.game-world), its own
- * stacking context, so the depth-sorted things inside stay under it.
- */
+/** Weather: drizzle, rain, snow, wind and lightning over an area. */
 
 import '../sass/weather.scss';
 
@@ -64,12 +14,7 @@ const SPELL = [2 / 24, 4 / 24];
 /** Clear sky kept either side of a stretch, as a share of its part of the day. */
 const MARGIN = 0.125;
 
-/**
- * The layers. tw × th is the tile; each loop it moves one tile down (th) and,
- * in wind, one tile across (tw), so the slant of a streak is tw / th.
- * Speeds are px per second. Near and far tiles are different sizes so their
- * patterns never line up, and big enough that the repeat does not show.
- */
+/** The layers. */
 const LAYERS = {
     rain: [
         { name: 'near', tw: 256, th: 512, count: 26, len: 20, width: 1.3, alpha: 0.55, speed: 1050 },
@@ -88,7 +33,7 @@ const LAYERS = {
     ],
 };
 
-/** How dark each kind makes the area. Drizzle and snow leave it be. */
+/** How dark each kind makes the area. */
 const DIM = { rain: 0.18, lightning: 0.28 };
 
 /** How long the fade in and out takes (the CSS transition), in ms. */
@@ -126,9 +71,7 @@ function has(kind) {
     return state.kinds.includes(kind);
 }
 
-// =============================================================================
 // When
-// =============================================================================
 
 /** 0–1 from two whole numbers, the same on every page. */
 function hash(a, b) {
@@ -150,10 +93,7 @@ function days(now) {
     return (now - epoch) / (minutes * 60000) + offset;
 }
 
-/**
- * Whether the area has weather right now, and whose turn it is: a number
- * that goes up by one each stretch (each CYCLE, under "Always").
- */
+/** Whether the area has weather right now, and whose turn it is. */
 function spell() {
     const now = Date.now() + state.skew;
 
@@ -180,10 +120,7 @@ function spell() {
     return { wet: false, turn: day * 3 };
 }
 
-/**
- * What falls now: one of the chosen kinds, their turn by the cycle, with wind
- * now and then on top. Empty for clear skies.
- */
+/** What falls now: one of the chosen kinds, their turn by the cycle, with wind now and then on top. */
 function plan() {
     const chosen = state.chosen;
     const { wet, turn: n } = spell();
@@ -216,9 +153,7 @@ function plan() {
     return turn;
 }
 
-// =============================================================================
 // The tiles
-// =============================================================================
 
 /** A small seeded random, so a tile is the same every time it is drawn. */
 function random(seed) {
@@ -240,10 +175,7 @@ function svg(w, h, body) {
     )}")`;
 }
 
-/**
- * One tile of a layer. Everything is kept clear of the tile's edges, so no
- * drop is cut in half where the tiles meet.
- */
+/** One tile of a layer. */
 function tile(kind, layer, windy, seed) {
     const rand = random(seed);
     const { tw, th } = layer;
@@ -288,9 +220,7 @@ function tile(kind, layer, windy, seed) {
     return svg(tw, th, `<g fill="none" stroke="rgb(235,240,245)" stroke-opacity="${layer.alpha}" stroke-width="1.5" stroke-linecap="round">${body}</g>`);
 }
 
-// =============================================================================
 // The layers
-// =============================================================================
 
 function build() {
     const root = document.createElement('div');
@@ -301,9 +231,7 @@ function build() {
         + '<div class="ow-wx-flash"></div><svg class="ow-wx-bolt" xmlns="http://www.w3.org/2000/svg"><path/></svg>';
     document.body.appendChild(root);
 
-    // A strike's class comes off as soon as it has played. Left on, the flash
-    // and the bolt would play again every time the weather is hidden and shown
-    // (a door, a cutscene), lightning or not.
+    // A strike's class comes off as soon as it has played.
     root.querySelectorAll('.ow-wx-flash, .ow-wx-bolt').forEach((el) => {
         el.addEventListener('animationend', () => el.classList.remove('is-striking'));
         el.addEventListener('animationcancel', () => el.classList.remove('is-striking'));
@@ -335,8 +263,7 @@ function dress() {
             anchor.style.setProperty('--tw', `${layer.tw}px`);
             anchor.style.setProperty('--th', `${layer.th}px`);
 
-            // Snow drifts from side to side as it falls; the drift is its own
-            // element because one element has only one transform to animate.
+            // Snow drifts from side to side as it falls.
             const sway = document.createElement('div');
             sway.className = 'ow-wx-sway';
 
@@ -404,9 +331,7 @@ function follow() {
     state.loop = window.requestAnimationFrame(follow);
 }
 
-// =============================================================================
 // Lightning
-// =============================================================================
 
 function boltPath() {
     const w = window.innerWidth;
@@ -445,8 +370,7 @@ function strike() {
                 el.classList.add('is-striking');
             });
 
-            // And in case neither event comes (a tab in the background never
-            // runs the animation at all), off again once it would be over.
+            // And in case neither event comes.
             setTimeout(() => {
                 flash.classList.remove('is-striking');
                 bolt.classList.remove('is-striking');
@@ -457,11 +381,9 @@ function strike() {
     }, 6000 + Math.random() * 12000);
 }
 
-// =============================================================================
 // Keeping up with the area
-// =============================================================================
 
-/** Read the area's weather off the game container. True when it changed. */
+/** Read the area's weather off the game container. */
 function read() {
     const box = container();
     const data = box ? box.dataset : {};

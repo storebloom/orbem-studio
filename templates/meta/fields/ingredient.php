@@ -2,18 +2,12 @@
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 /**
- * One row's ingredient, inside a recipe's repeater: a select of every
- * ingredient, by slug — which is how a recipe names it, so the same recipe
- * reads the same in any world that has the ingredient.
+ * One row's ingredient, inside a recipe's repeater.
  *
- * Its own template rather than the shared select, because that one takes its
- * options from the field definition and has no notion of the repeat index, so
- * every row would be named the same and only the last would survive the save.
- *
- * @var string         $orbem_studio_key
+ * @var string $orbem_studio_key
  * @var boolean|string $orbem_studio_main_key
- * @var boolean|int    $orbem_studio_repeat_index
- * @var array          $orbem_studio_meta_values
+ * @var boolean|int $orbem_studio_repeat_index
+ * @var array $orbem_studio_meta_values
  */
 
 $orbem_studio_final_key   = $orbem_studio_key;

@@ -2,30 +2,6 @@
 /**
  * Shops: somewhere to spend what you are carrying.
  *
- * A shop is a list of things for sale, kept by a character. Talk to them and
- * the list opens; buy something and it costs money and arrives in storage.
- *
- * WHAT A SHOP IS NOT
- *
- * It is not a place. A shop has no position on any map and cannot be walked
- * into — the character keeping it is the thing you walk up to, and the same
- * shop can be kept by more than one of them. That is deliberate: a builder
- * writing a list of goods is doing inventory, not level design, and a village
- * with three sellers of the same wares should be one list, not three.
- *
- * STOCK IS PER PLAYER
- *
- * Every visitor finds the shelves as the builder stocked them. One player
- * buying the last potion does not deny it to the next, and a world that has
- * been visited a hundred times is not an empty shop for the hundred and first.
- * Scarcity is a thing to feel inside your own run, not something earlier
- * strangers already spent.
- *
- * The count is therefore per player and lives with the player, and the restock
- * clock starts when an item runs out for *them*. An item that never runs out
- * never restocks, which is why the clock starts at zero rather than at the
- * first sale: a shop you have barely touched is not one that needs refilling.
- *
  * @package OrbemStudio
  */
 
@@ -33,15 +9,10 @@ namespace OrbemStudio;
 
 class Shop
 {
-    /**
-     * What may be sold.
-     *
-     * The three types storage accepts, because anything else vanishes the
-     * moment it is bought — a player would pay for something and hold nothing.
-     */
+    /** What may be sold. */
     public const SELLABLE = ['explore-point', 'explore-weapon', 'explore-gear', 'explore-ingredients'];
 
-    /** Where a player's buying is remembered. Global, like every other score. */
+    /** Where a player's buying is remembered. */
     public const PLAYER_META = 'explore_shop_stock';
 
     public $plugin;
@@ -51,17 +22,10 @@ class Shop
         $this->plugin = $plugin;
     }
 
-    // =========================================================================
     // Reading a shop
-    // =========================================================================
 
     /**
      * A shop's shelves as one player finds them right now.
-     *
-     * Everything the popup needs and nothing it has to work out: what the thing
-     * is called, what it looks like, what it costs, and whether they can have
-     * one. A client deciding for itself whether something is in stock is a
-     * client that can be talked into deciding wrongly.
      *
      * @return array{shop: int, greeting: string, items: array}|null
      */
@@ -80,9 +44,7 @@ class Shop
         foreach ($rows as $index => $row) {
             $item = get_page_by_path($row['item'], OBJECT, self::SELLABLE);
 
-            // A row pointing at something deleted is skipped rather than shown
-            // as an unbuyable blank: the builder's list is out of date, which
-            // is their problem to fix and not the player's to look at.
+            // A row pointing at something deleted is skipped rather than shown as an unbuyable blank.
             if (!$item) {
                 continue;
             }
@@ -112,13 +74,7 @@ class Shop
         ];
     }
 
-    /**
-     * The builder's list, cleaned up.
-     *
-     * Rows with no item or no price are dropped here rather than guarded
-     * against everywhere downstream — a shelf with nothing on it and no price
-     * is not a thing anybody meant to put in a shop.
-     */
+    /** The builder's list, cleaned up. */
     public static function rows(int $shop_id): array
     {
         $stored = get_post_meta($shop_id, 'explore-shop-items', true);
@@ -145,13 +101,7 @@ class Shop
         return $rows;
     }
 
-    /**
-     * How many of a row this player may still buy.
-     *
-     * Their own count, refilled if the restock time has passed since it ran
-     * out. Unlimited rows are not counted at all — asking how many are left of
-     * something endless is a question with no useful answer.
-     */
+    /** How many of a row this player may still buy. */
     private static function remaining(array $row, ?array $record): int
     {
         if ($row['unlimited']) {
@@ -165,8 +115,7 @@ class Shop
             return $left;
         }
 
-        // Sold out. It comes back only if the builder said it should, and only
-        // once the wait is over.
+        // Sold out.
         if ($row['restock'] > 0 && isset($record['emptied'])) {
             $due = (int) $record['emptied'] + ($row['restock'] * MINUTE_IN_SECONDS);
 
@@ -206,17 +155,10 @@ class Shop
             : [];
     }
 
-    // =========================================================================
     // Buying
-    // =========================================================================
 
     /**
      * Sell one thing to one player.
-     *
-     * Every question is asked here and none of it is taken on trust from the
-     * client: what the row says, what the player has, and what they have
-     * already bought. The popup sends a row number and nothing else, so there
-     * is no price to tamper with and no item to substitute.
      *
      * @return array{success: bool, message?: string, money?: int, item?: string}
      */
@@ -252,13 +194,7 @@ class Shop
             return ['success' => false, 'message' => __('You cannot afford that.', 'orbem-studio')];
         }
 
-        /**
-         * Whether this player may buy at all.
-         *
-         * A network of worlds has a reason to say no that a single game does
-         * not: somebody stocking their own shop can otherwise sell to
-         * themselves forever. Nothing refuses here by default.
-         */
+        /** Whether this player may buy at all. */
         $refusal = apply_filters('orbem_shop_refuse_purchase', '', $shop_id, $user_id, $item);
 
         if ('' !== $refusal) {
@@ -267,8 +203,7 @@ class Shop
 
         $left_after = self::recordPurchase($user_id, $shop_id, $index, $row, $record);
 
-        // Paid for after it is theirs to lose, so a failure between the two
-        // leaves the player with the thing rather than without the money.
+        // Paid for after it is theirs to lose, so a failure between the two leaves the player with the thing rather than without the money.
         self::give($user_id, $item);
 
         $remaining_money = Explore::spendMoney($user_id, $row['price']);
@@ -280,8 +215,7 @@ class Shop
             'image'   => (string) get_the_post_thumbnail_url($item->ID, 'full'),
             'money'   => $remaining_money,
             'left'    => $row['unlimited'] ? null : $left_after,
-            // The storage menu as it is now, for the page to show what was
-            // just bought without a reload.
+            // The storage menu as it is now, for the page to show what was just bought without a reload.
             'storage' => self::storageHtml($user_id),
         ];
     }
@@ -319,8 +253,7 @@ class Shop
 
         $bought = (int) ($record['bought'] ?? 0);
 
-        // A restock that has come due resets the count before this sale counts
-        // against it, so the first purchase after a refill starts from full.
+        // A restock that has come due resets the count before this sale counts against it, so the first purchase after a refill starts from full.
         if ($bought >= $row['count'] && self::remaining($row, $record) > 0) {
             $bought = 0;
         }
@@ -330,8 +263,7 @@ class Shop
 
         $all[$shop_id][$index] = ['bought' => $bought];
 
-        // The clock starts when the shelf is bare, not when it was first
-        // touched — a shop with stock left is not waiting on a delivery.
+        // The clock starts when the shelf is bare, not when it was first touched.
         if (0 === $left) {
             $all[$shop_id][$index]['emptied'] = time();
         }
@@ -344,9 +276,7 @@ class Shop
     /** Put the bought thing where the player keeps things. */
     public static function give(int $user_id, \WP_Post $item, int $count = 1): void
     {
-        /**
-         * Something is being given to a player — bought, found or made.
-         */
+        /** Something is being given to a player — bought, found or made. */
         do_action('orbem_given', $user_id, $item, max(1, $count));
 
         $storage = self::storageOf($user_id);
@@ -359,15 +289,10 @@ class Shop
             'value' => (int) get_post_meta($item->ID, 'explore-value', true),
         ];
 
-        /**
-         * A bought thing's storage entry, before it is kept — for a plugin
-         * that records more about where things came from.
-         */
+        /** A bought thing's storage entry, before it is kept. */
         $entry = (array) apply_filters('orbem_storage_entry', $entry, $item, $user_id);
 
-        // Stored the way picking it up stores it: in its tab, and once —
-        // another of something already kept, weapons included, adds to its
-        // count.
+        // Stored the way picking it up stores it.
         foreach ($storage[$tab] as $index => $kept) {
             if (($kept['name'] ?? '') === $entry['name']) {
                 $storage[$tab][$index]['count'] = (int) ($kept['count'] ?? 1) + max(1, $count);
@@ -386,11 +311,7 @@ class Shop
         update_user_meta($user_id, 'explore_storage', $storage);
     }
 
-    /**
-     * A player's storage, in its tabs: items, weapons, gear and ingredients. Anything filed loose at the top
-     * — which purchases once were, where the storage menu never looked — is
-     * put in its tab.
-     */
+    /** A player's storage, in its tabs: items, weapons, gear and ingredients. */
     public static function storageOf(int $user_id): array
     {
         $storage = get_user_meta($user_id, 'explore_storage', true);
@@ -417,18 +338,12 @@ class Shop
         return $tidy;
     }
 
-    // =========================================================================
     // Selling
-    // =========================================================================
 
     /** What a shop pays for something, as a share of what it charges. */
     public const BUYBACK = 0.5;
 
-    /**
-     * What this shop would pay for each thing it sells, by slug: half its
-     * price. Something it does not sell has no price here, so it cannot be
-     * sold here — rare finds and things that can only be made stay yours.
-     */
+    /** What this shop would pay for each thing it sells, by slug: half its price. */
     private static function buyback(int $shop_id): array
     {
         $out = [];
@@ -464,11 +379,7 @@ class Shop
         return false;
     }
 
-    /**
-     * Everything in a player's storage this shop will buy, and for how much.
-     * One of anything in use is held back: the weapon in your hand is not
-     * for sale unless you carry a spare.
-     */
+    /** Everything in a player's storage this shop will buy, and for how much. */
     public static function sellList(int $shop_id, int $user_id): array
     {
         $offers = self::buyback($shop_id);
@@ -503,12 +414,7 @@ class Shop
         return $out;
     }
 
-    /**
-     * Buy one thing back from a player, for half what it costs here.
-     *
-     * The price is the shop's, worked out here: the page sends which thing,
-     * never what it is worth.
-     */
+    /** Buy one thing back from a player, for half what it costs here. */
     public static function sell(int $shop_id, string $slug, int $user_id): array
     {
         if ($user_id <= 0) {
@@ -528,9 +434,7 @@ class Shop
             return ['success' => false, 'message' => __('This shop will not buy that.', 'orbem-studio')];
         }
 
-        /**
-         * Whether this player may sell here. Nothing refuses by default.
-         */
+        /** Whether this player may sell here. */
         $refusal = (string) apply_filters('orbem_shop_refuse_sale', '', $shop_id, $user_id, $slug);
 
         if ('' !== $refusal) {
@@ -576,9 +480,6 @@ class Shop
         ];
     }
 
-    // =========================================================================
-    // REST
-    // =========================================================================
 
     /**
      * @action rest_api_init

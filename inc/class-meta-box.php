@@ -238,8 +238,6 @@ class Meta_Box {
                 'right-hurt' => 'upload',
                 'dead' => 'upload',
                 // In the air, in a gravity room: going up, and coming down.
-                // Optional — without them the character keeps its walking
-                // or standing picture, as it always has.
                 'left-jump' => 'upload',
                 'right-jump' => 'upload',
                 'left-fall' => 'upload',

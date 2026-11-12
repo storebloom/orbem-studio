@@ -9,14 +9,11 @@
   }
 }
 
-// Free camera: the map is draggable, so say so. On body rather than on the
-// container, because the pointer handlers are on the document and the cursor
-// has to match wherever the drag can actually start.
+// Free camera: the map is draggable, so say so.
 body.orbem-free-camera {
   cursor: grab;
 
-  // Kill the browser's own drag of images and links mid-pan, which otherwise
-  // hijacks the gesture the moment the pointer crosses a sprite.
+  // Kill the browser's own drag of images and links mid-pan, which otherwise hijacks the gesture the moment the pointer crosses a sprite.
   img,
   a {
     -webkit-user-drag: none;
@@ -1134,9 +1131,7 @@ html {
           opacity: 1;
         }
 
-        // Four arrows out of a centre: the one shape that reads as "pan"
-        // rather than "move the character", drawn rather than shipped as an
-        // image so it inherits the toggled colour.
+        // Four arrows out of a centre: the one shape that reads as "pan" rather than "move the character", drawn rather than shipped as an image so it inherits the toggled colour.
         .free-camera-icon {
           background:
             linear-gradient(#2b2b2b, #2b2b2b) center / 2px 60% no-repeat,
@@ -1349,10 +1344,7 @@ html {
               }
             }
 
-            // Grows out from the middle of the boss, whatever its size: held
-            // at its centre by the half-translate, so padding added on every
-            // side spreads it evenly. Pixel offsets only lined up for a boss
-            // of one size, and anything else pulsed from its corner.
+            // Grows out from the middle of the boss, whatever its size.
             .pulse-wave-container {
               background: rgba(0, 0, 255, 0.17);
               border: 3px solid blue;
@@ -2202,9 +2194,7 @@ html {
   }
 }
 
-// Shops. Held above the world and centred, because a price list is something
-// you stop to read — the same reason movement pauses while it is open. The
-// crafting menu is the same kind of list, and looks it.
+// Shops.
 #orbem-shop,
 #orbem-crafting,
 #orbem-pod {
@@ -2350,12 +2340,6 @@ html {
 }
 
 // Somebody else, standing where they said they were.
-//
-// Placed by their centre and slid rather than jumped between reports — the
-// position arrives a few times a second, and without the transition everybody
-// else in the world teleports. Never a `.map-item`: that class is what the
-// movement code collects as walls, and being shoved around by another player's
-// lag is worse than being able to walk through them.
 .orbem-other-player {
   pointer-events: none;
   z-index: 2;
@@ -2365,11 +2349,7 @@ html {
     image-rendering: pixelated;
   }
 
-  // A swing that landed. Shown on the attacker's screen the moment they
-  // connect, because the only thing coming back from the server is that the
-  // hit was allowed — the damage itself is applied on the other person's
-  // machine, and waiting for a round trip to acknowledge a punch is what makes
-  // a fight feel dead.
+  // A swing that landed.
   &.is-hit img {
     filter: brightness(2.2) saturate(0.4);
   }
@@ -2391,12 +2371,6 @@ html {
 }
 
 // The choices a Dialogue Path offers.
-//
-// Standing where the dialogue box stands, because a question is part of the
-// conversation rather than something that has appeared on top of one. The
-// cutscene is a centred flex row, so these take the same width and alignment
-// its lines take — otherwise the list collapses to the width of its longest
-// word and sits wherever the flex algorithm leaves it.
 .orbem-dialogue-choices {
   align-self: center;
   background: #fff;
@@ -2412,8 +2386,7 @@ html {
     width: 100%;
   }
 
-  // Readable against the white box the cutscene draws its lines in, and sized
-  // like a line of dialogue, because that is what each one is about to become.
+  // Readable against the white box the cutscene draws its lines in, and sized like a line of dialogue, because that is what each one is about to become.
   .orbem-dialogue-choice {
     background: rgb(0 0 0 / 4%);
     border: 1px solid rgb(0 0 0 / 25%);
@@ -2434,14 +2407,7 @@ html {
   }
 }
 
-// A conversation is one of several things a character might say, and only one
-// of them is being said. The others are not hidden so much as not happening:
-// they are still in the page, because which one is chosen is decided when the
-// character is talked to and the choice changes on the next visit.
-//
-// `display: contents` on the one being said, for the same reason the paths
-// use it — the lines inside must be flex items of the cutscene, or the box
-// lays out one container beside the line it is meant to be showing.
+// A conversation is one of several things a character might say, and only one of them is being said.
 .map-cutscene .orbem-conversation,
 .map-communicate .orbem-conversation {
   display: none;
@@ -2453,18 +2419,12 @@ html {
 }
 
 // A path is structure, not scenery.
-//
-// `display: contents` so the wrapper draws nothing at all and the lines inside
-// become flex items of the cutscene itself — which is what makes a branch's
-// line look identical to any other line, and what stops the cutscene laying
-// out one box per branch beside the box it is meant to be showing.
 .map-cutscene .orbem-dialogue-path,
 .map-communicate .orbem-dialogue-path {
   display: contents;
 }
 
-// Builders see where their spawners are, faintly, so they can be found and
-// moved. Copies come from here.
+// Builders see where their spawners are, faintly, so they can be found and moved.
 main[data-devmode="true"] .game-container .enemy-item[data-spawner="yes"] {
   display: block;
   opacity: 0.45;
@@ -2477,8 +2437,7 @@ main[data-devmode="true"] .game-container .enemy-item[data-spawner="yes"] {
   }
 }
 
-// Somebody being defended: their health is always showing, they flash when
-// hit, and they fade when defeated.
+// Somebody being defended: their health is always showing, they flash when hit, and they fade when defeated.
 .game-container .map-item[data-targetable="yes"] {
   .npc-health-bar-wrapper {
     background: rgb(0 0 0 / 45%);
@@ -2516,8 +2475,7 @@ main[data-devmode="true"] .game-container .enemy-item[data-spawner="yes"] {
   }
 }
 
-// A boss about to rush shakes; a charging one burns. The wind-up is the
-// warning — long enough to see it coming and get out of the line.
+// A boss about to rush shakes; a charging one burns.
 .game-container .enemy-item {
   &.boss-rush-windup {
     animation: boss-rush-shake 0.08s linear infinite;
@@ -2534,9 +2492,7 @@ main[data-devmode="true"] .game-container .enemy-item[data-spawner="yes"] {
   75% { translate: 4px -2px; }
 }
 
-// A boss's name and health across the top of the screen, for the length of
-// the fight (data-boss-bar). Thin and dark, with the name above it: the bar is
-// the thing you watch while you fight, not something that covers the fight.
+// A boss's name and health across the top of the screen, for the length of the fight (data-boss-bar).
 #orbem-boss-bar {
   display: flex;
   flex-direction: column;
@@ -2585,10 +2541,7 @@ main[data-devmode="true"] .game-container .enemy-item[data-spawner="yes"] {
   }
 }
 
-// A timed mission's clock, top middle, for as long as it runs: the mission
-// list can be closed, and a countdown you cannot see is not one you can play
-// against. Below the boss bar or an arena's banner when one is up (placed by
-// drawTopClock). Red for the last ten seconds.
+// A timed mission's clock, top middle, for as long as it runs.
 #orbem-mission-clock {
   background: rgb(10 14 18 / 80%);
   border: 1px solid rgb(255 255 255 / 25%);
@@ -2624,9 +2577,7 @@ main[data-devmode="true"] .game-container .enemy-item[data-spawner="yes"] {
   50% { transform: translateX(-50%) scale(1.08); }
 }
 
-// The minimap: bottom right, outside the game container so walking between
-// areas never throws it away. Top right on touch screens, where the bottom
-// right corner belongs to the action button.
+// The minimap: bottom right, outside the game container so walking between areas never throws it away.
 #orbem-minimap {
   background: rgb(10 14 12 / 70%);
   border: 1px solid rgb(255 255 255 / 35%);
@@ -2656,9 +2607,7 @@ main[data-devmode="true"] .game-container .enemy-item[data-spawner="yes"] {
   }
 }
 
-// The time of day, under the map: the whole day as a strip — night, dawn,
-// day, dusk, night, in the colours the area is lit — a mark at now, and how
-// long until it turns. The colours match the engine's light (dayNightLook).
+// The time of day, under the map.
 #orbem-minimap .orbem-daynight {
   color: #fff;
   font-size: 11px;
@@ -2724,15 +2673,12 @@ main[data-devmode="true"] .game-container .enemy-item[data-spawner="yes"] {
   }
 }
 
-// The "!" over somebody you can talk to, or something you can use, sits above
-// the night (the day-night shade is the topmost thing in the world): a cue to
-// press a key is no cue if the dark covers it.
+// The "!" over somebody you can talk to, or something you can use, sits above the night.
 .game-world .indicator-icon {
   z-index: 2147483647 !important;
 }
 
-// The crafting menu: each thing, what it takes, and Craft. What the player
-// is short of shows in red.
+// The crafting menu: each thing, what it takes, and Craft.
 #orbem-crafting,
 #orbem-pod {
   .orbem-shop-item button::before { content: none; }
