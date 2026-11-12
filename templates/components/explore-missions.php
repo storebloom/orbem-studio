@@ -17,6 +17,9 @@ $orbem_studio_current_location        = false === empty($orbem_studio_current_lo
 $orbem_studio_linked_mission          = [];
 $orbem_studio_missions_from_cutscenes = [];
 $orbem_studio_next_mission_index      = 0;
+// Time left on timed missions, saved as the player played (milliseconds).
+$orbem_studio_mission_timers          = get_user_meta($orbem_studio_userid, 'explore_mission_timers', true);
+$orbem_studio_mission_timers          = is_array($orbem_studio_mission_timers) ? $orbem_studio_mission_timers : [];
 ?>
 <div class="mission-list">
     <?php
@@ -65,6 +68,9 @@ $orbem_studio_next_mission_index      = 0;
             $orbem_studio_classes .= (false === empty($orbem_studio_parent_mission)) || true === $orbem_studio_is_cutscene_mission ? 'next-mission mission-item ' : 'mission-item ';
             $orbem_studio_classes .= esc_attr($orbem_studio_mission->post_name) . '-mission-item';
             $orbem_studio_hazard_remove = get_post_meta($orbem_studio_mission->ID, 'explore-hazard-remove', true);
+            $orbem_studio_timer           = (int) get_post_meta($orbem_studio_mission->ID, 'explore-mission-timer', true);
+            $orbem_studio_timer_cutscene  = (string) get_post_meta($orbem_studio_mission->ID, 'explore-mission-timer-cutscene', true);
+            $orbem_studio_timer_explainer = (string) get_post_meta($orbem_studio_mission->ID, 'explore-mission-timer-explainer', true);
             ?>
             <div
                 id="<?php echo esc_attr($orbem_studio_mission->ID); ?>"
@@ -73,6 +79,15 @@ $orbem_studio_next_mission_index      = 0;
                 data-hazardremove="<?php echo esc_attr($orbem_studio_hazard_remove) ?? ''; ?>"
                 data-points="<?php echo esc_attr($orbem_studio_mission_points); ?>"
                 data-blockade="<?php echo false === empty($orbem_studio_mission_blockade) ? esc_attr(wp_json_encode($orbem_studio_mission_blockade)) : ''; ?>"
+
+                <?php if (0 < $orbem_studio_timer) : ?>
+                    data-timer="<?php echo esc_attr($orbem_studio_timer); ?>"
+                    data-timer-cutscene="<?php echo esc_attr($orbem_studio_timer_cutscene); ?>"
+                    data-timer-explainer="<?php echo esc_attr($orbem_studio_timer_explainer); ?>"
+                    <?php if (isset($orbem_studio_mission_timers[$orbem_studio_mission->post_name])) : ?>
+                        data-timer-left="<?php echo esc_attr((int) $orbem_studio_mission_timers[$orbem_studio_mission->post_name]); ?>"
+                    <?php endif; ?>
+                <?php endif; ?>
 
                 <?php if ( false === empty($orbem_studio_mission_blockade) ) : ?>
                     data-ability="<?php echo esc_attr($orbem_studio_ability);?>"

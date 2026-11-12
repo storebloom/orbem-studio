@@ -539,7 +539,7 @@ class Export_Import
     private function exportOptions(): array
     {
         $options      = [];
-        $game_options = array_keys(Menu::getGameOptionSettings());
+        $game_options = array_keys(Menu::getGameOptionSettings() + Menu::getSoundSettings());
 
         foreach ($game_options as $option_key) {
             $options[$option_key] = get_option($option_key, '');
@@ -637,7 +637,7 @@ class Export_Import
      */
     private function importOptions(array $options): void
     {
-        $game_options = array_keys(Menu::getGameOptionSettings());
+        $game_options = array_keys(Menu::getGameOptionSettings() + Menu::getSoundSettings());
 
         foreach ($options as $key => $value) {
             if (in_array($key, $game_options, true) && 'explore_game_page' !== $key) {

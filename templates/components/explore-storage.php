@@ -20,7 +20,7 @@ $orbem_studio_default_weapon_obj     = false === empty($orbem_studio_default_wea
     ]
 ) : false;
 $orbem_studio_default_weapon_id      = false === empty($orbem_studio_default_weapon_obj) && isset($orbem_studio_default_weapon_obj[0]) ? (int) $orbem_studio_default_weapon_obj[0] : '';
-$orbem_studio_default_storage        = '' !== $orbem_studio_default_weapon_id ? ['items' => [], 'weapons' => [['name' => $orbem_studio_default_weapon, 'id' => $orbem_studio_default_weapon_id, 'type' => 'weapons']], 'gear' => []] : ['items' => [], 'weapons' => [], 'gear' => []];
+$orbem_studio_default_storage        = '' !== $orbem_studio_default_weapon_id ? ['items' => [], 'weapons' => [['name' => $orbem_studio_default_weapon, 'id' => $orbem_studio_default_weapon_id, 'type' => 'weapons']], 'gear' => [], 'ingredients' => []] : ['items' => [], 'weapons' => [], 'gear' => [], 'ingredients' => []];
 $orbem_studio_storage                = false === empty($orbem_studio_storage) && true === is_array($orbem_studio_storage) ? $orbem_studio_storage : $orbem_studio_default_storage;
 // Guarantee exactly the three storage buckets, each a list (defensive against
 // older malformed data where one type got nested inside another).
@@ -28,6 +28,7 @@ $orbem_studio_storage                = [
     'items'   => isset($orbem_studio_storage['items'])   && is_array($orbem_studio_storage['items'])   ? $orbem_studio_storage['items']   : [],
     'weapons' => isset($orbem_studio_storage['weapons']) && is_array($orbem_studio_storage['weapons']) ? $orbem_studio_storage['weapons'] : [],
     'gear'    => isset($orbem_studio_storage['gear'])    && is_array($orbem_studio_storage['gear'])    ? $orbem_studio_storage['gear']    : [],
+    'ingredients' => isset($orbem_studio_storage['ingredients']) && is_array($orbem_studio_storage['ingredients']) ? $orbem_studio_storage['ingredients'] : [],
 ];
 // Guarantee the default weapon is always present (rendered hidden) in the
 // weapons bucket so unequipping another weapon can always fall back to it,
@@ -59,6 +60,7 @@ $orbem_studio_storage_tabs           = get_option('explore_storage_tabs', []);
 $orbem_studio_storage_tabs_items     = $orbem_studio_storage_tabs['items'] ?? '';
 $orbem_studio_storage_tabs_weapons   = $orbem_studio_storage_tabs['weapons'] ?? '';
 $orbem_studio_storage_tabs_gear      = $orbem_studio_storage_tabs['gear'] ?? '';
+$orbem_studio_storage_tabs_ingredients = $orbem_studio_storage_tabs['ingredients'] ?? '';
 ?>
 <?php
 // Only the first available tab (and its menu) starts active.
@@ -69,6 +71,8 @@ if ('on' === $orbem_studio_storage_tabs_items) {
     $orbem_studio_active_tab = 'weapons';
 } elseif ('on' === $orbem_studio_storage_tabs_gear) {
     $orbem_studio_active_tab = 'gear';
+} elseif ('on' === $orbem_studio_storage_tabs_ingredients) {
+    $orbem_studio_active_tab = 'ingredients';
 }
 ?>
 <div class="storage-form">
@@ -79,6 +83,7 @@ if ('on' === $orbem_studio_storage_tabs_items) {
                 <?php if ('on' === $orbem_studio_storage_tabs_items) :?><div class="items-tab<?php echo 'items' === $orbem_studio_active_tab ? ' engage' : ''; ?>" data-menu="items">Items</div><?php endif; ?>
                 <?php if ('on' === $orbem_studio_storage_tabs_weapons) :?><div class="weapons-tab<?php echo 'weapons' === $orbem_studio_active_tab ? ' engage' : ''; ?>" data-menu="weapons">Weapons</div><?php endif; ?>
                 <?php if ('on' === $orbem_studio_storage_tabs_gear) :?><div class="gear-tab<?php echo 'gear' === $orbem_studio_active_tab ? ' engage' : ''; ?>" data-menu="gear">Gear</div><?php endif; ?>
+                <?php if ('on' === $orbem_studio_storage_tabs_ingredients) :?><div class="ingredients-tab<?php echo 'ingredients' === $orbem_studio_active_tab ? ' engage' : ''; ?>" data-menu="ingredients">Ingredients</div><?php endif; ?>
             <?php endif; ?>
         </div>
         <?php foreach($orbem_studio_storage as $orbem_studio_storage_type => $orbem_studio_storage_items):
@@ -152,7 +157,7 @@ if ('on' === $orbem_studio_storage_tabs_items) {
                             data-subtype="<?php echo esc_attr($orbem_studio_item["subtype"]); ?>"
                             <?php endif;
 
-                            if (true === is_array($orbem_studio_current_explore_weapon) &&  (intval($orbem_studio_item_id) === intval($orbem_studio_current_explore_weapon[0]))) {
+                            if (true === is_array($orbem_studio_current_explore_weapon) && '' !== $orbem_studio_item_id && isset($orbem_studio_current_explore_weapon[0]) && (intval($orbem_studio_item_id) === intval($orbem_studio_current_explore_weapon[0]))) {
                                 $orbem_studio_current_weapon = true;
                             }
                             ?>
@@ -171,6 +176,7 @@ if ('on' === $orbem_studio_storage_tabs_items) {
                             data-motion="<?php echo esc_attr($orbem_studio_item_motion); ?>"
                             data-facing="<?php echo esc_attr($orbem_studio_item_facing); ?>"
                             data-resting="<?php echo esc_attr($orbem_studio_item_resting); ?>"
+                            data-light="<?php echo esc_attr(\OrbemStudio\Explore::lightOf((int) $orbem_studio_item_id)); ?>"
                             data-range="<?php echo esc_attr($orbem_studio_item_range); ?>"
                             data-vertical-offset="<?php echo esc_attr($orbem_studio_item_voffset); ?>"
                             data-held-width="<?php echo esc_attr($orbem_studio_item_held_width); ?>"
@@ -193,8 +199,19 @@ if ('on' === $orbem_studio_storage_tabs_items) {
                             $orbem_studio_is_default_weapon = $orbem_studio_is_weapon && false === empty($orbem_studio_default_weapon) && ($orbem_studio_item["name"] ?? '') === $orbem_studio_default_weapon;
                             ?>
                             class="storage-item<?php echo $orbem_studio_current_gear || true === $orbem_studio_current_weapon ? ' equipped' : ''; ?><?php echo $orbem_studio_is_default_weapon ? ' default-weapon' : ''; ?>">
-                        <?php if (true === $orbem_studio_weapons_and_gear) : ?>
-                            <img alt="<?php echo esc_attr($orbem_studio_item["name"]); ?>" src="<?php echo esc_url(get_the_post_thumbnail_url($orbem_studio_item_id)); ?>" width="30px" height="30px" />
+                        <?php
+                        // Every stored thing shows what it is.
+                        $orbem_studio_item_image = '';
+
+                        if (false === empty($orbem_studio_item['name'])) {
+                            $orbem_studio_item_image = false !== $orbem_studio_item_exists
+                                ? (string) get_the_post_thumbnail_url($orbem_studio_item_id)
+                                : '';
+                            $orbem_studio_item_image = (string) apply_filters('orbem_storage_item_image', $orbem_studio_item_image, $orbem_studio_item);
+                        }
+                        ?>
+                        <?php if ('' !== $orbem_studio_item_image) : ?>
+                            <img alt="<?php echo esc_attr($orbem_studio_item["name"]); ?>" src="<?php echo esc_url($orbem_studio_item_image); ?>" width="30px" height="30px" />
                         <?php endif; ?>
                     </span>
                 <?php endfor; ?>

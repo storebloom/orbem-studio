@@ -89,6 +89,13 @@ class Explore
             'permission_callback' => $permission_callback
         ]);
 
+        // Time left on a mission's timer, kept with the player's position so a refresh does not hand them a full clock mid-mission.
+        register_rest_route($namespace, '/mission-timer/', [
+            'methods'             => 'POST',
+            'callback'            => [$this, 'saveMissionTimer'],
+            'permission_callback' => $permission_callback
+        ]);
+
         // Register route for getting event by location.
         register_rest_route($namespace, '/resetexplore/', [
             'methods'             => 'POST',
@@ -177,6 +184,18 @@ class Explore
         $user = wp_get_current_user();
 
         return (int) $user->ID;
+    }
+
+    /**
+     * Whether the person looking builds this game, and so gets dev mode.
+     *
+     * @return bool
+     */
+    public static function canBuild(): bool
+    {
+        $user_id = self::currentUserId();
+
+        return (bool) apply_filters('orbem_studio_can_build', user_can($user_id, 'manage_options'), $user_id);
     }
 
     /**
@@ -360,6 +379,11 @@ class Explore
             }
 
             if ('communicate' !== $type) {
+                // Money may be owned elsewhere — see money().
+                if ('money' === $type) {
+                    $amount = (int) apply_filters('orbem_money_write', $amount, $userid);
+                }
+
                 $explore_points[$type]['points'] = $amount;
             } else {
                 $type = 'point';
@@ -367,12 +391,12 @@ class Explore
 
             $type = sanitize_key($type);
 
+            if (!isset($explore_points[$type]['positions']) || !is_array($explore_points[$type]['positions'])) {
+                $explore_points[$type]['positions'] = [];
+            }
+
             // Add position to list of positions received points on.
             if (true === is_array($item)) {
-                if (!isset($explore_points[$type]['positions']) || !is_array($explore_points[$type]['positions'])) {
-                    $explore_points[$type]['positions'] = [];
-                }
-
                 $existing_values = array_intersect($item, $explore_points[$type]['positions']);
                 foreach( $existing_values as $existing_value ) {
                     $item_index = array_search($existing_value, $item, true);
@@ -691,6 +715,19 @@ class Explore
             ]);
         }
 
+        // Gear and weapons with a "Level to use" stay in storage until then.
+        if (true !== $unequip && self::useLevel($item_id) > self::getCurrentLevel()) {
+            return rest_ensure_response([
+                'success' => false,
+                'level'   => self::useLevel($item_id),
+                'data'    => sprintf(
+                    /* translators: %d: the level needed */
+                    esc_html__('Reach level %d to use this.', 'orbem-studio'),
+                    self::useLevel($item_id)
+                ),
+            ]);
+        }
+
         $effect_type = '' !== $item_id ? get_post_meta($item_id, 'explore-value-type', true) : '';
 
         if ( true === in_array($effect_type, ['mana', 'health', 'power'], true)) {
@@ -771,7 +808,8 @@ class Explore
         $value                 = isset($data['value']) ? intval($data['value']) : '';
         $type                  = isset($data['type']) ? sanitize_text_field(wp_unslash($data['type'])) : '';
         $name                  = isset($data['name']) ? sanitize_text_field(wp_unslash($data['name'])) : '';
-        $remove                = isset($data['remove']) && 'true' === sanitize_text_field(wp_unslash($data['remove']));
+        // The client sends a JSON boolean, which never equalled the string 'true'.
+        $remove                = isset($data['remove']) ? rest_sanitize_boolean($data['remove']) : false;
 
         if ('' === $type || '' === $name || '' === $value || 0 >= $userid) {
             return rest_ensure_response([
@@ -780,7 +818,8 @@ class Explore
             ]);
         }
 
-        if ('' === $id || !get_post($id)) {
+        // A removal only needs the name to find the slot, and the item's post may well be gone by then.
+        if (false === $remove && ('' === $id || !get_post($id))) {
             return rest_ensure_response([
                 'success' => false,
                 'data'    => esc_html__('Invalid post id', 'orbem-studio'),
@@ -790,6 +829,7 @@ class Explore
         $menu_map = match($type) {
             'gear' => 'gear',
             'weapons' => 'weapons',
+            'ingredients' => 'ingredients',
             default => 'items'
         };
 
@@ -816,6 +856,9 @@ class Explore
                     }
                 }
             }
+
+            // Reindex so the template's slot loop doesn't skip what is left.
+            $menu_map_array = array_values($menu_map_array);
         } else {
             $new_item = [
                 'id'    => $id,
@@ -845,7 +888,7 @@ class Explore
                 foreach ($menu_map_array as $index => $item) {
                     if ($name === ($item['name'] ?? '')) {
                         $count                           = $item['count'] ?? 1;
-                        $menu_map_array[$index]['count'] = 'weapons'=== $menu_map ? 1 : $count + 1;
+                        $menu_map_array[$index]['count'] = $count + 1;
                         $has_dupe                        = true;
                     }
                 }
@@ -970,19 +1013,20 @@ class Explore
         $map_cutscenes         = self::getMapCutsceneHTML($explore_cutscenes, $position, $orbem_studio_userid);
         $map_abilities         = self::getMapAbilitiesHTML($explore_abilities);
 
-        $is_admin = user_can(self::currentUserId(), 'manage_options');
+        $is_admin = self::canBuild();
         $dev_mode = '';
 
+        // `include`, not `include_once`: these are templates being rendered into a buffer, not libraries being defined.
         ob_start();
-        include_once $this->plugin->dir_path . '/templates/style-scripts.php';
+        include $this->plugin->dir_path . '/templates/style-scripts.php';
         $area_item_styles_scripts = ob_get_clean();
 
         ob_start();
-        include_once $this->plugin->dir_path . '/templates/components/explore-missions.php';
+        include $this->plugin->dir_path . '/templates/components/explore-missions.php';
         $map_missions = ob_get_clean();
 
         ob_start();
-        include_once $this->plugin->dir_path . '/templates/components/explore-characters.php';
+        include $this->plugin->dir_path . '/templates/components/explore-characters.php';
         $map_characters = ob_get_clean();
 
         update_user_meta($orbem_studio_userid, 'current_location', $position);
@@ -1021,6 +1065,8 @@ class Explore
                 'is-cutscene'             => $is_area_cutscene,
                 'area-physics'            => false !== $area_id ? get_post_meta($area_id, 'explore-physics', true) : '',
                 'area-scale'              => false !== $area_id ? self::getAreaScale($area_id) : 1,
+                'day-night'               => self::dayNight(false !== $area_id ? (int) $area_id : 0),
+                'weather'                 => self::weather(false !== $area_id ? (int) $area_id : 0),
                 'dev-mode'                => $dev_mode,
             ],
         ] );
@@ -1038,8 +1084,10 @@ class Explore
         // Get request data.
         $data  = $request->get_json_params();
         $item  = isset($data['id']) ? intval($data['id']) : false;
+        $name  = isset($data['name']) ? sanitize_title((string) $data['name']) : '';
+        $types = ['explore-point', 'explore-weapon', 'explore-gear', 'explore-ingredients'];
 
-        if (false === $item) {
+        if (false === $item && '' === $name) {
             return rest_ensure_response([
                 'success' => false,
                 'data'    => esc_html__('Item id not provided', 'orbem-studio'),
@@ -1047,9 +1095,22 @@ class Explore
         }
 
         // Get content from the new explore-area post type.
-        $item_obj = get_post($item);
+        $item_obj = false !== $item ? get_post($item) : null;
 
-        if (!$item_obj || false === in_array($item_obj->post_type, ['explore-point', 'explore-weapon', 'explore-gear'])) {
+        // Storage belongs to the account, so an id saved in another world can name a different post here, or none.
+        if ('' !== $name && (!$item_obj || $item_obj->post_name !== $name || false === in_array($item_obj->post_type, $types, true))) {
+            $item_obj = null;
+
+            foreach ($types as $type) {
+                $item_obj = get_page_by_path($name, OBJECT, $type);
+
+                if ($item_obj) {
+                    break;
+                }
+            }
+        }
+
+        if (!$item_obj || false === in_array($item_obj->post_type, $types, true)) {
             return rest_ensure_response([
                 'success' => false,
                 'data'    => esc_html__('Item provided is in correct or non existent', 'orbem-studio'),
@@ -1129,6 +1190,54 @@ class Explore
     }
 
     /**
+     * Save, or clear, the time left on one mission's timer.
+     *
+     * @param \WP_REST_Request $request mission (slug) and left (milliseconds, or null to clear).
+     * @return \WP_REST_Response
+     */
+    public function saveMissionTimer(\WP_REST_Request $request): \WP_REST_Response
+    {
+        $userid = self::playerId();
+
+        if (0 === $userid) {
+            return rest_ensure_response([
+                'success' => false,
+                'data'    => esc_html__('User not authenticated', 'orbem-studio'),
+            ]);
+        }
+
+        $data    = (array) $request->get_json_params();
+        $mission = sanitize_title((string) ($data['mission'] ?? ''));
+
+        if ('' === $mission) {
+            return rest_ensure_response([
+                'success' => false,
+                'data'    => esc_html__('Missing mission', 'orbem-studio'),
+            ]);
+        }
+
+        $timers = get_user_meta($userid, 'explore_mission_timers', true);
+        $timers = is_array($timers) ? $timers : [];
+
+        if (isset($data['left']) && is_numeric($data['left'])) {
+            $timers[$mission] = max(0, (int) $data['left']);
+        } else {
+            unset($timers[$mission]);
+        }
+
+        if ($timers) {
+            update_user_meta($userid, 'explore_mission_timers', $timers);
+        } else {
+            delete_user_meta($userid, 'explore_mission_timers');
+        }
+
+        return rest_ensure_response([
+            'success' => true,
+            'data'    => esc_html__('success', 'orbem-studio'),
+        ]);
+    }
+
+    /**
      * Call back function to reset explore game.
      * @return \WP_REST_Response
      */
@@ -1145,6 +1254,7 @@ class Explore
 
         delete_user_meta($userid, 'current_coordinates');
         delete_user_meta($userid, 'current_location');
+        delete_user_meta($userid, 'explore_mission_timers');
         delete_user_meta($userid, 'explore_points');
         delete_user_meta($userid, 'explore_enemies');
         delete_user_meta($userid, 'explore_missions');
@@ -1389,11 +1499,118 @@ class Explore
     }
 
     /**
+     * How far a light reaches, in pixels, or 0 for something that gives none.
+     *
+     * @param int $post_id
+     * @return int
+     */
+    public static function lightOf(int $post_id): int
+    {
+        if (0 >= $post_id) {
+            return 0;
+        }
+
+        $weapon = 'explore-weapon' === get_post_type($post_id);
+        $key    = $weapon ? 'explore-weapon-light' : 'explore-illuminate';
+
+        if ('yes' !== get_post_meta($post_id, $key, true)) {
+            return 0;
+        }
+
+        $radius = intval(get_post_meta($post_id, $key . '-radius', true));
+
+        return 0 < $radius ? $radius : ($weapon ? 220 : 250);
+    }
+
+    /**
+     * The weather an area has: which kinds, how often, and what the page needs to agree with everybody else in the area on when it comes.
+     *
+     * @param int $area_id
+     * @return array{kinds: string[], frequency: string, seed: int, now: int}
+     */
+    public static function weather(int $area_id): array
+    {
+        $kinds     = 0 < $area_id ? get_post_meta($area_id, 'explore-weather', true) : [];
+        $frequency = 0 < $area_id ? (string) get_post_meta($area_id, 'explore-frequency', true) : '';
+
+        $weather = (array) apply_filters('orbem_weather', [
+            'kinds'     => is_array($kinds) ? $kinds : [],
+            'frequency' => $frequency,
+        ], $area_id);
+
+        $kinds = array_values(array_intersect(['drizzle', 'rain', 'snow', 'wind', 'lightning'], (array) ($weather['kinds'] ?? [])));
+
+        $frequency = (string) ($weather['frequency'] ?? '');
+
+        return [
+            'kinds'     => $kinds,
+            'frequency' => in_array($frequency, ['always', 'often', 'occasionally', 'rarely'], true) ? $frequency : 'always',
+            'seed'      => $area_id,
+            'now'       => (int) round(microtime(true) * 1000),
+        ];
+    }
+
+    /**
+     * How an area is lit, for the page.
+     *
+     * @param int $area_id
+     * @return array{mode: string, minutes: float, epoch: int, offset: float, now: int}
+     */
+    public static function dayNight(int $area_id): array
+    {
+        $mode    = 0 < $area_id ? (string) get_post_meta($area_id, 'explore-day-night', true) : '';
+        $minutes = 0 < $area_id ? (float) get_post_meta($area_id, 'explore-day-night-cycle', true) : 0;
+
+        $clock = (array) apply_filters('orbem_day_night', [
+            'mode'    => in_array($mode, ['cycle', 'day', 'dusk', 'night'], true) ? $mode : '',
+            'minutes' => 0 < $minutes ? $minutes : 60,
+            'epoch'   => 0,
+            'offset'  => 0,
+        ], $area_id);
+
+        $mode   = (string) ($clock['mode'] ?? '');
+        $offset = (float) ($clock['offset'] ?? 0);
+
+        return [
+            'mode'    => in_array($mode, ['cycle', 'day', 'dusk', 'night'], true) ? $mode : '',
+            'minutes' => max(1, (float) ($clock['minutes'] ?? 60)),
+            'epoch'   => (int) ($clock['epoch'] ?? 0),
+            'offset'  => $offset - floor($offset),
+            'now'     => (int) round(microtime(true) * 1000),
+        ];
+    }
+
+    /**
      * Grab all the points you can collide with.
      * @param string $position
      * @param string $post_type
      * @return int[]|WP_Post[]
      */
+    /**
+     * Everybody who speaks in a cutscene, however deep they speak.
+     *
+     * @param array $blocks Parsed blocks.
+     * @return array Character ids, in the order they first speak.
+     */
+    private static function speakersIn(array $blocks): array
+    {
+        $ids = [];
+
+        foreach ($blocks as $block) {
+            $speaker = $block['attrs']['selectedCharacter'] ?? '';
+
+            if (false === empty($speaker)) {
+                $ids[] = $speaker;
+            }
+
+            if (false === empty($block['innerBlocks']) && is_array($block['innerBlocks'])) {
+                $ids = array_merge($ids, self::speakersIn($block['innerBlocks']));
+            }
+        }
+
+        return $ids;
+    }
+
     public static function getExplorePosts(string $position, string $post_type): array
     {
         $allowed_post_types = [
@@ -1569,19 +1786,18 @@ class Explore
                 $breakable                      = 'breakable' === $interaction_type;
                 $collectable                    = 'collectable' === $interaction_type;
                 $draggable                      = 'draggable' === $interaction_type;
-                // A blocker holds a position and hurts anything that walks into
-                // it, which is a hazard that happens to be an enemy — so it is
-                // marked as one and the hazard handling does the rest.
+                // A blocker is a hazard that happens to be an enemy.
                 $is_hazard                      = 'hazard' === $interaction_type
                     || ('explore-enemy' === $explore_point->post_type
                         && 'blocker' === ($explore_point_meta['explore-enemy-type'] ?? ''));
                 $clickable                      = 'clickable' === $interaction_type;
                 $is_strong                      = $explore_point_meta['explore-is-strong'] ?? '';
                 $is_strong                      = false === empty($is_strong) ? $is_strong : false;
-                $top                            = $explore_point_meta['explore-top'] ?? '';
-                $left                           = $explore_point_meta['explore-left'] ?? '';
-                $height                         = $explore_point_meta['explore-height'] ?? '';
-                $width                          = $explore_point_meta['explore-width'] ?? '';
+                // Per-area placement, falling back to the single position.
+                $top                            = $explore_point_meta['explore-top-' . $area] ?? $explore_point_meta['explore-top'] ?? '';
+                $left                           = $explore_point_meta['explore-left-' . $area] ?? $explore_point_meta['explore-left'] ?? '';
+                $height                         = $explore_point_meta['explore-height-' . $area] ?? $explore_point_meta['explore-height'] ?? '';
+                $width                          = $explore_point_meta['explore-width-' . $area] ?? $explore_point_meta['explore-width'] ?? '';
                 $walking_path                   = $explore_point_meta['explore-path'] ?? '';
                 $walking_speed                  = $explore_point_meta['explore-speed'] ?? '';
                 $time_between                   = $explore_point_meta['explore-time-between'] ?? '';
@@ -1592,6 +1808,8 @@ class Explore
                 $layer                          = $explore_point_meta['explore-layer'] ?? '';
                 $passable                       = (($explore_point_meta['explore-passable'] ?? '') === 'yes');
                 $interacted_with                = $explore_point_meta['explore-interacted'] ?? '';
+                $interacted_every               = max(0, intval($explore_point_meta['explore-interacted-every'] ?? 0));
+                $interacted_hold                = max(0, intval($explore_point_meta['explore-interacted-hold'] ?? 0));
                 $crew_mate                      = $explore_point_meta['explore-crew-mate'] ?? '';
                 $hitbox_inset                   = $explore_point_meta['explore-hitbox-inset'] ?? '';
                 $path_trigger                   = $explore_point_meta['explore-path-trigger'] ?? '';
@@ -1636,7 +1854,9 @@ class Explore
                 $weapon_ammo_cost               = intval($explore_point_meta['explore-weapon-ammo-cost'] ?? 0);
                 $weapon_sound                   = $explore_point_meta['explore-weapon-sound'] ?? '';
                 $rotation                       = $explore_point_meta['explore-rotation'] ?? '';
-                $item_image                     = get_the_post_thumbnail_url($explore_point->ID);
+                $item_image                     = 'explore-area' === $explore_point->post_type
+                    ? (string) ($explore_point_meta['explore-trigger-image'] ?? '')
+                    : get_the_post_thumbnail_url($explore_point->ID);
                 $video_override                 = $explore_point_meta['explore-video-override'] ?? '';
                 $item_gravity                   = $explore_point_meta['explore-gravity'] ?? '';
 
@@ -1685,6 +1905,7 @@ class Explore
 
                     $html .= '<div style="' . esc_attr($layer) . 'transform: rotate(' . esc_attr($rotation) . 'deg);left:' . esc_attr($left) . 'px; top:' . esc_attr($top) . 'px;" id="' . esc_attr($explore_point->ID) . '" data-genre="' . esc_attr($explore_point->post_type) . '" data-type="' . esc_attr($type) . '" data-value="' . esc_attr($value) . '"';
                     $html .= ' data-image="' . esc_attr($item_image) . '"';
+                    $html .= ' data-title="' . esc_attr($explore_point->post_title) . '"';
 
                     // Reward granted to the player for killing this enemy.
                     if ('explore-enemy' === $explore_point->post_type && false === empty($reward_value)) {
@@ -1695,6 +1916,23 @@ class Explore
                         $map_url = $explore_point_meta['explore-map'] ?? '';
 
                         $html .= ' data-map-url="' . esc_attr($map_url) . '"';
+
+                        // Where to stand on arrival, when this trigger has an opinion about it.
+                        $entry_side = $explore_point_meta['explore-entry-side'] ?? '';
+
+                        if ('' !== $entry_side && 'any' !== $entry_side) {
+                            $html .= ' data-entry-side="' . esc_attr($entry_side) . '"';
+                        }
+
+                        if ('yes' === ($explore_point_meta['explore-interact-to-enter'] ?? '') && '' === ($explore_point_meta['explore-land-' . $area] ?? '')) {
+                            $html .= ' data-interact-to-enter="yes"';
+                        }
+
+                        $landing = $explore_point_meta['explore-land-' . $area] ?? '';
+
+                        if ('' !== $landing) {
+                            $html .= " data-nextarea-position='" . esc_attr($landing) . "'";
+                        }
                     }
 
                     // Walls carry their texture so devmode knows a textured wall
@@ -1722,7 +1960,26 @@ class Explore
                         $html .= ' data-wanderer="' . esc_attr($wanderer) . '"';
                     }
 
+                    // Somebody enemies can go for.
+                    $npc_health = 'explore-character' === $explore_point->post_type ? (int) ($explore_point_meta['explore-npc-health'] ?? 0) : 0;
+
+                    if (0 < $npc_health) {
+                        $html .= ' data-targetable="yes" data-health="' . esc_attr($npc_health) . '" data-healthamount="' . esc_attr($npc_health) . '"';
+                    }
+
                     // Explore character crew mate.
+                    if ('explore-character' === $explore_point->post_type) {
+                        $shop = get_page_by_path(
+                            (string) ($explore_point_meta['explore-shop'] ?? ''),
+                            OBJECT,
+                            'explore-shop'
+                        );
+
+                        if ($shop) {
+                            $html .= ' data-shop="' . esc_attr($shop->ID) . '"';
+                        }
+                    }
+
                     if ('explore-character' === $explore_point->post_type && 'yes' === $crew_mate) {
                         $html .= ' data-crewmate="' . esc_attr($crew_mate) . '"';
                     }
@@ -1755,6 +2012,28 @@ class Explore
                         $html .= ' data-passable="true"';
                     }
 
+                    // Walked through in part: from which side, how far in.
+                    $pass_side  = (string) ($explore_point_meta['explore-pass-side'] ?? '') ?: 'top';
+                    $pass_depth = intval($explore_point_meta['explore-pass-depth'] ?? 0);
+
+                    // Left empty, all but its last tenth: walked behind, bumped into at the base.
+                    if (0 >= $pass_depth) {
+                        $pass_span  = intval($explore_point_meta[in_array($pass_side, ['left', 'right'], true) ? 'explore-width' : 'explore-height'] ?? 0);
+                        $pass_depth = (int) round($pass_span * 0.9);
+                    }
+
+                    if ('yes' === ($explore_point_meta['explore-partial-pass'] ?? '') && 0 < $pass_depth) {
+                        $html .= ' data-pass-side="' . esc_attr(in_array($pass_side, ['top', 'bottom', 'left', 'right'], true) ? $pass_side : 'top') . '"';
+                        $html .= ' data-pass-depth="' . esc_attr($pass_depth) . '"';
+                    }
+
+                    // Gives light at night?
+                    $light = self::lightOf($explore_point->ID);
+
+                    if (0 < $light) {
+                        $html .= ' data-' . ('explore-weapon' === $explore_point->post_type ? 'light' : 'illuminate') . '="' . esc_attr($light) . '"';
+                    }
+
                     if (false === empty($height) && false === empty($width)) {
                         $html .= ' data-height="' . esc_attr($height) . '"';
                         $html .= ' data-width="' . esc_attr($width) . '"';
@@ -1763,6 +2042,11 @@ class Explore
                     // Interacted with image.
                     if (false === empty($interacted_with)) {
                         $html .= ' data-interacted="' . esc_url($interacted_with) . '"';
+
+                        if (0 < $interacted_every) {
+                            $html .= ' data-interacted-every="' . esc_attr($interacted_every) . '"';
+                            $html .= ' data-interacted-hold="' . esc_attr(0 < $interacted_hold ? $interacted_hold : $interacted_every) . '"';
+                        }
                     }
 
                     if ('explore-point' === $explore_point->post_type && false === empty($timer['time']) && 0 < intval($timer['time'])) {
@@ -1873,6 +2157,23 @@ class Explore
                         $html .= ' data-collectable="true"';
                     }
 
+                    // The storage entry it goes into when picked up, when that is not its own name.
+                    $store_as = (string) get_post_meta($explore_point->ID, 'explore-store-as', true);
+
+                    if ('' !== $store_as) {
+                        $html .= ' data-store-as="' . esc_attr($store_as) . '"';
+                    }
+
+                    // A crafting table, a workbench: walk up and press the action key to open the crafting menu.
+                    if ('crafting' === $interaction_type) {
+                        $html .= ' data-crafting="yes"';
+                    }
+
+                    // Anything else worked with the action key: the page is told (orbem:interact) and a plugin decides what it does.
+                    if ('interact' === $interaction_type) {
+                        $html .= ' data-interact="yes"';
+                    }
+
                     if (true === $clickable) {
                         $html .= ' data-clickable="true"';
                     }
@@ -1946,6 +2247,17 @@ class Explore
                         }
 
                         $html .= ' data-health="' . esc_attr($health) . '" data-healthamount="' . esc_attr($health) . '" data-enemyspeed="' . esc_attr($enemy_speed) . '" data-enemy-type="' . esc_attr($explore_enemy_type) . '"';
+
+                        // A spawner is not an enemy on the map but the place copies of it come from.
+                        if ('yes' === ($explore_point_meta['explore-spawner'] ?? '')) {
+                            $spawn_interval = (float) ($explore_point_meta['explore-spawn-interval'] ?? 0);
+                            $spawn_alive    = (int) ($explore_point_meta['explore-spawn-alive'] ?? 0);
+
+                            $html .= ' data-spawner="yes"'
+                                . ' data-spawn-amount="' . esc_attr(max(0, (int) ($explore_point_meta['explore-spawn-amount'] ?? 0))) . '"'
+                                . ' data-spawn-interval="' . esc_attr(0 < $spawn_interval ? $spawn_interval : 2) . '"'
+                                . ' data-spawn-alive="' . esc_attr(0 < $spawn_alive ? $spawn_alive : 8) . '"';
+                        }
                         $wave_html = ' data-waves="';
 
                         // Boss waves.
@@ -1955,7 +2267,8 @@ class Explore
                                     $pulse_wave = true;
                                 }
 
-                                if ('projectile' === $boss_wave_name && 'on' === $boss_wave) {
+                                // Both fire the boss's shot.
+                                if (in_array($boss_wave_name, ['projectile', 'auto-shoot'], true) && 'on' === $boss_wave) {
                                     $barrage_wave = true;
                                 }
 
@@ -1965,6 +2278,38 @@ class Explore
 
                         // Add boss waves.
                         $html .= wp_kses_post($wave_html) . '"';
+
+                        // The waves in order, each for its seconds, looping.
+                        $boss_sequence = [];
+
+                        foreach ((array) ($explore_point_meta['explore-boss-sequence'] ?? []) as $step) {
+                            $step_wave    = is_array($step) ? (string) ($step['wave'] ?? '') : '';
+                            $step_seconds = is_array($step) ? (float) ($step['seconds'] ?? 0) : 0;
+
+                            if (in_array($step_wave, ['projectile', 'pulse-wave', 'rush', 'auto-shoot'], true)) {
+                                $boss_sequence[] = ['wave' => $step_wave, 'seconds' => 0 < $step_seconds ? $step_seconds : 8];
+
+                                $pulse_wave   = $pulse_wave || 'pulse-wave' === $step_wave;
+                                $barrage_wave = $barrage_wave || in_array($step_wave, ['projectile', 'auto-shoot'], true);
+                            }
+                        }
+
+                        if ($boss_sequence) {
+                            $html .= " data-boss-sequence='" . esc_attr(wp_json_encode($boss_sequence)) . "'";
+                        }
+
+                        // Only written when set, so every other boss is as it was.
+                        $boss_difficulty = (int) ($explore_point_meta['explore-boss-difficulty'] ?? 0);
+
+                        if (0 < $boss_difficulty) {
+                            $html .= ' data-boss-difficulty="' . esc_attr(min(10, $boss_difficulty)) . '"';
+                        }
+
+                        if ('yes' === ($explore_point_meta['explore-boss-bar'] ?? '')) {
+                            $boss_name = (string) ($explore_point_meta['explore-character-name'] ?? '');
+
+                            $html .= ' data-boss-bar="yes" data-boss-name="' . esc_attr('' !== $boss_name ? $boss_name : $explore_point->post_title) . '"';
+                        }
 
                         $html .= ' class="wp-block-group enemy-item ' . esc_attr($explore_point->post_name) . '-map-item is-layout-flow wp-block-group-is-layout-flow' . esc_attr($classes) . '"';
                     } else {
@@ -2000,7 +2345,7 @@ class Explore
                     }
 
                     // Projectile html for enemy.
-                    if ('explore-enemy' === $explore_point->post_type && ('shooter' === $explore_enemy_type || true === $barrage_wave)) {
+                    if ('explore-enemy' === $explore_point->post_type && ('shooter' === $explore_enemy_type || true === $barrage_wave || 'yes' === ($explore_point_meta['explore-spawner'] ?? ''))) {
                         $projectile = $explore_point_meta['explore-projectile'] ?? '';
 
                         if (false !== $projectile) {
@@ -2032,6 +2377,9 @@ class Explore
                                 $html .= '<audio src="' . esc_url($enemy_hurt_sound) . '" id="' . esc_attr($explore_point->post_name) . '-hs"></audio>';
                                 $html .= '</span>';
                             }
+                        } elseif (0 < (int) ($explore_point_meta['explore-npc-health'] ?? 0)) {
+                            // Always showing: it is the thing being defended.
+                            $html .= '<div class="npc-health-bar-wrapper"><span class="npc-health-bar"></span></div>';
                         }
 
                         if ($direction_images) {
@@ -2053,7 +2401,7 @@ class Explore
                     }
 
                     // Boss data / html.
-                    if ('explore-enemy' === $explore_point->post_type && false === empty($boss_waves)) {
+                    if ('explore-enemy' === $explore_point->post_type && (false === empty($boss_waves) || true === $pulse_wave)) {
                         if (true === $pulse_wave) {
                             $html .= '<div class="pulse-wave-container" data-value="' . esc_attr($value) . '" data-hazard="true">';
                             $html .= self::getSVGCode(
@@ -2245,6 +2593,7 @@ class Explore
             $value                      = $cutscene_post_meta['explore-value'] ?? '';
             $has_video                  = has_block('video', $explore_cutscene->post_content);
             $cutscene_trigger           = $cutscene_post_meta['explore-cutscene-trigger'] ?? '';
+            $cutscene_repeats           = 'yes' === ($cutscene_post_meta['explore-cutscene-repeat'] ?? '');
             $character_position         = $cutscene_post_meta['explore-cutscene-character-position'] ?? '';
             $next_area_position         = $cutscene_post_meta['explore-cutscene-next-area-position'] ?? '';
             $npc_face_me                = $cutscene_post_meta['explore-npc-face-me'] ?? '';
@@ -2279,6 +2628,11 @@ class Explore
 
             if (false === empty($mission_cutscene)) {
                 $html .= ' data-mission="' . esc_attr($mission_cutscene) . '"';
+            }
+
+            // Something you can do again, rather than a story beat that happens once.
+            if ($cutscene_repeats) {
+                $html .= ' data-repeat="yes"';
             }
 
             if (false === empty($cutscene_trigger_type)) {
@@ -2399,9 +2753,7 @@ class Explore
             $blocks = parse_blocks( (string) $explore_cutscene->post_content );
 
             if (is_array($blocks)) {
-                foreach ($blocks as $block) {
-                    $character_ids[] = $block['attrs']['selectedCharacter'] ?? '';
-                }
+                $character_ids = self::speakersIn($blocks);
             }
 
             $unique_character_ids = array_unique($character_ids);
@@ -2444,7 +2796,7 @@ class Explore
             $path_trigger_width  = false === empty($cutscene_trigger['width']) && 0 !== $cutscene_trigger['width'] ? $cutscene_trigger['width'] : '0';
 
             // Trigger Cutscene.
-            if (false === in_array( '0', [$path_trigger_width, $path_trigger_height], true) && false === $is_cutscene_triggered) {
+            if (false === in_array( '0', [$path_trigger_width, $path_trigger_height], true) && (false === $is_cutscene_triggered || $cutscene_repeats)) {
                 $html .= '<div id="' . esc_attr($explore_cutscene->ID) . '-t" class="cutscene-trigger wp-block-group map-item ' . esc_attr($explore_cutscene->post_name) . '-cutscene-trigger-map-item is-layout-flow wp-block-group-is-layout-flow"';
                 $html .= ' style="left:' . esc_attr($path_trigger_left) . 'px;top:' . esc_attr($path_trigger_top) . 'px;height:' . esc_attr($path_trigger_height) . 'px; width:' . esc_attr($path_trigger_width) . 'px;"';
                 $html .= ' data-trigger="true" data-triggee="' . esc_attr($explore_cutscene->post_name) . '"';
@@ -2484,6 +2836,10 @@ class Explore
 
                 if (false === empty($remove_item)) {
                     $html .= ' data-removeafteritem="' . esc_attr($remove_item) . '"';
+                }
+
+                if ($cutscene_repeats) {
+                    $html .= ' data-repeat="yes"';
                 }
 
                 $html .= ' data-meta="explore-cutscene-trigger"';
@@ -2956,6 +3312,10 @@ class Explore
                 'Minigame',
                 'supports' => ['title', 'thumbnail']
             ],
+            'explore-shop'        => [
+                'Shop',
+                'supports' => ['title', 'thumbnail']
+            ],
             'explore-explainer'   => [
                 'Explainer',
                 'supports' => ['title', 'editor']
@@ -2966,6 +3326,10 @@ class Explore
             ],
             'explore-communicate' => [
                 'Communication',
+                'supports' => ['title', 'editor', 'thumbnail']
+            ],
+            'explore-ingredients' => [
+                'Ingredient',
                 'supports' => ['title', 'editor', 'thumbnail']
             ],
         ];
@@ -3156,6 +3520,47 @@ class Explore
      * Get current point width based on equipped weapons and gear.
      * @return array
      */
+    /**
+     * What a player has to spend.
+     *
+     * @param int $user_id
+     * @return int
+     */
+    public static function money(int $user_id): int
+    {
+        $points = get_user_meta($user_id, 'explore_points', true);
+        $stored = (is_array($points) && isset($points['money']['points']))
+            ? (int) $points['money']['points']
+            : 0;
+
+        return (int) apply_filters('orbem_money_balance', $stored, $user_id);
+    }
+
+    /** Set what a player has, through whatever owns money. */
+    public static function setMoney(int $user_id, int $amount): int
+    {
+        $amount = (int) apply_filters('orbem_money_write', max(0, $amount), $user_id);
+
+        $points = get_user_meta($user_id, 'explore_points', true);
+        $points = is_array($points) ? $points : [];
+
+        $points['money'] = array_merge(
+            ['positions' => []],
+            is_array($points['money'] ?? null) ? $points['money'] : [],
+            ['points' => $amount]
+        );
+
+        update_user_meta($user_id, 'explore_points', $points);
+
+        return $amount;
+    }
+
+    /** Take money off a player, and answer with what is left. */
+    public static function spendMoney(int $user_id, int $amount): int
+    {
+        return self::setMoney($user_id, self::money($user_id) - max(0, $amount));
+    }
+
     public static function getCurrentPointWidth(): array
     {
         $userid = self::playerId();
@@ -3170,6 +3575,8 @@ class Explore
         if (0 === $userid) {
             return $base_amounts;
         }
+
+        $base_amounts['health'] += (self::getCurrentLevel() - 1) * self::levelHealth();
 
         $gear = get_user_meta($userid, 'explore_current_gear', true);
 
@@ -3217,44 +3624,75 @@ class Explore
      */
     public static function getCurrentLevel(): int
     {
-        $levels = self::getLevelMap();
-
-        if (empty($levels) || !is_array($levels)) {
-            return 1;
-        }
-
-        sort($levels, SORT_NUMERIC);
-
         $userid = self::playerId();
 
         if (0 === $userid) {
             return 1;
         }
 
-        $meta   = get_user_meta($userid, 'explore_points', true);
-        $points = 0;
+        $meta = get_user_meta($userid, 'explore_points', true);
 
-        if (is_array($meta) && isset($meta['point']['points'])) {
-            $points = (int) $meta['point']['points'];
+        return self::levelOf(is_array($meta) && isset($meta['point']['points']) ? (int) $meta['point']['points'] : 0);
+    }
+
+    /** The level a number of points reaches: the last threshold it is at or past. */
+    public static function levelOf(int $points): int
+    {
+        $levels = self::getLevelMap();
+
+        if (empty($levels)) {
+            return 1;
         }
 
-        $count = count($levels);
+        sort($levels, SORT_NUMERIC);
 
-        for ($i = 0; $i < $count; $i++) {
-            $current = $levels[$i];
-            $next    = $levels[$i + 1] ?? null;
+        $level = 1;
 
-            if ($points === $current) {
-                return $i + 1;
-            }
-
-            if (null !== $next && $points > $current && $points < $next) {
-                return $i + 1;
+        foreach ($levels as $i => $threshold) {
+            if ($points >= (int) $threshold) {
+                $level = $i + 1;
             }
         }
 
-        // If points exceed all thresholds, return max level
-        return $count;
+        return $level;
+    }
+
+    /** How much longer the health bar gets at every level after the first. */
+    public static function levelHealth(): int
+    {
+        return max(0, (int) apply_filters('orbem_level_health', (int) get_option('explore_level_health', 0)));
+    }
+
+    /** The level a weapon or piece of gear needs before it can be equipped ("Level to use"); 0 when anybody can. */
+    public static function useLevel(int $item_id): int
+    {
+        return $item_id ? max(0, (int) get_post_meta($item_id, 'explore-use-level', true)) : 0;
+    }
+
+    /** Every weapon and piece of gear in this game that needs a level, by id, so the storage menu can say so before anybody tries. */
+    public static function useLevels(): array
+    {
+        $ids = get_posts([
+            'post_type'      => ['explore-weapon', 'explore-point'],
+            'post_status'    => 'publish',
+            'posts_per_page' => -1,
+            'fields'         => 'ids',
+            'no_found_rows'  => true,
+            'meta_query'     => [[
+                'key'     => 'explore-use-level',
+                'value'   => 1,
+                'compare' => '>',
+                'type'    => 'NUMERIC',
+            ]],
+        ]);
+
+        $levels = [];
+
+        foreach ($ids as $id) {
+            $levels[(int) $id] = self::useLevel((int) $id);
+        }
+
+        return $levels;
     }
 
     /**
@@ -3266,6 +3704,12 @@ class Explore
     public function customRegisterParagraphMp3Block(): void
     {
         Plugin::enqueueScript('orbem-order/paragraph-mp3-block');
+
+        // The branch a conversation can fork into.
+        Plugin::enqueueScript('orbem-order/dialogue-path-block');
+
+        // And the container that lets a character have more than one thing to say, so they are not the same every time you talk to them.
+        Plugin::enqueueScript('orbem-order/conversation-block');
     }
 
     /**
@@ -3500,6 +3944,136 @@ class Explore
     }
 
     /**
+     * Every per-item rule for one area.
+     *
+     * @param array $explore_points Items in the area.
+     * @param string $position The area being drawn, for per-area values.
+     * @return string
+     */
+    public static function itemStyles($explore_points, string $position): string
+    {
+        if (!is_array($explore_points)) {
+            return '';
+        }
+
+        $area_key = sanitize_key($position);
+        $css      = '';
+
+        foreach ($explore_points as $point) {
+            if (!isset($point->ID, $point->post_type) || !get_post($point->ID)) {
+                continue;
+            }
+
+            // The main character is drawn by its own markup, not from here.
+            if ('explore-character' === $point->post_type) {
+                continue;
+            }
+
+            // Per-area placement: an area's own trigger is a doorway in one place and the way back out of somewhere else, and those are neither the same size nor in the same spot.
+            $top    = self::placement($point->ID, 'explore-top', $area_key);
+            $left   = self::placement($point->ID, 'explore-left', $area_key);
+            $height = self::placement($point->ID, 'explore-height', $area_key);
+            $width  = self::placement($point->ID, 'explore-width', $area_key);
+
+            $type = 'explore-enemy' === $point->post_type ? '.enemy-item' : '.map-item';
+
+            // Only the types whose picture *is* their thumbnail.
+            $bg_url = in_array($point->post_type, ['explore-weapon', 'explore-point', 'explore-sign'], true)
+                ? (string) get_the_post_thumbnail_url($point->ID)
+                : '';
+
+            if ('explore-area' === $point->post_type) {
+                $bg_url = (string) get_post_meta($point->ID, 'explore-trigger-image', true);
+            }
+
+            if ($bg_url && 'explore-area' !== $point->post_type) {
+                $thumb_id = get_post_thumbnail_id($point->ID);
+
+                if ($thumb_id) {
+                    // Redrawing writes over the same file, so without this the browser keeps showing the picture from before the edit.
+                    $bg_url .= '?v=' . get_post_modified_time('U', false, $thumb_id);
+                }
+            }
+
+            $texture_css = self::wallTextureCss($point);
+
+            $paint = '' !== $texture_css
+                ? $texture_css
+                : ('' !== $bg_url ? "background: url('" . esc_url($bg_url) . "') no-repeat; background-size: contain;" : '');
+
+            $css .= "
+            body .game-container .default-map {$type}." . esc_attr($point->post_name) . "-map-item[data-genre='" . esc_attr($point->post_type) . "'] {
+                " . (self::hasLength($top) ? 'top:' . esc_attr($top) . ';' : '') . "
+                " . (self::hasLength($left) ? 'left:' . esc_attr($left) . ';' : '') . "
+                " . (self::hasLength($height) ? 'height:' . esc_attr($height) . ';' : '') . "
+                " . (self::hasLength($width) ? 'width:' . esc_attr($width) . ';' : '') . "
+                {$paint}
+            }
+            ";
+        }
+
+        return $css;
+    }
+
+    /** Whether a measurement is worth writing. */
+    private static function hasLength(string $value): bool
+    {
+        return '' !== $value && 'px' !== $value && '0px' !== $value;
+    }
+
+    /** How a wall's surface is painted, if it has one. */
+    private static function wallTextureCss($point): string
+    {
+        if ('explore-wall' !== $point->post_type) {
+            return '';
+        }
+
+        $texture = get_post_meta($point->ID, 'explore-texture', true);
+        $custom  = get_post_meta($point->ID, 'explore-custom-texture', true);
+        $scale   = (int) get_post_meta($point->ID, 'explore-texture-scale', true);
+        $scale   = 0 < $scale ? $scale : 64;
+        $url     = '';
+
+        if ('custom' === $texture && !empty($custom)) {
+            $url = $custom;
+        } elseif (!empty($texture) && 'invisible' !== $texture && 'custom' !== $texture) {
+            $url = plugin_dir_url(__FILE__) . '../assets/src/images/textures/' . sanitize_file_name($texture) . '.svg';
+        }
+
+        $css = '' !== $url
+            ? "background: url('" . esc_url($url) . "') repeat; background-size: " . esc_attr($scale) . "px " . esc_attr($scale) . "px; image-rendering: pixelated;"
+            : '';
+
+        // Rounded corners clip the texture to the rounded box.
+        $radius = (int) get_post_meta($point->ID, 'explore-wall-border-radius', true);
+
+        if (0 < $radius) {
+            $css .= ' border-radius: ' . esc_attr($radius) . 'px; overflow: hidden;';
+        }
+
+        return $css;
+    }
+
+    /**
+     * One placement value, preferring the one written for this area.
+     *
+     * @param int $post_id
+     * @param string $key
+     * @param string $area
+     * @return string A CSS length, or 'px' when nothing is set — which is what the caller already treats as "leave it out".
+     */
+    private static function placement(int $post_id, string $key, string $area): string
+    {
+        $value = get_post_meta($post_id, $key . '-' . $area, true);
+
+        if ('' === $value || null === $value) {
+            $value = get_post_meta($post_id, $key, true);
+        }
+
+        return $value . 'px';
+    }
+
+    /**
      * Generate dynamic inline CSS for game elements.
      * @param string $type
      * @return string
@@ -3540,67 +4114,7 @@ class Explore
         ";
         }
 
-        // Explore map points
-        if (is_array($explore_points)) {
-            foreach ($explore_points as $point) {
-                if (! isset($point->ID) || ! get_post($point->ID) || true === in_array($point->post_type, ['explore-character'], true)) {
-                    continue;
-                }
-
-                $top     = get_post_meta($point->ID, 'explore-top', true) . 'px';
-                $left    = get_post_meta($point->ID, 'explore-left', true) . 'px';
-                $height  = get_post_meta($point->ID, 'explore-height', true) . 'px';
-                $width   = get_post_meta($point->ID, 'explore-width', true) . 'px';
-                $bg_url  = $point->post_type !== 'explore-enemy' ? get_the_post_thumbnail_url($point->ID) : '';
-                $type    = $point->post_type === 'explore-enemy' ? '.enemy-item' : '.map-item';
-
-                if ($bg_url && in_array($point->post_type, ['explore-weapon', 'explore-point', 'explore-sign'], true)) {
-                    $thumb_id = get_post_thumbnail_id($point->ID);
-                    if ($thumb_id) {
-                        $bg_url .= '?v=' . get_post_modified_time('U', false, $thumb_id);
-                    }
-                }
-
-                // Wall texture: tile a preset (or uploaded) texture across the
-                // wall as a repeated background. Overrides the default invisible
-                // wall when a texture other than "invisible" is chosen.
-                $texture_css = '';
-
-                if ('explore-wall' === $point->post_type) {
-                    $texture     = get_post_meta($point->ID, 'explore-texture', true);
-                    $custom      = get_post_meta($point->ID, 'explore-custom-texture', true);
-                    $texture_scale = intval(get_post_meta($point->ID, 'explore-texture-scale', true));
-                    $texture_scale = 0 < $texture_scale ? $texture_scale : 64;
-                    $texture_url = '';
-
-                    if ('custom' === $texture && false === empty($custom)) {
-                        $texture_url = $custom;
-                    } elseif (false === empty($texture) && 'invisible' !== $texture && 'custom' !== $texture) {
-                        $texture_url = plugin_dir_url(__FILE__) . '../assets/src/images/textures/' . sanitize_file_name($texture) . '.svg';
-                    }
-
-                    if (false === empty($texture_url)) {
-                        $texture_css = "background: url('" . esc_url($texture_url) . "') repeat; background-size: " . esc_attr($texture_scale) . "px " . esc_attr($texture_scale) . "px; image-rendering: pixelated;";
-                    }
-
-                    // Rounded wall corners (clips the texture to the rounded box).
-                    $border_radius = intval(get_post_meta($point->ID, 'explore-wall-border-radius', true));
-                    if (0 < $border_radius) {
-                        $texture_css .= " border-radius: " . esc_attr($border_radius) . "px; overflow: hidden;";
-                    }
-                }
-
-                $css .= "
-                body .game-container .default-map {$type}.{$point->post_name}-map-item[data-genre='" . esc_attr($point->post_type) . "'] {
-                    top: " . esc_attr($top) . ";
-                    left: " . esc_attr($left) . ";
-                    " . ($height !== '0px' ? 'height:' . esc_attr($height) . ';' : '') . "
-                    " . ($width !== '0px' ? 'width:' . esc_attr($width) . ';' : '') . "
-                    " . (! empty($texture_css) ? $texture_css : (! empty($bg_url) ? "background: url('" . esc_url($bg_url) . "') no-repeat; background-size: contain;" : '')) . "
-                }
-                ";
-            }
-        }
+        $css .= self::itemStyles($explore_points, $position);
 
         // Custom CSS.
         $orbem_studio_custom_css = get_option('explore_custom_css');

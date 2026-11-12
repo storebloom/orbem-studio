@@ -1,0 +1,206 @@
+// Weather (see weather.js).
+
+#orbem-weather {
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  position: fixed;
+  z-index: 9;
+
+  &[hidden] {
+    display: none;
+  }
+
+  .ow-wx-dim,
+  .ow-wx-particles,
+  .ow-wx-flash,
+  .ow-wx-bolt {
+    inset: 0;
+    position: absolute;
+  }
+
+  // Coming and going with the spells: a slow fade either way.
+  .ow-wx-dim,
+  .ow-wx-particles {
+    opacity: 0;
+    transition: opacity 6s ease-in-out;
+  }
+
+  .ow-wx-dim {
+    background: rgb(16 24 42);
+  }
+
+  &.is-on {
+    .ow-wx-dim {
+      opacity: var(--wx-dim, 0);
+    }
+
+    .ow-wx-particles {
+      opacity: var(--wx-night, 1);
+    }
+  }
+
+  // A new area: its weather is already there, not arriving.
+  &.is-instant {
+    .ow-wx-dim,
+    .ow-wx-particles {
+      transition: none;
+    }
+  }
+
+  // Pinned to the map by weather.js, to within one tile.
+  .ow-wx-layer {
+    height: calc(100% + 2 * var(--th));
+    left: 0;
+    position: absolute;
+    top: 0;
+    width: calc(100% + 2 * var(--tw));
+    will-change: transform;
+  }
+
+  .ow-wx-sway,
+  .ow-wx-fall {
+    inset: 0;
+    position: absolute;
+  }
+
+  .ow-wx-fall {
+    animation: ow-wx-fall 1s linear infinite;
+    background-repeat: repeat;
+    background-size: var(--tw) var(--th);
+    will-change: transform;
+  }
+
+  .ow-wx-sway.is-swaying {
+    animation: ow-wx-sway 4s ease-in-out infinite alternate;
+  }
+
+  // Wind comes in gusts, not one steady blow.
+  .ow-wx-wind .ow-wx-sway {
+    animation: ow-wx-gust 5.5s ease-in-out infinite;
+  }
+
+  .ow-wx-flash {
+    background: rgb(235 240 255);
+    opacity: 0;
+
+    &.is-striking {
+      animation: ow-wx-flash 0.6s ease-out;
+    }
+  }
+
+  .ow-wx-bolt {
+    filter: drop-shadow(0 0 7px rgb(190 210 255 / 90%));
+    height: 100%;
+    opacity: 0;
+    width: 100%;
+
+    path {
+      fill: none;
+      stroke: rgb(255 255 255 / 95%);
+      stroke-linejoin: round;
+      stroke-width: 2.5;
+    }
+
+    &.is-striking {
+      animation: ow-wx-bolt 0.24s steps(1, end);
+    }
+  }
+}
+
+// One tile down (and across, in wind), then again: the repeat hides the jump.
+@keyframes ow-wx-fall {
+  from {
+    transform: translate3d(calc(-1 * var(--dx, 0px)), calc(-1 * var(--dy, 0px)), 0);
+  }
+
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes ow-wx-sway {
+  from {
+    transform: translate3d(-10px, 0, 0);
+  }
+
+  to {
+    transform: translate3d(10px, 0, 0);
+  }
+}
+
+@keyframes ow-wx-gust {
+  0%,
+  100% {
+    opacity: 0.15;
+  }
+
+  45% {
+    opacity: 1;
+  }
+
+  70% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes ow-wx-flash {
+  0% {
+    opacity: 0.5;
+  }
+
+  14% {
+    opacity: 0.5;
+  }
+
+  22% {
+    opacity: 0.15;
+  }
+
+  34% {
+    opacity: 0.4;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes ow-wx-bolt {
+  0% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+// Somebody who asked their system for less motion: no far layers, no drift, a soft flash and no bolt.
+@media (prefers-reduced-motion: reduce) {
+  #orbem-weather {
+    .ow-wx-far,
+    .ow-wx-bolt {
+      display: none;
+    }
+
+    .ow-wx-sway.is-swaying,
+    .ow-wx-wind .ow-wx-sway {
+      animation: none;
+    }
+
+    .ow-wx-flash.is-striking {
+      animation: ow-wx-flash-soft 0.6s ease-out;
+    }
+  }
+
+  @keyframes ow-wx-flash-soft {
+    0% {
+      opacity: 0.12;
+    }
+
+    100% {
+      opacity: 0;
+    }
+  }
+}

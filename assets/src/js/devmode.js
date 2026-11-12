@@ -206,9 +206,22 @@ export function engageDevMode() {
         // Disable transition so the item follows the cursor instantly.
         draggedContainer.style.transition = 'none';
 
-        const rect = draggedContainer.getBoundingClientRect();
-        offsetX = event.clientX - rect.left;
-        offsetY = event.clientY - rect.top;
+        // Where the cursor sits relative to the item's *layout* position, not its rendered box.
+        const dragIsMenu  = 'menu' === draggedContainer.dataset.type;
+        const dragMapEl   = document.querySelector('.game-container');
+        const dragMapRect = dragMapEl.getBoundingClientRect();
+        const dragZoom    = dragIsMenu ? 1 : window.devZoom || 1;
+        const dragStyle   = window.getComputedStyle(draggedContainer);
+        const dragLeft    = parseFloat(dragStyle.left) || 0;
+        const dragTop     = parseFloat(dragStyle.top) || 0;
+
+        offsetX = dragIsMenu
+            ? event.clientX - dragLeft
+            : event.clientX - dragMapRect.left + dragMapEl.scrollLeft - dragLeft * dragZoom;
+
+        offsetY = dragIsMenu
+            ? event.clientY - dragTop
+            : event.clientY - dragMapRect.top + dragMapEl.scrollTop - dragTop * dragZoom;
 
         document.addEventListener('mousemove', handleMouseMove);
         document.addEventListener('mouseup', handleDragEnd);

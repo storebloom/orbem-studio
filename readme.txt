@@ -4,7 +4,7 @@ Tags: game engine, rpg, video game, game-dev, narrative game
 Requires at least: 6.1
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.8.1
+Stable tag: 1.9.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -243,6 +243,31 @@ Documentation is available at https://orbem.studio/orbem-studio/docs/readme
 Tutorials are available on the Orbem Studio YouTube channel at https://youtube.com/@orbemstudio
 
 == Changelog ==
+
+= 1.9.0 =
+* Add shops: a new Shop post type lists goods with a price, a stock count per player, and an optional restock time. Give a character a shop and talking to them opens it to buy and sell, with an optional greeting.
+* Add crafting: a new Ingredients post type (common or rare) and a Crafting recipe on items, gear, weapons, and ingredients. An item with the "Crafting" interaction type becomes a crafting table that lists every recipe and crafts what the player can afford. Storage gains an Ingredients tab.
+* Add multiplayer (game option, requires login): signed-in players in the same area see each other move. Includes a cap on how many players are visible at once and a per-area "Player vs Player" option.
+* Add a time of day for areas: a day and night cycle with a configurable day length, or fixed day, dusk, or night. Items can light up at night with a radius, and equipped weapons can act as a light source such as a torch or lantern.
+* Add weather for areas: drizzle, rain, snow, wind, and lightning, which take turns and come always, often, occasionally, or rarely.
+* Add a minimap (game option) that shows the area's walls, doorways, items, people, enemies, and the player, plus a strip showing the time of day.
+* Add a pickup feed (game option) that lists money, points, and items as the player gets them.
+* Add player levels: weapons and gear can require a level before they can be equipped, and a "Health per level" option grows the health bar as the player levels up.
+* Add a Sound Effects settings page with sounds for doors, menus, tabs, buttons, selecting, equipping, using, dropping, buying, selling, crafting, denied actions, mission complete, level up, switching characters, and dialogue. The walking and points sounds have moved there.
+* Add branching dialogue: the new Dialogue Path block forks a cutscene into choices the player can pick, and paths can be nested.
+* Add the Conversation block: put several in a cutscene and the character says each in turn on later visits. Cutscenes also get a "Cutscene Repeats" option, and a new "None" trigger type.
+* Add mission timers: a time limit in seconds for a mission, with an optional cutscene and explainer that play when time runs out.
+* Add enemy spawners: an enemy can send copies of itself from its position, with settings for amount, interval, and how many can be alive at once.
+* Add boss improvements: new Rush and Auto Shoot attack patterns, a timed wave sequence, a 1 to 10 difficulty, and an optional name and health bar across the top of the screen.
+* Add defendable characters: give a character health and enemies will attack them as well as the player.
+* Add partial walk-through for walls and items, so a player can walk behind the top of a building, tree, or lamp post and only bump into its base.
+* Add area trigger options: an entrance image, which side the player can enter from, and "press the action key to enter" for doors and buildings.
+* Add jump and fall sprites for characters, and an option to swap an item to its interacted image on a timer.
+* Add a free camera for builders that pans around the map without moving the character.
+* Wandering characters are now remembered where they were for signed-in players instead of resetting on every page load.
+* "The End" cutscenes and explainers now walk the player back out of a building when the game is one building inside a larger world.
+* Add the `orbem_studio_can_build` filter so sites can decide who gets dev mode and builder tools.
+* Fix rotated items jumping when they are picked up and dragged in dev mode.
 
 = 1.8.1 =
 * Add patrolling runners: a runner enemy with a movement path now walks its route until the player comes within range, breaks off to chase them, and returns to its path if it lands no hit within its Chase Duration; each hit it lands restarts the timer.

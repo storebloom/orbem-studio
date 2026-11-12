@@ -56,7 +56,7 @@ class Meta_Box {
     public function exploreMetabox(): void
     {
         // Get all post types available.
-        $post_types = ['explore-explainer', 'explore-minigame', 'explore-point', 'explore-area', 'explore-character', 'explore-enemy', 'explore-weapon', 'explore-magic', 'explore-cutscene', 'explore-mission', 'explore-sign', 'explore-wall', 'explore-communicate'];
+        $post_types = ['explore-explainer', 'explore-minigame', 'explore-point', 'explore-area', 'explore-character', 'explore-enemy', 'explore-weapon', 'explore-magic', 'explore-cutscene', 'explore-mission', 'explore-sign', 'explore-wall', 'explore-communicate', 'explore-ingredients', 'explore-shop'];
 
         // Add the Explore Point meta box to editor pages.
         add_meta_box( 'explore-point', esc_html__( 'Configuration', 'orbem-studio' ), [$this, 'explorePointBox'], $post_types, 'normal', 'high' );
@@ -187,6 +187,7 @@ class Meta_Box {
         $explore_item_array = $this->plugin->util->getOrbemArray('explore-point');
         $explore_focus_array = $this->plugin->util->getOrbemArray('explore-sign');
         $explore_area_array = $this->plugin->util->getOrbemArray('explore-area');
+        $explore_shop_array = $this->plugin->util->getOrbemArray('explore-shop');
         $explore_communicate_array = $this->plugin->util->getOrbemArray('explore-communication-type', true);
         $explore_character_array = $this->plugin->util->getOrbemArray('explore-character');
         $explore_enemy_array = $this->plugin->util->getOrbemArray('explore-enemy');
@@ -236,6 +237,11 @@ class Meta_Box {
                 'left-hurt' => 'upload',
                 'right-hurt' => 'upload',
                 'dead' => 'upload',
+                // In the air, in a gravity room: going up, and coming down.
+                'left-jump' => 'upload',
+                'right-jump' => 'upload',
+                'left-fall' => 'upload',
+                'right-fall' => 'upload',
         ];
         $weapon_images = [];
 
@@ -248,6 +254,56 @@ class Meta_Box {
         }
 
         $post_type_specific = [
+                'explore-ingredients' => [
+                        'Ingredient' => [
+                                'explore-rarity' => [
+                                        [
+                                                'select' => [
+                                                        'Common' => 'common',
+                                                        'Rare'   => 'rare',
+                                                ]
+                                        ],
+                                        'Common ingredients are sold in shops and won from games. Rare ones are for special things, and come from rarer wins.'
+                                ],
+                        ],
+                        'Crafting' => [
+                                'explore-recipe' => [
+                                        [
+                                                'repeater' => [
+                                                        'explore-ingredient' => 'ingredient',
+                                                        'explore-amount'     => 'number',
+                                                ]
+                                        ],
+                                        'What it takes to make this ingredient out of others at a crafting table. Leave empty for one that is only found or bought.'
+                                ],
+                        ],
+                ],
+
+                'explore-shop' => [
+
+                        'Stock' => [
+                                'explore-shop-items' => [
+                                        [
+                                                'repeater' => [
+                                                        'explore-item'    => 'shopitem',
+                                                        'explore-price'   => 'number',
+                                                        'explore-stock'   => 'shopstock',
+                                                        'explore-count'   => 'number',
+                                                        'explore-restock' => 'number',
+                                                ]
+                                        ],
+                                        'What this shop sells. Price is in the same money the player carries. Count is how many one player may buy before it runs out — ignored when stock is unlimited. Restock is the number of minutes after it runs out before it fills up again; leave it empty and it stays sold out.'
+                                ],
+                        ],
+
+                        'Shop Appearance' => [
+                                'explore-shop-greeting' => [
+                                        'text',
+                                        'A line the shopkeeper says when the shop opens. Optional.'
+                                ],
+                        ],
+                ],
+
                 'explore-area' => [
 
                         'Area Media' => [
@@ -279,9 +335,94 @@ class Meta_Box {
                                         'number',
                                         'Zoom for this area as a percentage (e.g. 160 = 160%). Enlarges the whole world, great for small pixel art, while keeping the player centered. Leave empty or 100 for no zoom.'
                                 ],
+                                'explore-pvp' => [
+                                        [
+                                                'radio' => [
+                                                        'no',
+                                                        'yes'
+                                                ]
+                                        ],
+                                        'Whether players can fight each other here. Only does anything when Multiplayer is on for the game. Off unless you say otherwise, so a town is somewhere to stand around and an arena is a decision.'
+                                ],
+                        ],
+
+                        'Walking Through' => [
+                                'explore-partial-pass' => [
+                                        [
+                                                'radio' => [
+                                                        'no',
+                                                        'yes'
+                                                ]
+                                        ],
+                                        'Part of it can be walked through: from one side, as far in as you say, so a player can walk behind the top of a building and only reach its door at the bottom. Drawn in front of the player while they are behind it, at its Layer, and behind them once they are in front.'
+                                ],
+                                'explore-pass-side' => [
+                                        [
+                                                'select' => [
+                                                        'Top'    => 'top',
+                                                        'Bottom' => 'bottom',
+                                                        'Left'   => 'left',
+                                                        'Right'  => 'right',
+                                                ]
+                                        ],
+                                        'Which side can be walked into. Top, for something standing up out of the ground.'
+                                ],
+                                'explore-pass-depth' => [
+                                        'number',
+                                        'How many pixels in from that side can be walked through. The rest is solid: a 300px tall post walked through from the top by 280 is solid only in its bottom 20. Leave empty for 90% of its height (or width, from the left or right).'
+                                ],
+                        ],
+
+                        'Time of Day' => [
+                                'explore-day-night' => [
+                                        [
+                                                'select' => [
+                                                        'Off'                => '',
+                                                        'Day and night cycle' => 'cycle',
+                                                        'Always day'         => 'day',
+                                                        'Always dusk'        => 'dusk',
+                                                        'Always night'       => 'night',
+                                                ]
+                                        ],
+                                        'How this area is lit. A cycle runs from day to night and back again on one clock for everybody; the others keep it at that time for good. Leave it off indoors.'
+                                ],
+                                'explore-day-night-cycle' => [
+                                        'number',
+                                        'How long one whole day lasts in the cycle, in minutes: 60 is an hour from one noon to the next. Leave empty for 60.'
+                                ],
+                        ],
+
+                        'Weather' => [
+                                'explore-weather' => [
+                                        [
+                                                'multiselect' => [
+                                                        'Drizzle'   => 'drizzle',
+                                                        'Rain'      => 'rain',
+                                                        'Snow'      => 'snow',
+                                                        'Wind'      => 'wind',
+                                                        'Lightning' => 'lightning',
+                                                ]
+                                        ],
+                                        'The weather in this area. Pick several and they take turns: rain one time, snow the next. Wind can blow on its own or join any of the others. Drizzle is light rain that leaves the area as bright as it was; rain darkens it. Lightning is a storm, rain with lightning. Leave empty for clear skies, and indoors.'
+                                ],
+                                'explore-frequency' => [
+                                        [
+                                                'select' => [
+                                                        'Always'       => 'always',
+                                                        'Often'        => 'often',
+                                                        'Occasionally' => 'occasionally',
+                                                        'Rarely'       => 'rarely',
+                                                ]
+                                        ],
+                                        'How often that weather comes. Always never clears. The others come for a few hours of the day at a time, and some days not at all: Rarely at most once a day, Occasionally at most twice, Often at most three times. A day is one turn of the day-night cycle. Everybody in the area sees the same weather at the same time.'
+                                ],
                         ],
 
                         'Area Entry Trigger' => [
+                                'explore-trigger-image' => [
+                                        'upload',
+                                        'The picture of this area\'s entrance on the map: a door, a building, a cave mouth. Drawn at the trigger\'s width and height. Leave empty for an invisible trigger.'
+                                ],
                                 'explore-area' => [
                                         [
                                                 'multiselect' => $explore_area_array
@@ -303,6 +444,27 @@ class Meta_Box {
                                 'explore-width' => [
                                         'number',
                                         'The width of the trigger area.'
+                                ],
+                                'explore-entry-side' => [
+                                        [
+                                                'select' => [
+                                                        'Top'      => 'top',
+                                                        'Left'     => 'left',
+                                                        'Right'    => 'right',
+                                                        'Bottom'   => 'bottom',
+                                                        'Any side' => 'any',
+                                                ]
+                                        ],
+                                        'Which side of the trigger the player can walk in through. The other three do nothing, so a building can have a front. "Any side" behaves as it always has.'
+                                ],
+                                'explore-interact-to-enter' => [
+                                        [
+                                                'radio' => [
+                                                        'no',
+                                                        'yes'
+                                                ]
+                                        ],
+                                        'The player presses the action key (Space) at the trigger to go in, instead of going in the moment they walk into it. Stops buildings and doors being entered by accident. Where this trigger is the way back out of somewhere (it has a landing spot there), it is still walked through.'
                                 ],
                         ],
 
@@ -476,6 +638,25 @@ class Meta_Box {
                                 ],
                         ],
 
+                        'Mission Timer' => [
+                                'explore-mission-timer' => [
+                                        'number',
+                                        'Seconds the player has to complete this mission, counted from when it appears. A mission that follows another starts counting when that one is completed. Completing it in time stops the timer. Leave empty for no time limit.'
+                                ],
+                                'explore-mission-timer-cutscene' => [
+                                        [
+                                                'select' => $explore_cutscene_array
+                                        ],
+                                        'The cutscene that plays when time runs out.'
+                                ],
+                                'explore-mission-timer-explainer' => [
+                                        [
+                                                'select' => $explore_explainer_array
+                                        ],
+                                        'The explainer that shows when time runs out. If a cutscene is also chosen, the cutscene plays and this shows after it.'
+                                ],
+                        ],
+
                         'Mission Completion Triggers' => [
                                 'explore-mission-trigger' => [
                                         [
@@ -550,10 +731,11 @@ class Meta_Box {
                                         [
                                                 'radio' => [
                                                         'auto',
-                                                        'engagement'
+                                                        'engagement',
+                                                        'none'
                                                 ]
                                         ],
-                                        'Choose how the cutscene is triggered. "Auto" starts when the player enters the trigger. "Engagement" starts when the action key is pressed.'
+                                        'Choose how the cutscene is triggered. "Auto" starts when the player enters the trigger. "Engagement" starts when the action key is pressed. "None" never starts from a trigger or from touching its character — only when the game plays it (a story moment, a tutorial).'
                                 ],
                                 'explore-the-end' => [
                                         [
@@ -562,9 +744,33 @@ class Meta_Box {
                                                         'no'
                                                 ]
                                         ],
-                                        'The End: when Yes, the game restarts after this cutscene ends (wipes saved progress and returns to the start).'
+                                        'The End: when Yes, the game restarts after this cutscene ends (wipes saved progress and returns to the start). Where the game is one building in a larger world, it walks the player back out of the building instead.'
                                 ],
                         ],
+                        'Cutscene Repeats' => [
+                                'explore-cutscene-repeat' => [
+                                        [
+                                                'radio' => [
+                                                        'no',
+                                                        'yes'
+                                                ]
+                                        ],
+                                        'Whether this can happen more than once. A story beat happens once; talking to somebody is something you can do again, and should be.'
+                                ],
+                        ],
+
+                        'Cutscene Repeats' => [
+                                'explore-cutscene-repeat' => [
+                                        [
+                                                'radio' => [
+                                                        'no',
+                                                        'yes'
+                                                ]
+                                        ],
+                                        'Whether this can happen more than once. A story beat happens once; talking to somebody is something you can do again, and should be.'
+                                ],
+                        ],
+
                         'Cutscene Area & Trigger' => [
                                 'explore-area-required' => [
                                         [
@@ -761,6 +967,18 @@ class Meta_Box {
                 ],
                 'explore-weapon' => [
 
+                        'Crafting' => [
+                                'explore-recipe' => [
+                                        [
+                                                'repeater' => [
+                                                        'explore-ingredient' => 'ingredient',
+                                                        'explore-amount'     => 'number',
+                                                ]
+                                        ],
+                                        'What it takes to craft this at a crafting table: each ingredient, and how many of it. Leave empty for something that cannot be crafted.'
+                                ],
+                        ],
+
                         'Weapon Placement & Position' => [
                                 'explore-top' => [
                                         'number',
@@ -794,9 +1012,26 @@ class Meta_Box {
                                         'number',
                                         'Height (in pixels) of the weapon image when held/shown on the character. Leave empty to keep the image’s natural aspect ratio.'
                                 ],
+                                'explore-weapon-light' => [
+                                        [
+                                                'radio' => [
+                                                        'no',
+                                                        'yes'
+                                                ]
+                                        ],
+                                        'A light source: while it is equipped, the ground around and in front of the player stays lit at night. A torch, a lantern. Only does anything in an area with Time of Day on.'
+                                ],
+                                'explore-weapon-light-radius' => [
+                                        'number',
+                                        'How far its light reaches, in pixels. Leave empty for 220.'
+                                ],
                         ],
 
                         'Weapon Stats & Type' => [
+                                'explore-use-level' => [
+                                        'number',
+                                        'The level a player must reach before they can equip this weapon. They can still pick it up and keep it. Empty or 0: any level.'
+                                ],
                                 'explore-attack-required' => [
                                         [
                                                 'normal' => 'number',
@@ -1009,6 +1244,7 @@ class Meta_Box {
                                                 'select' => [
                                                         'Speed' => 'speed',
                                                         'Strength' => 'strength',
+                                                        'Defense' => 'defense',
                                                         'Hazard' => 'hazard',
                                                         'Programming' => 'programming',
                                                 ]
@@ -1081,6 +1317,13 @@ class Meta_Box {
                                 ],
                         ],
 
+                        'Defending' => [
+                                'explore-npc-health' => [
+                                        'number',
+                                        'Give this character health and enemies will go for them as well as the player, choosing whichever is closer. At 0 they are defeated. Leave empty for a character enemies ignore.'
+                                ],
+                        ],
+
                         'Movement & Pathing' => [
                                 'explore-speed' => [
                                         'number',
@@ -1115,6 +1358,12 @@ class Meta_Box {
                                                 ]
                                         ],
                                         'Define a fixed walking path for this character.'
+                                ],
+                                'explore-shop' => [
+                                        [
+                                                'select' => $explore_shop_array
+                                        ],
+                                        'Give this character a shop to keep. Talking to them opens it.'
                                 ],
                                 'explore-repeat' => [
                                         [
@@ -1319,6 +1568,30 @@ class Meta_Box {
                                 ],
                         ],
 
+                        'Spawning' => [
+                                'explore-spawner' => [
+                                        [
+                                                'radio' => [
+                                                        'yes',
+                                                        'no'
+                                                ]
+                                        ],
+                                        'Turn this enemy into a spawner. It is not on the map itself: copies of it appear at its position, one at a time.'
+                                ],
+                                'explore-spawn-amount' => [
+                                        'number',
+                                        'How many copies it sends. 0 keeps sending them for as long as the area is open.'
+                                ],
+                                'explore-spawn-interval' => [
+                                        'number',
+                                        'Seconds between copies. Defaults to 2.'
+                                ],
+                                'explore-spawn-alive' => [
+                                        'number',
+                                        'The most of its copies that can be on the map at once. Defaults to 8.'
+                                ],
+                        ],
+
                         'Materialization & Visibility' => [
                                 'explore-area-required' => [
                                         [
@@ -1426,10 +1699,34 @@ class Meta_Box {
                                         [
                                                 'multiselect' => [
                                                         'Projectile' => 'projectile',
-                                                        'Pulse Wave' => 'pulse-wave'
+                                                        'Pulse Wave' => 'pulse-wave',
+                                                        'Rush'       => 'rush',
+                                                        'Auto Shoot' => 'auto-shoot',
                                                 ]
                                         ],
-                                        'Select the attack patterns this boss can use during combat.'
+                                        'Select the attack patterns this boss can use during combat. It moves to the next as its health drops past three quarters, half and a quarter. Rush charges at the player and hurts like a hazard on contact; Auto Shoot sprays shots in a line while turning a full circle.'
+                                ],
+                                'explore-boss-sequence' => [
+                                        [
+                                                'repeater' => [
+                                                        'wave'    => 'bosswave',
+                                                        'seconds' => 'number',
+                                                ]
+                                        ],
+                                        'Optional. Waves in the order this boss uses them, each for its number of seconds, starting again from the top for as long as the fight lasts. A wave can appear more than once. When set, this replaces switching on health.'
+                                ],
+                                'explore-boss-difficulty' => [
+                                        'number',
+                                        'From 1 (gentle) to 10 (hardest). How fast Rush charges and how little warning it gives, and how fast Auto Shoot sprays. Leave empty for 5. Health, projectile rate and projectile speed are set in their own fields.'
+                                ],
+                                'explore-boss-bar' => [
+                                        [
+                                                'radio' => [
+                                                        'yes',
+                                                        'no'
+                                                ]
+                                        ],
+                                        'Show this boss\'s name and health in a bar across the top of the screen during the fight, instead of the small bar over its head.'
                                 ],
                         ],
 
@@ -1650,7 +1947,7 @@ class Meta_Box {
                                                         'no'
                                                 ]
                                         ],
-                                        'The End: when Yes, closing this explainer restarts the game (wipes saved progress and returns to the start).'
+                                        'The End: when Yes, closing this explainer restarts the game (wipes saved progress and returns to the start). Where the game is one building in a larger world, it walks the player back out of the building instead.'
                                 ],
                                 'explore-auto-close' => [
                                         'number',
@@ -1687,6 +1984,18 @@ class Meta_Box {
 
                 ],
                 'explore-point' => [
+                        'Crafting' => [
+                                'explore-recipe' => [
+                                        [
+                                                'repeater' => [
+                                                        'explore-ingredient' => 'ingredient',
+                                                        'explore-amount'     => 'number',
+                                                ]
+                                        ],
+                                        'What it takes to craft this at a crafting table: each ingredient, and how many of it. Leave empty for something that cannot be crafted.'
+                                ],
+                        ],
+
                         'Placement & Size' => [
                                 'explore-top-required' => [
                                         'number',
@@ -1715,9 +2024,11 @@ class Meta_Box {
                                                         'Draggable' => 'draggable',
                                                         'Hazard' => 'hazard',
                                                         'Clickable' => 'clickable',
+                                                        'Crafting' => 'crafting',
+                                                        'Action key (for plugins)' => 'interact',
                                                 ]
                                         ],
-                                        'Define how the player interacts with this item.'
+                                        'Define how the player interacts with this item. Crafting makes it a crafting table: walking up to it and pressing the action key opens the crafting menu.'
                                 ],
                                 'explore-rotation' => [
                                         'number',
@@ -1741,9 +2052,21 @@ class Meta_Box {
                                         ],
                                         'Select the type of reward granted when this item is collected or broken.'
                                 ],
+                                'explore-use-level' => [
+                                        'number',
+                                        'For gear: the level a player must reach before they can equip it. They can still pick it up and keep it. Empty or 0: any level.'
+                                ],
                                 'explore-interacted' => [
                                         'upload',
                                         'Image shown after the item has been interacted with, if it does not disappear.'
+                                ],
+                                'explore-interacted-every' => [
+                                        'number',
+                                        'Swap to the interacted image on its own, every this many milliseconds, then back to the normal image. Needs an interacted image. Empty or 0: off.'
+                                ],
+                                'explore-interacted-hold' => [
+                                        'number',
+                                        'How long the interacted image stays before changing back, in milliseconds. Empty or 0: the same as the swap time above.'
                                 ],
                                 'explore-passable' => [
                                         [
@@ -1753,6 +2076,43 @@ class Meta_Box {
                                                 ]
                                         ],
                                         'Choose whether the player can walk over this item after interacting with it.'
+                                ],
+                                'explore-illuminate' => [
+                                        [
+                                                'radio' => [
+                                                        'no',
+                                                        'yes'
+                                                ]
+                                        ],
+                                        'Lights up at night: the item and a circle around it stay as bright as day while the rest of the area is dark. A street light, a lamp, a campfire. Only does anything in an area with Time of Day on.'
+                                ],
+                                'explore-illuminate-radius' => [
+                                        'number',
+                                        'How far its light reaches, in pixels from the middle of the item. Leave empty for 250.'
+                                ],
+                                'explore-partial-pass' => [
+                                        [
+                                                'radio' => [
+                                                        'no',
+                                                        'yes'
+                                                ]
+                                        ],
+                                        'Part of it can be walked through: from one side, as far in as you say, so a player can walk behind a lamp post or a tree and only bump into its base. Drawn in front of the player while they are behind it, at its Layer, and behind them once they are in front.'
+                                ],
+                                'explore-pass-side' => [
+                                        [
+                                                'select' => [
+                                                        'Top'    => 'top',
+                                                        'Bottom' => 'bottom',
+                                                        'Left'   => 'left',
+                                                        'Right'  => 'right',
+                                                ]
+                                        ],
+                                        'Which side can be walked into. Top, for something standing up out of the ground.'
+                                ],
+                                'explore-pass-depth' => [
+                                        'number',
+                                        'How many pixels in from that side can be walked through. The rest is solid: a 300px tall post walked through from the top by 280 is solid only in its bottom 20. Leave empty for 90% of its height (or width, from the left or right).'
                                 ],
                                 'explore-disappear' => [
                                         [
