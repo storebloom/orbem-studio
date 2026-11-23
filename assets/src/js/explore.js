@@ -848,6 +848,10 @@ function engageSettingsMenus() {
                         });
                     });
                 }
+
+                const keyInHand = document.querySelector('.storage-item[data-type="key"].equipped');
+
+                holdKey(keyInHand ? keyInHand.dataset.id : '');
             }
 
             settingCog.addEventListener('click', (e) => {
@@ -2661,6 +2665,10 @@ function equipNewItem(type, id, amount, unequip, name) {
         window.currentWeapon = defaultWeapon !== name ? '-' + name : '';
     }
 
+    if ('key' === type) {
+        holdKey(true === unequip ? '' : id);
+    }
+
     if (false !== isLoggedIn) {
         // Save position of item.
         fetch(`${OrbemOrder.siteRESTURL}/equip-explore-item/`, {
@@ -2690,6 +2698,95 @@ function equipNewItem(type, id, amount, unequip, name) {
             );
         });
     }
+}
+
+function holdKey(id) {
+    'use strict';
+
+    const box = document.getElementById('map-character');
+    const key = id ? String(id) : '';
+
+    document.querySelectorAll('.storage-item[data-type="key"].equipped').forEach((el) => {
+        if (String(el.dataset.id) !== key) {
+            el.classList.remove('equipped');
+        }
+    });
+
+    const item = '' !== key ? document.querySelector('.storage-item[data-type="key"][data-id="' + key + '"]') : null;
+    let held = box ? box.querySelector('.map-held-key') : null;
+
+    window.heldKey = item ? key : '';
+
+    if (!box || !item) {
+        if (held) {
+            held.remove();
+        }
+
+        return;
+    }
+
+    item.classList.add('equipped');
+
+    if (!held) {
+        held = document.createElement('img');
+        held.className = 'map-held-key';
+        held.alt = '';
+        box.appendChild(held);
+    }
+
+    const icon = box.querySelector('.map-character-icon.engage');
+    const image = item.querySelector('img');
+    const width = icon ? icon.offsetWidth : 0;
+    const height = icon ? icon.offsetHeight : 0;
+
+    held.dataset.id = key;
+    held.src = image ? image.src : '';
+    held.style.cssText = 'position:absolute;pointer-events:none;z-index:2;width:36px;height:auto;transform:translate(-50%,-50%);'
+        + 'left:calc(50% + ' + Math.round(width * 0.36) + 'px);'
+        + 'top:calc(50% + ' + Math.round(height * 0.08) + 'px);';
+}
+
+function openLock(lock) {
+    'use strict';
+
+    if (!lock || lock.classList.contains('interacted-with') || 'yes' === lock.dataset.opening) {
+        return;
+    }
+
+    lock.dataset.opening = 'yes';
+
+    const keyItem = document.querySelector('.storage-item[data-type="key"][data-id="' + lock.dataset.lock + '"]');
+    const name = cleanClassName(lock.className);
+
+    playSfx('explore_sfx_use');
+
+    if (keyItem) {
+        removeItemFromStorage(keyItem.getAttribute('title'), 'key');
+    }
+
+    holdKey('');
+
+    if (lock.dataset.mission && '' !== lock.dataset.mission) {
+        saveMission(lock.dataset.mission, lock, name);
+    }
+
+    persistItemRemoval(name, 'point', 0, 0, '', true);
+
+    if ('no' === lock.dataset.disappear) {
+        interactWithItem(lock);
+        lock.classList.add('interacted-with');
+
+        if ('true' === lock.dataset.passable) {
+            lock.classList.add('passable');
+        }
+    } else {
+        interactWithItem(lock);
+        lock.style.display = 'none';
+        itemGone(lock);
+        lock.remove();
+    }
+
+    document.dispatchEvent(new CustomEvent('orbem:unlocked', { detail: { lock, key: lock.dataset.lock } }));
 }
 
 /**
@@ -7019,6 +7116,7 @@ function shouldRemoveItemOnload(mapItem) {
         'explore-character' === mapItem.dataset.genre ||
         'true' === mapItem.dataset.hazard ||
         'true' === mapItem.dataset.collectable ||
+        (undefined !== mapItem.dataset.lock && 'no' !== mapItem.dataset?.disappear) ||
         (('true' === mapItem.dataset.breakable || 'true' === mapItem.dataset.collectable || 'true' === mapItem.dataset.clickable) &&
             'no' !== mapItem.dataset?.disappear) ||
         ('true' === mapItem.dataset.removable &&
@@ -7874,6 +7972,17 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
                 }
             }
 
+            if (
+                value && box && value.dataset.lock &&
+                '' !== (window.heldKey || '') &&
+                window.heldKey === value.dataset.lock &&
+                elementsOverlap(value.dataset.passDepth ? feetBox(finalCharPos) : finalCharPos, value, ACTION_REACH)
+            ) {
+                openLock(value);
+
+                return;
+            }
+
             const actionReach = value && box && (
                 'explore-sign' === value.dataset.genre ||
                 'yes' === value.dataset.crafting ||
@@ -8710,10 +8819,14 @@ function miroExplorePosition(v, a, b, d, x, $newest) {
         }
     }
 
-    const w = pane.offsetWidth - box.offsetWidth;
+    const vertical = 87 === a || 38 === a;
+    const half = (vertical ? box.offsetHeight : box.offsetWidth) / 2;
+    const offset = vertical ? window.globalTopPositionOffset : window.globalLeftPositionOffset;
+    const least = Math.floor(half - offset);
+    const w = Math.ceil((vertical ? pane.offsetHeight : pane.offsetWidth) - offset - half);
     const n = parseInt(v, 10) - (d[a] ? x : 0) + (d[b] ? x : 0);
 
-    return n < 0 ? 0 : n > w ? w : n;
+    return n < least ? least : n > w ? w : n;
 
     function getKeyByValue(array, value) {
         for (const key in array) {
@@ -9328,6 +9441,10 @@ function storeExploreItem(item) {
 
             // Add item to database.
             saveStorageItem(id, name, type, value, false);
+
+            if ('key' === type) {
+                persistItemRemoval(cleanClassName(item.className), 'point', 0, 0, '', true);
+            }
         }
     }
 }
@@ -11937,7 +12054,11 @@ function setStaticMCImage(mapChar, direction, weaponChange) {
             staticId = staticId.slice(0, -window.currentWeapon.length);
         }
 
-        const staticVersion = getCharacterSprite(staticId);
+        let staticVersion = getCharacterSprite(staticId);
+
+        if (!staticVersion || '' === staticVersion.getAttribute('src')) {
+            staticVersion = getCharacterSprite(window.mainCharacter + '-static');
+        }
 
         if (staticVersion && '' !== staticVersion.getAttribute('src')) {
             currentCharacterImage.classList.remove('engage');
@@ -13177,6 +13298,7 @@ function getMenuType(type) {
         gear: 'gear',
         weapons: 'weapons',
         ingredients: 'ingredients',
+        key: 'items',
     };
 
     return menuTypes[type];

@@ -370,6 +370,8 @@ function strike() {
                 el.classList.add('is-striking');
             });
 
+            thunder();
+
             // And in case neither event comes.
             setTimeout(() => {
                 flash.classList.remove('is-striking');
@@ -379,6 +381,102 @@ function strike() {
 
         strike();
     }, 6000 + Math.random() * 12000);
+}
+
+// Sounds
+
+/** The weather that loops while it is falling, by its sound on the Sound Effects page. */
+const LOOPS = ['drizzle', 'rain', 'snow', 'wind'];
+
+const ambience = {};
+let ambienceTimer = 0;
+
+function soundUrl(kind) {
+    return window.OrbemOrder?.sounds?.[`explore_sfx_weather_${kind}`] || '';
+}
+
+function sfxVolume() {
+    return undefined === window.sfxVolume ? 1 : window.sfxVolume;
+}
+
+/** Each loop heads for full or silent, fading over as long as the picture does. */
+function listen() {
+    const audible = state.on && state.shown && !document.hidden;
+
+    LOOPS.forEach((kind) => {
+        const url = soundUrl(kind);
+
+        if (!url) {
+            return;
+        }
+
+        const sound = ambience[kind] || (ambience[kind] = { audio: null, level: 0, target: 0 });
+
+        sound.target = audible && has(kind) ? 1 : 0;
+
+        if (sound.target && !sound.audio) {
+            sound.audio = new Audio(url);
+            sound.audio.loop = true;
+            sound.audio.volume = 0;
+        }
+    });
+
+    if (!ambienceTimer) {
+        ambienceTimer = setInterval(fadeSounds, 100);
+    }
+}
+
+function fadeSounds() {
+    let settled = true;
+
+    Object.values(ambience).forEach((sound) => {
+        if (!sound.audio) {
+            return;
+        }
+
+        const step = 100 / FADE;
+
+        sound.level = sound.target > sound.level
+            ? Math.min(sound.target, sound.level + step)
+            : Math.max(sound.target, sound.level - step);
+
+        sound.audio.volume = Math.min(1, sound.level * sfxVolume());
+
+        if (sound.level > 0 && sound.audio.paused) {
+            sound.audio.play().catch(() => {});
+        } else if (0 === sound.level && !sound.audio.paused) {
+            sound.audio.pause();
+        }
+
+        if (sound.level !== sound.target) {
+            settled = false;
+        }
+    });
+
+    if (settled) {
+        clearInterval(ambienceTimer);
+        ambienceTimer = 0;
+    }
+}
+
+/** Thunder, a moment after the flash, as far off as the storm is. */
+function thunder() {
+    const url = soundUrl('lightning');
+
+    if (!url) {
+        return;
+    }
+
+    setTimeout(() => {
+        if (!state.on || !state.shown || document.hidden) {
+            return;
+        }
+
+        const clap = new Audio(url);
+
+        clap.volume = sfxVolume();
+        clap.play().catch(() => {});
+    }, 200 + Math.random() * 1300);
 }
 
 // Keeping up with the area
@@ -470,6 +568,8 @@ function check() {
             follow();
         }
     }
+
+    listen();
 }
 
 function start() {
