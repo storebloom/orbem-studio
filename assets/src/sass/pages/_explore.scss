@@ -2793,3 +2793,20 @@ main[data-devmode="true"] .game-container .enemy-item[data-spawner="yes"] {
     }
   }
 }
+
+.default-map > .orbem-shadows {
+  height: 0;
+  left: 0;
+  overflow: visible;
+  pointer-events: none;
+  position: absolute;
+  top: 0;
+  width: 0;
+  z-index: 0;
+}
+
+.orbem-shadow {
+  background: radial-gradient(closest-side, rgb(0 0 0 / 45%), transparent);
+  pointer-events: none;
+  position: absolute;
+}

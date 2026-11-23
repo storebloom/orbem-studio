@@ -4,7 +4,7 @@ Tags: game engine, rpg, video game, game-dev, narrative game
 Requires at least: 6.1
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.9.0
+Stable tag: 1.9.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -243,6 +243,12 @@ Documentation is available at https://orbem.studio/orbem-studio/docs/readme
 Tutorials are available on the Orbem Studio YouTube channel at https://youtube.com/@orbemstudio
 
 == Changelog ==
+
+= 1.9.1 =
+* Add locks and keys: two new item interaction types. A Key is picked up into Items and can be equipped (one key in hand at a time); touching its Lock with the key equipped opens the lock and uses the key up. Pair them with the new "Counterpart" field on either one. An opened lock disappears, or shows its Interacted image when Disappear is set to no.
+* Add ground shadows: a soft shadow under characters, items, and enemies, sized to the shape each one is drawn. New "Character shadow", "Item shadow", and "Enemy shadow" game options set the default (70 fits the sprite, higher is wider, 0 or empty for none), and a "Shadow" field on characters, enemies, items, weapons, and area entrances overrides it. New games start with all three set to 70.
+* Add weather sound effects: a new section on the Sound Effects page with looping sounds for drizzle, rain, snow, and wind that fade in and out with the weather, and a thunder sound that plays with each lightning strike.
+* Fix the main character showing no sprite at the start when there is no image for their start direction; they now fall back to the plain static image.
 
 = 1.9.0 =
 * Add shops: a new Shop post type lists goods with a price, a stock count per player, and an optional restock time. Give a character a shop and talking to them opens it to buy and sell, with an optional greeting.

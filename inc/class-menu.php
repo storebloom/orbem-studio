@@ -495,6 +495,10 @@ class Menu
 
         $this->telemetry->orbemTlmEvent('wizard_mode_selected', ['mode' => $type]);
 
+        foreach (['explore_shadow_characters', 'explore_shadow_items', 'explore_shadow_enemies'] as $shadow_option) {
+            add_option($shadow_option, '70');
+        }
+
         update_option('explore_setup', 'true');
 
         return rest_ensure_response( [
@@ -984,6 +988,9 @@ class Menu
                 'explore_multiplayer' => ['select', 'Multiplayer', 'Let players who are logged in and standing in the same area see each other. Requires login.', ['No', 'Yes']],
                 'explore_gain_feed' => ['select', 'Pickup feed', 'Show what the player gets — money, points, items, anything collected, bought, crafted or won — as a list down the right side of the screen, one line per thing in the order it arrived, each fading away after a few seconds. Replaces the little words that pop up over the player.', ['No', 'Yes']],
                 'explore_minimap' => ['select', 'Minimap', 'Show a small map of the area in the corner of the screen: its walls, doorways and the things in it, the people and enemies moving about, and the player as an arrow. Players click it to make it bigger.', ['No', 'Yes']],
+                'explore_shadow_characters' => ['number', 'Character shadow', 'A soft shadow on the ground under the main character and every NPC, sized to the shape the character is drawn: 70 fits it, higher is wider. A character\'s own Shadow field overrides it. Empty or 0: no shadow.'],
+                'explore_shadow_items' => ['number', 'Item shadow', 'A soft shadow on the ground under every item, weapon and building on the map, sized to the shape it is drawn: 70 fits it, higher is wider. An item\'s own Shadow field overrides it. Empty or 0: no shadow.'],
+                'explore_shadow_enemies' => ['number', 'Enemy shadow', 'A soft shadow on the ground under every enemy, sized to the shape it is drawn: 70 fits it, higher is wider. An enemy\'s own Shadow field overrides it. Empty or 0: no shadow.'],
                 'explore_multiplayer_cap' => ['number', 'Players visible at once', 'How many other players one person sees before the rest are left out. The nearest are kept. Higher costs more on slower devices; 16 is a sensible ceiling.'],
                 'explore_player_name' => ['select', 'Add player name input', 'Do you want to add an input field where people can enter their names to use for character and dialogues?', ['Yes', 'No']],
                 'explore_autoplay_cutscene' => ['select', 'Autoplay cutscene dialogue', 'Do you want your cutscene dialogue to automatically go to the next line as it completes?', ['Yes', 'No']],
@@ -1053,6 +1060,22 @@ class Menu
     }
 
     /**
+     * The weather's sounds, for the Sound Effects page.
+     *
+     * @return array
+     */
+    public static function getWeatherSoundSettings(): array
+    {
+        return [
+                'explore_sfx_weather_drizzle' => ['upload', 'Drizzle', 'Loops while it drizzles. Fades in and out with it.'],
+                'explore_sfx_weather_rain' => ['upload', 'Rain', 'Loops while it rains, and under a thunderstorm.'],
+                'explore_sfx_weather_snow' => ['upload', 'Snow', 'Loops while it snows. Fades in and out with it.'],
+                'explore_sfx_weather_wind' => ['upload', 'Wind', 'Loops while the wind blows, alone or with other weather.'],
+                'explore_sfx_weather_lightning' => ['upload', 'Lightning', 'Thunder: plays once with each lightning strike.'],
+        ];
+    }
+
+    /**
      * Every section of the Sound Effects page.
      *
      * @return array
@@ -1067,6 +1090,11 @@ class Menu
                                 'title' => 'Game sound effects',
                                 'description' => 'Played by the game everywhere. Leave one empty for silence.',
                                 'fields' => self::getSoundSettings(),
+                        ],
+                        'weather' => [
+                                'title' => 'Weather sound effects',
+                                'description' => 'Heard while an area\'s weather is showing. Leave one empty for silence.',
+                                'fields' => self::getWeatherSoundSettings(),
                         ],
                 ],
                 is_array($extra) ? $extra : []

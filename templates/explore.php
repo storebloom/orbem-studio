@@ -549,6 +549,11 @@ include plugin_dir_path(__FILE__) . 'plugin-header.php';
                 $orbem_studio_dir_image = 'static' . $orbem_studio_explore_start_direction;
             }
 
+            // No sprite for the start direction, so start on the plain static.
+            if (true === empty($orbem_studio_direction_images[$orbem_studio_dir_image])) {
+                $orbem_studio_dir_image = false === empty($orbem_studio_direction_images['static' . $orbem_studio_explore_weapon_start]) ? 'static' . $orbem_studio_explore_weapon_start : 'static';
+            }
+
             foreach($orbem_studio_direction_images as $orbem_studio_direction_label => $orbem_studio_direction_image):
                 $orbem_studio_fight_animation = false !== stripos($orbem_studio_direction_label, 'punch') ? ' fight-image' : '';
                 ?>

@@ -445,6 +445,10 @@ class Meta_Box {
                                         'number',
                                         'The width of the trigger area.'
                                 ],
+                                'explore-shadow' => [
+                                        'number',
+                                        'How wide the shadow on the ground under this entrance\'s picture is, sized to the shape it is drawn: 70 fits it, higher is wider. Empty uses the Item shadow game option. 0 for no shadow.'
+                                ],
                                 'explore-entry-side' => [
                                         [
                                                 'select' => [
@@ -996,6 +1000,10 @@ class Meta_Box {
                                         'number',
                                         'The width of the weapon’s interaction area on the map.'
                                 ],
+                                'explore-shadow' => [
+                                        'number',
+                                        'How wide this weapon\'s shadow on the ground is while it lies on the map, sized to the shape it is drawn: 70 fits it, higher is wider. Empty uses the Item shadow game option. 0 for no shadow.'
+                                ],
                                 'explore-rotation' => [
                                         'number',
                                         'The visual rotation of this weapon on the map.'
@@ -1202,6 +1210,10 @@ class Meta_Box {
                                 'explore-width-required' => [
                                         'number',
                                         'The width of this character’s interaction area.'
+                                ],
+                                'explore-shadow' => [
+                                        'number',
+                                        'How wide this character\'s shadow on the ground is, sized to the shape it is drawn: 70 fits it, higher is wider. Empty uses the Character shadow game option. 0 for no shadow.'
                                 ],
                                 'explore-character-images' => [
                                         $character_images,
@@ -1450,6 +1462,10 @@ class Meta_Box {
                                 'explore-width-required' => [
                                         'number',
                                         'The width of this enemy’s interaction area.'
+                                ],
+                                'explore-shadow' => [
+                                        'number',
+                                        'How wide this enemy\'s shadow on the ground is, sized to the shape it is drawn: 70 fits it, higher is wider. Empty uses the Enemy shadow game option. 0 for no shadow.'
                                 ],
                                 'explore-enemy-type-required' => [
                                         [
@@ -2013,6 +2029,10 @@ class Meta_Box {
                                         'number',
                                         'The width of this item’s interaction area.'
                                 ],
+                                'explore-shadow' => [
+                                        'number',
+                                        'How wide this item\'s shadow on the ground is, sized to the shape it is drawn: 70 fits it, higher is wider. Empty uses the Item shadow game option. 0 for no shadow.'
+                                ],
                         ],
 
                         'Extras, Interaction & Behavior' => [
@@ -2026,9 +2046,17 @@ class Meta_Box {
                                                         'Clickable' => 'clickable',
                                                         'Crafting' => 'crafting',
                                                         'Action key (for plugins)' => 'interact',
+                                                        'Lock' => 'lock',
+                                                        'Key' => 'key',
                                                 ]
                                         ],
-                                        'Define how the player interacts with this item. Crafting makes it a crafting table: walking up to it and pressing the action key opens the crafting menu.'
+                                        'Define how the player interacts with this item. Crafting makes it a crafting table: walking up to it and pressing the action key opens the crafting menu. A Key is picked up into Items; with it equipped, touching its Lock opens the lock and uses the key up.'
+                                ],
+                                'explore-counterpart' => [
+                                        [
+                                                'select' => $explore_item_array
+                                        ],
+                                        'For a Lock or a Key: the item it goes with. Set it on either one. An opened lock disappears, or shows its Interacted image when Disappear is no.'
                                 ],
                                 'explore-rotation' => [
                                         'number',

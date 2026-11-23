@@ -56,6 +56,7 @@ $orbem_studio_storage_limit          = get_user_meta($orbem_studio_userid, 'stor
 $orbem_studio_storage_limit          = false === empty($orbem_studio_storage_limit ) ? $orbem_studio_storage_limit : 11;
 $orbem_studio_current_explore_gear   = get_user_meta($orbem_studio_userid, 'explore_current_gear', true) ?? [];
 $orbem_studio_current_explore_weapon = get_user_meta($orbem_studio_userid, 'explore_current_weapons', true) ?? [$orbem_studio_default_weapon_id];
+$orbem_studio_current_key            = intval(get_user_meta($orbem_studio_userid, 'explore_current_key', true));
 $orbem_studio_storage_tabs           = get_option('explore_storage_tabs', []);
 $orbem_studio_storage_tabs_items     = $orbem_studio_storage_tabs['items'] ?? '';
 $orbem_studio_storage_tabs_weapons   = $orbem_studio_storage_tabs['weapons'] ?? '';
@@ -198,7 +199,7 @@ if ('on' === $orbem_studio_storage_tabs_items) {
                             // hidden from the weapon grid.
                             $orbem_studio_is_default_weapon = $orbem_studio_is_weapon && false === empty($orbem_studio_default_weapon) && ($orbem_studio_item["name"] ?? '') === $orbem_studio_default_weapon;
                             ?>
-                            class="storage-item<?php echo $orbem_studio_current_gear || true === $orbem_studio_current_weapon ? ' equipped' : ''; ?><?php echo $orbem_studio_is_default_weapon ? ' default-weapon' : ''; ?>">
+                            class="storage-item<?php echo $orbem_studio_current_gear || true === $orbem_studio_current_weapon || (0 < $orbem_studio_current_key && 'key' === ($orbem_studio_item['type'] ?? '') && $orbem_studio_current_key === intval($orbem_studio_item_id)) ? ' equipped' : ''; ?><?php echo $orbem_studio_is_default_weapon ? ' default-weapon' : ''; ?>">
                         <?php
                         // Every stored thing shows what it is.
                         $orbem_studio_item_image = '';

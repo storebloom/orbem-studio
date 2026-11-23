@@ -715,6 +715,20 @@ class Explore
             ]);
         }
 
+        // One key in hand at a time.
+        if ('key' === $type) {
+            if (true === rest_sanitize_boolean($data['unequip'] ?? false)) {
+                delete_user_meta($userid, 'explore_current_key');
+            } else {
+                update_user_meta($userid, 'explore_current_key', $item_id);
+            }
+
+            return rest_ensure_response([
+                'success' => true,
+                'data'    => esc_html__('equipped', 'orbem-studio') . esc_html($item_id),
+            ]);
+        }
+
         // Gear and weapons with a "Level to use" stay in storage until then.
         if (true !== $unequip && self::useLevel($item_id) > self::getCurrentLevel()) {
             return rest_ensure_response([
@@ -859,6 +873,11 @@ class Explore
 
             // Reindex so the template's slot loop doesn't skip what is left.
             $menu_map_array = array_values($menu_map_array);
+
+            // A used or dropped key is out of the hand too.
+            if ('key' === $type && intval(get_user_meta($userid, 'explore_current_key', true)) === intval($id)) {
+                delete_user_meta($userid, 'explore_current_key');
+            }
         } else {
             $new_item = [
                 'id'    => $id,
@@ -1262,6 +1281,7 @@ class Explore
         delete_user_meta($userid, 'explore_magic');
         delete_user_meta($userid, 'explore_current_gear');
         delete_user_meta($userid, 'explore_current_weapons');
+        delete_user_meta($userid, 'explore_current_key');
         delete_user_meta($userid, 'explore_drag_items');
         delete_user_meta($userid, 'explore_characters');
         delete_user_meta($userid, 'explore_materialized_items');
@@ -1496,6 +1516,52 @@ class Explore
         $percent = intval(get_post_meta($area_id, 'explore-area-scale', true));
 
         return 0 < $percent ? $percent / 100 : 1.0;
+    }
+
+    /**
+     * The other half of a lock and its key, or 0.
+     *
+     * Either one may name the other as its counterpart.
+     *
+     * @param int $post_id A lock or a key.
+     * @return int
+     */
+    public static function counterpartOf(int $post_id): int
+    {
+        $role = (string) get_post_meta($post_id, 'explore-interaction-type', true);
+
+        if (!in_array($role, ['lock', 'key'], true)) {
+            return 0;
+        }
+
+        $other = 'lock' === $role ? 'key' : 'lock';
+        $named = (string) get_post_meta($post_id, 'explore-counterpart', true);
+        $found = '' !== $named ? get_page_by_path($named, OBJECT, 'explore-point') : null;
+
+        if ($found && $other === get_post_meta($found->ID, 'explore-interaction-type', true)) {
+            return (int) $found->ID;
+        }
+
+        $slug = (string) get_post_field('post_name', $post_id);
+
+        if ('' === $slug) {
+            return 0;
+        }
+
+        $match = get_posts([
+            'post_type'      => 'explore-point',
+            'post_status'    => 'publish',
+            'posts_per_page' => 1,
+            'fields'         => 'ids',
+            'no_found_rows'  => true,
+            // phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+            'meta_query'     => [
+                ['key' => 'explore-interaction-type', 'value' => $other],
+                ['key' => 'explore-counterpart', 'value' => $slug],
+            ],
+        ]);
+
+        return (int) ($match[0] ?? 0);
     }
 
     /**
@@ -1783,8 +1849,10 @@ class Explore
                 $timer                          = $explore_point_meta['explore-timer'] ?? '';
                 $type                           = $explore_point_meta['explore-value-type'] ?? '';
                 $interaction_type               = $explore_point_meta['explore-interaction-type'] ?? '';
+                $type                           = 'key' === $interaction_type ? 'key' : $type;
                 $breakable                      = 'breakable' === $interaction_type;
-                $collectable                    = 'collectable' === $interaction_type;
+                $collectable                    = 'collectable' === $interaction_type || 'key' === $interaction_type;
+                $is_lock                        = 'lock' === $interaction_type;
                 $draggable                      = 'draggable' === $interaction_type;
                 // A blocker is a hazard that happens to be an enemy.
                 $is_hazard                      = 'hazard' === $interaction_type
@@ -1873,6 +1941,7 @@ class Explore
                         true !== $breakable &&
                         true !== $collectable &&
                         true !== $draggable &&
+                        true !== $is_lock &&
                         $passable &&
                         'explore-point' === $explore_point->post_type &&
                         true === empty($materialize_after_cutscene)
@@ -1906,6 +1975,10 @@ class Explore
                     $html .= '<div style="' . esc_attr($layer) . 'transform: rotate(' . esc_attr($rotation) . 'deg);left:' . esc_attr($left) . 'px; top:' . esc_attr($top) . 'px;" id="' . esc_attr($explore_point->ID) . '" data-genre="' . esc_attr($explore_point->post_type) . '" data-type="' . esc_attr($type) . '" data-value="' . esc_attr($value) . '"';
                     $html .= ' data-image="' . esc_attr($item_image) . '"';
                     $html .= ' data-title="' . esc_attr($explore_point->post_title) . '"';
+
+                    if ('' !== (string) ($explore_point_meta['explore-shadow'] ?? '')) {
+                        $html .= ' data-shadow="' . esc_attr(absint($explore_point_meta['explore-shadow'])) . '"';
+                    }
 
                     // Reward granted to the player for killing this enemy.
                     if ('explore-enemy' === $explore_point->post_type && false === empty($reward_value)) {
@@ -2162,6 +2235,15 @@ class Explore
 
                     if ('' !== $store_as) {
                         $html .= ' data-store-as="' . esc_attr($store_as) . '"';
+                    }
+
+                    // A lock opens when touched with its key in hand; a key goes into Items, then into its lock.
+                    if ($is_lock || 'key' === $interaction_type) {
+                        $counterpart = self::counterpartOf((int) $explore_point->ID);
+
+                        if (0 < $counterpart) {
+                            $html .= ' data-' . ($is_lock ? 'lock' : 'key') . '="' . esc_attr($counterpart) . '"';
+                        }
                     }
 
                     // A crafting table, a workbench: walk up and press the action key to open the crafting menu.
@@ -3661,6 +3743,20 @@ class Explore
     public static function levelHealth(): int
     {
         return max(0, (int) apply_filters('orbem_level_health', (int) get_option('explore_level_health', 0)));
+    }
+
+    /** The game's shadow sizes (percent of what is drawn) and the main character's own, for shadows.js. */
+    public static function shadows(): array
+    {
+        $main   = get_page_by_path((string) get_option('explore_main_character', ''), OBJECT, 'explore-character');
+        $player = $main ? (string) get_post_meta($main->ID, 'explore-shadow', true) : '';
+
+        return (array) apply_filters('orbem_shadows', [
+            'character' => absint(get_option('explore_shadow_characters', 0)),
+            'item'      => absint(get_option('explore_shadow_items', 0)),
+            'enemy'     => absint(get_option('explore_shadow_enemies', 0)),
+            'player'    => '' === $player ? null : absint($player),
+        ]);
     }
 
     /** The level a weapon or piece of gear needs before it can be equipped ("Level to use"); 0 when anybody can. */

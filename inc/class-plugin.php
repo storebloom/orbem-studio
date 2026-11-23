@@ -286,6 +286,7 @@ class Plugin extends Plugin_Base {
                 'multiplayer' => Multiplayer::settings(),
                 // Off unless the game turns it on (the "Minimap" game option).
                 'minimap' => 'Yes' === (string) get_option('explore_minimap', 'No') ? 'yes' : 'no',
+                'shadows' => Explore::shadows(),
                 'gainFeed' => 'Yes' === (string) get_option('explore_gain_feed', 'No') ? 'yes' : 'no',
                 'sounds' => Menu::getSoundUrls(),
                 // Only for somebody signed in: there is nowhere to keep this otherwise, and the client takes its absence as "do not".
